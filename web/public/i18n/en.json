@@ -79,16 +79,67 @@
   },
   "notice": {
     "terms": {
-      "text": "New terms from our bank-connection provider need your review"
+      "text": "New terms from our bank-connection provider need your review",
+      "action": "Review"
     },
     "bankExpiry": {
-      "text": "Your {{bank}} connection expires in {{days}} days"
+      "text": "Your {{bank}} connection expires in {{days}} days",
+      "action": "Renew"
     },
     "unreadable": {
-      "text": "Receipts that could not be read: {{count}}"
+      "text": "Receipts that could not be read: {{count}}",
+      "action": "Fix"
     },
     "revenueLimit": {
-      "text": "You have reached {{percent}}% of your small-business revenue limit"
+      "text": "You have reached {{percent}}% of your small-business revenue limit",
+      "action": "Details"
+    }
+  },
+  "home": {
+    "notices": {
+      "dismiss": "Dismiss",
+      "more": "+{{count}} more"
+    },
+    "decisions": {
+      "one": "1 thing needs your decision",
+      "many": "{{count}} things need your decision",
+      "minutesOne": "about 1 minute",
+      "minutes": "about {{count}} minutes",
+      "start": "Start",
+      "allClear": "All clear. Nothing needs your decision."
+    },
+    "checklist": {
+      "title": "Finish setting up",
+      "bank": "Connect your bank",
+      "tax": "Add your tax details",
+      "receipt": "Upload your first receipt",
+      "start": "Start",
+      "view": "View",
+      "done": "Done"
+    },
+    "status": {
+      "booked": "Booked",
+      "confirm": "Please confirm",
+      "noReceipt": "Receipt missing",
+      "unclear": "Unclear"
+    },
+    "transactions": {
+      "title": "Recent payments",
+      "seeAll": "See all"
+    },
+    "balances": {
+      "title": "Accounts",
+      "total": "Total available"
+    },
+    "tax": {
+      "title": "Taxes",
+      "vatDue": "Due {{date}}",
+      "vatAmount": "Estimated to pay",
+      "of": "of",
+      "thisYear": "this year",
+      "percentUsed": "{{percent}}% of your limit used",
+      "revenueLabel": "Revenue this year",
+      "incomeTax": "Income tax to set aside"
     }
   }
 }
