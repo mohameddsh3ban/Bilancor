@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmBadge } from '@spartan-ng/helm/badge';
@@ -9,7 +9,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { NoticeService } from '../state/notice.service';
 import { SHELL_ICONS } from './menu';
 
-/** The notifications bell: unread count badge, and a popover with the business's notice history. */
+/** The notifications bell: unread count badge, and a popover with the business's open and past notices. */
 @Component({
   selector: 'app-bell-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,17 +45,38 @@ import { SHELL_ICONS } from './menu';
       <ng-template hlmPopoverPortal>
         <hlm-popover-content class="max-h-96 w-80 max-w-[calc(100vw-2rem)] overflow-y-auto">
           <h2 class="font-medium">{{ 'shell.notifications' | transloco }}</h2>
-          @if (notices.history().length === 0) {
+          @if (open().length === 0 && notices.history().length === 0) {
             <p class="text-muted-foreground">{{ 'shell.noNotifications' | transloco }}</p>
-          } @else {
-            <ul class="flex flex-col gap-3">
-              @for (notice of notices.history(); track notice.id) {
-                <li class="flex flex-col gap-0.5">
-                  <span class="text-muted-foreground text-xs">{{ date(notice.date) }}</span>
-                  <span>{{ 'notice.' + notice.kind + '.text' | transloco: notice.params }}</span>
-                </li>
-              }
-            </ul>
+          }
+          @if (open().length > 0) {
+            <section class="flex flex-col gap-3" data-testid="bell-open">
+              <h3 class="text-muted-foreground text-xs font-medium uppercase">
+                {{ 'shell.needsAction' | transloco }}
+              </h3>
+              <ul class="flex flex-col gap-3">
+                @for (notice of open(); track notice.id) {
+                  <li class="flex flex-col gap-0.5">
+                    <span class="text-muted-foreground text-xs">{{ date(notice.date) }}</span>
+                    <span>{{ 'notice.' + notice.kind + '.text' | transloco: notice.params }}</span>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+          @if (notices.history().length > 0) {
+            <section class="flex flex-col gap-3" data-testid="bell-history">
+              <h3 class="text-muted-foreground text-xs font-medium uppercase">
+                {{ 'shell.earlier' | transloco }}
+              </h3>
+              <ul class="flex flex-col gap-3">
+                @for (notice of notices.history(); track notice.id) {
+                  <li class="flex flex-col gap-0.5">
+                    <span class="text-muted-foreground text-xs">{{ date(notice.date) }}</span>
+                    <span>{{ 'notice.' + notice.kind + '.text' | transloco: notice.params }}</span>
+                  </li>
+                }
+              </ul>
+            </section>
           }
         </hlm-popover-content>
       </ng-template>
@@ -65,6 +86,9 @@ import { SHELL_ICONS } from './menu';
 export class BellPanel {
   protected readonly notices = inject(NoticeService);
   private readonly language = inject(LanguageService);
+
+  /** Notices that still need action: the ones on the homepage, then the collapsed "+N more". */
+  protected readonly open = computed(() => [...this.notices.shown(), ...this.notices.overflow()]);
 
   protected date(iso: string): string {
     return formatDate(iso, this.language.lang());

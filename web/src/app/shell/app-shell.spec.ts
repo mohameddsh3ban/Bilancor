@@ -75,6 +75,33 @@ describe('AppShell', () => {
     expect(document.body.textContent).toContain('Your Qonto connection expires in 30 days');
   });
 
+  it('bell panel lists all three open notices, then the earlier history', async () => {
+    TestBed.inject(NoticeService).bellOpen.set(true);
+    await settle();
+    const text = (id: string) => document.body.querySelector(`[data-testid="${id}"]`)?.textContent ?? '';
+    const open = text('bell-open');
+    expect(open).toContain('Needs action');
+    expect(open).toContain('New terms from our bank-connection provider need your review');
+    expect(open).toContain('Your Qonto connection expires in 5 days');
+    expect(open).toContain('Receipts that could not be read: 2');
+    const history = text('bell-history');
+    expect(history).toContain('Earlier');
+    expect(history).toContain('Your Qonto connection expires in 30 days');
+    expect(history).toContain('Receipts that could not be read: 1');
+    expect(history).not.toContain('in 5 days');
+  });
+
+  it('bell panel omits the open section when nothing is open', async () => {
+    const demo = TestBed.inject(DemoStateService);
+    const notices = TestBed.inject(NoticeService);
+    demo.setBusiness('cafe-linde');
+    notices.dismiss('cl-n1');
+    notices.bellOpen.set(true);
+    await settle();
+    expect(document.body.querySelector('[data-testid="bell-open"]')).toBeNull();
+    expect(document.body.querySelector('[data-testid="bell-history"]')).not.toBeNull();
+  });
+
   it('bell opens the history panel on tap', async () => {
     q('[data-testid="bell"]').click();
     await settle();

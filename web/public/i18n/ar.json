@@ -66,7 +66,9 @@
     "noNotifications": "لا توجد إشعارات بعد",
     "language": "اللغة",
     "mainMenu": "القائمة الرئيسية",
-    "logo": "شعارك"
+    "logo": "شعارك",
+    "needsAction": "يتطلب إجراءً",
+    "earlier": "سابقًا"
   },
   "demo": {
     "label": "عرض تجريبي",
