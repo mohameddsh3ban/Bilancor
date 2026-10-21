@@ -73,12 +73,12 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
       <div hlmCardContent class="hidden lg:block">
         <table class="w-full table-fixed text-sm" data-testid="tx-table">
           <colgroup>
-            <col class="w-28" />
-            <col class="w-[26%]" />
-            <col class="w-32" />
+            <col class="w-20" />
             <col />
-            <col class="w-40" />
-            <col class="w-32" />
+            <col class="w-20" />
+            <col />
+            <col class="w-36" />
+            <col class="w-24" />
           </colgroup>
           <thead>
             <tr class="text-muted-foreground text-xs">
@@ -104,11 +104,11 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
           </thead>
           <tbody>
             @for (tx of rows(); track tx.id) {
-              <tr class="border-border hover:bg-muted border-t" data-testid="tx-table-row">
+              <tr class="border-border hover:bg-muted relative border-t" data-testid="tx-table-row">
                 <td class="py-2.5 pe-3 whitespace-nowrap">{{ date(tx.date) }}</td>
                 <td class="py-2.5 pe-3">
                   <a
-                    class="block truncate font-medium hover:underline"
+                    class="block truncate font-medium after:absolute after:inset-0 hover:underline"
                     dir="auto"
                     data-testid="tx-table-counterparty"
                     [routerLink]="['/soon', 'payments']"
@@ -117,15 +117,28 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                   </a>
                 </td>
                 <td class="py-2.5 pe-3">{{ accountName(tx.accountId) }}</td>
-                <td class="py-2.5 pe-3" data-testid="tx-table-booking">
-                  @if (tx.booking; as booking) {
-                    @if (showLabel()) {
-                      {{ 'booking.' + booking.labelKey | transloco }} ·
+                @let booking = tx.booking;
+                <td class="py-2.5 pe-3">
+                  <span
+                    class="block truncate"
+                    data-testid="tx-table-booking"
+                    [attr.title]="
+                      booking
+                        ? showLabel()
+                          ? ('booking.' + booking.labelKey | transloco) + ' · ' + skr03(booking)
+                          : skr03(booking)
+                        : null
+                    "
+                  >
+                    @if (booking) {
+                      @if (showLabel()) {
+                        {{ 'booking.' + booking.labelKey | transloco }} ·
+                      }
+                      <bdi dir="ltr">{{ skr03(booking) }}</bdi>
+                    } @else {
+                      —
                     }
-                    <bdi dir="ltr">{{ skr03(booking) }}</bdi>
-                  } @else {
-                    —
-                  }
+                  </span>
                 </td>
                 <td class="py-2.5 pe-3">
                   <ng-container [ngTemplateOutlet]="statusChip" [ngTemplateOutletContext]="{ $implicit: tx }" />

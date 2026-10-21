@@ -138,5 +138,50 @@ describe('TransactionsCard', () => {
       expect(table.parentElement!.classList).toContain('lg:block');
       expect(root.querySelector('[data-testid="tx-row"]')!.closest('ul')!.classList).toContain('lg:hidden');
     });
+
+    it('gives booking real room: no fixed width on counterparty and booking, narrow fixed widths elsewhere', () => {
+      const root = renderTable();
+      const cols = Array.from(root.querySelectorAll('[data-testid="tx-table"] col'));
+      const widths = cols.map((c) => Array.from(c.classList).filter((k) => /^w-/.test(k)));
+      // date, counterparty, account, booking, status, amount
+      expect(widths[1]).toEqual([]);
+      expect(widths[3]).toEqual([]);
+      for (const i of [0, 2, 4, 5]) expect(widths[i]).toHaveLength(1);
+      for (const th of Array.from(root.querySelectorAll('[data-testid="tx-table"] th'))) {
+        expect(Array.from(th.classList).some((k) => /^w-/.test(k))).toBe(false);
+      }
+    });
+
+    it('booking cell truncates and carries the full text as its title', () => {
+      const root = renderTable('en');
+      const cell = rowFor(root, 'Telekom').querySelector('[data-testid="tx-table-booking"]')!;
+      expect(cell.classList).toContain('truncate');
+      expect(cell.getAttribute('title')).toBe('Phone & internet · 4920 Telefon');
+      const de = renderTable('de');
+      expect(rowFor(de, 'Telekom').querySelector('[data-testid="tx-table-booking"]')!.getAttribute('title')).toBe(
+        '4920 Telefon',
+      );
+      const none = rowFor(renderTable('en'), 'Amazon').querySelector('[data-testid="tx-table-booking"]')!;
+      expect(none.hasAttribute('title')).toBe(false);
+    });
+
+    it('status chips never wrap', () => {
+      for (const chip of Array.from(
+        renderTable().querySelectorAll('[data-testid="tx-table"] [data-testid="tx-status"]'),
+      )) {
+        expect(chip.classList).toContain('whitespace-nowrap');
+      }
+    });
+
+    it('the whole row opens payments: row is relative and the counterparty link is stretched over it', () => {
+      const root = renderTable();
+      for (const row of tableRows(root)) {
+        expect(row.classList).toContain('relative');
+        const link = row.querySelector('[data-testid="tx-table-counterparty"]')!;
+        expect(link.classList).toContain('after:absolute');
+        expect(link.classList).toContain('after:inset-0');
+        expect(link.getAttribute('href')).toBe('/soon/payments');
+      }
+    });
   });
 });
