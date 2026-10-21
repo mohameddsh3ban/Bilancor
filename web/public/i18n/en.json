@@ -1,0 +1,24 @@
+{
+  "terms": {
+    "ustva": {
+      "label": "VAT return",
+      "de": "UStVA",
+      "explain": "The regular report to the tax office of how much VAT you charged and paid."
+    },
+    "euer": {
+      "label": "Annual profit report",
+      "de": "EÜR",
+      "explain": "A simple yearly statement of income minus expenses that shows your profit for tax."
+    },
+    "kleinunternehmer": {
+      "label": "Small business (no VAT)",
+      "de": "Kleinunternehmer",
+      "explain": "A rule for small businesses that lets you skip charging VAT while your revenue stays under the limit."
+    },
+    "skr03": {
+      "label": "Chart of accounts",
+      "de": "SKR03",
+      "explain": "The standard list of account numbers that every income and expense is filed under."
+    }
+  }
+}

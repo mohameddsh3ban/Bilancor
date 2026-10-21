@@ -1,0 +1,24 @@
+{
+  "terms": {
+    "ustva": {
+      "label": "UStVA",
+      "de": "UStVA",
+      "explain": "Die regelmäßige Meldung ans Finanzamt, wie viel Umsatzsteuer du berechnet und gezahlt hast."
+    },
+    "euer": {
+      "label": "EÜR",
+      "de": "EÜR",
+      "explain": "Eine einfache Jahresaufstellung aus Einnahmen minus Ausgaben, die deinen steuerlichen Gewinn zeigt."
+    },
+    "kleinunternehmer": {
+      "label": "Kleinunternehmer",
+      "de": "Kleinunternehmer",
+      "explain": "Eine Regelung für kleine Unternehmen: Du musst keine Umsatzsteuer berechnen, solange dein Umsatz unter der Grenze bleibt."
+    },
+    "skr03": {
+      "label": "SKR03",
+      "de": "SKR03",
+      "explain": "Der Standardkontenrahmen mit den Kontonummern, unter denen jede Einnahme und Ausgabe abgelegt wird."
+    }
+  }
+}
