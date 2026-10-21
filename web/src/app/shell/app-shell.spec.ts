@@ -117,11 +117,45 @@ describe('AppShell', () => {
     expect(document.documentElement.lang).toBe('ar');
   });
 
+  it('pop-ups follow the language direction after a switch', async () => {
+    const pane = () => document.body.querySelector<HTMLElement>('.cdk-overlay-pane');
+    const dirOf = () => pane()?.closest('[dir]')?.getAttribute('dir');
+    const pick = (label: string) =>
+      qa('[data-testid="lang-switcher"] button')
+        .find((b) => b.textContent?.trim() === label)!
+        .click();
+    pick('عربي');
+    await settle();
+    q('[data-testid="bell"]').click();
+    await settle();
+    expect(pane()).not.toBeNull();
+    expect(dirOf()).toBe('rtl');
+    q('[data-testid="bell"]').click();
+    await settle();
+    pick('EN');
+    await settle();
+    q('[data-testid="bell"]').click();
+    await settle();
+    expect(pane()).not.toBeNull();
+    expect(dirOf()).toBe('ltr');
+  });
+
   it('demo switch changes the setup state', () => {
     const demo = TestBed.inject(DemoStateService);
     const halfway = qa('[data-testid="demo-toolbar"] button').find((b) => b.textContent?.includes('Halfway'));
     halfway!.click();
     expect(demo.setup()).toBe('halfway');
+  });
+
+  it('reset demo brings dismissed notices back', () => {
+    const notices = TestBed.inject(NoticeService);
+    notices.dismiss('wd-n2');
+    harness.detectChanges();
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
+    q('[data-testid="demo-reset"]').click();
+    harness.detectChanges();
+    expect(q('[data-testid="demo-reset"]').textContent).toContain('Reset demo');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
   });
 
   it('has Upload receipt in the sidebar and the full menu', () => {

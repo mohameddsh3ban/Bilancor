@@ -75,7 +75,8 @@
     "setup": "Setup state",
     "new": "New client",
     "halfway": "Halfway",
-    "active": "Active client"
+    "active": "Active client",
+    "reset": "Reset demo"
   },
   "notice": {
     "terms": {

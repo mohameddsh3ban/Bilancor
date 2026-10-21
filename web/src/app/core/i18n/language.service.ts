@@ -1,3 +1,4 @@
+import { Directionality } from '@angular/cdk/bidi';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { Lang } from '../../data/models';
@@ -10,6 +11,7 @@ const LANGS: readonly Lang[] = ['en', 'de', 'ar'];
 export class LanguageService {
   private readonly storage = inject(SafeStorage);
   private readonly transloco = inject(TranslocoService);
+  private readonly directionality = inject(Directionality);
 
   private readonly current = signal<Lang>(this.initialLang());
 
@@ -30,6 +32,9 @@ export class LanguageService {
     const root = document.documentElement;
     root.lang = lang;
     root.dir = this.dir();
+    // CDK reads <html dir> only once, so keep its Directionality (overlays, progress bars) in step.
+    this.directionality.valueSignal.set(this.dir());
+    this.directionality.change.emit(this.dir());
     this.transloco.setActiveLang(lang);
   }
 

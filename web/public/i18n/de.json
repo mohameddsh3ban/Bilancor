@@ -75,7 +75,8 @@
     "setup": "Einrichtungsstand",
     "new": "Neukunde",
     "halfway": "Halb fertig",
-    "active": "Aktiver Kunde"
+    "active": "Aktiver Kunde",
+    "reset": "Demo zurücksetzen"
   },
   "notice": {
     "terms": {

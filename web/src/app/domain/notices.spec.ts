@@ -1,5 +1,5 @@
 import { BUSINESSES } from '../data/sample-data';
-import { splitNotices } from './notices';
+import { noticesForSetup, splitNotices } from './notices';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
 const [terms, bankExpiry, unreadable] = weber.notices;
@@ -27,5 +27,28 @@ describe('splitNotices', () => {
     const { shown, overflow } = splitNotices(weber.notices, new Set(), 1);
     expect(shown.map((n) => n.id)).toEqual([terms.id]);
     expect(overflow).toHaveLength(2);
+  });
+});
+
+describe('noticesForSetup', () => {
+  const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
+  const done = { bank: true, tax: true, receipt: true };
+
+  it('keeps everything once setup is complete', () => {
+    expect(noticesForSetup(weber.notices, done)).toEqual(weber.notices);
+  });
+
+  it('hides bank notices until the bank step is done', () => {
+    const kinds = noticesForSetup(weber.notices, { ...done, bank: false }).map((n) => n.kind);
+    expect(kinds).toEqual(['unreadable']);
+  });
+
+  it('hides unreadable notices until the receipt step is done', () => {
+    const kinds = noticesForSetup(weber.notices, { ...done, receipt: false }).map((n) => n.kind);
+    expect(kinds).toEqual(['terms', 'bankExpiry']);
+  });
+
+  it('hides the revenue limit notice until the tax step is done', () => {
+    expect(noticesForSetup(sara.notices, { ...done, tax: false })).toEqual([]);
   });
 });

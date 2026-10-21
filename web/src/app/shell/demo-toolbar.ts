@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SetupState } from '../data/models';
 import { DemoStateService } from '../state/demo-state.service';
+import { NoticeService } from '../state/notice.service';
 
 /** Demo-only strip at the very top: lets the owner compare the three setup states. */
 @Component({
@@ -31,10 +32,19 @@ import { DemoStateService } from '../state/demo-state.service';
           </button>
         }
       </div>
+      <button
+        type="button"
+        class="rounded-sm border border-current px-2 py-0.5"
+        data-testid="demo-reset"
+        (click)="notices.resetDismissals()"
+      >
+        {{ 'demo.reset' | transloco }}
+      </button>
     </div>
   `,
 })
 export class DemoToolbar {
   protected readonly demo = inject(DemoStateService);
+  protected readonly notices = inject(NoticeService);
   protected readonly states: readonly SetupState[] = ['new', 'halfway', 'active'];
 }

@@ -73,3 +73,77 @@ describe('NoticeService', () => {
     expect(service.history().map((n) => n.id)).toEqual(cafe.noticeHistory.map((n) => n.id));
   });
 });
+
+describe('NoticeService and the setup state', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('shows no bank notice and a zero badge for Café Linde while setup is new', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setBusiness('cafe-linde');
+    demo.setSetup('new');
+    expect(service.shown()).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+    expect(service.history()).toEqual([]);
+  });
+
+  it('shows the bank notices but not the receipt notice for weber-design when halfway', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setSetup('halfway');
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.overflow()).toEqual([]);
+    expect(service.unreadCount()).toBe(2);
+    expect(service.history().map((n) => n.kind)).toEqual(['bankExpiry']);
+  });
+
+  it('hides the revenue limit notice for sara-yoga when halfway', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setBusiness('sara-yoga');
+    demo.setSetup('halfway');
+    expect(service.unreadCount()).toBe(0);
+    expect(service.history()).toEqual([]);
+  });
+
+  it('leaves the active state unchanged', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setSetup('active');
+    expect(service.unreadCount()).toBe(3);
+  });
+});
+
+describe('NoticeService.resetDismissals', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('brings a dismissed notice back and empties the history entry', () => {
+    const service = TestBed.inject(NoticeService);
+    service.dismiss(bankExpiry.id);
+    expect(service.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
+    service.resetDismissals();
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.unreadCount()).toBe(3);
+    expect(service.history().map((n) => n.id)).toEqual(weber.noticeHistory.map((n) => n.id));
+  });
+
+  it('clears the stored dismissals of every business of the person', () => {
+    const storage = TestBed.inject(SafeStorage);
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    service.dismiss(bankExpiry.id);
+    demo.setBusiness('cafe-linde');
+    service.dismiss(cafe.notices[0].id);
+    service.resetDismissals();
+    expect(JSON.parse(storage.get('mockup.dismissed.p1.weber-design')!)).toEqual([]);
+    expect(JSON.parse(storage.get('mockup.dismissed.p1.cafe-linde')!)).toEqual([]);
+    expect(service.shown().map((n) => n.id)).toEqual([cafe.notices[0].id]);
+  });
+
+  it('a new NoticeService sees nothing dismissed after a reset', () => {
+    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).resetDismissals();
+    const second = TestBed.runInInjectionContext(() => new NoticeService());
+    expect(second.unreadCount()).toBe(3);
+  });
+});
