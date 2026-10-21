@@ -7,7 +7,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { formatDate, formatMoney } from '../../core/format/format';
 import { LanguageService } from '../../core/i18n/language.service';
-import { Booking, TxStatus } from '../../data/models';
+import { Account, Booking, TxStatus } from '../../data/models';
 import { newestTransactions } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 
@@ -124,7 +124,8 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                     {{ tx.counterparty }}
                   </a>
                 </td>
-                <td class="py-2.5 pe-3">{{ accountName(tx.accountId) }}</td>
+                @let account = accountOf(tx.accountId);
+                <td class="py-2.5 pe-3">{{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}</td>
                 <td class="py-2.5 pe-3">
                   <span class="block truncate" data-testid="tx-table-booking">
                     @if (booking) {
@@ -175,8 +176,8 @@ export class TransactionsCard {
   /** German keeps only the SKR03 account; English and Arabic put a short translated label in front of it. */
   protected readonly showLabel = computed(() => this.language.lang() !== 'de');
 
-  protected accountName(accountId: string): string {
-    return this.demo.business().accounts.find((a) => a.id === accountId)?.name ?? '';
+  protected accountOf(accountId: string): Account | undefined {
+    return this.demo.business().accounts.find((a) => a.id === accountId);
   }
 
   /** The SKR03 number with its German name; the caller keeps it left-to-right. */

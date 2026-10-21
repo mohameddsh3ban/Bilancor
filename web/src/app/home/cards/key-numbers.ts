@@ -62,7 +62,7 @@ import { RevenueTracker } from './revenue-tracker';
           <ul class="border-border flex flex-col border-t pt-1">
             @for (account of business().accounts; track account.id) {
               <li class="flex items-baseline justify-between gap-3 py-1.5 text-sm">
-                <span class="min-w-0 truncate">{{ account.name }}</span>
+                <span class="min-w-0 truncate">{{ account.kind === 'cash' ? ('account.cash' | transloco) : account.name }}</span>
                 <bdi dir="ltr" class="shrink-0 font-medium">{{ money(account.balanceCents) }}</bdi>
               </li>
             }

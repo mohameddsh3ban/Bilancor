@@ -37,7 +37,7 @@ import { DemoStateService } from '../../state/demo-state.service';
                   aria-hidden="true"
                 />
                 <span class="flex min-w-0 flex-1 flex-col">
-                  <span class="truncate">{{ account.name }}</span>
+                  <span class="truncate">{{ account.kind === 'cash' ? ('account.cash' | transloco) : account.name }}</span>
                   <span class="text-muted-foreground text-xs" data-testid="account-updated">
                     {{ 'home.balances.updated' | transloco: { date: date(account.lastUpdate) } }}
                   </span>

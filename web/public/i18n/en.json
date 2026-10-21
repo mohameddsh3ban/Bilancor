@@ -11,7 +11,7 @@
       "explain": "A simple yearly statement of income minus expenses that shows your profit for tax."
     },
     "kleinunternehmer": {
-      "label": "Small business (no VAT)",
+      "label": "Small business, no VAT",
       "de": "Kleinunternehmer",
       "explain": "A rule for small businesses that lets you skip charging VAT while your revenue stays under the limit."
     },
@@ -20,6 +20,9 @@
       "de": "SKR03",
       "explain": "The standard list of account numbers that every income and expense is filed under."
     }
+  },
+  "account": {
+    "cash": "Cash box"
   },
   "menu": {
     "home": "Home",

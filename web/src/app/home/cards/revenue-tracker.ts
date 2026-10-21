@@ -17,15 +17,15 @@ import { DemoStateService } from '../../state/demo-state.service';
     <div class="flex flex-col gap-2" data-testid="tax-tracker">
       <p class="text-sm font-medium"><app-term key="kleinunternehmer" /></p>
       <hlm-progress [value]="progress()" [attr.aria-label]="'home.tax.revenueLabel' | transloco">
-        <hlm-progress-indicator [class]="limit().level === 'ok' ? '' : 'bg-warning'" />
+        <hlm-progress-indicator [class]="indicatorClass()" />
       </hlm-progress>
       <p class="text-sm">
-        <bdi dir="ltr" class="font-medium">{{ money(revenue()) }}</bdi>
+        <bdi dir="ltr" class="font-medium">{{ money(revenue(), true) }}</bdi>
         {{ 'home.tax.of' | transloco }}
-        <bdi dir="ltr" class="font-medium">{{ money(limit().limitCents) }}</bdi>
+        <bdi dir="ltr" class="font-medium">{{ money(limit().limitCents, true) }}</bdi>
         {{ 'home.tax.thisYear' | transloco }}
       </p>
-      <p [class]="limit().level === 'ok' ? 'text-muted-foreground text-xs' : 'text-warning text-xs font-medium'">
+      <p data-testid="tax-tracker-percent" [class]="percentClass()">
         {{ 'home.tax.percentUsed' | transloco: { percent: limit().percent } }}
       </p>
     </div>
@@ -40,7 +40,17 @@ export class RevenueTracker {
   /** The bar only takes 0 to 100; the percentage text still shows the real figure. */
   protected readonly progress = computed(() => Math.min(100, Math.max(0, this.limit().percent)));
 
-  protected money(cents: number): string {
-    return formatMoney(cents, this.language.lang());
+  protected readonly indicatorClass = computed(() => {
+    const level = this.limit().level;
+    return level === 'ok' ? '' : level === 'overNow' ? 'bg-negative' : 'bg-warning';
+  });
+  protected readonly percentClass = computed(() => {
+    const level = this.limit().level;
+    if (level === 'ok') return 'text-muted-foreground text-xs';
+    return (level === 'overNow' ? 'text-negative' : 'text-warning') + ' text-xs font-medium';
+  });
+
+  protected money(cents: number, whole = false): string {
+    return formatMoney(cents, this.language.lang(), { whole });
   }
 }

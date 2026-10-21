@@ -85,7 +85,7 @@ export const BUSINESSES: Business[] = [
     incomeTaxReserveCents: 210000,
     revenueThisYearCents: 2130000,
     notices: [
-      { id: 'sy-n1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 85.2, limit: 25000 }, date: '2026-10-20' },
+      { id: 'sy-n1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 85, limit: 25000 }, date: '2026-10-20' },
     ],
     noticeHistory: [
       { id: 'sy-h1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 80, limit: 25000 }, date: '2026-09-24' },

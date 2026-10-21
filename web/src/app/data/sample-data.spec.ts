@@ -1,3 +1,4 @@
+import { revenueLimitStatus } from '../domain/revenue-limit';
 import { BUSINESSES, PERSON } from './sample-data';
 
 describe('sample data', () => {
@@ -28,5 +29,13 @@ describe('sample data', () => {
       for (const a of b.accounts) expect(Number.isInteger(a.balanceCents)).toBe(true);
       for (const t of b.transactions) expect(Number.isInteger(t.amountCents)).toBe(true);
     }
+  });
+});
+
+describe('sample data revenue notice', () => {
+  it('shows the same whole percent as the revenue tracker', () => {
+    const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
+    const notice = sara.notices.find((n) => n.kind === 'revenueLimit')!;
+    expect(notice.params['percent']).toBe(revenueLimitStatus(sara.revenueThisYearCents).percent);
   });
 });

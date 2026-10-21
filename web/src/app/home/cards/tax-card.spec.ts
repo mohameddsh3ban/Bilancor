@@ -46,6 +46,42 @@ describe('TaxCard', () => {
     expect(indicator.className).not.toContain('bg-primary');
   });
 
+
+  function renderWithRevenue(cents: number): HTMLElement {
+    const sara = TestBed.inject(DemoStateService).businesses.find((b) => b.id === 'sara-yoga')!;
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideTranslocoTesting(),
+        provideRouter([]),
+        { provide: DemoStateService, useValue: { business: () => ({ ...sara, revenueThisYearCents: cents }) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(TaxCard);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('shows the tracker amounts in whole euros', () => {
+    const text = render('sara-yoga').querySelector('[data-testid="tax-tracker"]')!.textContent!;
+    expect(text.replace(/\s+/g, ' ')).toContain('€21,300 of €25,000 this year');
+    expect(text.replace(/\s+/g, ' ')).toContain('85% of your limit used');
+  });
+
+  it('uses the negative colour once revenue is over the hard limit', () => {
+    const el = renderWithRevenue(11_000_000);
+    const indicator = el.querySelector('[data-slot="progress-indicator"]')!;
+    expect(indicator.className).toContain('bg-negative');
+    expect(indicator.className).not.toContain('bg-warning');
+    expect(el.querySelector('[data-testid="tax-tracker-percent"]')!.className).toContain('text-negative');
+  });
+
+  it('keeps the warning colour while over the limit but under the hard limit', () => {
+    const el = renderWithRevenue(3_000_000);
+    expect(el.querySelector('[data-slot="progress-indicator"]')!.className).toContain('bg-warning');
+    expect(el.querySelector('[data-testid="tax-tracker-percent"]')!.className).toContain('text-warning');
+  });
+
   it('links to the taxes page', () => {
     for (const id of ['weber-design', 'sara-yoga']) {
       const link = render(id).querySelector('[data-testid="tax-open"]');

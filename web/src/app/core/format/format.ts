@@ -6,11 +6,16 @@ const LOCALES: Record<Lang, string> = {
   ar: 'ar-u-nu-latn',
 };
 
-export function formatMoney(cents: number, lang: Lang, opts: { signed?: boolean } = {}): string {
+export function formatMoney(
+  cents: number,
+  lang: Lang,
+  opts: { signed?: boolean; whole?: boolean } = {},
+): string {
   return new Intl.NumberFormat(LOCALES[lang], {
     style: 'currency',
     currency: 'EUR',
     signDisplay: opts.signed ? 'exceptZero' : 'auto',
+    ...(opts.whole ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}),
   }).format(cents / 100);
 }
 

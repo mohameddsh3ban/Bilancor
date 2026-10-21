@@ -43,3 +43,10 @@ describe('formatDate', () => {
     expect(formatDate('2026-10-21', 'ar')).toMatch(/21/);
   });
 });
+
+describe('formatMoney whole', () => {
+  it('drops the cents', () => {
+    expect(formatMoney(2130000, 'en', { whole: true })).toBe('€21,300');
+    expect(formatMoney(2130000, 'de', { whole: true }).replace(/ /g, ' ')).toBe('21.300 €');
+  });
+});

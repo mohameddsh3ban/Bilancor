@@ -21,6 +21,9 @@
       "explain": "Der Standardkontenrahmen mit den Kontonummern, unter denen jede Einnahme und Ausgabe abgelegt wird."
     }
   },
+  "account": {
+    "cash": "Kasse"
+  },
   "menu": {
     "home": "Start",
     "payments": "Zahlungen",
