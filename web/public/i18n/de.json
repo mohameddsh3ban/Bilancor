@@ -20,5 +20,73 @@
       "de": "SKR03",
       "explain": "Der Standardkontenrahmen mit den Kontonummern, unter denen jede Einnahme und Ausgabe abgelegt wird."
     }
+  },
+  "menu": {
+    "home": "Start",
+    "payments": "Zahlungen",
+    "documents": "Dokumente",
+    "invoices": "Rechnungen",
+    "taxes": "Steuern",
+    "reports": "Auswertungen",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "upload": "Beleg hochladen",
+    "more": "Mehr"
+  },
+  "soon": {
+    "home": "Start",
+    "payments": "Zahlungen",
+    "documents": "Dokumente",
+    "invoices": "Rechnungen",
+    "taxes": "Steuern",
+    "reports": "Auswertungen",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "upload": "Beleg hochladen",
+    "more": "Mehr",
+    "decisions": "Ihre Entscheidungen",
+    "terms": "Bedingungen der Bankanbindung",
+    "bankExpiry": "Bankanbindung",
+    "unreadable": "Nicht lesbare Belege",
+    "revenueLimit": "Umsatzgrenze",
+    "bank": "Bank verbinden",
+    "tax": "Ihre Steuerangaben",
+    "receipt": "Ersten Beleg hochladen",
+    "account": "Konto",
+    "default": "Diese Seite"
+  },
+  "comingSoon": {
+    "body": "Diese Seite gestalten wir als Nächstes",
+    "back": "Zurück zum Start"
+  },
+  "shell": {
+    "greeting": "Hallo, {{name}}",
+    "switchBusiness": "Unternehmen wechseln",
+    "notifications": "Benachrichtigungen",
+    "noNotifications": "Noch keine Benachrichtigungen",
+    "language": "Sprache",
+    "mainMenu": "Hauptmenü",
+    "logo": "Ihr Logo"
+  },
+  "demo": {
+    "label": "Demo",
+    "setup": "Einrichtungsstand",
+    "new": "Neukunde",
+    "halfway": "Halb fertig",
+    "active": "Aktiver Kunde"
+  },
+  "notice": {
+    "terms": {
+      "text": "Neue Bedingungen unseres Anbieters für die Bankanbindung müssen geprüft werden"
+    },
+    "bankExpiry": {
+      "text": "Ihre Verbindung zu {{bank}} läuft in {{days}} Tagen ab"
+    },
+    "unreadable": {
+      "text": "Nicht lesbare Belege: {{count}}"
+    },
+    "revenueLimit": {
+      "text": "Sie haben {{percent}} % Ihrer Umsatzgrenze als Kleinunternehmer erreicht"
+    }
   }
 }

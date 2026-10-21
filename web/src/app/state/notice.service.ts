@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { Notice } from '../data/models';
 import { splitNotices } from '../domain/notices';
@@ -19,6 +19,9 @@ export class NoticeService {
   });
 
   private readonly split = computed(() => splitNotices(this.demo.business().notices, this.dismissedIds()));
+
+  /** Whether the bell's history panel is open; the homepage's "+N more" sets it. */
+  readonly bellOpen: WritableSignal<boolean> = signal(false);
 
   readonly shown = computed(() => this.split().shown);
   readonly overflow = computed(() => this.split().overflow);
