@@ -73,4 +73,29 @@ describe('HomePage', () => {
       expect(step(id).querySelector('a')?.getAttribute('href')).toBe(`/soon/${id}`);
     }
   });
+
+  it('shows the key-number tiles from lg while the phone cards for decisions, balances and tax hide', () => {
+    const el = render();
+    const tiles = el.querySelector('app-key-numbers')!;
+    expect(tiles.classList).toContain('hidden');
+    expect(tiles.classList).toContain('lg:grid');
+    for (const id of ['decisions-card', 'balances-card', 'tax-card']) {
+      expect(el.querySelector(`[data-testid="${id}"]`)!.parentElement!.classList).toContain('lg:hidden');
+    }
+    expect(el.querySelector('[data-testid="transactions-card"]')!.parentElement!.classList).not.toContain('lg:hidden');
+  });
+
+  it('places the tiles after the checklist and before the transactions card', () => {
+    demo.setSetup('halfway');
+    const el = render();
+    const order = Array.from(
+      el.querySelectorAll('[data-testid="setup-checklist"], app-key-numbers, [data-testid="transactions-card"]'),
+    ).map((n) => n.getAttribute('data-testid') ?? n.tagName.toLowerCase());
+    expect(order).toEqual(['setup-checklist', 'app-key-numbers', 'transactions-card']);
+  });
+
+  it('has no tiles for a new client', () => {
+    demo.setSetup('new');
+    expect(render().querySelector('app-key-numbers')).toBeNull();
+  });
 });

@@ -6,6 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { formatDate, formatMoney } from '../../core/format/format';
 import { LanguageService } from '../../core/i18n/language.service';
+import { totalAvailableCents } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 
 /** Each account with its balance (tap opens the coming soon page), and the total available. */
@@ -65,7 +66,7 @@ export class BalancesCard {
   private readonly language = inject(LanguageService);
 
   protected readonly accounts = computed(() => this.demo.business().accounts);
-  protected readonly total = computed(() => this.accounts().reduce((sum, a) => sum + a.balanceCents, 0));
+  protected readonly total = computed(() => totalAvailableCents(this.accounts()));
 
   protected money(cents: number): string {
     return formatMoney(cents, this.language.lang());

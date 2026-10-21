@@ -95,6 +95,20 @@
       "action": "Details"
     }
   },
+  "booking": {
+    "goods7": "Wareneinkauf (7 % USt)",
+    "otherCosts": "Sonstige Betriebskosten",
+    "phone": "Telefon & Internet",
+    "rent": "Miete",
+    "revenue19": "Einnahmen (19 % USt)",
+    "revenue7": "Einnahmen (7 % USt)",
+    "revenueKU": "Einnahmen (ohne USt)",
+    "salaries": "Gehälter",
+    "software": "Software & Wartung",
+    "supplies": "Betriebsbedarf",
+    "travel": "Reisen",
+    "utilities": "Nebenkosten"
+  },
   "home": {
     "notices": {
       "dismiss": "Schließen",
@@ -125,7 +139,15 @@
     },
     "transactions": {
       "title": "Letzte Zahlungen",
-      "seeAll": "Alle ansehen"
+      "seeAll": "Alle ansehen",
+      "col": {
+        "date": "Datum",
+        "counterparty": "Gegenpartei",
+        "account": "Konto",
+        "booking": "Buchung",
+        "status": "Status",
+        "amount": "Betrag"
+      }
     },
     "balances": {
       "title": "Konten",
@@ -142,6 +164,9 @@
       "revenueLabel": "Umsatz in diesem Jahr",
       "incomeTax": "Einkommensteuer zurücklegen",
       "open": "Zu den Steuern"
+    },
+    "tiles": {
+      "decisions": "Entscheidungen"
     }
   }
 }

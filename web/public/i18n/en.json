@@ -95,6 +95,20 @@
       "action": "Details"
     }
   },
+  "booking": {
+    "goods7": "Goods purchased (7% VAT)",
+    "otherCosts": "Other business costs",
+    "phone": "Phone & internet",
+    "rent": "Rent",
+    "revenue19": "Revenue (19% VAT)",
+    "revenue7": "Revenue (7% VAT)",
+    "revenueKU": "Revenue (no VAT)",
+    "salaries": "Salaries",
+    "software": "Software & maintenance",
+    "supplies": "Supplies",
+    "travel": "Travel",
+    "utilities": "Utilities"
+  },
   "home": {
     "notices": {
       "dismiss": "Dismiss",
@@ -125,7 +139,15 @@
     },
     "transactions": {
       "title": "Recent payments",
-      "seeAll": "See all"
+      "seeAll": "See all",
+      "col": {
+        "date": "Date",
+        "counterparty": "Counterparty",
+        "account": "Account",
+        "booking": "Booking",
+        "status": "Status",
+        "amount": "Amount"
+      }
     },
     "balances": {
       "title": "Accounts",
@@ -142,6 +164,9 @@
       "revenueLabel": "Revenue this year",
       "incomeTax": "Income tax to set aside",
       "open": "Open taxes"
+    },
+    "tiles": {
+      "decisions": "Decisions"
     }
   }
 }
