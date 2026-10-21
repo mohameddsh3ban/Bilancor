@@ -106,30 +106,27 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
             @for (tx of rows(); track tx.id) {
               <tr class="border-border hover:bg-muted relative border-t" data-testid="tx-table-row">
                 <td class="py-2.5 pe-3 whitespace-nowrap">{{ date(tx.date) }}</td>
+                @let booking = tx.booking;
+                @let bookingText =
+                  booking
+                    ? showLabel()
+                      ? ('booking.' + booking.labelKey | transloco) + ' · ' + skr03(booking)
+                      : skr03(booking)
+                    : '';
                 <td class="py-2.5 pe-3">
                   <a
                     class="block truncate font-medium after:absolute after:inset-0 hover:underline"
                     dir="auto"
                     data-testid="tx-table-counterparty"
+                    [attr.title]="bookingText ? tx.counterparty + ' · ' + bookingText : tx.counterparty"
                     [routerLink]="['/soon', 'payments']"
                   >
                     {{ tx.counterparty }}
                   </a>
                 </td>
                 <td class="py-2.5 pe-3">{{ accountName(tx.accountId) }}</td>
-                @let booking = tx.booking;
                 <td class="py-2.5 pe-3">
-                  <span
-                    class="block truncate"
-                    data-testid="tx-table-booking"
-                    [attr.title]="
-                      booking
-                        ? showLabel()
-                          ? ('booking.' + booking.labelKey | transloco) + ' · ' + skr03(booking)
-                          : skr03(booking)
-                        : null
-                    "
-                  >
+                  <span class="block truncate" data-testid="tx-table-booking">
                     @if (booking) {
                       @if (showLabel()) {
                         {{ 'booking.' + booking.labelKey | transloco }} ·

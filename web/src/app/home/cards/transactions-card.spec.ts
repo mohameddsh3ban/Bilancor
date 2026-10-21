@@ -152,17 +152,18 @@ describe('TransactionsCard', () => {
       }
     });
 
-    it('booking cell truncates and carries the full text as its title', () => {
-      const root = renderTable('en');
-      const cell = rowFor(root, 'Telekom').querySelector('[data-testid="tx-table-booking"]')!;
+    it('booking cell truncates and has no title of its own (the stretched link covers it)', () => {
+      const cell = rowFor(renderTable('en'), 'Telekom').querySelector('[data-testid="tx-table-booking"]')!;
       expect(cell.classList).toContain('truncate');
-      expect(cell.getAttribute('title')).toBe('Phone & internet · 4920 Telefon');
-      const de = renderTable('de');
-      expect(rowFor(de, 'Telekom').querySelector('[data-testid="tx-table-booking"]')!.getAttribute('title')).toBe(
-        '4920 Telefon',
-      );
-      const none = rowFor(renderTable('en'), 'Amazon').querySelector('[data-testid="tx-table-booking"]')!;
-      expect(none.hasAttribute('title')).toBe(false);
+      expect(cell.hasAttribute('title')).toBe(false);
+    });
+
+    it('the counterparty link carries the full row text as its hover title', () => {
+      const titleOf = (root: HTMLElement, name: string) =>
+        rowFor(root, name).querySelector('[data-testid="tx-table-counterparty"]')!.getAttribute('title');
+      expect(titleOf(renderTable('en'), 'Telekom')).toBe('Telekom · Phone & internet · 4920 Telefon');
+      expect(titleOf(renderTable('de'), 'Telekom')).toBe('Telekom · 4920 Telefon');
+      expect(titleOf(renderTable('en'), 'Amazon')).toBe('Amazon');
     });
 
     it('status chips never wrap', () => {
@@ -175,6 +176,7 @@ describe('TransactionsCard', () => {
 
     it('the whole row opens payments: row is relative and the counterparty link is stretched over it', () => {
       const root = renderTable();
+      expect(tableRows(root)).toHaveLength(5);
       for (const row of tableRows(root)) {
         expect(row.classList).toContain('relative');
         const link = row.querySelector('[data-testid="tx-table-counterparty"]')!;
