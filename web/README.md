@@ -19,9 +19,9 @@ npm install
 
 ## Open on a phone (same Wi-Fi)
 
-1. On the computer, run `npm run serve:lan`. This serves the app on all network interfaces.
+1. On the computer, run `npm run serve:lan`. This serves the app on all network interfaces. Only run `serve:lan` on a trusted network: it opens the dev server to everyone on that Wi-Fi.
 2. Find the computer's IPv4 address: run `ipconfig` and look for the Wi-Fi adapter's "IPv4 Address".
-3. On the phone, open `http://<computer-ip>:4200` (for example `http://192.168.1.5:4200`). The phone must be on the same Wi-Fi.
+3. On the phone, open `http://<computer-ip>:4200` (for example `http://192.168.x.x:4200`). The phone must be on the same Wi-Fi.
 
 Windows may ask to allow Node.js on private networks; allow it so your phone can connect.
 
@@ -31,6 +31,7 @@ The strip at the top of every page is demo-only:
 
 - **Setup state** (New client / Halfway / Active client) shows how the homepage looks at each stage of setup.
 - **Business switcher** (in the top bar) changes which business is open.
+- **Reset demo** brings back every notice you dismissed (dismissals are remembered in the browser until you reset).
 
 ## Translations
 
@@ -50,7 +51,6 @@ import { HlmButton } from '@spartan-ng/helm/button';
 Available: `button`, `card`, `badge`, `dropdown-menu`, `popover`, `progress`, `tooltip`, `separator` (plus `utils`).
 Config is in `components.json` (written by hand, because the generator only offers it interactively).
 Add more with `npx ng g @spartan-ng/cli:ui <name> --interactive=false --defaults`.
-
 
 ## Colour convention
 
