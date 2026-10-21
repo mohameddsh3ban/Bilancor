@@ -1,12 +1,43 @@
 # Homepage mockup (web)
 
-Clickable Angular mockup of the bookkeeping app's homepage (en / de / ar). No backend.
+Clickable Angular mockup of the bookkeeping app's homepage (en / de / ar). No backend. All data is sample data in
+`src/app/data/sample-data.ts`.
+
+## Install
+
+Needs Node.js (LTS). From this `web/` folder:
+
+```sh
+npm install
+```
 
 ## Commands
 
-- `npm start` — dev server
+- `npm start` (or `npx ng serve`) — dev server at `http://localhost:4200`
 - `npx ng test --watch=false` — unit tests (Vitest)
-- `npx ng build` — production build
+- `npx ng build` — production build (output in `dist/`)
+
+## Open on a phone (same Wi-Fi)
+
+1. On the computer, run `npm run serve:lan`. This serves the app on all network interfaces.
+2. Find the computer's IPv4 address: run `ipconfig` and look for the Wi-Fi adapter's "IPv4 Address".
+3. On the phone, open `http://<computer-ip>:4200` (for example `http://192.168.1.5:4200`). The phone must be on the same Wi-Fi.
+
+Windows may ask to allow Node.js on private networks; allow it so your phone can connect.
+
+## Demo toolbar
+
+The strip at the top of every page is demo-only:
+
+- **Setup state** (New client / Halfway / Active client) shows how the homepage looks at each stage of setup.
+- **Business switcher** (in the top bar) changes which business is open.
+
+## Translations
+
+All text lives in `public/i18n/{en,de,ar}.json`. Every key in `en.json` must also exist in `de.json` and `ar.json`.
+
+German and Arabic text is a **draft**. It must be reviewed by a fluent speaker who knows German bookkeeping before
+it is shown to anyone else.
 
 ## spartan/ui (helm) components
 
