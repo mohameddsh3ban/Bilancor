@@ -19,6 +19,20 @@ describe('formatMoney', () => {
 });
 
 describe('formatDate', () => {
+  // Vitest runs in Node, so the process time zone can be switched at runtime.
+  const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } })
+    .process.env;
+  const originalTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  afterEach(() => {
+    env['TZ'] = originalTz;
+  });
+
+  it('shows the same calendar day in a zone west of UTC', () => {
+    env['TZ'] = 'America/New_York';
+    expect(formatDate('2026-10-21', 'en')).toBe('21 Oct');
+    expect(formatDate('2026-01-01', 'en')).toBe('1 Jan');
+  });
+
   it('shows a short day and month per language', () => {
     expect(formatDate('2026-10-21', 'en')).toBe('21 Oct');
     expect(formatDate('2026-10-21', 'de')).toBe('21. Okt.');

@@ -14,8 +14,11 @@ export function formatMoney(cents: number, lang: Lang, opts: { signed?: boolean 
   }).format(cents / 100);
 }
 
+/** Date-only ISO strings parse as UTC midnight, so format in UTC to keep the same calendar day everywhere. */
 export function formatDate(iso: string, lang: Lang): string {
-  return new Intl.DateTimeFormat(LOCALES[lang], { day: 'numeric', month: 'short' }).format(
-    new Date(iso),
-  );
+  return new Intl.DateTimeFormat(LOCALES[lang], {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(iso));
 }
