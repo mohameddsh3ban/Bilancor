@@ -129,7 +129,8 @@
     },
     "balances": {
       "title": "Konten",
-      "total": "Insgesamt verfügbar"
+      "total": "Insgesamt verfügbar",
+      "updated": "Aktualisiert am {{date}}"
     },
     "tax": {
       "title": "Steuern",
@@ -139,7 +140,8 @@
       "thisYear": "in diesem Jahr",
       "percentUsed": "{{percent}} % deiner Grenze erreicht",
       "revenueLabel": "Umsatz in diesem Jahr",
-      "incomeTax": "Einkommensteuer zurücklegen"
+      "incomeTax": "Einkommensteuer zurücklegen",
+      "open": "Zu den Steuern"
     }
   }
 }

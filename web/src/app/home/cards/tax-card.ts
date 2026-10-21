@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmProgressImports } from '@spartan-ng/helm/progress';
@@ -12,12 +13,19 @@ import { DemoStateService } from '../../state/demo-state.service';
 @Component({
   selector: 'app-tax-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmCardImports, HlmProgressImports, Term, TranslocoPipe],
+  imports: [HlmCardImports, HlmProgressImports, RouterLink, Term, TranslocoPipe],
   host: { class: 'block' },
   template: `
     <section hlmCard size="sm" data-testid="tax-card">
-      <header hlmCardHeader>
+      <header hlmCardHeader class="grid-cols-[1fr_auto] items-center">
         <h2 hlmCardTitle>{{ 'home.tax.title' | transloco }}</h2>
+        <a
+          class="text-primary text-sm font-medium underline-offset-4 hover:underline"
+          data-testid="tax-open"
+          [routerLink]="['/soon', 'taxes']"
+        >
+          {{ 'home.tax.open' | transloco }}
+        </a>
       </header>
       <div hlmCardContent class="flex flex-col gap-4">
         @if (business().taxProfile.kleinunternehmer) {

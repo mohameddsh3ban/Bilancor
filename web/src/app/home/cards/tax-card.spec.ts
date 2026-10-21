@@ -46,6 +46,13 @@ describe('TaxCard', () => {
     expect(indicator.className).not.toContain('bg-primary');
   });
 
+  it('links to the taxes page', () => {
+    for (const id of ['weber-design', 'sara-yoga']) {
+      const link = render(id).querySelector('[data-testid="tax-open"]');
+      expect(link?.getAttribute('href')).toBe('/soon/taxes');
+    }
+  });
+
   it('clamps the progress bar at 100 when revenue is over the limit', () => {
     const sara = TestBed.inject(DemoStateService).businesses.find((b) => b.id === 'sara-yoga')!;
     TestBed.resetTestingModule();

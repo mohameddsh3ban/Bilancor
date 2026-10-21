@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
-import { DemoStateService } from '../../state/demo-state.service';
 import { TransactionsCard } from './transactions-card';
 
 describe('TransactionsCard', () => {
@@ -20,7 +19,7 @@ describe('TransactionsCard', () => {
   it('shows the 5 newest transactions, linking to payments', () => {
     expect(rows()).toHaveLength(5);
     expect(rows()[0].textContent).toContain('Müller GmbH');
-    expect(el.textContent).not.toContain('Rundfunk');
+    expect(el.textContent).not.toContain('Adobe');
     for (const row of rows()) expect(row.getAttribute('href')).toBe('/soon/payments');
     expect(el.querySelector('[data-testid="tx-see-all"]')?.getAttribute('href')).toBe('/soon/payments');
   });
@@ -44,16 +43,19 @@ describe('TransactionsCard', () => {
     expect(expense.className).toContain('text-negative');
   });
 
-  it('counterparty cell truncates and its row still contains the amount', () => {
-    // The long "Rundfunk ARD ..." payment is the 6th newest, so it is not on the card; use a long name that is.
-    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
-    const fixture = TestBed.createComponent(TransactionsCard);
-    fixture.detectChanges();
-    const names = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[data-testid="tx-counterparty"]'),
-    );
-    const long = names.find((n) => n.textContent?.includes('Studio Mitte, Kursgebühren Oktober'))!;
-    expect(long.classList).toContain('truncate');
-    expect(long.closest('[data-testid="tx-row"]')?.querySelector('[data-testid="tx-amount"]')).not.toBeNull();
+  it('counterparty cell truncates at its own end and its row still contains the amount', () => {
+    const name = rows()
+      .map((r) => r.querySelector<HTMLElement>('[data-testid="tx-counterparty"]')!)
+      .find((n) => n.textContent?.includes('Rundfunk ARD'))!;
+    expect(name.classList).toContain('truncate');
+    expect(name.parentElement?.classList).toContain('min-w-0');
+    const amount = name.closest('[data-testid="tx-row"]')!.querySelector('[data-testid="tx-amount"]')!;
+    expect(amount.closest('bdi')?.classList).toContain('shrink-0');
+  });
+
+  it('counterparty has dir="auto" so a Latin name truncates at its end in right-to-left pages', () => {
+    for (const name of Array.from(el.querySelectorAll('[data-testid="tx-counterparty"]'))) {
+      expect(name.getAttribute('dir')).toBe('auto');
+    }
   });
 });

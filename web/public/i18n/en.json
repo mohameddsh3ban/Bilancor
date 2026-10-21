@@ -129,7 +129,8 @@
     },
     "balances": {
       "title": "Accounts",
-      "total": "Total available"
+      "total": "Total available",
+      "updated": "Updated {{date}}"
     },
     "tax": {
       "title": "Taxes",
@@ -139,7 +140,8 @@
       "thisYear": "this year",
       "percentUsed": "{{percent}}% of your limit used",
       "revenueLabel": "Revenue this year",
-      "incomeTax": "Income tax to set aside"
+      "incomeTax": "Income tax to set aside",
+      "open": "Open taxes"
     }
   }
 }

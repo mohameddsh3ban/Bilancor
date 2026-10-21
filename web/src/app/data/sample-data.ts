@@ -49,7 +49,7 @@ export const BUSINESSES: Business[] = [
       { id: 'wd-t3', date: '2026-10-17', counterparty: 'Deutsche Bahn', accountId: 'wd-qonto', amountCents: -12000, status: 'noReceipt', booking: TRAVEL },
       { id: 'wd-t4', date: '2026-10-15', counterparty: 'Amazon', accountId: 'wd-qonto', amountCents: -4900, status: 'unclear', booking: null },
       { id: 'wd-t5', date: '2026-10-12', counterparty: 'Adobe', accountId: 'wd-qonto', amountCents: -5949, status: 'booked', booking: SOFTWARE },
-      { id: 'wd-t6', date: '2026-10-05', counterparty: 'Rundfunk ARD, ZDF und Deutschlandradio Beitragsservice', accountId: 'wd-qonto', amountCents: -5508, status: 'booked', booking: OTHER_COSTS },
+      { id: 'wd-t6', date: '2026-10-13', counterparty: 'Rundfunk ARD, ZDF und Deutschlandradio Beitragsservice', accountId: 'wd-qonto', amountCents: -5508, status: 'booked', booking: OTHER_COSTS },
     ],
     decisionsOpen: 3,
     vatDue: { dueDate: '2026-11-10', amountCents: 184200 },

@@ -44,7 +44,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
               [routerLink]="['/soon', 'payments']"
             >
               <span class="flex min-w-0 flex-1 flex-col gap-1">
-                <span class="truncate font-medium" data-testid="tx-counterparty">{{ tx.counterparty }}</span>
+                <span class="truncate font-medium" dir="auto" data-testid="tx-counterparty">{{ tx.counterparty }}</span>
                 <span class="text-muted-foreground flex items-center gap-2 text-xs">
                   <span>{{ date(tx.date) }}</span>
                   <span

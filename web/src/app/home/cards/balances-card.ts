@@ -4,7 +4,7 @@ import { lucideBanknote, lucideChevronRight, lucideLandmark } from '@ng-icons/lu
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { formatMoney } from '../../core/format/format';
+import { formatDate, formatMoney } from '../../core/format/format';
 import { LanguageService } from '../../core/i18n/language.service';
 import { DemoStateService } from '../../state/demo-state.service';
 
@@ -35,7 +35,12 @@ import { DemoStateService } from '../../state/demo-state.service';
                   class="text-muted-foreground shrink-0"
                   aria-hidden="true"
                 />
-                <span class="min-w-0 flex-1 truncate">{{ account.name }}</span>
+                <span class="flex min-w-0 flex-1 flex-col">
+                  <span class="truncate">{{ account.name }}</span>
+                  <span class="text-muted-foreground text-xs" data-testid="account-updated">
+                    {{ 'home.balances.updated' | transloco: { date: date(account.lastUpdate) } }}
+                  </span>
+                </span>
                 <bdi dir="ltr" class="shrink-0 font-medium">{{ money(account.balanceCents) }}</bdi>
                 <ng-icon
                   name="lucideChevronRight"
@@ -64,5 +69,9 @@ export class BalancesCard {
 
   protected money(cents: number): string {
     return formatMoney(cents, this.language.lang());
+  }
+
+  protected date(iso: string): string {
+    return formatDate(iso, this.language.lang());
   }
 }
