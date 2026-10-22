@@ -125,7 +125,8 @@ describe('DocumentDetailPage', () => {
     it('shows the name, what it is, the invoice number, the amount and the status', async () => {
       await render('/documents/wd-d2');
       expect(text(d('document-detail-name'))).toBe('Studio Kern');
-      expect(d('document-detail-name')!.getAttribute('dir')).toBe('auto');
+      expect(d('document-detail-name')!.hasAttribute('dir')).toBe(false);
+      expect(text(d('document-detail-name')!.querySelector('[dir="auto"]'))).toBe('Studio Kern');
       expect(text(d('document-detail-meta'))).toBe('Invoice you sent · RE-2026-044');
       expect(
         inside(d('document-detail-meta'), 'document-detail-invoice')!
@@ -189,11 +190,44 @@ describe('DocumentDetailPage', () => {
     });
   });
 
+  describe('names in the page direction', () => {
+    /** The text of a name that sits on a line of its own: the block keeps the page direction and only the name inside is isolated (dir auto), so a Latin name in Arabic still starts on the start side. */
+    function isolatesOnlyTheName(block: HTMLElement | null, name: string): void {
+      expect(block).not.toBeNull();
+      expect(block!.hasAttribute('dir')).toBe(false);
+      const inner = block!.querySelector<HTMLElement>('[dir="auto"]');
+      expect(inner).not.toBeNull();
+      expect(text(inner)).toBe(name);
+      expect(block!.querySelectorAll('[dir="auto"]')).toHaveLength(1);
+    }
+
+    it('the title, the drawn page, the linked payment and the picker rows', async () => {
+      await render('/documents/wd-d4');
+      isolatesOnlyTheName(d('document-detail-name'), 'Böttcher Bürobedarf');
+      isolatesOnlyTheName(d('paper-name'), 'Böttcher Bürobedarf');
+      // a long name still truncates, inside its own box, so the start of the name stays visible
+      expect(d('paper-name')!.querySelector('[dir="auto"]')!.classList).toContain('truncate');
+
+      await click(d('search-payments'));
+      for (const row of options('payment-picker-option')) {
+        isolatesOnlyTheName(inside(row, 'picker-name'), text(inside(row, 'picker-name')));
+        expect(inside(row, 'picker-name')!.querySelector('[dir="auto"]')!.classList).toContain(
+          'truncate',
+        );
+      }
+      await click(inBody('payment-picker-option'));
+
+      const linked = inside(d('linked-payment'), 'linked-name');
+      isolatesOnlyTheName(linked, 'SCHREIBWAREN BOETTCHER');
+      expect(linked!.querySelector('[dir="auto"]')!.classList).toContain('truncate');
+    });
+  });
+
   describe('paper', () => {
     it('draws the name, invoice number, date and total of the document', async () => {
       await render('/documents/wd-d2');
       expect(text(d('paper-name'))).toBe('Studio Kern');
-      expect(d('paper-name')!.getAttribute('dir')).toBe('auto');
+      expect(d('paper-name')!.hasAttribute('dir')).toBe(false);
       expect(text(d('paper-invoice'))).toBe('RE-2026-044');
       expect(d('paper-invoice')!.closest('bdi')!.getAttribute('dir')).toBe('ltr');
       expect(text(d('paper-date'))).toBe(formatDate('2026-10-16', 'en', { year: true }));
@@ -659,19 +693,58 @@ describe('DocumentDetailPage', () => {
         expect(doc('wd-d2')).toBe(studioKern);
       });
 
-      it('Edit changes the direction and the why-note follows', async () => {
+      it('Edit changes the direction, says so in the history, and the why-note goes because you chose it', async () => {
         await render('/documents/wd-d2');
+        expect(d('why-note')).not.toBeNull();
         await edit();
         await click(d('edit-direction-received'));
         await click(d('edit-save'));
         expect(doc('wd-d2').direction).toBe('received');
         expect(text(d('field-type'))).toBe('Received (Eingangsbeleg)');
-        expect(text(d('why-note'))).toBe(
-          'We set Received because the document comes from someone else.',
-        );
+        expect(d('why-note')).toBeNull();
         expect(text(d('document-detail-meta'))).toBe('Received · RE-2026-044');
-        expect(historyTexts()[0]).toBe('You corrected the details');
+        expect(historyTexts().slice(0, 2)).toEqual([
+          'You corrected the details',
+          'You marked it as received',
+        ]);
         expect(d('edit-form')).toBeNull();
+      });
+
+      it('Edit changing something else leaves the why-note and the history as they were', async () => {
+        await render('/documents/wd-d2');
+        await edit();
+        await typeIn('edit-name', 'Studio Kern GmbH');
+        await click(d('edit-save'));
+        expect(text(d('why-note'))).toBe('We set Sent because the invoice comes from your business.');
+        expect(doc('wd-d2').history.map((h) => h.key)).not.toContain('markedSent');
+      });
+
+      it('a linked document does not offer Received or Sent, and says how to change them', async () => {
+        await render('/documents/doc-wd-t2');
+        await edit();
+        expect(d('edit-direction-received')).toBeNull();
+        expect(d('edit-direction-sent')).toBeNull();
+        expect(text(d('edit-direction-locked'))).toBe(
+          'Linked to a payment — unlink it to change Received or Sent.',
+        );
+        // the rest of the form still works
+        await typeIn('edit-name', 'Telekom Deutschland');
+        await click(d('edit-save'));
+        expect(doc('doc-wd-t2')).toMatchObject({
+          name: 'Telekom Deutschland',
+          direction: 'received',
+          paymentId: 'wd-t2',
+        });
+        expect(doc('doc-wd-t2').history.map((h) => h.key)).not.toContain('markedReceived');
+      });
+
+      it('an unlinked document offers the choice again', async () => {
+        await render('/documents/doc-wd-t2');
+        await click(d('unlink-payment'));
+        await edit();
+        expect(d('edit-direction-locked')).toBeNull();
+        expect(d('edit-direction-sent')).not.toBeNull();
+        expect(d('edit-direction-received')!.getAttribute('aria-pressed')).toBe('true');
       });
 
       it('saves every field that was changed, in one history line', async () => {

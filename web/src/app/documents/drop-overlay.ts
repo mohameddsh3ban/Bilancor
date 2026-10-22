@@ -1,15 +1,15 @@
-import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideFileUp } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { isComputerScreen } from '../core/layout/computer-screen';
 import { UploadService } from '../state/upload.service';
 
 /**
- * Dropping files anywhere on the page adds them. While files are dragged over the page (from `lg`; a phone has
- * no dragging) a dashed overlay covers it: "Drop to add N files". It listens to the whole document, so it has
- * nothing to wrap; a drag that carries no files (selected text, say) is left alone.
+ * Dropping files anywhere on the page adds them. While files are dragged over the page a dashed overlay covers it:
+ * "Drop to add N files". It works at any width: a narrow window or a tablet can drag too, and a drop that is not
+ * taken would make the browser open the file and lose everything changed in the demo. A phone has no dragging, so
+ * there nothing happens. It listens to the whole document, so it has nothing to wrap; a drag that carries no
+ * files (selected text, say) is left alone.
  */
 @Component({
   selector: 'app-drop-overlay',
@@ -47,7 +47,6 @@ import { UploadService } from '../state/upload.service';
 })
 export class DropOverlay {
   private readonly upload = inject(UploadService);
-  private readonly document = inject(DOCUMENT);
 
   /** How many files are being dragged over the page; 0 while the overlay is hidden. */
   protected readonly count = signal(0);
@@ -89,11 +88,8 @@ export class DropOverlay {
     this.count.set(0);
   }
 
-  /** Whether this drag is files from a computer screen: nothing else is ours to take. */
+  /** Whether this drag carries files: nothing else is ours to take. */
   private takes(event: DragEvent): boolean {
-    return (
-      isComputerScreen(this.document) &&
-      Array.from(event.dataTransfer?.types ?? []).includes('Files')
-    );
+    return Array.from(event.dataTransfer?.types ?? []).includes('Files');
   }
 }

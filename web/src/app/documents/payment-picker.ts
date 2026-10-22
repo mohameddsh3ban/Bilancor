@@ -79,9 +79,11 @@ export function matchPayments(payments: readonly Transaction[], query: string): 
                   (click)="choose(payment, popover)"
                 >
                   <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span class="truncate font-medium" dir="auto" data-testid="picker-name">{{
-                      payment.counterparty
-                    }}</span>
+                    <span class="block font-medium" data-testid="picker-name"
+                      ><span class="inline-block max-w-full truncate align-bottom" dir="auto">{{
+                        payment.counterparty
+                      }}</span></span
+                    >
                     <span class="text-muted-foreground text-xs" data-testid="picker-meta">
                       @let account = accountOf(payment);
                       {{ payment.date | appDate }} ·

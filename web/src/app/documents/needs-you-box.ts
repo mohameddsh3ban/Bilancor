@@ -45,16 +45,17 @@ import { DemoStateService } from '../state/demo-state.service';
             >
               <div class="flex min-w-0 flex-col gap-0.5">
                 <span
-                  class="truncate font-medium"
-                  dir="auto"
+                  class="block font-medium"
                   data-testid="needs-name"
                   [id]="'needs-name-' + doc.id"
                 >
-                  @if (doc.name) {
-                    {{ doc.name }}
-                  } @else {
-                    <bdi dir="ltr">{{ doc.fileName }}</bdi>
-                  }
+                  <span class="inline-block max-w-full truncate align-bottom" dir="auto">
+                    @if (doc.name) {
+                      {{ doc.name }}
+                    } @else {
+                      <bdi dir="ltr">{{ doc.fileName }}</bdi>
+                    }
+                  </span>
                 </span>
                 @if (doc.date || doc.amountCents !== null) {
                   <span class="text-muted-foreground text-xs" data-testid="needs-meta">

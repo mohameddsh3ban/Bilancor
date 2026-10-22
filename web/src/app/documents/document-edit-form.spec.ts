@@ -106,6 +106,24 @@ describe('DocumentEditForm', () => {
     expect(fixture.componentInstance.finished).toBe(1);
   });
 
+  it('a document that gets linked while the form is open loses the choice, and saving flips nothing', () => {
+    const before = doc('wd-d2');
+    q('edit-direction-received').click();
+    fixture.detectChanges();
+    expect(q('edit-direction-received').getAttribute('aria-pressed')).toBe('true');
+
+    fixture.componentInstance.doc.set({ ...before, paymentId: 'wd-t17' });
+    fixture.detectChanges();
+    expect(el().querySelector('[data-testid="edit-direction-received"]')).toBeNull();
+    expect(q('edit-direction-locked').textContent?.trim()).toBe(
+      'Linked to a payment — unlink it to change Received or Sent.',
+    );
+
+    submit();
+    expect(doc('wd-d2')).toBe(before);
+    expect(fixture.componentInstance.finished).toBe(1);
+  });
+
   it('saving twice before the form has closed writes one history line', () => {
     type('edit-name', 'Studio Kern GmbH');
     submit();

@@ -262,6 +262,19 @@ describe('DocumentsPage', () => {
       );
     });
 
+    it('the name on a card keeps the page direction, and only the name inside is isolated', async () => {
+      upload(3);
+      await render();
+      expect(qa('needs-name').length).toBe(3);
+      for (const name of qa('needs-name')) {
+        expect(name.hasAttribute('dir')).toBe(false);
+        const inner = name.querySelectorAll<HTMLElement>('[dir="auto"]');
+        expect(inner).toHaveLength(1);
+        expect(inner[0].classList).toContain('truncate');
+        expect(text(inner[0])).toBe(text(name));
+      }
+    });
+
     it('a document that is not read yet is called by its file name', async () => {
       addDoc({ id: 'x1', name: null, fileName: 'IMG_9.jpg', amountCents: null });
       await render();
@@ -312,6 +325,17 @@ describe('DocumentsPage', () => {
       expect(demo.documents().find((d) => d.name === 'Krause & Partner')!.history[0].key).toBe(
         'markedReceived',
       );
+    });
+
+    it('after an answer on the direction card the detail does not say "We set" it', async () => {
+      upload(3);
+      await render();
+      await click(inside(cardOf('Krause'), 'direction-sent'));
+      const krause = demo.documents().find((d) => d.name === 'Krause & Partner')!;
+      await harness.navigateByUrl(`/documents/${krause.id}`);
+      await settle();
+      expect(text(q('field-type'))).toBe('Sent (Ausgangsbeleg)');
+      expect(q('why-note')).toBeNull();
     });
 
     it('Sent on the direction card moves the document into the list as sent', async () => {
@@ -481,9 +505,17 @@ describe('DocumentsPage', () => {
 
     it('names truncate with dir auto, and invoice numbers and amounts are left-to-right', async () => {
       await render();
-      for (const name of [...qa('document-name'), ...qa('document-table-name')]) {
+      for (const name of qa('document-name')) {
         expect(name.classList).toContain('truncate');
         expect(name.getAttribute('dir')).toBe('auto');
+      }
+      // in the table a name has a cell to itself: the cell keeps the page direction, only the name inside is isolated
+      expect(qa('document-table-name').length).toBeGreaterThan(0);
+      for (const cell of qa('document-table-name')) {
+        expect(cell.hasAttribute('dir')).toBe(false);
+        const inner = cell.querySelector<HTMLElement>('[dir="auto"]')!;
+        expect(inner.classList).toContain('truncate');
+        expect(cell.textContent?.trim()).toBe(inner.textContent?.trim());
       }
       const invoice = inside(rowOf('Studio Kern'), 'document-meta')!.querySelector('bdi')!;
       expect(invoice.getAttribute('dir')).toBe('ltr');

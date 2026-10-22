@@ -190,6 +190,26 @@ describe('document actions', () => {
     expect(next).toMatchObject({ direction: 'sent', name: 'Neuer Name', invoiceNo: 'X-1', date: '2026-10-01', dueDate: '2026-10-31' });
   });
 
+  it('editDocument that changes the direction also logs that the person chose it', () => {
+    const received = doc('wd-d4');
+    const toSent = editDocument(received, { direction: 'sent', name: 'Neuer Name' });
+    expect(toSent.history[0]).toEqual({ date: TODAY, key: 'docEdited', params: {} });
+    expect(toSent.history[1]).toEqual({ date: TODAY, key: 'markedSent', params: {} });
+    expect(toSent.history).toHaveLength(received.history.length + 2);
+
+    const sent = doc('wd-d2');
+    const toReceived = editDocument(sent, { direction: 'received' });
+    expect(toReceived.history.slice(0, 2).map((h) => h.key)).toEqual(['docEdited', 'markedReceived']);
+  });
+
+  it('editDocument that keeps the direction, or does not touch it, logs only the edit', () => {
+    const received = doc('wd-d4');
+    for (const changes of [{ direction: 'received' as const }, { name: 'Neuer Name' }]) {
+      const next = editDocument(received, changes);
+      expect(next.history.map((h) => h.key)).toEqual(['docEdited', ...received.history.map((h) => h.key)]);
+    }
+  });
+
   it('changeDocCategory sets and confirms the booking', () => {
     const d = doc('wd-d4');
     expect(d.bookingConfirmed).toBe(false);

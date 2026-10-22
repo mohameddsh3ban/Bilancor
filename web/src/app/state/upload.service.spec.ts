@@ -89,6 +89,22 @@ describe('UploadService', () => {
     expect(paymentOf('wd-t3').history[0].key).toBe('receiptLinkedAuto');
   });
 
+  it('a possible duplicate does not link itself to the payment of the document it looks like', () => {
+    demo.unlink('doc-wd-t2');
+    expect(paymentOf('wd-t2').receipt).toBe('missing');
+
+    upload.add([file('a.pdf'), file('b.pdf')], 'file'); // Deutsche Bahn, then the Telekom duplicate
+    vi.advanceTimersByTime(READING_MS);
+
+    expect(docsOf('weber-design').find((d) => d.id === 'up-2')).toMatchObject({
+      name: 'Telekom',
+      duplicateOf: 'doc-wd-t2',
+      paymentId: null,
+    });
+    expect(paymentOf('wd-t2').receipt).toBe('missing');
+    expect(upload1().paymentId).toBe('wd-t3');
+  });
+
   it('a file that does not surely match any payment is not linked', () => {
     upload.add([file('a.pdf'), file('b.pdf'), file('c.pdf'), file('d.pdf')], 'file');
     vi.advanceTimersByTime(READING_MS);
@@ -272,6 +288,32 @@ describe('UploadService', () => {
 
     vi.advanceTimersByTime(1000); // the second is
     expect(upload.summary()).toEqual({ added: 1, needsYou: 1, refused: [] });
+  });
+
+  it('the summary belongs to the business it was added to', () => {
+    upload.add([file('a.pdf'), file('b.pdf'), file('c.pdf')], 'file');
+    vi.advanceTimersByTime(READING_MS);
+    expect(upload.summary()).toEqual({ added: 3, needsYou: 2, refused: [] });
+
+    demo.setBusiness('sara-yoga');
+    expect(upload.summary()).toBeNull();
+
+    demo.setBusiness('weber-design');
+    expect(upload.summary()).toEqual({ added: 3, needsYou: 2, refused: [] });
+  });
+
+  it('a summary still being read does not show in another business either, and each business gets its own after a new drop', () => {
+    upload.add([file('notes.docx'), file('a.pdf')], 'file');
+    demo.setBusiness('sara-yoga');
+    expect(upload.summary()).toBeNull();
+
+    upload.add([file('b.pdf')], 'file');
+    expect(upload.summary()).toEqual({ added: 0, needsYou: 0, refused: [] });
+    vi.advanceTimersByTime(READING_MS);
+    expect(upload.summary()).toEqual({ added: 1, needsYou: 0, refused: [] });
+
+    demo.setBusiness('weber-design');
+    expect(upload.summary()).toBeNull(); // the newer drop replaced the first one, and it belongs to Sara
   });
 
   it('clearSummary removes the summary and a batch still reading does not bring it back', () => {

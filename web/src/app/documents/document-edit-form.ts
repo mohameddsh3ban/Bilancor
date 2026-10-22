@@ -52,9 +52,10 @@ const INPUT_CLASS =
   'border-input bg-background placeholder:text-muted-foreground h-10 w-full rounded-md border px-3 text-sm aria-invalid:border-negative';
 
 /**
- * The form that edits what was read in a document: direction, name, invoice number, date, amount, VAT rate and due
- * date. What is typed belongs to the document it was opened for: it starts from that document's values and starts over
- * when the document shown is another one, so one document's values can never be saved into another.
+ * The form that edits what was read in a document: direction (not while it is linked to a payment, which has one of
+ * its own), name, invoice number, date, amount, VAT rate and due date. What is typed belongs to the document it was
+ * opened for: it starts from that document's values and starts over when the document shown is another one, so one
+ * document's values can never be saved into another.
  * Saving writes one history line, and none when nothing changed; a name, date or amount that was read cannot be
  * emptied, one that could not be read may stay empty. `done` says the form is finished (saved, or cancelled).
  */
@@ -64,33 +65,39 @@ const INPUT_CLASS =
   imports: [HlmButton, TranslocoPipe],
   template: `
     <form class="flex flex-col gap-3" data-testid="edit-form" novalidate (submit)="save($event)">
-      <div class="flex flex-col gap-1">
-        <span class="text-muted-foreground text-sm" id="edit-direction-label">
-          {{ 'documents.detail.fields.direction' | transloco }}
-        </span>
-        <div
-          role="group"
-          class="border-border bg-card flex self-start overflow-hidden rounded-md border text-sm"
-          aria-labelledby="edit-direction-label"
-        >
-          @for (direction of directions; track direction) {
-            <button
-              type="button"
-              class="border-border min-h-10 border-s px-4 py-2 first:border-s-0"
-              [class]="
-                draft().direction === direction
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground hover:bg-muted'
-              "
-              [attr.data-testid]="'edit-direction-' + direction"
-              [attr.aria-pressed]="draft().direction === direction"
-              (click)="setDirection(direction)"
-            >
-              {{ 'documents.direction.' + direction | transloco }}
-            </button>
-          }
+      @if (doc().paymentId === null) {
+        <div class="flex flex-col gap-1">
+          <span class="text-muted-foreground text-sm" id="edit-direction-label">
+            {{ 'documents.detail.fields.direction' | transloco }}
+          </span>
+          <div
+            role="group"
+            class="border-border bg-card flex self-start overflow-hidden rounded-md border text-sm"
+            aria-labelledby="edit-direction-label"
+          >
+            @for (direction of directions; track direction) {
+              <button
+                type="button"
+                class="border-border min-h-10 border-s px-4 py-2 first:border-s-0"
+                [class]="
+                  draft().direction === direction
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                "
+                [attr.data-testid]="'edit-direction-' + direction"
+                [attr.aria-pressed]="draft().direction === direction"
+                (click)="setDirection(direction)"
+              >
+                {{ 'documents.direction.' + direction | transloco }}
+              </button>
+            }
+          </div>
         </div>
-      </div>
+      } @else {
+        <p class="text-muted-foreground text-sm" data-testid="edit-direction-locked">
+          {{ 'documents.detail.fields.directionLocked' | transloco }}
+        </p>
+      }
 
       <label class="flex flex-col gap-1 text-sm">
         <span class="text-muted-foreground">{{ 'documents.detail.fields.name' | transloco }}</span>
@@ -315,7 +322,8 @@ export class DocumentEditForm {
     const changes: DocChanges = {};
     const errors: FieldErrors = {};
 
-    if (draft.direction !== null && draft.direction !== doc.direction) {
+    // A linked document keeps its direction until it is unlinked (the form no longer offers the choice then).
+    if (doc.paymentId === null && draft.direction !== null && draft.direction !== doc.direction) {
       changes.direction = draft.direction;
     }
 

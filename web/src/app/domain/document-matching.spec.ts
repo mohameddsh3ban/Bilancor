@@ -193,6 +193,12 @@ describe('certainMatch', () => {
     expect(certainMatch(docFromPool(0), [payment])?.id).toBe(payment.id);
   });
 
+  it('finds nothing for a possible duplicate, even when one payment fits exactly', () => {
+    const payment = missingPayment({ counterparty: 'Deutsche Bahn', amountCents: -12000, date: '2026-10-17' });
+    expect(certainMatch(docFromPool(0), [payment])?.id).toBe(payment.id);
+    expect(certainMatch({ ...docFromPool(0), duplicateOf: 'doc-wd-t2' }, [payment])).toBeNull();
+  });
+
   it('finds nothing when two payments fit', () => {
     const first = missingPayment({ id: 'one', counterparty: 'Deutsche Bahn', amountCents: -12000, date: '2026-10-17' });
     const second = { ...first, id: 'two' };

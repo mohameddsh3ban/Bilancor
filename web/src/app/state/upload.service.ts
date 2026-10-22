@@ -43,12 +43,21 @@ interface Batch {
 export class UploadService {
   private readonly demo = inject(DemoStateService);
 
-  /** The summary of the last drop, with the data generation it belongs to. */
-  private readonly latest = signal<{ summary: UploadSummary; generation: number } | null>(null);
-  /** The summary of the last drop, or null when there is none, it was cleared, or Reset demo has wiped the data it speaks of. */
+  /** The summary of the last drop, with the business it was added to and the data generation it belongs to. */
+  private readonly latest = signal<{
+    summary: UploadSummary;
+    generation: number;
+    businessId: string;
+  } | null>(null);
+  /**
+   * The summary of the last drop, or null when there is none, it was cleared, Reset demo has wiped the data it speaks of,
+   * or another business is open: the summary speaks of the documents of the business it was added to (and shows again there).
+   */
   readonly summary = computed(() => {
     const latest = this.latest();
-    return latest !== null && latest.generation === this.demo.dataGeneration()
+    return latest !== null &&
+      latest.generation === this.demo.dataGeneration() &&
+      latest.businessId === this.demo.business().id
       ? latest.summary
       : null;
   });
@@ -81,7 +90,7 @@ export class UploadService {
       reading.push({ id, result: this.nextResult(businessId, generation) });
     }
     const summaryVersion = ++this.summaryVersion;
-    this.latest.set({ summary: { added: 0, needsYou: 0, refused }, generation });
+    this.latest.set({ summary: { added: 0, needsYou: 0, refused }, generation, businessId });
     if (reading.length === 0) return;
     setTimeout(
       () => this.finish({ businessId, generation, reading, refused, summaryVersion }),
@@ -118,6 +127,7 @@ export class UploadService {
       this.latest.set({
         summary: { added, needsYou, refused: batch.refused },
         generation: batch.generation,
+        businessId: batch.businessId,
       });
     }
   }

@@ -68,16 +68,17 @@ import { DocumentStatusChip } from './document-status-chip';
                 <td class="py-2.5 ps-4 pe-3 whitespace-nowrap">{{ day(doc) | appDate }}</td>
                 <td class="py-2.5 pe-3">
                   <a
-                    class="block truncate font-medium after:absolute after:inset-0 hover:underline"
-                    dir="auto"
+                    class="block font-medium after:absolute after:inset-0 hover:underline"
                     data-testid="document-table-name"
                     [routerLink]="['/documents', doc.id]"
                   >
-                    @if (doc.name) {
-                      {{ doc.name }}
-                    } @else {
-                      <bdi dir="ltr">{{ doc.fileName }}</bdi>
-                    }
+                    <span class="inline-block max-w-full truncate align-bottom" dir="auto">
+                      @if (doc.name) {
+                        {{ doc.name }}
+                      } @else {
+                        <bdi dir="ltr">{{ doc.fileName }}</bdi>
+                      }
+                    </span>
                   </a>
                 </td>
                 <td class="py-2.5 pe-3">

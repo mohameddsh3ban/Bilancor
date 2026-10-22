@@ -41,9 +41,11 @@ const SUGGESTIONS = 3;
           [routerLink]="['/payments', linked.id]"
         >
           <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span class="truncate font-medium" dir="auto" data-testid="linked-name">{{
-              linked.counterparty
-            }}</span>
+            <span class="block font-medium" data-testid="linked-name"
+              ><span class="inline-block max-w-full truncate align-bottom" dir="auto">{{
+                linked.counterparty
+              }}</span></span
+            >
             <span class="text-muted-foreground text-xs" data-testid="linked-meta">
               {{ linked.date | appDate }} ·
               {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}

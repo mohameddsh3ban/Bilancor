@@ -136,16 +136,14 @@ import { DocumentSteps } from './document-steps';
               <ng-icon name="lucideX" size="18" aria-hidden="true" />
             </a>
           </div>
-          <h1
-            class="text-lg font-medium wrap-break-word"
-            dir="auto"
-            data-testid="document-detail-name"
-          >
-            @if (doc.name) {
-              {{ doc.name }}
-            } @else {
-              <bdi dir="ltr">{{ doc.fileName }}</bdi>
-            }
+          <h1 class="text-lg font-medium wrap-break-word" data-testid="document-detail-name">
+            <span dir="auto">
+              @if (doc.name) {
+                {{ doc.name }}
+              } @else {
+                <bdi dir="ltr">{{ doc.fileName }}</bdi>
+              }
+            </span>
           </h1>
           <p class="text-muted-foreground text-sm" data-testid="document-detail-meta">
             @if (doc.direction) {

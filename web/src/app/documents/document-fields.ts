@@ -164,9 +164,11 @@ const NO_BOOKING: Booking = { skr03: '', nameDe: '', labelKey: '', vatRate: 0 };
           </div>
         </dl>
         @if (doc().direction; as direction) {
-          <p class="text-muted-foreground text-xs" data-testid="why-note">
-            {{ 'documents.detail.why.' + direction | transloco }}
-          </p>
+          @if (!directionChosen()) {
+            <p class="text-muted-foreground text-xs" data-testid="why-note">
+              {{ 'documents.detail.why.' + direction | transloco }}
+            </p>
+          }
         }
       }
     </section>
@@ -190,6 +192,10 @@ export class DocumentFields {
 
   protected readonly kleinunternehmer = computed(
     () => this.demo.business().taxProfile.kleinunternehmer,
+  );
+  /** Whether the person chose the direction (on the Needs-you card or in Edit): then it was not "set" by reading, so there is no why-note. */
+  protected readonly directionChosen = computed(() =>
+    this.doc().history.some((h) => h.key === 'markedReceived' || h.key === 'markedSent'),
   );
   protected readonly termKey = computed<TermKey>(() =>
     this.doc().direction === 'received' ? 'eingangsbeleg' : 'ausgangsbeleg',

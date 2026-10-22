@@ -9,13 +9,11 @@ import { map } from 'rxjs';
 const FEATURES: readonly string[] = [
   'home',
   'payments',
-  'documents',
   'invoices',
   'taxes',
   'reports',
   'settings',
   'help',
-  'upload',
   'more',
   'decisions',
   'terms',

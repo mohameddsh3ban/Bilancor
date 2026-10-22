@@ -94,7 +94,7 @@ describe('DocumentPicker', () => {
   }
 
   async function search(value: string): Promise<void> {
-    const input = inBody('document-search') as HTMLInputElement;
+    const input = inBody('document-picker-search') as HTMLInputElement;
     input.value = value;
     input.dispatchEvent(new Event('input'));
     await settle();
@@ -191,7 +191,7 @@ describe('DocumentPicker', () => {
     expect(options()).toHaveLength(0);
     expect(text(inBody('document-picker-no-match'))).toBe('No document matches');
     expect(inBody('document-picker-empty')).toBeNull();
-    expect((inBody('document-search') as HTMLInputElement).value).toBe('zzz');
+    expect((inBody('document-picker-search') as HTMLInputElement).value).toBe('zzz');
   });
 
   it('with no document that fits, says so and offers to add one', async () => {
@@ -239,7 +239,7 @@ describe('DocumentPicker', () => {
     options()[0].click();
     await settle();
     await open();
-    expect((inBody('document-search') as HTMLInputElement).value).toBe('');
+    expect((inBody('document-picker-search') as HTMLInputElement).value).toBe('');
     expect(options()).toHaveLength(2);
   });
 
@@ -248,7 +248,7 @@ describe('DocumentPicker', () => {
     TestBed.inject(LanguageService).setLang('de');
     await settle();
     await open();
-    const searchBox = inBody('document-search') as HTMLInputElement;
+    const searchBox = inBody('document-picker-search') as HTMLInputElement;
     expect(searchBox.placeholder).toBe('Name oder Betrag');
     expect(searchBox.getAttribute('aria-label')).toBe('Dokumente durchsuchen');
     expect(text(inside(options()[0], 'picker-meta'))).toBe(formatDate('2026-10-08', 'de'));

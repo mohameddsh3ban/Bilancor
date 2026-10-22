@@ -39,16 +39,14 @@ import { Doc } from '../data/models';
         } @else {
           <div class="flex items-start justify-between gap-3">
             <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-              <span
-                class="block truncate text-sm font-semibold"
-                dir="auto"
-                data-testid="paper-name"
-              >
-                @if (doc().name) {
-                  {{ doc().name }}
-                } @else {
-                  <span [class]="markClass" data-testid="paper-missing" data-field="name">?</span>
-                }
+              <span class="block text-sm font-semibold" data-testid="paper-name">
+                <span class="inline-block max-w-full truncate align-bottom" dir="auto">
+                  @if (doc().name) {
+                    {{ doc().name }}
+                  } @else {
+                    <span [class]="markClass" data-testid="paper-missing" data-field="name">?</span>
+                  }
+                </span>
               </span>
               <span class="bg-muted h-1.5 w-24 rounded-full"></span>
               <span class="bg-muted h-1.5 w-16 rounded-full"></span>

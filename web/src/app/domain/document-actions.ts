@@ -69,12 +69,17 @@ export function setDirection(doc: Doc, direction: DocDirection): Doc {
   return { ...doc, direction, history: logged(doc.history, direction === 'received' ? 'markedReceived' : 'markedSent') };
 }
 
-/** The person types in or corrects what reading found. */
+/**
+ * The person types in or corrects what reading found. One history line says the details were corrected; a changed
+ * direction also gets the line `setDirection` writes, so a direction the person chose is always told apart from one reading set.
+ */
 export function editDocument(
   doc: Doc,
   changes: Partial<Pick<Doc, 'direction' | 'name' | 'invoiceNo' | 'date' | 'dueDate' | 'amountCents' | 'vatRate'>>,
 ): Doc {
-  return { ...doc, ...changes, history: logged(doc.history, 'docEdited') };
+  const { direction } = changes;
+  const history = direction && direction !== doc.direction ? setDirection(doc, direction).history : doc.history;
+  return { ...doc, ...changes, history: logged(history, 'docEdited') };
 }
 
 /** The person picks the category; choosing it also confirms the booking. */

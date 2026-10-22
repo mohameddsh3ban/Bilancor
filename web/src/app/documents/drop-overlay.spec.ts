@@ -109,12 +109,26 @@ describe('DropOverlay', () => {
     expect(overlay()).toBeNull();
   });
 
-  it('is for computers only: below lg nothing shows and nothing is taken over', () => {
+  it('works at any width: below lg a drag of files still shows the overlay and a drop is added, not opened by the browser', () => {
     screenIs(false);
-    expect(drag('dragenter', { items: 2 }).defaultPrevented).toBe(false);
+    const entered = drag('dragenter', { items: 2 });
+    expect(entered.defaultPrevented).toBe(true);
+    expect(text(overlay())).toContain('Drop to add 2 files');
+    expect(drag('dragover').defaultPrevented).toBe(true);
+
+    const files = [new File(['x'], 'a.pdf'), new File(['x'], 'b.jpg')];
+    const dropped = drag('drop', { items: 2, files });
+    expect(dropped.defaultPrevented).toBe(true);
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(add).toHaveBeenCalledWith(files, 'file');
     expect(overlay()).toBeNull();
-    const dropped = drag('drop', { files: [new File(['x'], 'a.pdf')] });
-    expect(dropped.defaultPrevented).toBe(false);
+  });
+
+  it('below lg a drag without files is still left alone', () => {
+    screenIs(false);
+    expect(drag('dragenter', { types: ['text/plain'] }).defaultPrevented).toBe(false);
+    expect(overlay()).toBeNull();
+    expect(drag('drop', { types: ['text/plain'], files: [] }).defaultPrevented).toBe(false);
     expect(add).not.toHaveBeenCalled();
   });
 

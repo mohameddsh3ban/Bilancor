@@ -77,7 +77,7 @@ export function matchDocuments(docs: readonly Doc[], query: string): Doc[] {
             <input
               type="search"
               class="border-input bg-background placeholder:text-muted-foreground h-10 w-full rounded-md border ps-9 pe-3 text-sm"
-              data-testid="document-search"
+              data-testid="document-picker-search"
               [value]="query()"
               [attr.aria-label]="'payments.detail.docPicker.search' | transloco"
               [placeholder]="'payments.detail.docPicker.placeholder' | transloco"

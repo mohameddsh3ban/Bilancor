@@ -83,9 +83,11 @@ export function documentCandidates(tx: Transaction, docs: readonly Doc[]): Doc[]
 
 /**
  * The payment a new document surely belongs to: the only candidate with the same amount, a date at most 7 days away,
- * and a name that contains the document's name or is contained in it. Anything less sure is left to the person.
+ * and a name that contains the document's name or is contained in it. Anything less sure is left to the person,
+ * and a possible duplicate is never sure: it is the person who says whether it is a second document or the same one.
  */
 export function certainMatch(doc: Doc, txs: readonly Transaction[]): Transaction | null {
+  if (doc.duplicateOf !== null) return null;
   const { amountCents, date, name } = doc;
   if (amountCents === null || date === null || name === null) return null;
   const docName = normalizedName(name);
