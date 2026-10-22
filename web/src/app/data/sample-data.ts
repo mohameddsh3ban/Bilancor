@@ -131,6 +131,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'wd-h1', kind: 'unreadable', urgency: 3, blocking: false, params: { count: 1 }, date: '2026-09-28' },
       { id: 'wd-h2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 30 }, date: '2026-09-21' },
     ],
+    categoryRules: [],
   },
   {
     id: 'sara-yoga',
@@ -163,6 +164,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     noticeHistory: [
       { id: 'sy-h1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 80, limit: 25000 }, date: '2026-09-24' },
     ],
+    categoryRules: [],
   },
   {
     id: 'cafe-linde',
@@ -196,6 +198,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     noticeHistory: [
       { id: 'cl-h1', kind: 'terms', urgency: 1, blocking: false, params: {}, date: '2026-09-15' },
     ],
+    categoryRules: [],
   },
 ];
 

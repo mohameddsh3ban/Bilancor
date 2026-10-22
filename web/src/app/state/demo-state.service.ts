@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Business, Doc, Person, SetupState, Transaction } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
+import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { setupSteps } from '../domain/home-cards';
 
@@ -47,13 +48,22 @@ export class DemoStateService {
     this.setupSignal.set(state);
   }
 
-  /** Replaces one payment of the open business with the result of `change` (ignored for an unknown id). */
+  /**
+   * Replaces one payment of the open business with the result of `change` (ignored for an unknown id).
+   * When the payment gets a different category, the rule for its counterparty follows it (see `followCategoryChange`).
+   */
   updateTransaction(id: string, change: (tx: Transaction) => Transaction): void {
     const openId = this.businessIdSignal();
     this.data.update((all) =>
       all.map((business) => {
-        if (business.id !== openId || !business.transactions.some((t) => t.id === id)) return business;
-        return { ...business, transactions: business.transactions.map((t) => (t.id === id ? change(t) : t)) };
+        const before = business.id === openId ? business.transactions.find((t) => t.id === id) : undefined;
+        if (!before) return business;
+        const after = change(before);
+        return {
+          ...business,
+          transactions: business.transactions.map((t) => (t.id === id ? after : t)),
+          categoryRules: followCategoryChange(business.categoryRules, before, after),
+        };
       }),
     );
   }
@@ -112,6 +122,43 @@ export class DemoStateService {
         transactions: business.transactions.map((t) => (t.id === tx.id ? unlinked.tx : t)),
       };
     });
+  }
+
+  /**
+   * Learns a rule for the open business: payments from that counterparty get that booking from now on. Adds the rule,
+   * or replaces the one for the same counterparty, then books the other unclear payments of the counterparty
+   * (`exceptId` is the payment the person just answered, which already has its category). Returns the ids it booked.
+   */
+  addRule(rule: CategoryRule, exceptId: string): string[] {
+    let bookedIds: string[] = [];
+    this.updateBusiness(this.businessIdSignal(), (business) => {
+      const applied = applyRuleToUnclear(business.transactions, rule, exceptId);
+      bookedIds = applied.bookedIds;
+      const known = business.categoryRules.some((r) => r.counterpartyKey === rule.counterpartyKey);
+      return {
+        ...business,
+        transactions: applied.txs,
+        categoryRules: known
+          ? business.categoryRules.map((r) => (r.counterpartyKey === rule.counterpartyKey ? rule : r))
+          : [...business.categoryRules, rule],
+      };
+    });
+    return bookedIds;
+  }
+
+  /** A deep copy of the open business as it is now: its payments, documents and rules. Keep it to `restore` it (Undo). */
+  snapshot(): Business {
+    return structuredClone(this.business());
+  }
+
+  /**
+   * Puts a business back as a snapshot had it (ignored when no business has the snapshot's id). It is a different object
+   * from the snapshot, so a later restore of the same snapshot works again. The data is not reset: `dataGeneration` stays.
+   */
+  restore(snapshot: Business): void {
+    this.data.update((all) =>
+      all.some((b) => b.id === snapshot.id) ? all.map((b) => (b.id === snapshot.id ? structuredClone(snapshot) : b)) : all,
+    );
   }
 
   /** Puts every edited payment and document back to the sample data (demo only). */

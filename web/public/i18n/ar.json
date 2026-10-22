@@ -157,7 +157,8 @@
     "unlinked": "ألغيت ربطها بالدفعة {{name}}",
     "receiptLinked": "ربطت المستند {{name}}",
     "receiptLinkedAuto": "تم ربط المستند {{name}} تلقائيًا",
-    "receiptUnlinked": "ألغيت ربط المستند {{name}}"
+    "receiptUnlinked": "ألغيت ربط المستند {{name}}",
+    "bookedByRule": "تم الترحيل كـ {{category}} حسب قاعدتك"
   },
   "payments": {
     "title": "المدفوعات",

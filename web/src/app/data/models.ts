@@ -25,7 +25,10 @@ export type HistoryKey =
   | 'unlinked'
   | 'receiptLinked'
   | 'receiptLinkedAuto'
-  | 'receiptUnlinked';
+  | 'receiptUnlinked'
+  | 'bookedByRule';
+/** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
+export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
 export interface Transaction {
   id: string; date: string; counterparty: string; accountId: string; amountCents: number;
@@ -55,5 +58,5 @@ export type PoolResult = Pick<Doc, 'name' | 'direction' | 'invoiceNo' | 'date' |
 export type NoticeKind = 'terms' | 'bankExpiry' | 'unreadable' | 'revenueLimit';
 export interface Notice { id: string; kind: NoticeKind; urgency: number; blocking: boolean; params: Record<string, string | number>; date: string } // lower urgency = more urgent; text from i18n "notice.<kind>.text" / ".action"
 export interface TaxProfile { kleinunternehmer: boolean; vatPeriod: 'monthly' | 'quarterly' | null }
-export interface Business { id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[]; vatDue: { dueDate: string; amountCents: number } | null; incomeTaxReserveCents: number; revenueThisYearCents: number; notices: Notice[]; noticeHistory: Notice[] }
+export interface Business { id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[]; vatDue: { dueDate: string; amountCents: number } | null; incomeTaxReserveCents: number; revenueThisYearCents: number; notices: Notice[]; noticeHistory: Notice[]; categoryRules: CategoryRule[] }
 export interface Person { id: string; firstName: string; lastName: string; businessIds: string[] }

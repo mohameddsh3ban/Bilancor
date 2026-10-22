@@ -67,6 +67,14 @@ describe('PaymentHistory', () => {
     expect(imported.textContent).not.toContain(FIRST_STRONG_ISOLATE);
   });
 
+  it('a bookedByRule line shows the category as its label, in every language', () => {
+    expect(lines([entry('bookedByRule', { category: 'office' })])).toEqual(['Booked as Office supplies by your rule']);
+    TestBed.inject(LanguageService).setLang('de');
+    expect(lines([entry('bookedByRule', { category: 'office' })])).toEqual(['Nach deiner Regel als Bürobedarf gebucht']);
+    TestBed.inject(LanguageService).setLang('ar');
+    expect(lines([entry('bookedByRule', { category: 'office' })])).toEqual(['تم الترحيل كـ مستلزمات مكتبية حسب قاعدتك']);
+  });
+
   it('still shows the category as its label and the cash box by its name', () => {
     expect(
       lines([entry('confirmed', { category: 'travel' }), entry('imported', { account: 'Cash box' }), entry('imported', { account: 'Qonto' })]),

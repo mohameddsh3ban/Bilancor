@@ -157,7 +157,8 @@
     "unlinked": "You unlinked it from the {{name}} payment",
     "receiptLinked": "You linked the document {{name}}",
     "receiptLinkedAuto": "The document {{name}} was linked automatically",
-    "receiptUnlinked": "You unlinked the document {{name}}"
+    "receiptUnlinked": "You unlinked the document {{name}}",
+    "bookedByRule": "Booked as {{category}} by your rule"
   },
   "payments": {
     "title": "Payments",

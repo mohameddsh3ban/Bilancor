@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { TRAVEL } from '../data/categories';
-import type { Doc } from '../data/models';
+import { OFFICE, SOFTWARE, TRAVEL } from '../data/categories';
+import type { Booking, Doc } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
+import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docsNeedingYouCount } from '../domain/document-status';
+import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
 
@@ -269,6 +271,158 @@ describe('DemoStateService', () => {
       expect(state.dataGeneration()).toBe(1);
       state.resetData();
       expect(state.dataGeneration()).toBe(2);
+    });
+  });
+
+  describe('learned category rules', () => {
+    const payment = (state: DemoStateService, id: string) => state.business().transactions.find((t) => t.id === id)!;
+    const AMAZON_OFFICE: CategoryRule = { counterpartyKey: 'amazon', booking: OFFICE };
+
+    /** The client answers the Amazon payment wd-t4 with a category, the way the review inbox will. */
+    function answerAmazon(state: DemoStateService, booking: Booking): string[] {
+      state.updateTransaction('wd-t4', (tx) => changeCategory(tx, booking));
+      return state.addRule({ counterpartyKey: counterpartyKey('Amazon'), booking }, 'wd-t4');
+    }
+
+    it('every business starts with no rules', () => {
+      const state = TestBed.inject(DemoStateService);
+      expect(state.businesses.map((b) => b.categoryRules)).toEqual([[], [], []]);
+    });
+
+    it('addRule keeps the rule and books the other unclear payments of the counterparty, returning their ids', () => {
+      const state = TestBed.inject(DemoStateService);
+      const before = needsYouCount(state.business().transactions);
+      expect(answerAmazon(state, OFFICE)).toEqual(['wd-t18']);
+      expect(state.business().categoryRules).toEqual([AMAZON_OFFICE]);
+      const booked = payment(state, 'wd-t18');
+      expect(paymentStatus(booked)).toBe('booked');
+      expect(booked.booking?.labelKey).toBe('office');
+      expect(booked.history[0]).toEqual({ date: '2026-10-22', key: 'bookedByRule', params: { category: 'office' } });
+      // Only one history line for the payment that was answered: the rule did not touch it again.
+      expect(payment(state, 'wd-t4').history.map((h) => h.key)).toEqual(['categoryChanged', 'imported']);
+      expect(needsYouCount(state.business().transactions)).toBe(before - 2);
+    });
+
+    it('addRule replaces the rule for the same counterparty instead of adding a second one', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addRule({ counterpartyKey: 'amazon', booking: OFFICE }, 'none');
+      expect(state.addRule({ counterpartyKey: 'amazon', booking: SOFTWARE }, 'none')).toEqual([]);
+      expect(state.business().categoryRules).toEqual([{ counterpartyKey: 'amazon', booking: SOFTWARE }]);
+    });
+
+    it('rules belong to the open business only', () => {
+      const state = TestBed.inject(DemoStateService);
+      answerAmazon(state, OFFICE);
+      state.setBusiness('sara-yoga');
+      expect(state.business().categoryRules).toEqual([]);
+      expect(state.businesses.find((b) => b.id === 'weber-design')!.categoryRules).toEqual([AMAZON_OFFICE]);
+    });
+
+    it("a rule doesn't touch payments of other businesses", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      expect(state.addRule({ counterpartyKey: 'amazon', booking: OFFICE }, 'none')).toEqual([]);
+      const weber = state.businesses.find((b) => b.id === 'weber-design')!;
+      expect(weber.categoryRules).toEqual([]);
+      expect(paymentStatus(weber.transactions.find((t) => t.id === 'wd-t18')!)).toBe('unclear');
+    });
+
+    it("changing a payment's category updates its counterparty's rule", () => {
+      const state = TestBed.inject(DemoStateService);
+      answerAmazon(state, OFFICE);
+      // Anywhere in the app: here a payment the rule booked.
+      state.updateTransaction('wd-t18', (tx) => changeCategory(tx, SOFTWARE));
+      expect(state.business().categoryRules).toEqual([{ counterpartyKey: 'amazon', booking: SOFTWARE }]);
+      // And a payment of another counterparty leaves it alone.
+      state.updateTransaction('wd-t2', (tx) => changeCategory(tx, TRAVEL));
+      expect(state.business().categoryRules).toEqual([{ counterpartyKey: 'amazon', booking: SOFTWARE }]);
+    });
+
+    it("changing a category never makes a rule when there isn't one", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.updateTransaction('wd-t18', (tx) => changeCategory(tx, SOFTWARE));
+      expect(state.business().categoryRules).toEqual([]);
+    });
+
+    it("marking private doesn't change a rule", () => {
+      const state = TestBed.inject(DemoStateService);
+      answerAmazon(state, OFFICE);
+      state.updateTransaction('wd-t18', (tx) => setPrivate(tx, true));
+      expect(payment(state, 'wd-t18').booking?.labelKey).toBe('privateOut');
+      expect(state.business().categoryRules).toEqual([AMAZON_OFFICE]);
+      state.updateTransaction('wd-t18', (tx) => setPrivate(tx, false));
+      expect(state.business().categoryRules).toEqual([AMAZON_OFFICE]);
+    });
+
+    it('a change that keeps the category leaves the rules as they are', () => {
+      const state = TestBed.inject(DemoStateService);
+      answerAmazon(state, OFFICE);
+      const rules = state.business().categoryRules;
+      state.updateTransaction('wd-t18', (tx) => ({ ...tx, confirmed: false }));
+      expect(state.business().categoryRules).toBe(rules);
+    });
+
+    it('snapshot and restore bring back payments, documents and rules', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+      const original = structuredClone(snapshot);
+      const generation = state.dataGeneration();
+
+      answerAmazon(state, OFFICE);
+      state.link('wd-d4', 'wd-t17');
+      state.removeDocument('wd-d1');
+      state.addDocument('weber-design', { ...structuredClone(snapshot.documents.find((d) => d.id === 'wd-d4')!), id: 'up-1' });
+      expect(state.business()).not.toEqual(original);
+
+      state.restore(snapshot);
+
+      expect(state.business()).toEqual(original);
+      expect(state.business().categoryRules).toEqual([]);
+      expect(paymentStatus(payment(state, 'wd-t18'))).toBe('unclear');
+      expect(state.documents().some((d) => d.id === 'wd-d1')).toBe(true);
+      expect(state.documents().some((d) => d.id === 'up-1')).toBe(false);
+      expect(state.documents().find((d) => d.id === 'wd-d4')!.paymentId).toBeNull();
+      expect(state.dataGeneration()).toBe(generation);
+    });
+
+    it('a snapshot is a deep copy: later edits do not change it, and restoring brings back a new object', () => {
+      const state = TestBed.inject(DemoStateService);
+      const open = state.business();
+      const snapshot = state.snapshot();
+      expect(snapshot).toEqual(open);
+      expect(snapshot).not.toBe(open);
+      expect(snapshot.transactions[0]).not.toBe(open.transactions[0]);
+
+      answerAmazon(state, OFFICE);
+      expect(snapshot.categoryRules).toEqual([]);
+      expect(paymentStatus(snapshot.transactions.find((t) => t.id === 'wd-t4')!)).toBe('unclear');
+
+      state.restore(snapshot);
+      expect(state.business()).not.toBe(open);
+      expect(state.business()).not.toBe(snapshot);
+      expect(state.businesses.find((b) => b.id === 'weber-design')).toBe(state.business());
+    });
+
+    it('restore only replaces the business it was taken from, and ignores an unknown one', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+      state.setBusiness('sara-yoga');
+      state.updateTransaction('sy-t8', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+      const sara = state.business();
+      state.restore(snapshot);
+      expect(state.business()).toBe(sara);
+      expect(state.businesses.find((b) => b.id === 'weber-design')).toEqual(snapshot);
+      state.restore({ ...snapshot, id: 'nope' });
+      expect(state.business()).toBe(sara);
+    });
+
+    it('resetData clears rules', () => {
+      const state = TestBed.inject(DemoStateService);
+      answerAmazon(state, OFFICE);
+      expect(state.business().categoryRules).toHaveLength(1);
+      state.resetData();
+      expect(state.business().categoryRules).toEqual([]);
+      expect(paymentStatus(payment(state, 'wd-t18'))).toBe('unclear');
     });
   });
 });

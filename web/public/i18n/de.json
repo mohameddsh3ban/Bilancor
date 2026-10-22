@@ -157,7 +157,8 @@
     "unlinked": "Du hast die Verknüpfung mit der Zahlung {{name}} gelöst",
     "receiptLinked": "Du hast den Beleg {{name}} verknüpft",
     "receiptLinkedAuto": "Der Beleg {{name}} wurde automatisch verknüpft",
-    "receiptUnlinked": "Du hast die Verknüpfung mit dem Beleg {{name}} gelöst"
+    "receiptUnlinked": "Du hast die Verknüpfung mit dem Beleg {{name}} gelöst",
+    "bookedByRule": "Nach deiner Regel als {{category}} gebucht"
   },
   "payments": {
     "title": "Zahlungen",
