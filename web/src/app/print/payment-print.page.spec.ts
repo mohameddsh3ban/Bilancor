@@ -63,7 +63,7 @@ describe('PaymentPrintPage', () => {
     expect(q('print-amount')!.closest('bdi[dir="ltr"]')).not.toBeNull();
     expect(text(q('print-counterparty'))).toBe('Müller GmbH');
     expect(q('print-counterparty')!.getAttribute('dir')).toBe('auto');
-    expect(text(q('print-meta'))).toBe('20 Oct · Qonto');
+    expect(text(q('print-meta'))).toBe('20 Oct 2026 · Qonto');
     expect(text(q('tx-status'))).toBe('Please confirm');
     expect(text(q('print-iban'))).toBe('DE68 2105 0170 0012 3456 78');
     expect(q('print-iban')!.closest('bdi[dir="ltr"]')).not.toBeNull();
@@ -76,6 +76,18 @@ describe('PaymentPrintPage', () => {
       'Booked as Revenue (19% VAT) automatically',
       'Imported from Qonto',
     ]);
+  });
+
+  it('shows the year on the payment date and on every history date, since a printout leaves the app', async () => {
+    await render('/print/payment/wd-t3');
+    expect(text(q('print-meta'))).toBe('17 Oct 2026 · Qonto');
+    const dates = () =>
+      Array.from(el.querySelectorAll('[data-testid="history-date"]')).map((node) => text(node));
+    expect(dates()).toEqual(['17 Oct 2026', '17 Oct 2026']);
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(text(q('print-meta'))).toBe('17. Okt. 2026 · Qonto');
+    expect(dates()).toEqual(['17. Okt. 2026', '17. Okt. 2026']);
   });
 
   it('shows the receipt state in words and a payment with no category as such', async () => {
@@ -106,7 +118,7 @@ describe('PaymentPrintPage', () => {
 
   it('names the cash box and leaves out the IBAN, but keeps the reference', async () => {
     await render('/print/payment/wd-t15');
-    expect(text(q('print-meta'))).toBe('14 Aug · Cash box');
+    expect(text(q('print-meta'))).toBe('14 Aug 2026 · Cash box');
     expect(q('print-iban')).toBeNull();
     expect(text(q('print-reference'))).toBe('Einkauf bar');
     expect(historyTexts()).toEqual([
@@ -124,7 +136,7 @@ describe('PaymentPrintPage', () => {
     expect(q('print-amount')!.closest('bdi[dir="ltr"]')).not.toBeNull();
     TestBed.inject(LanguageService).setLang('de');
     await settle();
-    expect(text(q('print-vat'))).toBe('19 %');
+    expect(text(q('print-vat'))).toBe('7 %'); // Travel
     expect(text(q('print-receipt'))).toBe('Beleg fehlt');
   });
 

@@ -18,8 +18,8 @@ describe('translation files', () => {
     expect(flatten(ar).sort()).toEqual(enKeys);
   });
 
-  it('has the four German tax terms with label, de and explain', () => {
-    for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03']) {
+  it('has the German tax terms with label, de and explain', () => {
+    for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03', 'eigenbeleg']) {
       for (const part of ['label', 'de', 'explain']) {
         expect(enKeys).toContain(`terms.${term}.${part}`);
       }

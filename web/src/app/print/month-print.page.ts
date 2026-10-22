@@ -4,12 +4,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { map } from 'rxjs';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppMonthPipe } from '../core/format/month.pipe';
 import { Account, Transaction } from '../data/models';
-import { setupSteps } from '../domain/home-cards';
 import { EMPTY_FILTER, MonthGroup, filterPayments, groupByMonth } from '../domain/payment-filters';
 import { paymentStatus } from '../domain/payment-status';
 import { BookingLabel } from '../payments/booking-label';
@@ -191,7 +189,7 @@ export class MonthPrintPage {
   /** The month's payments, newest first, with its totals; none without a month, payments or a connected bank. */
   protected readonly group = computed<MonthGroup | null>(() => {
     const month = this.monthParam();
-    if (!month || !setupSteps(this.demo.setup()).bank) return null;
+    if (!month || !this.demo.bankConnected()) return null;
     const payments = filterPayments(this.business().transactions, {
       ...EMPTY_FILTER,
       month,

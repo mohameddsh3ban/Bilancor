@@ -42,6 +42,25 @@ describe('formatDate', () => {
     expect(formatDate('2026-10-21', 'ar')).not.toMatch(/[٠-٩]/);
     expect(formatDate('2026-10-21', 'ar')).toMatch(/21/);
   });
+
+  it('adds the year when asked, and leaves it out otherwise', () => {
+    expect(formatDate('2026-10-17', 'en', { year: true })).toBe('17 Oct 2026');
+    expect(formatDate('2026-10-17', 'de', { year: true })).toBe('17. Okt. 2026');
+    expect(formatDate('2026-10-17', 'en', { year: false })).toBe('17 Oct');
+    expect(formatDate('2026-10-17', 'en', {})).toBe('17 Oct');
+  });
+
+  it('ar with the year uses western digits', () => {
+    const text = formatDate('2026-10-17', 'ar', { year: true });
+    expect(text).toMatch(/17/);
+    expect(text).toMatch(/2026/);
+    expect(text).not.toMatch(/[٠-٩]/);
+  });
+
+  it('the year follows the calendar day in a zone west of UTC', () => {
+    env['TZ'] = 'America/New_York';
+    expect(formatDate('2026-01-01', 'en', { year: true })).toBe('1 Jan 2026');
+  });
 });
 
 describe('formatMoney whole', () => {

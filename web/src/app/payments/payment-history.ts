@@ -17,11 +17,13 @@ import { Account, HistoryEntry } from '../data/models';
       @for (entry of entries(); track entry) {
         <li class="flex gap-3" data-testid="history-item">
           <time
-            class="text-muted-foreground w-14 shrink-0"
+            class="text-muted-foreground shrink-0"
             data-testid="history-date"
+            [class.w-14]="!withYear()"
+            [class.w-28]="withYear()"
             [attr.datetime]="entry.date"
           >
-            {{ entry.date | appDate }}
+            {{ entry.date | appDate: { year: withYear() } }}
           </time>
           <span class="min-w-0" data-testid="history-text">
             {{
@@ -46,6 +48,8 @@ export class PaymentHistory {
   readonly entries = input.required<readonly HistoryEntry[]>();
   /** The open business's accounts, to tell the cash box from a bank. */
   readonly accounts = input.required<readonly Account[]>();
+  /** Show the year in each line's date (for a printout). */
+  readonly withYear = input(false);
 
   protected isCashBox(name: string | undefined): boolean {
     return this.accounts().some((account) => account.kind === 'cash' && account.name === name);

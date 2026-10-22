@@ -370,6 +370,19 @@ describe('PaymentsPage', () => {
       expect(qa('payment-row')).toHaveLength(1);
     });
 
+    it('keeps the detail panel in view on computers: sticky, and scrolling on its own when taller than the screen', async () => {
+      await render('/payments/wd-t3');
+      const panel = q('payments-detail')!.classList;
+      for (const name of [
+        'lg:sticky',
+        'lg:top-6',
+        'lg:max-h-[calc(100dvh-3rem)]',
+        'lg:overflow-y-auto',
+      ]) {
+        expect(panel, name).toContain(name);
+      }
+    });
+
     it('moves the highlight when another payment opens', async () => {
       await render('/payments/wd-t3');
       await harness.navigateByUrl('/payments/wd-t4');
@@ -378,6 +391,71 @@ describe('PaymentsPage', () => {
       expect(selected).toHaveLength(1);
       expect(selected[0].textContent).toContain('Amazon');
       expect(q('payments-detail')!.classList).not.toContain('hidden');
+    });
+  });
+
+  describe('scrolling when a payment opens', () => {
+    const root = () => document.documentElement;
+    let originalMatchMedia: PropertyDescriptor | undefined;
+
+    /** jsdom has no media queries; a computer is a screen where `(min-width: 64rem)` (Tailwind's lg) matches. */
+    function screenIs(computer: boolean): void {
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+          matches: computer && query === '(min-width: 64rem)',
+          media: query,
+        }),
+      });
+    }
+
+    beforeEach(() => {
+      originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+      root().scrollTop = 600;
+    });
+
+    afterEach(() => {
+      root().scrollTop = 0;
+      if (originalMatchMedia) Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+      else delete (window as { matchMedia?: unknown }).matchMedia;
+    });
+
+    it('on a phone, a payment opens at the top of the page, not where the list was scrolled to', async () => {
+      screenIs(false);
+      await render('/payments/wd-t3');
+      await settle();
+      expect(root().scrollTop).toBe(0);
+    });
+
+    it('on a phone, tapping a row of the list opens the payment at the top', async () => {
+      screenIs(false);
+      await render();
+      await settle();
+      expect(root().scrollTop).toBe(600);
+      qa('payment-row')
+        .find((r) => r.textContent?.includes('Deutsche Bahn'))!
+        .click();
+      await settle();
+      expect(TestBed.inject(Router).url).toBe('/payments/wd-t3');
+      expect(root().scrollTop).toBe(0);
+    });
+
+    it('on a computer, the page stays where it is when a payment opens or another one opens', async () => {
+      screenIs(true);
+      await render('/payments/wd-t3');
+      await settle();
+      expect(root().scrollTop).toBe(600);
+      await harness.navigateByUrl('/payments/wd-t4');
+      await settle();
+      expect(root().scrollTop).toBe(600);
+    });
+
+    it('does not scroll when the list opens without a payment', async () => {
+      screenIs(false);
+      await render();
+      await settle();
+      expect(root().scrollTop).toBe(600);
     });
   });
 });

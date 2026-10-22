@@ -19,6 +19,11 @@
       "label": "Chart of accounts",
       "de": "SKR03",
       "explain": "The standard list of account numbers that every income and expense is filed under."
+    },
+    "eigenbeleg": {
+      "label": "Self-issued receipt",
+      "de": "Eigenbeleg",
+      "explain": "A receipt you write yourself when the original is lost or never existed."
     }
   },
   "account": {
@@ -183,8 +188,7 @@
         "missingHint": "Add one, or say that this payment needs none.",
         "takePhoto": "Take photo",
         "pickDocument": "Pick from Documents",
-        "noReceiptNeeded": "No receipt needed",
-        "selfReceipt": "Self-issued receipt"
+        "noReceiptNeeded": "No receipt needed"
       },
       "booking": {
         "title": "Booking",

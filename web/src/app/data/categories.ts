@@ -11,7 +11,7 @@ export const REVENUE_KU: Booking = {
   vatRate: 0,
 };
 export const PHONE: Booking = { skr03: '4920', nameDe: 'Telefon', labelKey: 'phone', vatRate: 19 };
-export const TRAVEL: Booking = { skr03: '4670', nameDe: 'Reisekosten Unternehmer', labelKey: 'travel', vatRate: 19 };
+export const TRAVEL: Booking = { skr03: '4670', nameDe: 'Reisekosten Unternehmer', labelKey: 'travel', vatRate: 7 };
 export const SOFTWARE: Booking = {
   skr03: '4806',
   nameDe: 'Wartungskosten für Hard- und Software',

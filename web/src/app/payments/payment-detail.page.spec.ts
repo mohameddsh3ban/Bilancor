@@ -8,6 +8,7 @@ import { DemoStateService } from '../state/demo-state.service';
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
 import ar from '../../../public/i18n/ar.json';
+import en from '../../../public/i18n/en.json';
 
 describe('PaymentDetailPage', () => {
   let demo: DemoStateService;
@@ -167,12 +168,46 @@ describe('PaymentDetailPage', () => {
       expect(text(q('needs-you-count'))).toBe('2');
     });
 
-    it('choosing the category a payment already has changes nothing', async () => {
+    it('choosing the category a payment already has changes nothing when it is booked', async () => {
       await render('/payments/wd-t2');
+      expect(status()).toBe('Booked');
       const before = historyTexts();
       await choose('Phone');
       expect(historyTexts()).toEqual(before);
+      expect(status()).toBe('Booked');
       expect(options()).toHaveLength(0);
+    });
+
+    it('choosing the category a payment already has changes nothing when only the receipt is missing', async () => {
+      await render('/payments/wd-t3');
+      expect(status()).toBe('Receipt missing');
+      const before = historyTexts();
+      await choose('Travel');
+      expect(historyTexts()).toEqual(before);
+      expect(status()).toBe('Receipt missing');
+    });
+
+    it('choosing the suggested category of a payment that needs confirming confirms it', async () => {
+      await render('/payments/wd-t1');
+      expect(status()).toBe('Please confirm');
+      expect(text(q('needs-you-count'))).toBe('3');
+      await choose('Revenue (19% VAT)');
+      expect(status()).toBe('Booked');
+      expect(d('confirm-booking')).toBeNull();
+      expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
+      expect(historyTexts().filter((t) => t.startsWith('You'))).toHaveLength(1);
+      expect(options()).toHaveLength(0);
+      expect(text(q('needs-you-count'))).toBe('2');
+    });
+
+    it('choosing the suggested category of a payment that needs confirming and has no receipt leaves the receipt to do', async () => {
+      await render('/payments/wd-t3');
+      demo.updateTransaction('wd-t3', (tx) => ({ ...tx, confirmed: false }));
+      await settle();
+      expect(status()).toBe('Please confirm');
+      await choose('Travel');
+      expect(status()).toBe('Receipt missing');
+      expect(historyTexts()[0]).toBe('You confirmed Travel');
     });
 
     it('private shows 1800 and back to business shows receipt missing', async () => {
@@ -267,6 +302,27 @@ describe('PaymentDetailPage', () => {
       expect(d('self-receipt')!.getAttribute('href')).toBe('/soon/selfReceipt');
     });
 
+    it('names the self-issued receipt with its German term, Eigenbeleg, outside German', async () => {
+      await render('/payments/wd-t3');
+      expect(text(d('self-receipt'))).toBe('Self-issued receipt (Eigenbeleg)');
+      expect(d('self-receipt')!.querySelector('bdi[dir="ltr"]')!.textContent).toBe('Eigenbeleg');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('self-receipt'))).toBe(`${ar.terms.eigenbeleg.label} (Eigenbeleg)`);
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('self-receipt'))).toBe('Eigenbeleg');
+      expect(d('self-receipt')!.querySelector('bdi')).toBeNull();
+    });
+
+    it('explains the Eigenbeleg when the link is focused', async () => {
+      await render('/payments/wd-t3');
+      d('self-receipt')!.dispatchEvent(new Event('focus'));
+      await new Promise((resolve) => setTimeout(resolve));
+      await settle();
+      expect(document.body.textContent).toContain(en.terms.eigenbeleg.explain);
+    });
+
     it('a payment that needs no receipt says so', async () => {
       await render('/payments/wd-t15');
       expect(text(d('receipt-state'))).toBe('No receipt needed');
@@ -299,6 +355,12 @@ describe('PaymentDetailPage', () => {
       expect(text(d('booking-label'))).toBe('Rent · 4210 Miete (unbewegliche Wirtschaftsgüter)');
       expect(text(d('booking-vat'))).toContain('No VAT');
       expect(text(d('booking-vat'))).not.toContain('19');
+    });
+
+    it('travel is taxed at the reduced rate of 7%', async () => {
+      await render('/payments/wd-t3');
+      expect(text(d('booking-label'))).toBe('Travel · 4670 Reisekosten Unternehmer');
+      expect(text(d('booking-vat'))).toBe('7%');
     });
 
     it('a business that charges VAT shows the category rate', async () => {

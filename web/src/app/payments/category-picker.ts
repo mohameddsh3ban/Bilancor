@@ -13,8 +13,9 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmPopoverImports } from '@spartan-ng/helm/popover';
 import { LanguageService } from '../core/i18n/language.service';
-import { CATEGORIES } from '../data/categories';
 import { Booking } from '../data/models';
+import { categoriesFor } from '../domain/tax-rules';
+import { DemoStateService } from '../state/demo-state.service';
 import { BookingLabel } from './booking-label';
 
 /** The categories whose label, SKR03 number or German name contains the typed text (any case, outer spaces ignored). */
@@ -33,8 +34,9 @@ export function matchCategories(
 }
 
 /**
- * A "Change" button that opens a searchable list of the categories a person can book a payment to.
- * Choosing one emits it and closes the list; choosing the current category only closes it.
+ * A "Change" button that opens a searchable list of the categories a person can book a payment to (the open
+ * business's own: its tax status decides which revenue account it is offered).
+ * Choosing one emits it and closes the list, the current category too, so the page decides what that means.
  * The list is a popover that is nearly as wide as the screen on a phone.
  */
 @Component({
@@ -109,6 +111,7 @@ export function matchCategories(
 export class CategoryPicker {
   private readonly language = inject(LanguageService);
   private readonly transloco = inject(TranslocoService);
+  private readonly demo = inject(DemoStateService);
 
   /** The category the payment is booked to now, if any. */
   readonly current = input<Booking | null>(null);
@@ -117,8 +120,10 @@ export class CategoryPicker {
   protected readonly query = signal('');
   protected readonly matches = computed(() => {
     this.language.lang(); // the labels change with the language
-    return matchCategories(CATEGORIES, this.query(), (category) =>
-      this.transloco.translate(`booking.${category.labelKey}`),
+    return matchCategories(
+      categoriesFor(this.demo.business().taxProfile),
+      this.query(),
+      (category) => this.transloco.translate(`booking.${category.labelKey}`),
     );
   });
 
@@ -136,6 +141,6 @@ export class CategoryPicker {
 
   protected choose(category: Booking, popover: { close: () => void }): void {
     popover.close();
-    if (!this.isCurrent(category)) this.picked.emit(category);
+    this.picked.emit(category);
   }
 }

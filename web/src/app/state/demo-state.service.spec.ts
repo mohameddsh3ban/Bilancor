@@ -30,6 +30,17 @@ describe('DemoStateService', () => {
     expect(state.setup()).toBe('new');
   });
 
+  it('bankConnected follows the setup state: no bank yet in "new", connected in "halfway" and "active"', () => {
+    const state = TestBed.inject(DemoStateService);
+    expect(state.bankConnected()).toBe(true);
+    state.setSetup('new');
+    expect(state.bankConnected()).toBe(false);
+    state.setSetup('halfway');
+    expect(state.bankConnected()).toBe(true);
+    state.setSetup('active');
+    expect(state.bankConnected()).toBe(true);
+  });
+
   it('updateTransaction changes what business() returns and needsYouCount drops', () => {
     const state = TestBed.inject(DemoStateService);
     const before = needsYouCount(state.business().transactions);

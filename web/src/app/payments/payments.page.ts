@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -14,7 +22,6 @@ import {
   isFilterActive,
   monthsOf,
 } from '../domain/payment-filters';
-import { setupSteps } from '../domain/home-cards';
 import { needsYouCount } from '../domain/payment-status';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentFilterChips, PaymentFiltersBar } from './payment-filters-bar';
@@ -132,7 +139,7 @@ type EmptyKind = 'new' | 'allClear' | 'noMatch' | null;
       </section>
 
       <div
-        class="min-w-0 lg:w-[26rem] lg:shrink-0"
+        class="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:w-[26rem] lg:shrink-0 lg:overflow-y-auto"
         data-testid="payments-detail"
         [class.hidden]="!selectedId()"
       >
@@ -145,6 +152,7 @@ export class PaymentsPage {
   private readonly demo = inject(DemoStateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   /** The filters live here, not in the URL; they start over when another business opens. */
   protected readonly filter = linkedSignal<string, PaymentFilter>({
@@ -162,10 +170,9 @@ export class PaymentsPage {
     { initialValue: null },
   );
 
-  private readonly connected = computed(() => setupSteps(this.demo.setup()).bank);
   protected readonly accounts = computed(() => this.demo.business().accounts);
   private readonly payments = computed(() =>
-    this.connected() ? this.demo.business().transactions : [],
+    this.demo.bankConnected() ? this.demo.business().transactions : [],
   );
   protected readonly months = computed(() => monthsOf(this.payments()));
   protected readonly needsYou = computed(() => needsYouCount(this.payments()));
@@ -174,13 +181,26 @@ export class PaymentsPage {
 
   /** What to show instead of the list: no bank yet, nothing left to do, or no match for the filters. */
   protected readonly empty = computed<EmptyKind>(() => {
-    if (!this.connected()) return 'new';
+    if (!this.demo.bankConnected()) return 'new';
     if (this.filtered().length > 0) return null;
     const f = this.filter();
     const onlyNeedsYou =
       f.quick === 'needsYou' && f.accountId === null && f.month === null && f.search.trim() === '';
     return onlyNeedsYou ? 'allClear' : isFilterActive(f) ? 'noMatch' : null;
   });
+
+  constructor() {
+    // On a phone a payment is a page of its own: show it from its top, not from where the list or the homepage
+    // was scrolled to. From `lg` it is a panel beside the list, which stays where it is (the panel is sticky).
+    effect(() => {
+      if (this.selectedId() && !this.isComputer()) this.document.documentElement.scrollTop = 0;
+    });
+  }
+
+  /** Whether the screen is at least Tailwind's `lg` wide (one that matches the `lg:` classes in the template). */
+  private isComputer(): boolean {
+    return this.document.defaultView?.matchMedia?.('(min-width: 64rem)').matches ?? false;
+  }
 
   protected showAll(): void {
     this.filter.set(EMPTY_FILTER);

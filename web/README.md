@@ -1,7 +1,7 @@
-# Homepage mockup (web)
+# Bookkeeping app mockup (web)
 
-Clickable Angular mockup of the bookkeeping app's homepage (en / de / ar). No backend. All data is sample data in
-`src/app/data/sample-data.ts`.
+Clickable Angular mockup of the bookkeeping app: the homepage and the Payments page (en / de / ar). No backend.
+All data is sample data in `src/app/data/sample-data.ts`.
 
 ## Install
 
@@ -29,7 +29,7 @@ Windows may ask to allow Node.js on private networks; allow it so your phone can
 
 The strip at the top of every page is demo-only:
 
-- **Setup state** (New client / Halfway / Active client) shows how the homepage looks at each stage of setup.
+- **Setup state** (New client / Halfway / Active client) shows how the homepage and the Payments page look at each stage of setup (in "New client" no bank is connected yet, so Payments has no list).
 - **Business switcher** (in the top bar) changes which business is open.
 - **Reset demo** brings back every notice you dismissed and the sample payments (dismissals are remembered in the browser until you reset).
 
@@ -41,9 +41,9 @@ What works on sample data:
 
 - **Search** by name, amount or reference. Amounts can be typed as `120`, `120,00`, `120.00` or `-120`.
 - **Quick filters** (All, Needs you, Money in, Money out) are the segmented buttons under the search box; the one that is on is highlighted. **Account**, **month** and **search** show as removable chips with ✕, and **Clear all** removes everything.
-- **One payment:** full screen on a phone, a side panel beside the list from 1024 px wide.
+- **One payment:** full screen on a phone, a side panel beside the list from 1024 px wide. On a computer between 1024 and 1535 px the table has no room next to the panel, so while a payment is open the list layout is shown instead; from 1536 px the table stays.
 - **Actions**, where they apply: Confirm, No receipt needed, **Change** (the category), Business / Private. Each adds a line to the history.
-- **Print views:** Download PDF (one payment), and Download month (computer only), which prints the whole selected month, with its account if one is chosen; search and the quick filter don't apply. Both open the browser's Print dialog; choose Save as PDF to keep a file.
+- **Print views:** Download PDF (one payment), and Download month (computer only), which prints the selected month, or the newest month when none is chosen, with its account if one is chosen; search and the quick filter don't apply. Both open the browser's Print dialog; choose Save as PDF to keep a file.
 - In the "New client" setup state, Payments shows "Connect your bank to see your payments" with a button instead of the list.
 
 Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Pick from Documents, Self-issued receipt, and the homepage's decisions Start button.

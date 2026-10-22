@@ -36,6 +36,14 @@ describe('format pipes', () => {
     expect(pipe.transform('2026-10-21')).toContain('21. Okt');
   });
 
+  it('appDate pipe adds the year only when asked', () => {
+    const pipe = TestBed.runInInjectionContext(() => new AppDatePipe());
+    expect(pipe.transform('2026-10-17')).toBe('17 Oct');
+    expect(pipe.transform('2026-10-17', { year: true })).toBe('17 Oct 2026');
+    TestBed.inject(LanguageService).setLang('de');
+    expect(pipe.transform('2026-10-17', { year: true })).toBe('17. Okt. 2026');
+  });
+
   it('appMonth pipe names the month in the current language', () => {
     const pipe = TestBed.runInInjectionContext(() => new AppMonthPipe());
     expect(pipe.transform('2026-10')).toBe('October 2026');

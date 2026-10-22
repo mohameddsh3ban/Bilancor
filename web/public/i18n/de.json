@@ -19,6 +19,11 @@
       "label": "SKR03",
       "de": "SKR03",
       "explain": "Der Standardkontenrahmen mit den Kontonummern, unter denen jede Einnahme und Ausgabe abgelegt wird."
+    },
+    "eigenbeleg": {
+      "label": "Eigenbeleg",
+      "de": "Eigenbeleg",
+      "explain": "Ein Beleg, den du selbst ausstellst, wenn das Original verloren ging oder es nie einen gab."
     }
   },
   "account": {
@@ -183,8 +188,7 @@
         "missingHint": "Füge einen hinzu oder sag, dass diese Zahlung keinen braucht.",
         "takePhoto": "Foto aufnehmen",
         "pickDocument": "Aus Dokumenten wählen",
-        "noReceiptNeeded": "Kein Beleg nötig",
-        "selfReceipt": "Eigenbeleg"
+        "noReceiptNeeded": "Kein Beleg nötig"
       },
       "booking": {
         "title": "Buchung",

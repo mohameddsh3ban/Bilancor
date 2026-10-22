@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Business, Person, SetupState, Transaction } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
+import { setupSteps } from '../domain/home-cards';
 
 const DEFAULT_BUSINESS_ID = 'weber-design';
 
@@ -24,6 +25,8 @@ export class DemoStateService {
     return all.find((b) => b.id === this.businessIdSignal()) ?? all[0];
   });
   readonly setup = this.setupSignal.asReadonly();
+  /** Whether the person has connected a bank yet; until then there are no payments to show. */
+  readonly bankConnected = computed(() => setupSteps(this.setupSignal()).bank);
 
   /** The person's businesses as they are now (including edits). */
   get businesses(): Business[] {

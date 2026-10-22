@@ -12,13 +12,14 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideDownload, lucideFileText, lucideX } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
+import { HlmTooltip } from '@spartan-ng/helm/tooltip';
 import { map } from 'rxjs';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { formatIban } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
+import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
 import { Account, Booking, Transaction } from '../data/models';
-import { setupSteps } from '../domain/home-cards';
 import {
   changeCategory,
   confirmBooking,
@@ -26,6 +27,7 @@ import {
   setPrivate,
 } from '../domain/payment-actions';
 import { paymentStatus } from '../domain/payment-status';
+import { vatRateShown } from '../domain/tax-rules';
 import { DemoStateService } from '../state/demo-state.service';
 import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
@@ -46,6 +48,7 @@ import { PaymentStatusChip } from './payment-status-chip';
     BookingLabel,
     CategoryPicker,
     HlmButton,
+    HlmTooltip,
     MoneyPipe,
     NgIcon,
     PaymentHistory,
@@ -174,8 +177,15 @@ import { PaymentStatusChip } from './payment-status-chip';
                     size="lg"
                     data-testid="self-receipt"
                     [routerLink]="['/soon', 'selfReceipt']"
+                    [hlmTooltip]="'terms.eigenbeleg.explain' | transloco"
                   >
-                    {{ 'payments.detail.receipt.selfReceipt' | transloco }}
+                    <span>
+                      {{ 'terms.eigenbeleg.label' | transloco }}
+                      @if (showGerman()) {
+                        (<bdi dir="ltr">{{ 'terms.eigenbeleg.de' | transloco }}</bdi
+                        >)
+                      }
+                    </span>
                   </a>
                 </div>
               }
@@ -201,12 +211,14 @@ import { PaymentStatusChip } from './payment-status-chip';
             <div class="flex flex-col gap-0.5">
               <dt class="text-muted-foreground">{{ 'payments.detail.booking.vat' | transloco }}</dt>
               <dd class="font-medium" data-testid="booking-vat">
-                @if (!tx.booking) {
-                  —
-                } @else if (vatRate(tx); as rate) {
-                  {{ 'payments.detail.booking.vatRate' | transloco: { rate } }}
+                @if (tx.booking; as booking) {
+                  @if (vatRate(booking); as rate) {
+                    {{ 'payments.detail.booking.vatRate' | transloco: { rate } }}
+                  } @else {
+                    {{ 'payments.detail.booking.noVat' | transloco }}
+                  }
                 } @else {
-                  {{ 'payments.detail.booking.noVat' | transloco }}
+                  —
                 }
                 @if (kleinunternehmer()) {
                   <span class="text-muted-foreground block text-xs font-normal">
@@ -321,19 +333,22 @@ export class PaymentDetailPage {
   private readonly demo = inject(DemoStateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly language = inject(LanguageService);
 
   private readonly id = toSignal(this.route.paramMap.pipe(map((params) => params.get('id'))), {
     initialValue: this.route.snapshot.paramMap.get('id'),
   });
 
   protected readonly accounts = computed(() => this.demo.business().accounts);
+  /** German keeps only its own term; the other languages put the German original next to the translation. */
+  protected readonly showGerman = computed(() => this.language.lang() !== 'de');
   protected readonly kleinunternehmer = computed(
     () => this.demo.business().taxProfile.kleinunternehmer,
   );
 
   /** The open payment; none when its id is unknown, belongs to another business, or no bank is connected yet. */
   protected readonly payment = computed<Transaction | null>(() => {
-    if (!setupSteps(this.demo.setup()).bank) return null;
+    if (!this.demo.bankConnected()) return null;
     return this.demo.business().transactions.find((tx) => tx.id === this.id()) ?? null;
   });
 
@@ -352,9 +367,9 @@ export class PaymentDetailPage {
     return this.accounts().find((account) => account.id === tx.accountId);
   }
 
-  /** A small business never charges or reclaims VAT, whatever the category's usual rate is. */
-  protected vatRate(tx: Transaction): number {
-    return this.kleinunternehmer() ? 0 : (tx.booking?.vatRate ?? 0);
+  /** The VAT rate to show for the booking, none when there is no VAT (always so for a small business). */
+  protected vatRate(booking: Booking): number | null {
+    return vatRateShown(this.demo.business().taxProfile, booking);
   }
 
   // Each action changes the payment only while it still applies, so a double tap never writes a second history line.
@@ -367,8 +382,12 @@ export class PaymentDetailPage {
     this.change((tx) => (tx.receipt === 'missing' ? markNoReceiptNeeded(tx) : tx));
   }
 
+  /** Another category changes it; the one it already has confirms it when it still waits for confirmation. */
   protected pick(booking: Booking): void {
-    this.change((tx) => (tx.booking?.skr03 === booking.skr03 ? tx : changeCategory(tx, booking)));
+    this.change((tx) => {
+      if (tx.booking?.skr03 !== booking.skr03) return changeCategory(tx, booking);
+      return paymentStatus(tx) === 'confirm' ? confirmBooking(tx) : tx;
+    });
   }
 
   protected markPrivate(isPrivate: boolean): void {

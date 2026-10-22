@@ -9,9 +9,9 @@ import { AppDatePipe } from '../core/format/date.pipe';
 import { formatIban } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
-import { Account, Transaction } from '../data/models';
-import { setupSteps } from '../domain/home-cards';
+import { Account, Booking, Transaction } from '../data/models';
 import { paymentStatus } from '../domain/payment-status';
+import { vatRateShown } from '../domain/tax-rules';
 import { BookingLabel } from '../payments/booking-label';
 import { PaymentHistory } from '../payments/payment-history';
 import { PaymentStatusChip } from '../payments/payment-status-chip';
@@ -75,7 +75,7 @@ import { printOnceRendered } from './print-once';
             {{ tx.counterparty }}
           </h1>
           <p class="text-muted-foreground text-sm" data-testid="print-meta">
-            {{ tx.date | appDate }} ·
+            {{ tx.date | appDate: { year: true } }} ·
             {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
           </p>
         </header>
@@ -127,12 +127,14 @@ import { printOnceRendered } from './print-once';
             <div class="flex flex-col gap-0.5">
               <dt class="text-muted-foreground">{{ 'payments.detail.booking.vat' | transloco }}</dt>
               <dd class="font-medium" data-testid="print-vat">
-                @if (!tx.booking) {
-                  —
-                } @else if (vatRate(tx); as rate) {
-                  {{ 'payments.detail.booking.vatRate' | transloco: { rate } }}
+                @if (tx.booking; as booking) {
+                  @if (vatRate(booking); as rate) {
+                    {{ 'payments.detail.booking.vatRate' | transloco: { rate } }}
+                  } @else {
+                    {{ 'payments.detail.booking.noVat' | transloco }}
+                  }
                 } @else {
-                  {{ 'payments.detail.booking.noVat' | transloco }}
+                  —
                 }
               </dd>
             </div>
@@ -173,7 +175,7 @@ import { printOnceRendered } from './print-once';
           <h2 class="text-muted-foreground text-sm font-medium">
             {{ 'payments.detail.history.title' | transloco }}
           </h2>
-          <app-payment-history [entries]="tx.history" [accounts]="accounts()" />
+          <app-payment-history [entries]="tx.history" [accounts]="accounts()" [withYear]="true" />
         </section>
       </article>
     } @else {
@@ -197,7 +199,7 @@ export class PaymentPrintPage {
 
   /** The payment to print; none when its id is unknown, belongs to another business, or no bank is connected yet. */
   protected readonly payment = computed<Transaction | null>(() => {
-    if (!setupSteps(this.demo.setup()).bank) return null;
+    if (!this.demo.bankConnected()) return null;
     return this.business().transactions.find((tx) => tx.id === this.id()) ?? null;
   });
 
@@ -219,8 +221,8 @@ export class PaymentPrintPage {
     return this.accounts().find((account) => account.id === tx.accountId);
   }
 
-  /** A small business never charges or reclaims VAT, whatever the category's usual rate is. */
-  protected vatRate(tx: Transaction): number {
-    return this.business().taxProfile.kleinunternehmer ? 0 : (tx.booking?.vatRate ?? 0);
+  /** The VAT rate to show for the booking, none when there is no VAT (always so for a small business). */
+  protected vatRate(booking: Booking): number | null {
+    return vatRateShown(this.business().taxProfile, booking);
   }
 }

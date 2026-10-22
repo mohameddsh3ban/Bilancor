@@ -19,11 +19,15 @@ export function formatMoney(
   }).format(cents / 100);
 }
 
-/** Date-only ISO strings parse as UTC midnight, so format in UTC to keep the same calendar day everywhere. */
-export function formatDate(iso: string, lang: Lang): string {
+/**
+ * A short day and month ("17 Oct"), with the year ("17 Oct 2026") when `year` is set.
+ * Date-only ISO strings parse as UTC midnight, so format in UTC to keep the same calendar day everywhere.
+ */
+export function formatDate(iso: string, lang: Lang, opts: { year?: boolean } = {}): string {
   return new Intl.DateTimeFormat(LOCALES[lang], {
     day: 'numeric',
     month: 'short',
+    ...(opts.year ? { year: 'numeric' } : {}),
     timeZone: 'UTC',
   }).format(new Date(iso));
 }
