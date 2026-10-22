@@ -118,8 +118,20 @@ describe('ReviewFinish', () => {
       render();
 
       expect(demo.business().vatDue!.dueDate).toBe('2026-11-10');
-      expect(text(q('finish-vat'))).toBe(`Next VAT return due ${formatDate('2026-11-10', 'en')}`);
-      expect(text(q('finish-vat'))).toBe('Next VAT return due 10 Nov');
+      expect(text(q('finish-vat'))).toBe(
+        `VAT return (UStVA) · next due ${formatDate('2026-11-10', 'en')}`,
+      );
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+    });
+
+    it('names the tax term with its German original and an explanation, like the tax card', () => {
+      answerAll();
+      render();
+
+      const term = q('finish-vat')!.querySelector('app-term');
+      expect(term).not.toBeNull();
+      expect(text(term!.querySelector('button'))).toBe('VAT return (UStVA)');
+      expect(term!.querySelector('bdi')!.getAttribute('dir')).toBe('ltr');
     });
 
     it('is left out for a business that does not', () => {
@@ -135,7 +147,9 @@ describe('ReviewFinish', () => {
     it('follows the business that is open', () => {
       demo.setBusiness('cafe-linde');
       render();
-      expect(text(q('finish-vat'))).toBe(`Next VAT return due ${formatDate('2027-01-10', 'en')}`);
+      expect(text(q('finish-vat'))).toBe(
+        `VAT return (UStVA) · next due ${formatDate('2027-01-10', 'en')}`,
+      );
 
       demo.setBusiness('sara-yoga');
       fixture.detectChanges();
@@ -160,13 +174,16 @@ describe('ReviewFinish', () => {
     );
     expect(text(q('finish-summary'))).toBe('6 Entscheidungen · 1 Beleg hinzugefügt');
     expect(text(q('finish-vat'))).toBe(
-      `Nächste Umsatzsteuer-Voranmeldung fällig am ${formatDate('2026-11-10', 'de')}`,
+      `UStVA · als Nächstes fällig am ${formatDate('2026-11-10', 'de')}`,
     );
     expect(text(q('finish-back'))).toBe('Zurück');
 
     TestBed.inject(LanguageService).setLang('ar');
     fixture.detectChanges();
     expect(text(q('finish-back'))).toBe('رجوع');
+    expect(text(q('finish-vat'))).toBe(
+      `إقرار ضريبة القيمة المضافة (UStVA) · الموعد القادم: ${formatDate('2026-11-10', 'ar')}`,
+    );
     expect(text(q('finish-summary'))).toContain('6 قرارات');
   });
 

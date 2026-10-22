@@ -38,6 +38,7 @@ import { ReviewStage } from './review-stage';
       #layer
       class="bg-surface lg:bg-foreground/40 fixed inset-0 z-50 flex flex-col items-center overflow-y-auto overscroll-contain outline-none lg:p-6"
       role="dialog"
+      aria-modal="true"
       tabindex="-1"
       data-testid="review-layer"
       [attr.dir]="language.dir()"
@@ -53,6 +54,7 @@ import { ReviewStage } from './review-stage';
             type="button"
             class="text-muted-foreground hover:bg-muted focus-visible:ring-ring/50 -ms-2 inline-flex size-9 shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-3"
             data-testid="review-close"
+            [disabled]="review.pending()"
             [attr.aria-label]="'review.close' | transloco"
             (click)="close()"
           >
@@ -145,10 +147,10 @@ export class ReviewPage {
     return shown === null ? [] : [shown];
   });
 
-  /** How far along the person is, as the share of the cards: what the bar and "N of M" both say. */
+  /** How much is done, as the share of the cards answered: empty at the start, full when nothing is left. */
   protected readonly percent = computed(() => {
     const total = this.review.total();
-    return total === 0 ? 100 : Math.round((this.review.position() / total) * 100);
+    return total === 0 ? 100 : Math.round((this.review.answered() / total) * 100);
   });
 
   /** The classes that slide the card out, or in: the other way round when the page reads right to left. */
@@ -175,7 +177,9 @@ export class ReviewPage {
     });
   }
 
+  /** Leaves for the page the person came from. Not while an answer is being made: it would be lost half way. */
   protected close(): void {
+    if (this.review.pending()) return;
     void this.router.navigateByUrl(this.review.returnUrl());
   }
 }

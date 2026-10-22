@@ -4,6 +4,7 @@ import { lucideCheck } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { AppDatePipe } from '../core/format/date.pipe';
+import { Term } from '../core/i18n/term';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService } from '../state/review.service';
 
@@ -14,7 +15,7 @@ import { ReviewService } from '../state/review.service';
 @Component({
   selector: 'app-review-finish',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppDatePipe, HlmButton, NgIcon, TranslocoPipe],
+  imports: [AppDatePipe, HlmButton, NgIcon, Term, TranslocoPipe],
   viewProviders: [provideIcons({ lucideCheck })],
   host: {
     class: 'flex flex-1 flex-col items-center justify-center gap-4 py-8 text-center',
@@ -43,7 +44,8 @@ import { ReviewService } from '../state/review.service';
     }
     @if (vatDue(); as vat) {
       <p class="text-sm font-medium" data-testid="finish-vat">
-        {{ 'review.finish.vat' | transloco: { date: (vat.dueDate | appDate) } }}
+        <app-term key="ustva" /> ·
+        {{ 'review.finish.vatDue' | transloco: { date: (vat.dueDate | appDate) } }}
       </p>
     }
     <button hlmBtn size="lg" class="mt-2 min-w-32" data-testid="finish-back" (click)="back.emit()">

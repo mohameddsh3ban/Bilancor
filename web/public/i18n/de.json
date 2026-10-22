@@ -518,7 +518,7 @@
         "one": "1 Duplikat entfernt",
         "many": "{{count}} Duplikate entfernt"
       },
-      "vat": "Nächste Umsatzsteuer-Voranmeldung fällig am {{date}}",
+      "vatDue": "als Nächstes fällig am {{date}}",
       "back": "Zurück"
     }
   }

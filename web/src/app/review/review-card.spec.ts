@@ -140,20 +140,24 @@ describe('ReviewCard', () => {
       expect(review.skip).toHaveBeenCalledTimes(1);
     });
 
-    it('is not offered when this is the only card left', () => {
+    it('is not offered when this is the only card left, but keeps its space so the card does not shrink', () => {
       setUp();
+      const hidden = () => q('card-skip')!.classList.contains('invisible');
+      expect(hidden()).toBe(false);
+
       review.total.set(1);
       fixture.detectChanges();
-      expect(q('card-skip')).toBeNull();
+      expect(q('card-skip')).not.toBeNull();
+      expect(hidden()).toBe(true);
 
       review.total.set(3);
       review.answered.set(2);
       fixture.detectChanges();
-      expect(q('card-skip')).toBeNull();
+      expect(hidden()).toBe(true);
 
       review.answered.set(1);
       fixture.detectChanges();
-      expect(q('card-skip')).not.toBeNull();
+      expect(hidden()).toBe(false);
     });
   });
 

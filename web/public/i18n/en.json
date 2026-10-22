@@ -518,7 +518,7 @@
         "one": "1 duplicate removed",
         "many": "{{count}} duplicates removed"
       },
-      "vat": "Next VAT return due {{date}}",
+      "vatDue": "next due {{date}}",
       "back": "Back"
     }
   }

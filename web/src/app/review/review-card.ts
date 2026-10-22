@@ -86,16 +86,15 @@ type Tick =
 
         <ng-content />
 
-        @if (canSkip()) {
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 mx-auto rounded-sm text-sm underline underline-offset-4 outline-none focus-visible:ring-3"
-            data-testid="card-skip"
-            (click)="review.skip()"
-          >
-            {{ 'review.skip' | transloco }}
-          </button>
-        }
+        <button
+          type="button"
+          class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 mx-auto rounded-sm text-sm underline underline-offset-4 outline-none focus-visible:ring-3"
+          data-testid="card-skip"
+          [class.invisible]="!canSkip()"
+          (click)="review.skip()"
+        >
+          {{ 'review.skip' | transloco }}
+        </button>
       </div>
 
       @if (tick(); as state) {
@@ -151,7 +150,10 @@ export class ReviewCard {
   protected readonly tick = signal<Tick | null>(null);
   /** The question and answers cannot be used: a tick is showing, or an answer is still being made. */
   protected readonly locked = computed(() => this.tick() !== null || this.review.pending());
-  /** Skip moves the card behind the others, so it needs another card to move behind. */
+  /**
+   * Skip moves the card behind the others, so it needs another card to move behind. Without one it is hidden but keeps
+   * its space, so a card that ticks as the second to last does not shrink.
+   */
   protected readonly canSkip = computed(() => this.review.total() - this.review.answered() > 1);
   protected readonly amountClass = computed(() => {
     const cents = this.amountCents();

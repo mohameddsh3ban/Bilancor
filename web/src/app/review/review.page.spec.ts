@@ -132,6 +132,7 @@ describe('ReviewPage', () => {
       await render();
       const layer = q('review-layer')!;
       expect(layer.getAttribute('role')).toBe('dialog');
+      expect(layer.getAttribute('aria-modal')).toBe('true');
       expect(layer.getAttribute('aria-label')).toBe('Review your decisions');
       expect(document.activeElement).toBe(layer);
     });
@@ -151,23 +152,43 @@ describe('ReviewPage', () => {
       expect(document.activeElement).toBe(q('review-layer'));
     });
 
+    const barValue = () => el.querySelector('[role="progressbar"]')!.getAttribute('aria-valuenow');
+
     it('progress reads 1 of 6 for weber-design', async () => {
       await render();
 
       expect(demo.business().id).toBe('weber-design');
       expect(text(q('review-meta'))).toBe('1 of 6 · about 6 min left');
-      const bar = el.querySelector('[role="progressbar"]')!;
-      expect(bar.getAttribute('aria-valuenow')).toBe('17');
-      expect(bar.getAttribute('aria-label')).toBe('Progress');
+      expect(el.querySelector('[role="progressbar"]')!.getAttribute('aria-label')).toBe('Progress');
     });
 
-    it('progress follows the answers', async () => {
+    it('the bar is empty at the start and fills with the answers given, not the card number', async () => {
+      await render();
+      vi.useFakeTimers();
+      expect(barValue()).toBe('0');
+
+      const values = [barValue()];
+      for (let i = 0; i < 6; i++) {
+        answerAndWait();
+        values.push(barValue());
+      }
+      // The text says which card it is on; the bar says how much is done.
+      expect(values).toEqual(['0', '17', '33', '50', '67', '83', '100']);
+    });
+
+    it('the bar moves when the answer is given, while its card still shows the tick', async () => {
       await render();
       vi.useFakeTimers();
 
-      answerAndWait();
-      expect(text(q('review-meta'))).toBe('2 of 6 · about 5 min left');
-      expect(el.querySelector('[role="progressbar"]')!.getAttribute('aria-valuenow')).toBe('33');
+      answer();
+      expect(barValue()).toBe('17');
+      expect(name()).toBe('Amazon');
+    });
+
+    it('the bar is full when there is nothing to review', async () => {
+      demo.setBusiness('cafe-linde');
+      await render();
+      expect(barValue()).toBe('100');
     });
   });
 
@@ -186,6 +207,40 @@ describe('ReviewPage', () => {
 
       expect(TestBed.inject(Router).url).toBe('/payments');
       expect(q('review-layer')).toBeNull();
+    });
+
+    describe('while an answer is being made (a photo being read)', () => {
+      beforeEach(async () => {
+        harness = await RouterTestingHarness.create('/documents');
+        await harness.navigateByUrl('/review');
+        el = harness.routeNativeElement as HTMLElement;
+        harness.detectChanges();
+        void review.answer(() => new Promise<void>(() => undefined), { labelKey: BOOKED });
+        harness.detectChanges();
+      });
+
+      it('close is disabled and does nothing', async () => {
+        const close = q('review-close')!;
+        expect(review.pending()).toBe(true);
+        expect(close.hasAttribute('disabled')).toBe(true);
+
+        close.click();
+        await settle();
+        expect(TestBed.inject(Router).url).toBe('/review');
+      });
+
+      it('Escape does nothing either', async () => {
+        q('review-layer')!.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+        );
+        await settle();
+        expect(TestBed.inject(Router).url).toBe('/review');
+      });
+    });
+
+    it('close is enabled when nothing is going on', async () => {
+      await render();
+      expect(q('review-close')!.hasAttribute('disabled')).toBe(false);
     });
 
     it('goes home when there was no page before', async () => {
@@ -444,7 +499,7 @@ describe('ReviewPage', () => {
       expect(q('review-card')).toBeNull();
       expect(text(q('finish-title'))).toBe('All done — your books are up to date');
       expect(text(q('finish-summary'))).toBe('6 decisions · 1 receipt added · 1 duplicate removed');
-      expect(text(q('finish-vat'))).toBe('Next VAT return due 10 Nov');
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
       expect(q('review-meta')).toBeNull();
       expect(el.querySelector('[role="progressbar"]')!.getAttribute('aria-valuenow')).toBe('100');
     });
