@@ -38,7 +38,7 @@
 
 ```
 .gitignore                                  # root: node_modules, .superpowers/, web/.angular, dist
-web/                                        # Angular app (backend comes later in api/)
+web/                                        # Angular app (backend comes later in backend/)
   .postcssrc.json                           # Tailwind 4 PostCSS plugin
   src/styles.css                            # Tailwind import + theme tokens
   src/assets/i18n/en.json, de.json, ar.json
