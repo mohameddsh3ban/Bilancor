@@ -111,6 +111,27 @@ describe('sample payments', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it('every unclear sample payment has 1–3 suggestions from CATEGORIES', () => {
+    const known = CATEGORIES.map((c) => c.labelKey);
+    const unclear = BUSINESSES.flatMap((b) => b.transactions).filter((t) => paymentStatus(t) === 'unclear');
+    expect(unclear.map((t) => t.id)).toEqual(['wd-t4', 'wd-t18', 'sy-t7']);
+    for (const t of unclear) {
+      expect(t.suggestions?.length, t.id).toBeGreaterThanOrEqual(1);
+      expect(t.suggestions!.length, t.id).toBeLessThanOrEqual(3);
+      expect(new Set(t.suggestions).size, t.id).toBe(t.suggestions!.length);
+      for (const key of t.suggestions!) expect(known, `${t.id} ${key}`).toContain(key);
+    }
+  });
+
+  it('weber-design has the new Amazon payment wd-t18: unclear, with its receipt attached and the same suggestions as wd-t4', () => {
+    const wd = BUSINESSES.find((b) => b.id === 'weber-design')!;
+    const t18 = wd.transactions.find((t) => t.id === 'wd-t18')!;
+    expect(paymentStatus(t18)).toBe('unclear');
+    expect(t18).toMatchObject({ date: '2026-10-02', counterparty: 'Amazon', amountCents: -2390, accountId: 'wd-qonto', booking: null, receipt: 'attached' });
+    expect(t18.suggestions).toEqual(wd.transactions.find((t) => t.id === 'wd-t4')!.suggestions);
+    expect(wd.documents.filter((d) => d.paymentId === 'wd-t18').map((d) => d.id)).toEqual(['doc-wd-t18']);
+  });
+
   it('every booking is a known category or a private booking', () => {
     const known = [...CATEGORIES, PRIVATE_OUT, PRIVATE_IN];
     for (const b of BUSINESSES) {

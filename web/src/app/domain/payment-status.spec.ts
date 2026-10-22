@@ -57,7 +57,7 @@ describe('needsYouCount', () => {
   });
 
   it('matches the sample businesses', () => {
-    expect(count('weber-design')).toBe(4);
+    expect(count('weber-design')).toBe(5);
     expect(count('sara-yoga')).toBe(3);
     expect(count('cafe-linde')).toBe(0);
   });

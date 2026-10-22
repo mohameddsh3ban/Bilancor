@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
 import { SUPPLIES } from '../../data/categories';
 import { editDocument } from '../../domain/document-actions';
+import { decisionCount } from '../../domain/home-figures';
 import { changeCategory, markNoReceiptNeeded } from '../../domain/payment-actions';
 import { DemoStateService } from '../../state/demo-state.service';
 import { DecisionsCard } from './decisions-card';
@@ -22,36 +23,44 @@ describe('DecisionsCard', () => {
 
   it('shows the count, the minutes and a Start link', () => {
     const el = render('weber-design');
-    expect(el.textContent).toContain('5 things need your decision');
-    expect(el.textContent).toContain('about 5 minutes');
+    expect(el.textContent).toContain('6 things need your decision');
+    expect(el.textContent).toContain('about 6 minutes');
     expect(el.querySelector('a')?.getAttribute('href')).toBe('/soon/decisions');
     expect(el.querySelector('a')?.textContent).toContain('Start');
   });
 
-  it('decisions count is 5 for weber-design and drops to 4 after typing the amount', () => {
+  it('shows the shared count, decisionCount of the open business', () => {
+    const el = render('weber-design');
+    const demo = TestBed.inject(DemoStateService);
+    const count = decisionCount(demo.business(), demo.setup());
+    expect(count).toBeGreaterThan(1);
+    expect(el.textContent).toContain(`${count} things need your decision`);
+  });
+
+  it('decisions count is 6 for weber-design and drops to 5 after typing the amount', () => {
     const demo = TestBed.inject(DemoStateService);
     demo.setBusiness('weber-design');
     const fixture = TestBed.createComponent(DecisionsCard);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent).toContain('5 things need your decision');
-    // Four payments need the person; the fifth thing is the receipt whose amount could not be read.
+    expect(el.textContent).toContain('6 things need your decision');
+    // Five payments need the person; the sixth thing is the receipt whose amount could not be read.
     demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
     fixture.detectChanges();
-    expect(el.textContent).toContain('4 things need your decision');
-    expect(el.textContent).toContain('about 4 minutes');
+    expect(el.textContent).toContain('5 things need your decision');
+    expect(el.textContent).toContain('about 5 minutes');
   });
 
-  it('counts a document that needs the person once a bank is connected, and not before', () => {
+  it('counts payments and documents once a bank is connected, and nothing before', () => {
     const demo = TestBed.inject(DemoStateService);
     demo.setBusiness('weber-design');
     demo.setSetup('halfway');
     const fixture = TestBed.createComponent(DecisionsCard);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('5 things need your decision');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('6 things need your decision');
     demo.setSetup('new');
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('4 things need your decision');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('All clear');
   });
 
   it('sara-yoga stays at 3', () => {

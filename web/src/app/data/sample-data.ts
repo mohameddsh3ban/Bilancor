@@ -34,6 +34,7 @@ interface PaySpec {
   receipt?: ReceiptState; // default 'attached'
   file?: string; // default beleg-<id>.pdf
   priv?: boolean;
+  suggestions?: string[]; // category labelKeys, for a payment without a booking
 }
 
 /** A payment as the bank import would have created it, with its history so far (newest first, like every action adds it). */
@@ -59,6 +60,7 @@ function pay(p: PaySpec): Transaction {
     history,
     beforePrivate: null,
     beforeLink: null,
+    ...(p.suggestions ? { suggestions: [...p.suggestions] } : {}),
   };
 }
 
@@ -72,6 +74,9 @@ function withDocuments(b: BusinessSpec): Business {
     .map((tx) => linkedDocFor(tx, b.taxProfile.kleinunternehmer));
   return { ...b, documents: [...linked, ...(EXTRA_DOCUMENTS[b.id] ?? [])] };
 }
+
+/** What the system would offer for an Amazon order it cannot sort: office supplies, software or other costs. */
+const AMAZON_SUGGESTIONS = [OFFICE.labelKey, SOFTWARE.labelKey, OTHER_COSTS.labelKey];
 
 const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21' };
 const WD_CASH: Account = { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14' };
@@ -98,7 +103,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'wd-t1', date: '2026-10-20', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, confirmed: false, iban: 'DE68210501700012345678', ref: 'RE-2026-041' }),
       pay({ id: 'wd-t2', date: '2026-10-19', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0712, Mobilfunk Oktober', file: 'telekom-rechnung-oktober.pdf' }),
       pay({ id: 'wd-t3', date: '2026-10-17', who: 'Deutsche Bahn', acct: WD_QONTO, cents: -12000, booking: TRAVEL, receipt: 'missing', iban: 'DE35100100100098765432', ref: 'Fahrkarte Berlin-Hamburg, Buchung 8841' }),
-      pay({ id: 'wd-t4', date: '2026-10-15', who: 'Amazon', acct: WD_QONTO, cents: -4900, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-1182733-5561', file: 'amazon-bestellung-5561.pdf' }),
+      pay({ id: 'wd-t4', date: '2026-10-15', who: 'Amazon', acct: WD_QONTO, cents: -4900, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-1182733-5561', file: 'amazon-bestellung-5561.pdf', suggestions: AMAZON_SUGGESTIONS }),
       pay({ id: 'wd-t5', date: '2026-10-12', who: 'Adobe', acct: WD_QONTO, cents: -5949, booking: SOFTWARE, iban: 'DE47200400600150222900', ref: 'Creative Cloud, Rechnung IEE2026-77410' }),
       pay({ id: 'wd-t6', date: '2026-10-13', who: 'Rundfunk ARD, ZDF und Deutschlandradio Beitragsservice', acct: WD_QONTO, cents: -5508, booking: OTHER_COSTS, iban: 'DE44370501980000020101', ref: 'Beitragsnummer 123 456 789, Quartal 4' }),
       pay({ id: 'wd-t7', date: '2026-10-09', who: 'Atelier Sommer GmbH', acct: WD_QONTO, cents: 297500, booking: REVENUE_19, iban: 'DE72120300000011223344', ref: 'RE-2026-043' }),
@@ -112,6 +117,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'wd-t15', date: '2026-08-14', who: 'Edeka Markt Prenzlauer Berg', acct: WD_CASH, cents: -6430, booking: PRIVATE_OUT, receipt: 'notNeeded', priv: true, iban: 'DE63100900001234567890', ref: 'Einkauf bar' }),
       pay({ id: 'wd-t16', date: '2026-08-05', who: 'Coworking Mitte', acct: WD_QONTO, cents: -35700, booking: RENT, iban: 'DE29100500000190876543', ref: 'Miete Arbeitsplatz August' }),
       pay({ id: 'wd-t17', date: '2026-10-08', who: 'SCHREIBWAREN BOETTCHER', acct: WD_QONTO, cents: -2380, booking: OFFICE, receipt: 'missing', iban: 'DE45100100100076543210', ref: 'Kartenzahlung 08.10.' }),
+      pay({ id: 'wd-t18', date: '2026-10-02', who: 'Amazon', acct: WD_QONTO, cents: -2390, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-4471920-8830', file: 'amazon-bestellung-8830.pdf', suggestions: AMAZON_SUGGESTIONS }),
     ],
     vatDue: { dueDate: '2026-11-10', amountCents: 184200 },
     incomeTaxReserveCents: 320000,
@@ -139,7 +145,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'sy-t4', date: '2026-10-07', who: 'Yogashop Berlin', acct: SY_QONTO, cents: -4890, booking: SUPPLIES, iban: 'DE31100100106655443322', ref: 'Rechnung 22-9071, Yogamatten' }),
       pay({ id: 'sy-t5', date: '2026-10-02', who: 'Zoom Communications', acct: SY_QONTO, cents: -1590, booking: SOFTWARE, iban: 'DE77500700100112233445', ref: 'Zoom Pro, Rechnung INV-4471182' }),
       pay({ id: 'sy-t6', date: '2026-09-29', who: 'Studio Mitte, Kursgebühren September', acct: SY_QONTO, cents: 96000, booking: REVENUE_KU, iban: 'DE55100700240123456780', ref: 'RE-2026-016' }),
-      pay({ id: 'sy-t7', date: '2026-10-13', who: 'Decathlon Berlin', acct: SY_QONTO, cents: -7490, booking: null, iban: 'DE24100100100445566778', ref: 'Kartenzahlung 13.10., Filiale Berlin' }),
+      pay({ id: 'sy-t7', date: '2026-10-13', who: 'Decathlon Berlin', acct: SY_QONTO, cents: -7490, booking: null, iban: 'DE24100100100445566778', ref: 'Kartenzahlung 13.10., Filiale Berlin', suggestions: [SUPPLIES.labelKey, OTHER_COSTS.labelKey] }),
       pay({ id: 'sy-t8', date: '2026-10-05', who: 'Druckerei Kiezdruck', acct: SY_QONTO, cents: -4500, booking: ADVERTISING, receipt: 'missing', iban: 'DE62100500000098765401', ref: 'Flyer Herbstkurse' }),
       pay({ id: 'sy-t9', date: '2026-09-17', who: 'Jonas Peters, Privatstunden', acct: SY_QONTO, cents: 12000, booking: REVENUE_KU, iban: 'DE09100100100887766554', ref: 'RE-2026-017' }),
       pay({ id: 'sy-t10', date: '2026-09-10', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete September' }),

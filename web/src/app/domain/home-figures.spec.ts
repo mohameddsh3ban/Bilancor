@@ -50,14 +50,13 @@ describe('home figures', () => {
     const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
 
     it('adds the documents that need the person to the payments that need them', () => {
-      expect(decisionCount(business('weber-design'), 'active')).toBe(5);
+      expect(decisionCount(business('weber-design'), 'active')).toBe(6);
       expect(decisionCount(business('sara-yoga'), 'active')).toBe(3);
       expect(decisionCount(business('cafe-linde'), 'active')).toBe(0);
     });
 
-    it('leaves out the documents that are not shown yet', () => {
-      // Before a bank is connected only documents added in the demo show, and the sample ones were not added in it.
-      expect(decisionCount(business('weber-design'), 'new')).toBe(4);
+    it('counts nothing before a bank is connected: the payments are not there yet and the sample documents were not added in the demo', () => {
+      expect(decisionCount(business('weber-design'), 'new')).toBe(0);
     });
   });
 });

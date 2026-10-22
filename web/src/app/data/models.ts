@@ -35,6 +35,7 @@ export interface Transaction {
   history: HistoryEntry[]; // newest first: every action adds its line at the front
   beforePrivate: { booking: Booking | null; confirmed: boolean; receipt: ReceiptState } | null;
   beforeLink: { booking: Booking | null; confirmed: boolean; receipt: ReceiptState } | null; // what the payment had before a document was linked to it
+  suggestions?: string[]; // up to three category labelKeys the system would offer for an unclear payment
 } // the status is calculated by paymentStatus(), never stored
 export type DocDirection = 'received' | 'sent';
 export type DocSource = 'photo' | 'file' | 'email';

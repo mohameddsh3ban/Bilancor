@@ -71,9 +71,10 @@ describe('MonthPrintPage', () => {
       'Atelier Sommer GmbH',
       'SCHREIBWAREN BOETTCHER',
       'Coworking Mitte',
+      'Amazon',
     ]);
     expect(text(q('print-total-in'))).toBe(formatMoney(447500, 'en', { signed: true }));
-    expect(text(q('print-total-out'))).toBe(formatMoney(-70432, 'en', { signed: true }));
+    expect(text(q('print-total-out'))).toBe(formatMoney(-72822, 'en', { signed: true }));
     expect(q('print-total-in')!.closest('bdi[dir="ltr"]')).not.toBeNull();
     expect(q('print-total-out')!.closest('bdi[dir="ltr"]')).not.toBeNull();
   });
@@ -120,7 +121,7 @@ describe('MonthPrintPage', () => {
 
   it('ignores the quick filter and the search, so it is always the whole month', async () => {
     await render('/print/month?month=2026-10&quick=needsYou&search=Telekom');
-    expect(rows()).toHaveLength(9);
+    expect(rows()).toHaveLength(10);
   });
 
   it('prints the edits made in the app, since the business is the one the demo state holds', async () => {

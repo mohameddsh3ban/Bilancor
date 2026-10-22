@@ -35,9 +35,10 @@ describe('KeyNumbers', () => {
   it('decisions tile shows the count and a Start button', () => {
     const el = render();
     const t = tile(el, 'decisions')!;
-    expect(t.querySelector('p')?.textContent?.trim()).toBe('5');
-    expect(t.textContent).toContain(String(decisionCount(demo.business(), demo.setup())));
-    expect(t.textContent).toContain('about 5 minutes');
+    const count = decisionCount(demo.business(), demo.setup());
+    expect(count).toBe(6);
+    expect(t.querySelector('p')?.textContent?.trim()).toBe(String(count));
+    expect(t.textContent).toContain('about 6 minutes');
     const start = t.querySelector('a')!;
     expect(start.textContent).toContain('Start');
     expect(start.getAttribute('href')).toBe('/soon/decisions');
