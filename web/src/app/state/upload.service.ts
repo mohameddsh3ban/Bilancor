@@ -149,6 +149,7 @@ export class UploadService {
     const id = `up-${++this.idCounter}`;
     const fileName = `photo-${DEMO_TODAY}-${++this.photoCounter}.jpg`;
     this.demo.addDocument(businessId, newReadingDoc(id, fileName, 'photo'));
+    this.demo.completeStep('receipt', businessId);
     const result = photoReceiptFor(payment);
     const outcome = new Promise<PhotoOutcome>((resolve) => {
       setTimeout(() => {

@@ -535,6 +535,25 @@ describe('UploadService', () => {
       expect(upload.readingFor()).toBeNull();
     });
 
+    it('a photo for a payment ticks the receipt step of its business', async () => {
+      demo.setSetup('halfway');
+      demo.setBusiness('sara-yoga');
+      demo.setSetup('halfway');
+      demo.setBusiness('weber-design');
+      const outcome = upload.addPhotoFor('wd-t3');
+      expect(demo.setup()).toEqual({ bank: true, tax: false, receipt: true });
+      demo.setBusiness('sara-yoga');
+      expect(demo.setup()).toEqual({ bank: true, tax: false, receipt: false });
+      vi.advanceTimersByTime(READING_MS);
+      await outcome;
+    });
+
+    it('a photo that is not taken ticks nothing', async () => {
+      demo.setSetup('halfway');
+      await expect(upload.addPhotoFor('wd-t2')).resolves.toBe('dropped');
+      expect(demo.setup()).toEqual({ bank: true, tax: false, receipt: false });
+    });
+
     it('two payments can be read at the same time', async () => {
       const first = upload.addPhotoFor('wd-t3');
       const second = upload.addPhotoFor('wd-t17');
