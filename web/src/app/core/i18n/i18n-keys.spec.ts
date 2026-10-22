@@ -19,7 +19,7 @@ describe('translation files', () => {
   });
 
   it('has the German tax terms with label, de and explain', () => {
-    for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03', 'eigenbeleg']) {
+    for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03', 'eigenbeleg', 'eingangsbeleg', 'ausgangsbeleg']) {
       for (const part of ['label', 'de', 'explain']) {
         expect(enKeys).toContain(`terms.${term}.${part}`);
       }

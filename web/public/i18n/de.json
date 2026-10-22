@@ -24,6 +24,16 @@
       "label": "Eigenbeleg",
       "de": "Eigenbeleg",
       "explain": "Ein Beleg, den du selbst ausstellst, wenn das Original verloren ging oder es nie einen gab."
+    },
+    "eingangsbeleg": {
+      "label": "Eingangsbeleg",
+      "de": "Eingangsbeleg",
+      "explain": "Ein Beleg von jemand anderem, zum Beispiel eine Rechnung, die du bezahlst oder bezahlt hast."
+    },
+    "ausgangsbeleg": {
+      "label": "Ausgangsbeleg",
+      "de": "Ausgangsbeleg",
+      "explain": "Eine Rechnung, die du selbst an einen Kunden gestellt hast."
     }
   },
   "account": {
@@ -63,6 +73,7 @@
     "account": "Konto",
     "photo": "Foto aufnehmen",
     "selfReceipt": "Eigenbeleg",
+    "cashPayment": "Bar oder privat bezahlt",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -331,7 +342,73 @@
       "clearSearch": "Suche löschen"
     },
     "detail": {
-      "back": "Dokumente"
+      "back": "Dokumente",
+      "close": "Schließen",
+      "paper": {
+        "invoiceNo": "Rechnungsnr.",
+        "date": "Datum",
+        "total": "Gesamt"
+      },
+      "fix": {
+        "amount": "Wir konnten den Betrag nicht lesen; er ist auf dem Scan markiert.",
+        "date": "Wir konnten das Datum nicht lesen; es ist auf dem Scan markiert.",
+        "name": "Wir konnten den Namen nicht lesen; er ist auf dem Scan markiert.",
+        "save": "Speichern",
+        "amountError": "Gib einen Betrag über 0 ein, zum Beispiel 71,39.",
+        "dateError": "Wähle das Datum aus.",
+        "nameError": "Gib den Namen ein."
+      },
+      "kind": {
+        "received": "Empfangen",
+        "sent": "Von dir gesendete Rechnung"
+      },
+      "steps": {
+        "title": "Fortschritt",
+        "read": "Gelesen",
+        "booked": "Gebucht",
+        "confirm": "Bestätigen",
+        "paid": "Bezahlt",
+        "waiting": "Wartet auf Zahlung",
+        "done": "erledigt",
+        "current": "aktueller Schritt"
+      },
+      "fields": {
+        "title": "Das haben wir gelesen",
+        "edit": "Bearbeiten",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "direction": "Art",
+        "parties": "Von / an",
+        "name": "Name",
+        "invoiceNo": "Rechnungsnummer",
+        "date": "Datum",
+        "amount": "Betrag",
+        "vat": "USt",
+        "dueDate": "Fällig am"
+      },
+      "why": {
+        "received": "Wir haben „Empfangen“ gewählt, weil der Beleg von jemand anderem kommt.",
+        "sent": "Wir haben „Gesendet“ gewählt, weil die Rechnung von deinem Unternehmen kommt."
+      },
+      "booking": {
+        "hint": "Das ist die Buchung der verknüpften Zahlung. Wenn du sie hier änderst, ändert sie sich auch dort."
+      },
+      "payment": {
+        "title": "Zahlung",
+        "intro": "Noch keine Zahlung. Diese könnten passen:",
+        "none": "Noch keine Zahlung.",
+        "noMatch": "Noch keine passenden Zahlungen",
+        "thisOne": "Diese",
+        "searchAll": "Alle Zahlungen durchsuchen",
+        "cash": "Bar oder privat bezahlt",
+        "notThis": "Nicht diese Zahlung"
+      },
+      "picker": {
+        "search": "Zahlungen durchsuchen",
+        "placeholder": "Name oder Betrag",
+        "empty": "Keine Zahlung passt"
+      },
+      "remove": "Entfernen"
     }
   },
   "print": {

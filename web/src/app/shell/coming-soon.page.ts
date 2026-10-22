@@ -28,6 +28,7 @@ const FEATURES: readonly string[] = [
   'account',
   'photo',
   'selfReceipt',
+  'cashPayment',
 ];
 
 /** Where every link to a page that is not designed yet lands. */

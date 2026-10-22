@@ -4,7 +4,13 @@ import { HlmPopoverImports } from '@spartan-ng/helm/popover';
 import { HlmTooltip } from '@spartan-ng/helm/tooltip';
 import { LanguageService } from './language.service';
 
-export type TermKey = 'ustva' | 'euer' | 'kleinunternehmer' | 'skr03';
+export type TermKey =
+  | 'ustva'
+  | 'euer'
+  | 'kleinunternehmer'
+  | 'skr03'
+  | 'eingangsbeleg'
+  | 'ausgangsbeleg';
 
 /** A German tax term: translation plus the German original, explained on hover (tooltip) or tap (popover). */
 @Component({

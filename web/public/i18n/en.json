@@ -24,6 +24,16 @@
       "label": "Self-issued receipt",
       "de": "Eigenbeleg",
       "explain": "A receipt you write yourself when the original is lost or never existed."
+    },
+    "eingangsbeleg": {
+      "label": "Received",
+      "de": "Eingangsbeleg",
+      "explain": "A bill or receipt from someone else, such as an invoice you pay or have paid."
+    },
+    "ausgangsbeleg": {
+      "label": "Sent",
+      "de": "Ausgangsbeleg",
+      "explain": "An invoice you issued to a customer."
     }
   },
   "account": {
@@ -63,6 +73,7 @@
     "account": "Account",
     "photo": "Take a photo",
     "selfReceipt": "Self-issued receipt",
+    "cashPayment": "Paid in cash or privately",
     "default": "This page"
   },
   "comingSoon": {
@@ -331,7 +342,73 @@
       "clearSearch": "Clear search"
     },
     "detail": {
-      "back": "Documents"
+      "back": "Documents",
+      "close": "Close",
+      "paper": {
+        "invoiceNo": "Invoice no.",
+        "date": "Date",
+        "total": "Total"
+      },
+      "fix": {
+        "amount": "We couldn't read the amount; it's marked on the scan.",
+        "date": "We couldn't read the date; it's marked on the scan.",
+        "name": "We couldn't read the name; it's marked on the scan.",
+        "save": "Save",
+        "amountError": "Type an amount above 0, like 71.39.",
+        "dateError": "Pick the date.",
+        "nameError": "Type the name."
+      },
+      "kind": {
+        "received": "Received",
+        "sent": "Invoice you sent"
+      },
+      "steps": {
+        "title": "Progress",
+        "read": "Read",
+        "booked": "Booked",
+        "confirm": "Confirm",
+        "paid": "Paid",
+        "waiting": "Waiting for payment",
+        "done": "done",
+        "current": "current step"
+      },
+      "fields": {
+        "title": "What we read",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "direction": "Type",
+        "parties": "From / to",
+        "name": "Name",
+        "invoiceNo": "Invoice number",
+        "date": "Date",
+        "amount": "Amount",
+        "vat": "VAT",
+        "dueDate": "Due date"
+      },
+      "why": {
+        "received": "We set Received because the document comes from someone else.",
+        "sent": "We set Sent because the invoice comes from your business."
+      },
+      "booking": {
+        "hint": "This is the booking of the linked payment. Changing it here changes it there too."
+      },
+      "payment": {
+        "title": "Payment",
+        "intro": "No payment yet. These might be it:",
+        "none": "No payment yet.",
+        "noMatch": "No matching payments yet",
+        "thisOne": "This one",
+        "searchAll": "Search all payments",
+        "cash": "Paid in cash or privately",
+        "notThis": "Not this payment"
+      },
+      "picker": {
+        "search": "Search payments",
+        "placeholder": "Name or amount",
+        "empty": "No payments match"
+      },
+      "remove": "Remove"
     }
   },
   "print": {
