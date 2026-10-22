@@ -1,6 +1,7 @@
 import {
   ADVERTISING,
   GOODS_7,
+  OFFICE,
   OTHER_COSTS,
   PHONE,
   PRIVATE_OUT,
@@ -15,6 +16,7 @@ import {
   UTILITIES,
 } from './categories';
 import { Account, Booking, Business, HistoryEntry, Person, ReceiptState, Transaction } from './models';
+import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
 
@@ -56,7 +58,19 @@ function pay(p: PaySpec): Transaction {
     reference: p.ref,
     history,
     beforePrivate: null,
+    beforeLink: null,
   };
+}
+
+/** A business as written out below; `withDocuments()` adds its documents. */
+type BusinessSpec = Omit<Business, 'documents'>;
+
+/** One document linked to every payment with a receipt attached, then the business's extra documents. */
+function withDocuments(b: BusinessSpec): Business {
+  const linked = b.transactions
+    .filter((tx) => tx.receipt === 'attached')
+    .map((tx) => linkedDocFor(tx, b.taxProfile.kleinunternehmer));
+  return { ...b, documents: [...linked, ...(EXTRA_DOCUMENTS[b.id] ?? [])] };
 }
 
 const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21' };
@@ -73,10 +87,11 @@ export const PERSON: Person = {
   businessIds: ['weber-design', 'sara-yoga', 'cafe-linde'],
 };
 
-export const BUSINESSES: Business[] = [
+const BUSINESS_SPECS: BusinessSpec[] = [
   {
     id: 'weber-design',
     name: 'Weber Design',
+    inboxEmail: 'weber-design@inbox.example',
     taxProfile: { kleinunternehmer: false, vatPeriod: 'monthly' },
     accounts: [WD_QONTO, WD_CASH],
     transactions: [
@@ -96,6 +111,7 @@ export const BUSINESSES: Business[] = [
       pay({ id: 'wd-t14', date: '2026-08-21', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0655, Mobilfunk August' }),
       pay({ id: 'wd-t15', date: '2026-08-14', who: 'Edeka Markt Prenzlauer Berg', acct: WD_CASH, cents: -6430, booking: PRIVATE_OUT, receipt: 'notNeeded', priv: true, iban: 'DE63100900001234567890', ref: 'Einkauf bar' }),
       pay({ id: 'wd-t16', date: '2026-08-05', who: 'Coworking Mitte', acct: WD_QONTO, cents: -35700, booking: RENT, iban: 'DE29100500000190876543', ref: 'Miete Arbeitsplatz August' }),
+      pay({ id: 'wd-t17', date: '2026-10-08', who: 'SCHREIBWAREN BOETTCHER', acct: WD_QONTO, cents: -2380, booking: OFFICE, receipt: 'missing', iban: 'DE45100100100076543210', ref: 'Kartenzahlung 08.10.' }),
     ],
     vatDue: { dueDate: '2026-11-10', amountCents: 184200 },
     incomeTaxReserveCents: 320000,
@@ -113,6 +129,7 @@ export const BUSINESSES: Business[] = [
   {
     id: 'sara-yoga',
     name: 'Sara Weber Yoga',
+    inboxEmail: 'sara-yoga@inbox.example',
     taxProfile: { kleinunternehmer: true, vatPeriod: null },
     accounts: [SY_QONTO],
     transactions: [
@@ -144,6 +161,7 @@ export const BUSINESSES: Business[] = [
   {
     id: 'cafe-linde',
     name: 'Café Linde GbR',
+    inboxEmail: 'cafe-linde@inbox.example',
     taxProfile: { kleinunternehmer: false, vatPeriod: 'quarterly' },
     accounts: [CL_QONTO, CL_SPARKASSE, CL_CASH],
     transactions: [
@@ -174,3 +192,5 @@ export const BUSINESSES: Business[] = [
     ],
   },
 ];
+
+export const BUSINESSES: Business[] = BUSINESS_SPECS.map(withDocuments);

@@ -24,6 +24,7 @@ const tx = (id: string, date: string): Transaction => ({
   reference: id,
   history: [],
   beforePrivate: null,
+  beforeLink: null,
 });
 
 describe('home figures', () => {

@@ -134,7 +134,21 @@
     "receiptNotNeeded": "حددت: لا حاجة إلى إيصال",
     "categoryChanged": "غيّرت الفئة إلى {{category}}",
     "markedPrivate": "حددتها كدفعة خاصة",
-    "markedBusiness": "حددتها كدفعة تجارية"
+    "markedBusiness": "حددتها كدفعة تجارية",
+    "addedPhoto": "تمت إضافة صورة",
+    "addedFile": "تمت إضافة ملف",
+    "addedEmail": "تمت الإضافة من البريد الإلكتروني",
+    "docRead": "تمت القراءة تلقائيًا، الفئة المقترحة: {{category}}",
+    "docEdited": "صحّحت البيانات",
+    "markedReceived": "حددتها كمستند مستلم",
+    "markedSent": "حددتها كمستند مرسل",
+    "keptDuplicate": "أبقيتها رغم أنها تبدو مكررة",
+    "linked": "ربطتها بالدفعة {{name}}",
+    "linkedAuto": "تم الربط تلقائيًا بالدفعة {{name}}",
+    "unlinked": "ألغيت ربطها بالدفعة {{name}}",
+    "receiptLinked": "ربطت المستند {{name}}",
+    "receiptLinkedAuto": "تم ربط المستند {{name}} تلقائيًا",
+    "receiptUnlinked": "ألغيت ربط المستند {{name}}"
   },
   "payments": {
     "title": "المدفوعات",

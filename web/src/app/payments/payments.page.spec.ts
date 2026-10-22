@@ -116,18 +116,18 @@ describe('PaymentsPage', () => {
     expect(link.closest('tr')!.classList).toContain('relative');
   });
 
-  it('quick filter Needs you shows 3 for weber-design', async () => {
+  it('quick filter Needs you shows 4 for weber-design', async () => {
     await render();
-    expect(text(q('quick-needsYou'))).toContain('3');
+    expect(text(q('quick-needsYou'))).toContain('4');
     expect(q('quick-all')!.getAttribute('aria-pressed')).toBe('true');
     await click('quick-needsYou');
     expect(q('quick-needsYou')!.getAttribute('aria-pressed')).toBe('true');
     expect(q('quick-all')!.getAttribute('aria-pressed')).toBe('false');
-    expect(qa('payment-row')).toHaveLength(3);
-    expect(qa('payment-table-row')).toHaveLength(3);
+    expect(qa('payment-row')).toHaveLength(4);
+    expect(qa('payment-table-row')).toHaveLength(4);
     expect(
       qa('payment-row').map((r) => text(r.querySelector('[data-testid="tx-status"]'))),
-    ).toEqual(['Please confirm', 'Receipt missing', 'Unclear']);
+    ).toEqual(['Please confirm', 'Receipt missing', 'Unclear', 'Receipt missing']);
   });
 
   it('Money in and Money out narrow the list', async () => {

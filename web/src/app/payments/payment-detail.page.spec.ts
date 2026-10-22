@@ -116,11 +116,11 @@ describe('PaymentDetailPage', () => {
   describe('actions', () => {
     it('confirm turns Müller into booked and lowers Needs you', async () => {
       await render('/payments/wd-t1');
-      expect(text(q('needs-you-count'))).toBe('3');
+      expect(text(q('needs-you-count'))).toBe('4');
       await click('confirm-booking');
       expect(status()).toBe('Booked');
       expect(d('confirm-booking')).toBeNull();
-      expect(text(q('needs-you-count'))).toBe('2');
+      expect(text(q('needs-you-count'))).toBe('3');
       expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
       expect(text(d('history-date'))).toBe('22 Oct');
       const row = Array.from(el.querySelectorAll('[data-testid="payment-row"]')).find((r) =>
@@ -141,13 +141,13 @@ describe('PaymentDetailPage', () => {
     it('no receipt needed books Deutsche Bahn', async () => {
       await render('/payments/wd-t3');
       expect(status()).toBe('Receipt missing');
-      expect(text(q('needs-you-count'))).toBe('3');
+      expect(text(q('needs-you-count'))).toBe('4');
       await click('no-receipt-needed');
       expect(status()).toBe('Booked');
       expect(text(d('receipt-state'))).toBe('No receipt needed');
       expect(d('no-receipt-needed')).toBeNull();
       expect(d('take-photo')).toBeNull();
-      expect(text(q('needs-you-count'))).toBe('2');
+      expect(text(q('needs-you-count'))).toBe('3');
       expect(historyTexts()[0]).toBe('You marked: no receipt needed');
     });
 
@@ -165,7 +165,7 @@ describe('PaymentDetailPage', () => {
       expect(text(d('booking-vat'))).toBe('19%');
       expect(d('change-category')!.textContent?.trim()).toBe('Change');
       expect(historyTexts()[0]).toBe('You changed the category to Software & maintenance');
-      expect(text(q('needs-you-count'))).toBe('2');
+      expect(text(q('needs-you-count'))).toBe('3');
     });
 
     it('choosing the category a payment already has changes nothing when it is booked', async () => {
@@ -190,14 +190,14 @@ describe('PaymentDetailPage', () => {
     it('choosing the suggested category of a payment that needs confirming confirms it', async () => {
       await render('/payments/wd-t1');
       expect(status()).toBe('Please confirm');
-      expect(text(q('needs-you-count'))).toBe('3');
+      expect(text(q('needs-you-count'))).toBe('4');
       await choose('Revenue (19% VAT)');
       expect(status()).toBe('Booked');
       expect(d('confirm-booking')).toBeNull();
       expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
       expect(historyTexts().filter((t) => t.startsWith('You'))).toHaveLength(1);
       expect(options()).toHaveLength(0);
-      expect(text(q('needs-you-count'))).toBe('2');
+      expect(text(q('needs-you-count'))).toBe('3');
     });
 
     it('choosing the suggested category of a payment that needs confirming and has no receipt leaves the receipt to do', async () => {

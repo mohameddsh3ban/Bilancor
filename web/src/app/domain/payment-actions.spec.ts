@@ -78,6 +78,14 @@ describe('payment actions', () => {
     expect(setPrivate(tx, true).booking?.skr03).toBe('1890');
   });
 
+  it('moving to private and back keeps what was saved before a link', () => {
+    const beforeLink = { booking: TRAVEL, confirmed: false, receipt: 'missing' as const };
+    const tx: Transaction = { ...sample('wd-t3'), beforeLink };
+    const priv = setPrivate(tx, true);
+    expect(priv.beforeLink).toEqual(beforeLink);
+    expect(setPrivate(priv, false).beforeLink).toEqual(beforeLink);
+  });
+
   it('does nothing when the payment is already in that state', () => {
     const business = sample('wd-t3');
     expect(setPrivate(business, false)).toBe(business);

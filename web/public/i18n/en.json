@@ -134,7 +134,21 @@
     "receiptNotNeeded": "You marked: no receipt needed",
     "categoryChanged": "You changed the category to {{category}}",
     "markedPrivate": "You marked it as private",
-    "markedBusiness": "You marked it as business"
+    "markedBusiness": "You marked it as business",
+    "addedPhoto": "Photo added",
+    "addedFile": "File added",
+    "addedEmail": "Added from email",
+    "docRead": "Read automatically, suggested {{category}}",
+    "docEdited": "You corrected the details",
+    "markedReceived": "You marked it as received",
+    "markedSent": "You marked it as sent",
+    "keptDuplicate": "You kept it although it looks like a duplicate",
+    "linked": "You linked it to the {{name}} payment",
+    "linkedAuto": "Linked automatically to the {{name}} payment",
+    "unlinked": "You unlinked it from the {{name}} payment",
+    "receiptLinked": "You linked the document {{name}}",
+    "receiptLinkedAuto": "The document {{name}} was linked automatically",
+    "receiptUnlinked": "You unlinked the document {{name}}"
   },
   "payments": {
     "title": "Payments",

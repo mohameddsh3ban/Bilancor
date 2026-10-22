@@ -4,7 +4,28 @@ export type TxStatus = 'booked' | 'confirm' | 'noReceipt' | 'unclear';
 export interface Account { id: string; kind: 'bank' | 'cash'; name: string; balanceCents: number; lastUpdate: string } // ISO date
 export type ReceiptState = 'attached' | 'missing' | 'notNeeded';
 export interface Booking { skr03: string; nameDe: string; labelKey: string; vatRate: 0 | 7 | 19 } // labelKey -> i18n "booking.<labelKey>"
-export type HistoryKey = 'imported' | 'autoBooked' | 'confirmed' | 'receiptNotNeeded' | 'categoryChanged' | 'markedPrivate' | 'markedBusiness';
+export type HistoryKey =
+  | 'imported'
+  | 'autoBooked'
+  | 'confirmed'
+  | 'receiptNotNeeded'
+  | 'categoryChanged'
+  | 'markedPrivate'
+  | 'markedBusiness'
+  | 'addedPhoto'
+  | 'addedFile'
+  | 'addedEmail'
+  | 'docRead'
+  | 'docEdited'
+  | 'markedReceived'
+  | 'markedSent'
+  | 'keptDuplicate'
+  | 'linked'
+  | 'linkedAuto'
+  | 'unlinked'
+  | 'receiptLinked'
+  | 'receiptLinkedAuto'
+  | 'receiptUnlinked';
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
 export interface Transaction {
   id: string; date: string; counterparty: string; accountId: string; amountCents: number;
@@ -13,9 +34,25 @@ export interface Transaction {
   counterpartyIban: string; reference: string;
   history: HistoryEntry[]; // newest first: every action adds its line at the front
   beforePrivate: { booking: Booking | null; confirmed: boolean; receipt: ReceiptState } | null;
+  beforeLink: { booking: Booking | null; confirmed: boolean; receipt: ReceiptState } | null; // what the payment had before a document was linked to it
 } // the status is calculated by paymentStatus(), never stored
+export type DocDirection = 'received' | 'sent';
+export type DocSource = 'photo' | 'file' | 'email';
+export type DocField = 'amount' | 'date' | 'name';
+export type DocStatus = 'reading' | 'duplicate' | 'direction' | 'checkAmount' | 'checkDate' | 'checkName' | 'waiting' | 'overdue' | 'done';
+export interface Doc {
+  id: string; fileName: string; source: DocSource; addedOn: string; fromUpload: boolean; reading: boolean;
+  name: string | null; direction: DocDirection | null; invoiceNo: string;
+  date: string | null; dueDate: string | null; amountCents: number | null; vatRate: 0 | 7 | 19; // amount: gross, positive
+  duplicateOf: string | null; // id of the document this looks like
+  booking: Booking | null; bookingConfirmed: boolean; // the prepared booking while not linked
+  paymentId: string | null;
+  history: HistoryEntry[]; // newest first
+} // the status is calculated by docStatus(), never stored
+/** A ready-made reading result for a simulated upload; `plain` marks the receipts a pool repeats. */
+export type PoolResult = Pick<Doc, 'name' | 'direction' | 'invoiceNo' | 'date' | 'dueDate' | 'amountCents' | 'vatRate' | 'duplicateOf' | 'booking'> & { plain: boolean };
 export type NoticeKind = 'terms' | 'bankExpiry' | 'unreadable' | 'revenueLimit';
 export interface Notice { id: string; kind: NoticeKind; urgency: number; blocking: boolean; params: Record<string, string | number>; date: string } // lower urgency = more urgent; text from i18n "notice.<kind>.text" / ".action"
 export interface TaxProfile { kleinunternehmer: boolean; vatPeriod: 'monthly' | 'quarterly' | null }
-export interface Business { id: string; name: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; vatDue: { dueDate: string; amountCents: number } | null; incomeTaxReserveCents: number; revenueThisYearCents: number; notices: Notice[]; noticeHistory: Notice[] }
+export interface Business { id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[]; vatDue: { dueDate: string; amountCents: number } | null; incomeTaxReserveCents: number; revenueThisYearCents: number; notices: Notice[]; noticeHistory: Notice[] }
 export interface Person { id: string; firstName: string; lastName: string; businessIds: string[] }

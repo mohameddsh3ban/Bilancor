@@ -21,8 +21,8 @@ describe('DecisionsCard', () => {
 
   it('shows the count, the minutes and a Start link', () => {
     const el = render('weber-design');
-    expect(el.textContent).toContain('3 things need your decision');
-    expect(el.textContent).toContain('about 3 minutes');
+    expect(el.textContent).toContain('4 things need your decision');
+    expect(el.textContent).toContain('about 4 minutes');
     expect(el.querySelector('a')?.getAttribute('href')).toBe('/soon/decisions');
     expect(el.querySelector('a')?.textContent).toContain('Start');
   });

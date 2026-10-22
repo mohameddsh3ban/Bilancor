@@ -27,6 +27,7 @@ export function changeCategory(tx: Transaction, booking: Booking): Transaction {
 /**
  * Moves a payment to private (booked to 1800 or 1890, no receipt needed) or back to the business.
  * Going back restores what was saved before; a payment that started private comes back as unclear.
+ * Everything else stays as it was, including what `beforeLink` saved for an unlink.
  */
 export function setPrivate(tx: Transaction, isPrivate: boolean): Transaction {
   if (tx.isPrivate === isPrivate) return tx;
