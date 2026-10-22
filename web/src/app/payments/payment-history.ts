@@ -6,6 +6,7 @@ import { Account, HistoryEntry } from '../data/models';
 /**
  * What happened to a payment, newest line first. Lines are stored as keys with parameters, so they read in
  * the language of the page: a category parameter is a label key, and the cash box is named in that language.
+ * Every other parameter (a payment or document name) goes to the text as it is.
  */
 @Component({
   selector: 'app-payment-history',
@@ -30,6 +31,7 @@ import { Account, HistoryEntry } from '../data/models';
               'history.' + entry.key
                 | transloco
                   : {
+                      ...entry.params,
                       category: entry.params['category']
                         ? ('booking.' + entry.params['category'] | transloco)
                         : '',
