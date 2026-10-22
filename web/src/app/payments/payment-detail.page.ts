@@ -29,6 +29,7 @@ import {
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
 import { DemoStateService } from '../state/demo-state.service';
+import { UploadService } from '../state/upload.service';
 import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
 import { DocumentPicker } from './document-picker';
@@ -38,7 +39,7 @@ import { PaymentStatusChip } from './payment-status-chip';
 /**
  * One payment of the open business: what it is, its receipt, its booking, the other party's bank details and
  * what happened to it. Confirming, "no receipt needed", picking a document as the receipt, changing the category
- * and business/private really change the sample data. A payment that a document links to can't be marked private
+ * and business/private really change the sample data (Take photo shows Reading…, then links a receipt made from the payment). A payment that a document links to can't be marked private
  * (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
  * the list.
  * When the payment is not there (another business opened, an unknown id, no bank yet) it goes back to the list.
@@ -169,15 +170,22 @@ import { PaymentStatusChip } from './payment-status-chip';
                   >
                     {{ 'payments.detail.receipt.noReceiptNeeded' | transloco }}
                   </button>
-                  <a
+                  <button
                     hlmBtn
                     variant="outline"
                     size="lg"
+                    type="button"
                     data-testid="take-photo"
-                    [routerLink]="['/soon', 'photo']"
+                    [disabled]="photoReading()"
+                    (click)="takePhoto()"
                   >
-                    {{ 'payments.detail.receipt.takePhoto' | transloco }}
-                  </a>
+                    {{
+                      (photoReading()
+                        ? 'payments.detail.receipt.reading'
+                        : 'payments.detail.receipt.takePhoto'
+                      ) | transloco
+                    }}
+                  </button>
                   <app-document-picker [payment]="tx" (picked)="pickDocument($event)" />
                   <a
                     hlmBtn
@@ -345,6 +353,7 @@ import { PaymentStatusChip } from './payment-status-chip';
 })
 export class PaymentDetailPage {
   private readonly demo = inject(DemoStateService);
+  private readonly upload = inject(UploadService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly language = inject(LanguageService);
@@ -370,6 +379,12 @@ export class PaymentDetailPage {
   protected readonly linkedDoc = computed<Doc | null>(() => {
     const id = this.payment()?.id;
     return id ? (this.demo.documents().find((doc) => doc.paymentId === id) ?? null) : null;
+  });
+
+  /** Whether a photo is being read for the open payment. */
+  protected readonly photoReading = computed(() => {
+    const id = this.payment()?.id;
+    return id !== undefined && this.upload.readingFor() === id;
   });
 
   protected readonly paymentStatus = paymentStatus;
@@ -418,6 +433,12 @@ export class PaymentDetailPage {
   protected pickDocument(docId: string): void {
     const id = this.payment()?.id;
     if (id) this.demo.link(docId, id);
+  }
+
+  /** Simulates a photo of the receipt: Reading… for a moment, then a receipt made from the payment is linked to it. */
+  protected takePhoto(): void {
+    const id = this.payment()?.id;
+    if (id) void this.upload.addPhotoFor(id);
   }
 
   private change(action: (tx: Transaction) => Transaction): void {

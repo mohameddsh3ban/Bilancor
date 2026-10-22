@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { DEMO_TODAY } from '../data/demo-date';
 import type { Business, Doc, PoolResult } from '../data/models';
 import { UPLOAD_POOLS } from '../data/sample-documents';
 import { certainMatch } from '../domain/document-matching';
@@ -11,6 +12,7 @@ import {
   newReadingDoc,
   nextPoolResult,
 } from '../domain/document-upload';
+import { photoReceiptFor } from '../domain/photo-receipt';
 import { DemoStateService } from './demo-state.service';
 
 /**
@@ -22,6 +24,9 @@ export interface UploadSummary {
   needsYou: number;
   refused: { name: string; reason: RefuseReason }[];
 }
+
+/** How a photo taken for a payment ended: linked to it, or dropped (see `UploadService.addPhotoFor`). */
+export type PhotoOutcome = 'linked' | 'dropped';
 
 /** A document of a drop that is being read, with the result it will get. */
 interface Reading {
@@ -62,8 +67,15 @@ export class UploadService {
       : null;
   });
 
+  /** The payments a photo is being read for, each with how its photo will end, oldest first. */
+  private readonly photos = signal<ReadonlyMap<string, Promise<PhotoOutcome>>>(new Map());
+  /** The payment a photo is being read for (the latest when there are several), or null when none is. */
+  readonly readingFor = computed(() => [...this.photos().keys()].at(-1) ?? null);
+
   /** Never goes back, so a document id is never used twice in one page load, not even after a reset. */
   private idCounter = 0;
+  /** How many photos were taken in this page load, for the number in their file names; it never goes back either. */
+  private photoCounter = 0;
   /** Changes whenever the summary is replaced or cleared, so a drop that is read later cannot bring back an old summary. */
   private summaryVersion = 0;
   /** How many results each business has handed out in each data generation: a reset starts every pool over. */
@@ -104,6 +116,36 @@ export class UploadService {
     this.latest.set(null);
   }
 
+  /**
+   * Simulates a photo of the receipt of a payment of the open business: a document `photo-<date>-<n>.jpg` shows Reading…
+   * for `READING_MS`, then is a receipt made from the payment and is linked to it (by hand, not as a sure match).
+   * Resolves `'linked'` when that happened, and `'dropped'` when it did not: nothing is taken when the payment is not there
+   * or has its receipt already; a photo whose payment got its receipt meanwhile stays as an unlinked document; a reset
+   * during reading takes it away. It never moves a business's upload pool. A second call for a payment that is being read
+   * gives the photo already on its way.
+   */
+  addPhotoFor(paymentId: string): Promise<PhotoOutcome> {
+    const running = this.photos().get(paymentId);
+    if (running) return running;
+    const businessId = this.demo.business().id;
+    const payment = this.demo.business().transactions.find((tx) => tx.id === paymentId);
+    if (payment?.receipt !== 'missing') return Promise.resolve('dropped');
+
+    const generation = this.demo.dataGeneration();
+    const id = `up-${++this.idCounter}`;
+    const fileName = `photo-${DEMO_TODAY}-${++this.photoCounter}.jpg`;
+    this.demo.addDocument(businessId, newReadingDoc(id, fileName, 'photo'));
+    const result = photoReceiptFor(payment);
+    const outcome = new Promise<PhotoOutcome>((resolve) => {
+      setTimeout(() => {
+        this.photos.update((all) => new Map([...all].filter(([key]) => key !== paymentId)));
+        resolve(this.readPhoto({ businessId, generation, id, paymentId, result }));
+      }, READING_MS);
+    });
+    this.photos.update((all) => new Map(all).set(paymentId, outcome));
+    return outcome;
+  }
+
   private nextResult(businessId: string, generation: number): PoolResult {
     const key = `${generation}:${businessId}`;
     const index = this.poolUsed.get(key) ?? 0;
@@ -141,6 +183,22 @@ export class UploadService {
     const payment = this.demo.bankConnected() ? certainMatch(doc, business.transactions) : null;
     if (payment) this.demo.link(id, payment.id, true, businessId);
     return this.businessOf(businessId)?.documents.find((d) => d.id === id);
+  }
+
+  /** Gives a photo its result and links it to its payment; says whether it is linked now (it is not when the payment got its receipt meanwhile, or the photo is gone). */
+  private readPhoto(photo: {
+    businessId: string;
+    generation: number;
+    id: string;
+    paymentId: string;
+    result: PoolResult;
+  }): PhotoOutcome {
+    const { businessId, generation, id, paymentId, result } = photo;
+    if (this.demo.dataGeneration() !== generation) return 'dropped';
+    this.demo.updateDocument(id, (doc) => applyReadResult(doc, result), businessId);
+    this.demo.link(id, paymentId, false, businessId);
+    const doc = this.businessOf(businessId)?.documents.find((d) => d.id === id);
+    return doc?.paymentId === paymentId ? 'linked' : 'dropped';
   }
 
   private businessOf(businessId: string): Business | undefined {

@@ -211,6 +211,7 @@
         "missing": "Beleg fehlt",
         "missingHint": "Füge einen hinzu oder sag, dass diese Zahlung keinen braucht.",
         "takePhoto": "Foto aufnehmen",
+        "reading": "Wird gelesen…",
         "pickDocument": "Aus Dokumenten wählen",
         "openDocument": "Dokument öffnen",
         "noReceiptNeeded": "Kein Beleg nötig"

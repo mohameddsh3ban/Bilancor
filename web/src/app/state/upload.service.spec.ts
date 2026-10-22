@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import type { Doc, Transaction } from '../data/models';
-import { docNeedsYou } from '../domain/document-status';
+import { docNeedsYou, docStatus } from '../domain/document-status';
 import { READING_MS } from '../domain/document-upload';
 import { paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
@@ -344,5 +344,152 @@ describe('UploadService', () => {
     expect(uploadsOf('weber-design').map((d) => d.id)).toEqual(['up-2']);
     expect(paymentOf('wd-t3').receipt).toBe('missing');
     expect(upload.summary()).toEqual({ added: 1, needsYou: 1, refused: [] });
+  });
+
+  describe('addPhotoFor', () => {
+    it('photo for wd-t3 links a new Done document after READING_MS', async () => {
+      expect(paymentStatus(paymentOf('wd-t3'))).toBe('noReceipt');
+      expect(upload.readingFor()).toBeNull();
+
+      const outcome = upload.addPhotoFor('wd-t3');
+      expect(upload.readingFor()).toBe('wd-t3');
+      expect(upload1()).toMatchObject({
+        fileName: 'photo-2026-10-22-1.jpg',
+        source: 'photo',
+        fromUpload: true,
+        reading: true,
+        paymentId: null,
+      });
+      expect(paymentStatus(paymentOf('wd-t3'))).toBe('noReceipt');
+
+      vi.advanceTimersByTime(READING_MS - 1);
+      expect(upload1().reading).toBe(true);
+      expect(upload.readingFor()).toBe('wd-t3');
+
+      vi.advanceTimersByTime(1);
+      await expect(outcome).resolves.toBe('linked');
+      expect(upload.readingFor()).toBeNull();
+      expect(upload1()).toMatchObject({
+        reading: false,
+        name: 'Deutsche Bahn',
+        direction: 'received',
+        amountCents: 12000,
+        date: '2026-10-17',
+        duplicateOf: null,
+        paymentId: 'wd-t3',
+      });
+      expect(docStatus(upload1())).toBe('done');
+      expect(paymentOf('wd-t3')).toMatchObject({
+        receipt: 'attached',
+        receiptFile: 'photo-2026-10-22-1.jpg',
+      });
+      expect(paymentStatus(paymentOf('wd-t3'))).toBe('booked');
+      const docKeys = upload1().history.map((h) => h.key);
+      expect(docKeys[0]).toBe('linked');
+      expect(docKeys.at(-1)).toBe('addedPhoto');
+      expect(paymentOf('wd-t3').history[0].key).toBe('receiptLinked');
+    });
+
+    it("photo doesn't move the upload pool", async () => {
+      const first = upload.addPhotoFor('wd-t3');
+      const second = upload.addPhotoFor('wd-t17');
+      vi.advanceTimersByTime(READING_MS);
+      await expect(Promise.all([first, second])).resolves.toEqual(['linked', 'linked']);
+
+      upload.add([file('ticket.pdf')], 'file');
+      vi.advanceTimersByTime(READING_MS);
+      expect(docsOf('weber-design').find((d) => d.id === 'up-3')).toMatchObject({
+        name: 'Deutsche Bahn',
+        invoiceNo: '8841',
+        amountCents: 12000,
+      });
+    });
+
+    it('photos are numbered through the session, one number each', async () => {
+      const first = upload.addPhotoFor('wd-t3');
+      const second = upload.addPhotoFor('wd-t17');
+      const fileName = (id: string) => docsOf('weber-design').find((d) => d.id === id)!.fileName;
+      expect(fileName('up-1')).toBe('photo-2026-10-22-1.jpg');
+      expect(fileName('up-2')).toBe('photo-2026-10-22-2.jpg');
+      vi.advanceTimersByTime(READING_MS);
+      await Promise.all([first, second]);
+    });
+
+    it('reset during reading drops it', async () => {
+      const outcome = upload.addPhotoFor('wd-t3');
+      demo.resetData();
+      expect(() => vi.advanceTimersByTime(READING_MS)).not.toThrow();
+
+      await expect(outcome).resolves.toBe('dropped');
+      expect(uploadsOf('weber-design')).toEqual([]);
+      expect(paymentOf('wd-t3').receipt).toBe('missing');
+      expect(upload.readingFor()).toBeNull();
+    });
+
+    it('a photo of a payment that was fixed meanwhile stays unlinked', async () => {
+      const outcome = upload.addPhotoFor('wd-t3');
+      demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+      vi.advanceTimersByTime(READING_MS);
+
+      await expect(outcome).resolves.toBe('dropped');
+      expect(upload1()).toMatchObject({ reading: false, name: 'Deutsche Bahn', paymentId: null });
+      expect(paymentOf('wd-t3')).toMatchObject({ receipt: 'notNeeded', receiptFile: null });
+      expect(upload.readingFor()).toBeNull();
+    });
+
+    it('a photo that is removed while it is read is dropped', async () => {
+      const outcome = upload.addPhotoFor('wd-t3');
+      demo.removeDocument('up-1');
+      vi.advanceTimersByTime(READING_MS);
+
+      await expect(outcome).resolves.toBe('dropped');
+      expect(uploadsOf('weber-design')).toEqual([]);
+      expect(paymentOf('wd-t3').receipt).toBe('missing');
+    });
+
+    it('lands in the business the photo was taken in', async () => {
+      const outcome = upload.addPhotoFor('wd-t3');
+      demo.setBusiness('sara-yoga');
+      vi.advanceTimersByTime(READING_MS);
+
+      await expect(outcome).resolves.toBe('linked');
+      expect(uploadsOf('sara-yoga')).toEqual([]);
+      expect(upload1()).toMatchObject({ reading: false, paymentId: 'wd-t3' });
+      expect(
+        demo.businesses
+          .find((b) => b.id === 'weber-design')!
+          .transactions.find((t) => t.id === 'wd-t3')!.receipt,
+      ).toBe('attached');
+    });
+
+    it('a second tap on the same payment gives the same photo, not another one', async () => {
+      const first = upload.addPhotoFor('wd-t3');
+      const second = upload.addPhotoFor('wd-t3');
+      expect(second).toBe(first);
+      vi.advanceTimersByTime(READING_MS);
+
+      await expect(first).resolves.toBe('linked');
+      expect(uploadsOf('weber-design').map((d) => d.id)).toEqual(['up-1']);
+      expect(paymentOf('wd-t3').history.filter((h) => h.key === 'receiptLinked')).toHaveLength(1);
+    });
+
+    it('a payment that has its receipt, or is not there, takes no photo', async () => {
+      await expect(upload.addPhotoFor('wd-t2')).resolves.toBe('dropped');
+      await expect(upload.addPhotoFor('nope')).resolves.toBe('dropped');
+      expect(uploadsOf('weber-design')).toEqual([]);
+      expect(upload.readingFor()).toBeNull();
+    });
+
+    it('two payments can be read at the same time', async () => {
+      const first = upload.addPhotoFor('wd-t3');
+      const second = upload.addPhotoFor('wd-t17');
+      expect(upload.readingFor()).toBe('wd-t17');
+
+      vi.advanceTimersByTime(READING_MS);
+      await Promise.all([first, second]);
+      expect(upload.readingFor()).toBeNull();
+      expect(paymentOf('wd-t3').receipt).toBe('attached');
+      expect(paymentOf('wd-t17').receipt).toBe('attached');
+    });
   });
 });

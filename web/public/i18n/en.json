@@ -211,6 +211,7 @@
         "missing": "Receipt missing",
         "missingHint": "Add one, or say that this payment needs none.",
         "takePhoto": "Take photo",
+        "reading": "Reading…",
         "pickDocument": "Pick from Documents",
         "openDocument": "Open document",
         "noReceiptNeeded": "No receipt needed"

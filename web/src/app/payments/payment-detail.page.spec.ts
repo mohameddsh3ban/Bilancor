@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { READING_MS } from '../domain/document-upload';
 import { DocumentDetailPage } from '../documents/document-detail.page';
 import { DocumentsPage } from '../documents/documents.page';
 import { DemoStateService } from '../state/demo-state.service';
@@ -303,11 +304,13 @@ describe('PaymentDetailPage', () => {
       expect(d('receipt-thumbnail')).not.toBeNull();
     });
 
-    it('missing receipt: no receipt needed, a picker for documents, and two coming-soon ways to add one', async () => {
+    it('missing receipt: no receipt needed, a photo, a picker for documents, and a coming-soon self-issued receipt', async () => {
       await render('/payments/wd-t3');
       expect(text(d('receipt-state'))).toBe('Receipt missing');
       expect(d('no-receipt-needed')!.tagName).toBe('BUTTON');
-      expect(d('take-photo')!.getAttribute('href')).toBe('/soon/photo');
+      expect(d('take-photo')!.tagName).toBe('BUTTON');
+      expect(text(d('take-photo'))).toBe('Take photo');
+      expect(d('take-photo')!.hasAttribute('disabled')).toBe(false);
       expect(d('pick-document')!.tagName).toBe('BUTTON');
       expect(text(d('pick-document'))).toBe('Pick from Documents');
       expect(d('self-receipt')!.getAttribute('href')).toBe('/soon/selfReceipt');
@@ -376,6 +379,69 @@ describe('PaymentDetailPage', () => {
       expect(plain(d('history-text'))).toBe('You linked the document Böttcher Bürobedarf');
       expect(doc('wd-d4').paymentId).toBe('wd-t17');
       expect(options()).toHaveLength(0);
+    });
+
+    it('payment detail Take a photo shows Reading… then the receipt', async () => {
+      await render('/payments/wd-t3');
+      vi.useFakeTimers();
+      try {
+        d('take-photo')!.click();
+        await settle();
+        expect(text(d('take-photo'))).toBe('Reading…');
+        expect(d('take-photo')!.hasAttribute('disabled')).toBe(true);
+        expect(status()).toBe('Receipt missing');
+        TestBed.inject(LanguageService).setLang('de');
+        await settle();
+        expect(text(d('take-photo'))).toBe(de.payments.detail.receipt.reading);
+        expect(text(d('take-photo'))).not.toBe(en.payments.detail.receipt.reading);
+        TestBed.inject(LanguageService).setLang('en');
+        await settle();
+
+        vi.advanceTimersByTime(READING_MS);
+        await settle();
+        expect(status()).toBe('Booked');
+        expect(text(d('receipt-state'))).toBe('photo-2026-10-22-1.jpg');
+        expect(d('take-photo')).toBeNull();
+        expect(d('pick-document')).toBeNull();
+        expect(d('open-document')!.getAttribute('href')).toBe('/documents/up-1');
+        expect(plain(d('history-text'))).toBe('You linked the document Deutsche Bahn');
+        expect(doc('up-1')).toMatchObject({ source: 'photo', paymentId: 'wd-t3', reading: false });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('a double tap on Take a photo takes one photo', async () => {
+      await render('/payments/wd-t3');
+      vi.useFakeTimers();
+      try {
+        const button = d('take-photo')!;
+        button.click();
+        button.click();
+        await settle();
+        vi.advanceTimersByTime(READING_MS);
+        await settle();
+        expect(demo.documents().filter((x) => x.fromUpload).map((x) => x.id)).toEqual(['up-1']);
+        expect(tx('wd-t3').history.filter((h) => h.key === 'receiptLinked')).toHaveLength(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('another payment keeps its own Take a photo while one is being read', async () => {
+      await render('/payments/wd-t3');
+      vi.useFakeTimers();
+      try {
+        d('take-photo')!.click();
+        await settle();
+        await harness.navigateByUrl('/payments/wd-t17');
+        await settle();
+        expect(text(d('take-photo'))).toBe('Take photo');
+        expect(d('take-photo')!.hasAttribute('disabled')).toBe(false);
+        vi.advanceTimersByTime(READING_MS);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('lists the documents that fit the payment, best match first', async () => {
