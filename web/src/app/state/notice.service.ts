@@ -1,6 +1,7 @@
 import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { Notice } from '../data/models';
+import { bankNotices } from '../domain/bank-connection';
 import { docsToCheckCount, visibleDocuments } from '../domain/document-status';
 import { noticesForSetup, splitNotices, withUnreadableCount } from '../domain/notices';
 import { DemoStateService } from './demo-state.service';
@@ -24,11 +25,14 @@ export class NoticeService {
     docsToCheckCount(visibleDocuments(this.demo.documents(), this.demo.setup())),
   );
 
-  /** The business's open notices whose setup step is done, with the live count of unreadable receipts. */
+  /**
+   * The business's open notices whose setup step is done, with the live count of unreadable receipts. The bank notices
+   * are calculated from the accounts and join the stored ones, so they are dismissed, ordered and listed the same way.
+   */
   private readonly applicable = computed(() => {
     const business = this.demo.business();
     return withUnreadableCount(
-      noticesForSetup(business.notices, this.demo.setup(), business.taxProfile),
+      noticesForSetup([...business.notices, ...bankNotices(business.accounts)], this.demo.setup(), business.taxProfile),
       this.unreadable(),
     );
   });

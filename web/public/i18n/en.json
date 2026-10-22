@@ -101,7 +101,6 @@
     "help": "Help",
     "more": "More",
     "terms": "Bank connection terms",
-    "bankExpiry": "Bank connection",
     "unreadable": "Unreadable receipts",
     "revenueLimit": "Revenue limit",
     "bank": "Connect your bank",
@@ -144,6 +143,10 @@
     "bankExpiry": {
       "text": "Your {{bank}} connection expires in {{days}} days",
       "action": "Renew"
+    },
+    "bankEnded": {
+      "text": "Your {{bank}} connection has ended",
+      "action": "Sign in again"
     },
     "unreadable": {
       "text": "Receipts that could not be read: {{count}}",

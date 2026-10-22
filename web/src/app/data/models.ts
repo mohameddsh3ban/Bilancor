@@ -74,7 +74,7 @@ export interface Doc {
 } // the status is calculated by docStatus(), never stored
 /** A ready-made reading result for a simulated upload; `plain` marks the receipts a pool repeats. */
 export type PoolResult = Pick<Doc, 'name' | 'direction' | 'invoiceNo' | 'date' | 'dueDate' | 'amountCents' | 'vatRate' | 'duplicateOf' | 'booking'> & { plain: boolean };
-export type NoticeKind = 'terms' | 'bankExpiry' | 'unreadable' | 'revenueLimit';
+export type NoticeKind = 'terms' | 'bankExpiry' | 'bankEnded' | 'unreadable' | 'revenueLimit';
 export interface Notice { id: string; kind: NoticeKind; urgency: number; blocking: boolean; params: Record<string, string | number>; date: string } // lower urgency = more urgent; text from i18n "notice.<kind>.text" / ".action"
 export type BusinessKind = 'freelance' | 'trade';
 export type VatPeriod = 'monthly' | 'quarterly' | 'yearly';

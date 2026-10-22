@@ -75,8 +75,16 @@ import { NoticeService } from '../../state/notice.service';
 export class NoticesCard {
   protected readonly notices = inject(NoticeService);
 
-  /** Fixing unreadable receipts happens in Documents; the other actions are not built yet. */
+  /** Fixing unreadable receipts happens in Documents and renewing a bank connection in Settings; the other actions are not built yet. */
   protected link(kind: NoticeKind): string[] {
-    return kind === 'unreadable' ? ['/documents'] : ['/soon', kind];
+    switch (kind) {
+      case 'unreadable':
+        return ['/documents'];
+      case 'bankExpiry':
+      case 'bankEnded':
+        return ['/settings'];
+      default:
+        return ['/soon', kind];
+    }
   }
 }

@@ -1,11 +1,14 @@
-import type { Notice } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { bankNotices } from './bank-connection';
 import { noticesForSetup, splitNotices, withUnreadableCount } from './notices';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
-const [terms, unreadable] = weber.notices;
-// The sample data no longer stores a bank notice (it is calculated from the connections), so these tests bring their own.
-const bankExpiry: Notice = { id: 'wd-n2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 5 }, date: '2026-10-19' };
+const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
+const terms = weber.notices.find((n) => n.kind === 'terms')!;
+const unreadable = weber.notices.find((n) => n.kind === 'unreadable')!;
+// The sample data stores no bank notice: it is calculated from the connections.
+const [bankExpiry] = bankNotices(weber.accounts);
+const [bankEnded] = bankNotices(sara.accounts);
 const three = [terms, bankExpiry, unreadable];
 
 describe('splitNotices', () => {
@@ -35,7 +38,6 @@ describe('splitNotices', () => {
 });
 
 describe('noticesForSetup', () => {
-  const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
   const done = { bank: true, tax: true, receipt: true };
   const vatBusiness = weber.taxProfile;
   const kleinunternehmer = sara.taxProfile;
@@ -47,6 +49,12 @@ describe('noticesForSetup', () => {
   it('hides bank notices until the bank step is done', () => {
     const kinds = noticesForSetup(three, { ...done, bank: false }, vatBusiness).map((n) => n.kind);
     expect(kinds).toEqual(['unreadable']);
+  });
+
+  it('hides the bank-ended notice until the bank step is done, like the bank-expiry one', () => {
+    const both = [bankEnded, bankExpiry];
+    expect(noticesForSetup(both, { ...done, bank: false }, vatBusiness)).toEqual([]);
+    expect(noticesForSetup(both, { ...done, tax: false, receipt: false }, vatBusiness)).toEqual(both);
   });
 
   it('hides unreadable notices until the receipt step is done', () => {
@@ -66,9 +74,9 @@ describe('noticesForSetup', () => {
   });
 
   it('leaves the other notices alone when the business charges VAT', () => {
-    const withLimit = [...three, ...sara.notices];
+    const withLimit = [...three, bankEnded, ...sara.notices];
     const kinds = noticesForSetup(withLimit, done, vatBusiness).map((n) => n.kind);
-    expect(kinds).toEqual(['terms', 'bankExpiry', 'unreadable']);
+    expect(kinds).toEqual(['terms', 'bankExpiry', 'unreadable', 'bankEnded']);
   });
 });
 

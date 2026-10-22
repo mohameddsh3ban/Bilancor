@@ -37,9 +37,9 @@ describe('ComingSoonPage', () => {
     expect(el.querySelector('h1')?.textContent).toContain('This page');
   });
 
-  it('documents, upload and decisions are built pages now, so they are no longer coming-soon features', async () => {
+  it('documents, upload, decisions and the bank notices are built or open Settings, so they are no longer coming-soon features', async () => {
     const harness = await RouterTestingHarness.create('/soon/home');
-    for (const feature of ['documents', 'upload', 'decisions']) {
+    for (const feature of ['documents', 'upload', 'decisions', 'bankExpiry', 'bankEnded']) {
       await harness.navigateByUrl(`/soon/${feature}`);
       harness.detectChanges();
       const title = (harness.routeNativeElement as HTMLElement).querySelector('h1')?.textContent;
@@ -58,7 +58,6 @@ describe('ComingSoonPage', () => {
       'help',
       'more',
       'terms',
-      'bankExpiry',
       'unreadable',
       'revenueLimit',
       'bank',

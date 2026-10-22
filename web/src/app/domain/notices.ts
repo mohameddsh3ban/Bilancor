@@ -3,6 +3,7 @@ import { Notice, NoticeKind, SetupSteps, TaxProfile } from '../data/models';
 /** The setup step a notice kind needs: until it is done, the notice has nothing to talk about. */
 const STEP_FOR_KIND: Record<NoticeKind, keyof SetupSteps> = {
   bankExpiry: 'bank',
+  bankEnded: 'bank',
   terms: 'bank',
   unreadable: 'receipt',
   revenueLimit: 'tax',

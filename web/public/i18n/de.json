@@ -101,7 +101,6 @@
     "help": "Hilfe",
     "more": "Mehr",
     "terms": "Bedingungen der Bankanbindung",
-    "bankExpiry": "Bankanbindung",
     "unreadable": "Nicht lesbare Belege",
     "revenueLimit": "Umsatzgrenze",
     "bank": "Bank verbinden",
@@ -144,6 +143,10 @@
     "bankExpiry": {
       "text": "Deine Verbindung zu {{bank}} läuft in {{days}} Tagen ab",
       "action": "Erneuern"
+    },
+    "bankEnded": {
+      "text": "Deine Verbindung zu {{bank}} ist beendet",
+      "action": "Erneut anmelden"
     },
     "unreadable": {
       "text": "Nicht lesbare Belege: {{count}}",

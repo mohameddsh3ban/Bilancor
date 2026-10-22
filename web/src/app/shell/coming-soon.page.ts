@@ -16,7 +16,6 @@ const FEATURES: readonly string[] = [
   'help',
   'more',
   'terms',
-  'bankExpiry',
   'unreadable',
   'revenueLimit',
   'bank',
