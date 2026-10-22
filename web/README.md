@@ -1,6 +1,6 @@
 # Bookkeeping app mockup (web)
 
-Clickable Angular mockup of the bookkeeping app: the homepage and the Payments page (en / de / ar). No backend.
+Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page and the Documents page (en / de / ar). No backend.
 All data is sample data in `src/app/data/sample-data.ts`.
 
 ## Install
@@ -31,7 +31,7 @@ The strip at the top of every page is demo-only:
 
 - **Setup state** (New client / Halfway / Active client) shows how the homepage and the Payments page look at each stage of setup (in "New client" no bank is connected yet, so Payments has no list).
 - **Business switcher** (in the top bar) changes which business is open.
-- **Reset demo** brings back every notice you dismissed and the sample payments (dismissals are remembered in the browser until you reset).
+- **Reset demo** brings back every notice you dismissed and the sample payments and documents (dismissals are remembered in the browser until you reset).
 
 ## Payments
 
@@ -46,9 +46,37 @@ What works on sample data:
 - **Print views:** Download PDF (one payment), and Download month (computer only), which prints the selected month, or the newest month when none is chosen, with its account if one is chosen; search and the quick filter don't apply. Both open the browser's Print dialog; choose Save as PDF to keep a file.
 - In the "New client" setup state, Payments shows "Connect your bank to see your payments" with a button instead of the list.
 
-Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Pick from Documents, Self-issued receipt, and the homepage's decisions Start button.
+**Pick from Documents** (in a payment's Receipt section) opens a list of unlinked documents of the matching direction; choosing one links it (see Documents). A payment with a linked document can't be marked Private: the switch says to unlink the document first. **Open document** on a payment with a linked document opens that document.
+
+Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Self-issued receipt, and the homepage's decisions Start button.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample data. The demo's "today" is 22 Oct 2026, so new history lines are dated 22 Oct.
+
+## Documents
+
+The Documents page (`/documents`) opens from the menu (on a phone, under More in the bottom bar), from the camera button in the bottom bar (which also opens the Add choices), from the homepage's "Unreadable receipts" notice and from the "Open document" link on a payment. It works in English, German and Arabic.
+
+What works on sample data:
+
+- **Needs you** box at the top: one card per document that needs a decision. A possible duplicate offers **Keep both** or **Remove**, a document whose direction is unclear asks **Received** or **Sent**, and a document with an unreadable amount, date or name offers **Type it in**. Fixing a card removes it, or turns it into its next problem. The box disappears when it is empty.
+- **List by month:** every other document, newest first, with its status as a word (Waiting for payment, Overdue, Done). Search by name, amount (typed as on Payments) or invoice number.
+- **One document:** full screen on a phone, a side panel beside the list from 1024 px wide. It shows the drawn scan, what we read, the booking, the payment and the history.
+  - **Edit** the fields we read. Saving adds a history line, and fixing an unreadable field clears that problem.
+  - **Change** or **Confirm** the booking. One booking is shared by a document and its payment.
+  - **Payment suggestions:** up to three likely payments, each with **This one**. **Search all payments** opens every unlinked payment of the matching direction. **Not this payment** unlinks (the payment gets its earlier booking back and needs a receipt again).
+  - **Remove** a document that is not linked to a payment.
+- Linking from either page adds a history line on both the document and the payment.
+- In the "New client" setup state there is no list, only the ways to add a document.
+
+**Adding documents:** the **+ Add** button, the menu's "Upload receipt" and the homepage's "Upload your first receipt" step open the choices. On a phone: take a photo, choose a file, or copy the forwarding address. On a computer: choose a file, copy the forwarding address, or drop files anywhere on the page. **Copy** copies the address; if the browser refuses, the message says to select it.
+
+Every upload is simulated. A new document shows "Reading…" for about two seconds, then takes the next ready-made result from a small pool for the open business. For Weber Design, the first upload is a Deutsche Bahn receipt that links itself to the payment with the missing receipt, the second is a possible duplicate, and the third asks "Received or sent?"; after that the pool gives plain receipts waiting for payment. Accepted files are PDF, JPG, PNG and e-invoice XML, up to 20 MB; any other file is refused with a message that names it. A short message sums up what was added and how many documents need you.
+
+**Homepage:** the decisions count ("things need your decision") counts documents in the Needs you box as well as payments, and the "Unreadable receipts" notice counts documents with an unreadable field (its Fix button opens Documents).
+
+Coming soon (the buttons open a placeholder page): Paid in cash or privately, and Self-issued receipt. Not built: real reading of documents, a real email inbox (the forwarding address is made up) and Dropbox import.
+
+Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample documents along with the payments, and drops any upload that is still "Reading…".
 
 ## Translations
 
