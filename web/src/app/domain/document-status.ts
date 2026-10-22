@@ -42,6 +42,11 @@ export function docsNeedingYouCount(docs: readonly Doc[]): number {
   return docs.filter(docNeedsYou).length;
 }
 
+/** How many documents have a field to check: the amount, the date or the name could not be read. */
+export function docsToCheckCount(docs: readonly Doc[]): number {
+  return docs.filter((doc) => docStatus(doc).startsWith('check')).length;
+}
+
 /** The documents the open business shows: everything once a bank is connected, before that only what was added in the demo. */
 export function visibleDocuments(docs: readonly Doc[], setup: SetupState): Doc[] {
   return setupSteps(setup).bank ? [...docs] : docs.filter((doc) => doc.fromUpload);

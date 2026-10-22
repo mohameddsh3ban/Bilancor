@@ -213,6 +213,7 @@
         "missingHint": "Füge einen hinzu oder sag, dass diese Zahlung keinen braucht.",
         "takePhoto": "Foto aufnehmen",
         "pickDocument": "Aus Dokumenten wählen",
+        "openDocument": "Dokument öffnen",
         "noReceiptNeeded": "Kein Beleg nötig"
       },
       "booking": {
@@ -226,12 +227,20 @@
         "noVat": "Keine USt",
         "kind": "Diese Zahlung ist",
         "business": "Geschäftlich",
-        "private": "Privat"
+        "private": "Privat",
+        "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung."
       },
       "picker": {
         "search": "Kategorien durchsuchen",
         "placeholder": "Name oder Nummer",
         "empty": "Keine Kategorie passt"
+      },
+      "docPicker": {
+        "search": "Dokumente durchsuchen",
+        "placeholder": "Name oder Betrag",
+        "empty": "Kein nicht verknüpftes Dokument passt zu dieser Zahlung",
+        "noMatch": "Kein Dokument passt",
+        "add": "Dokument hinzufügen"
       },
       "bank": {
         "title": "Bankdaten",

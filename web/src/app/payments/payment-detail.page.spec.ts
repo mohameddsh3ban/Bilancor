@@ -4,10 +4,13 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { DocumentDetailPage } from '../documents/document-detail.page';
+import { DocumentsPage } from '../documents/documents.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
 import ar from '../../../public/i18n/ar.json';
+import de from '../../../public/i18n/de.json';
 import en from '../../../public/i18n/en.json';
 
 describe('PaymentDetailPage', () => {
@@ -25,6 +28,11 @@ describe('PaymentDetailPage', () => {
             path: 'payments',
             component: PaymentsPage,
             children: [{ path: ':id', component: PaymentDetailPage }],
+          },
+          {
+            path: 'documents',
+            component: DocumentsPage,
+            children: [{ path: ':id', component: DocumentDetailPage }],
           },
         ]),
       ],
@@ -232,6 +240,8 @@ describe('PaymentDetailPage', () => {
     });
 
     it('a private payment offers no Change, Confirm or receipt actions', async () => {
+      // Its document has to go first: a payment with a document can't be marked private.
+      demo.unlink('doc-wd-t1');
       await render('/payments/wd-t1');
       expect(d('confirm-booking')).not.toBeNull();
       await click('kind-private');
@@ -243,7 +253,7 @@ describe('PaymentDetailPage', () => {
     });
 
     it('clicking the side that is already on adds no history line', async () => {
-      await render('/payments/wd-t2');
+      await render('/payments/wd-t3');
       const before = historyTexts();
       await click('kind-business');
       expect(historyTexts()).toEqual(before);
@@ -293,12 +303,13 @@ describe('PaymentDetailPage', () => {
       expect(d('receipt-thumbnail')).not.toBeNull();
     });
 
-    it('missing receipt: no receipt needed, and three coming-soon ways to add one', async () => {
+    it('missing receipt: no receipt needed, a picker for documents, and two coming-soon ways to add one', async () => {
       await render('/payments/wd-t3');
       expect(text(d('receipt-state'))).toBe('Receipt missing');
       expect(d('no-receipt-needed')!.tagName).toBe('BUTTON');
       expect(d('take-photo')!.getAttribute('href')).toBe('/soon/photo');
-      expect(d('pick-document')!.getAttribute('href')).toBe('/soon/documents');
+      expect(d('pick-document')!.tagName).toBe('BUTTON');
+      expect(text(d('pick-document'))).toBe('Pick from Documents');
       expect(d('self-receipt')!.getAttribute('href')).toBe('/soon/selfReceipt');
     });
 
@@ -327,6 +338,166 @@ describe('PaymentDetailPage', () => {
       await render('/payments/wd-t15');
       expect(text(d('receipt-state'))).toBe('No receipt needed');
       expect(d('no-receipt-needed')).toBeNull();
+    });
+  });
+
+  describe('documents', () => {
+    // The document list opens in an overlay outside the page, so it is read from the document.
+    const options = () =>
+      Array.from(
+        document.body.querySelectorAll<HTMLElement>('[data-testid="document-picker-option"]'),
+      );
+    const optionNames = () =>
+      options().map((o) => text(o.querySelector('[data-testid="picker-name"]')));
+    const inBody = (testId: string) =>
+      document.body.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+    /** Text without the isolates that keep a name's direction (see PaymentHistory). */
+    const plain = (node: Element | null | undefined) =>
+      text(node).replaceAll(String.fromCodePoint(0x2068), '').replaceAll(String.fromCodePoint(0x2069), '');
+    const doc = (id: string) => demo.documents().find((x) => x.id === id)!;
+    const tx = (id: string) => demo.business().transactions.find((t) => t.id === id)!;
+
+    async function pick(name: string): Promise<void> {
+      await click('pick-document');
+      options()
+        .find((o) => text(o).includes(name))!
+        .click();
+      await settle();
+    }
+
+    it('Pick from Documents links Böttcher to wd-t17', async () => {
+      await render('/payments/wd-t17');
+      expect(status()).toBe('Receipt missing');
+      await pick('Böttcher');
+      expect(status()).toBe('Booked');
+      expect(text(d('receipt-state'))).toBe('boettcher-quittung.pdf');
+      expect(d('pick-document')).toBeNull();
+      expect(d('no-receipt-needed')).toBeNull();
+      expect(plain(d('history-text'))).toBe('You linked the document Böttcher Bürobedarf');
+      expect(doc('wd-d4').paymentId).toBe('wd-t17');
+      expect(options()).toHaveLength(0);
+    });
+
+    it('lists the documents that fit the payment, best match first', async () => {
+      await render('/payments/wd-t17');
+      await click('pick-document');
+      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Bürobedarf Schulz']);
+    });
+
+    it('the picker offers only received documents for money out', async () => {
+      await render('/payments/wd-t3');
+      await click('pick-document');
+      expect(optionNames()).toEqual(['Bürobedarf Schulz', 'Böttcher Bürobedarf']);
+    });
+
+    it('and only sent documents for money in', async () => {
+      demo.updateTransaction('wd-t1', (t) => ({ ...t, receipt: 'missing', receiptFile: null }));
+      await render('/payments/wd-t1');
+      await click('pick-document');
+      expect(optionNames()).toEqual(['Studio Kern', 'Bäckerei Lange']);
+    });
+
+    it('with no document that fits, says so and offers to add one', async () => {
+      demo.updateDocument('wd-d1', (x) => ({ ...x, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d4', (x) => ({ ...x, paymentId: 'wd-t2' }));
+      await render('/payments/wd-t17');
+      await click('pick-document');
+      expect(text(inBody('document-picker-empty'))).toContain(
+        'No unlinked documents fit this payment',
+      );
+      expect(inBody('document-picker-add')!.getAttribute('href')).toBe('/documents?add=1');
+    });
+
+    it('choosing a document twice writes one history line on each side', async () => {
+      await render('/payments/wd-t17');
+      await click('pick-document');
+      const option = options().find((o) => text(o).includes('Böttcher'))!;
+      option.click();
+      option.click();
+      await settle();
+      expect(tx('wd-t17').history.filter((h) => h.key === 'receiptLinked')).toHaveLength(1);
+      expect(doc('wd-d4').history.filter((h) => h.key === 'linked')).toHaveLength(1);
+      expect(historyTexts().filter((t) => t.startsWith('You linked the document'))).toHaveLength(
+        1,
+      );
+    });
+
+    it('Open document goes to the linked document', async () => {
+      await render('/payments/wd-t17');
+      expect(d('open-document')).toBeNull();
+      await pick('Böttcher');
+      const open = d('open-document')!;
+      expect(open.getAttribute('href')).toBe('/documents/wd-d4');
+      expect(text(open)).toBe('Open document');
+      await click('open-document');
+      expect(TestBed.inject(Router).url).toBe('/documents/wd-d4');
+      const opened = harness.routeNativeElement as HTMLElement;
+      expect(text(opened.querySelector('[data-testid="document-detail-name"]'))).toBe(
+        'Böttcher Bürobedarf',
+      );
+    });
+
+    it('Open document is there for a receipt that was attached from the start', async () => {
+      await render('/payments/wd-t2');
+      expect(d('open-document')!.getAttribute('href')).toBe('/documents/doc-wd-t2');
+    });
+
+    it('offers no Open document when no document links to the payment', async () => {
+      demo.updateDocument('doc-wd-t2', (x) => ({ ...x, paymentId: null }));
+      await render('/payments/wd-t2');
+      expect(text(d('receipt-state'))).toBe('telekom-rechnung-oktober.pdf');
+      expect(d('open-document')).toBeNull();
+      await harness.navigateByUrl('/payments/wd-t3');
+      await settle();
+      expect(d('open-document')).toBeNull();
+      await harness.navigateByUrl('/payments/wd-t15');
+      await settle();
+      expect(d('open-document')).toBeNull();
+    });
+
+    it('takes Open document away again when the document is unlinked', async () => {
+      await render('/payments/wd-t17');
+      await pick('Böttcher');
+      demo.unlink('wd-d4');
+      await settle();
+      expect(d('open-document')).toBeNull();
+      expect(status()).toBe('Receipt missing');
+      expect(d('pick-document')).not.toBeNull();
+    });
+
+    it("a linked payment can't be marked private", async () => {
+      await render('/payments/wd-t17');
+      expect(d('private-blocked')).toBeNull();
+      expect(d('kind-private')).not.toBeNull();
+      await pick('Böttcher');
+      expect(text(d('private-blocked'))).toBe('This payment has a document. Unlink it first.');
+      expect(d('kind-private')).toBeNull();
+      expect(d('kind-business')).toBeNull();
+
+      demo.unlink('wd-d4');
+      await settle();
+      expect(d('private-blocked')).toBeNull();
+      expect(d('kind-private')).not.toBeNull();
+      expect(d('kind-business')!.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('a payment with a receipt from the start is blocked too, in every language', async () => {
+      await render('/payments/wd-t2');
+      expect(text(d('private-blocked'))).toBe('This payment has a document. Unlink it first.');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlocked);
+      expect(text(d('private-blocked'))).not.toBe(en.payments.detail.booking.privateBlocked);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlocked);
+    });
+
+    it('a payment that no document links to can still be marked private', async () => {
+      await render('/payments/wd-t3');
+      expect(d('private-blocked')).toBeNull();
+      await click('kind-private');
+      expect(tx('wd-t3').isPrivate).toBe(true);
     });
   });
 

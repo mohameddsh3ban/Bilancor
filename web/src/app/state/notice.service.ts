@@ -1,8 +1,9 @@
 import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { Notice } from '../data/models';
+import { docsToCheckCount, visibleDocuments } from '../domain/document-status';
 import { setupSteps } from '../domain/home-cards';
-import { noticesForSetup, splitNotices } from '../domain/notices';
+import { noticesForSetup, splitNotices, withUnreadableCount } from '../domain/notices';
 import { DemoStateService } from './demo-state.service';
 
 /** Notices of the open business, with dismissals remembered per person and business. */
@@ -21,8 +22,18 @@ export class NoticeService {
 
   private readonly steps = computed(() => setupSteps(this.demo.setup()));
 
-  /** The business's open notices whose setup step is done. */
-  private readonly applicable = computed(() => noticesForSetup(this.demo.business().notices, this.steps()));
+  /** How many documents the open business shows that have a field to check; the "unreadable" notice counts them live. */
+  private readonly unreadable = computed(() =>
+    docsToCheckCount(visibleDocuments(this.demo.documents(), this.demo.setup())),
+  );
+
+  /** The business's open notices whose setup step is done, with the live count of unreadable receipts. */
+  private readonly applicable = computed(() =>
+    withUnreadableCount(
+      noticesForSetup(this.demo.business().notices, this.steps()),
+      this.unreadable(),
+    ),
+  );
 
   private readonly split = computed(() => splitNotices(this.applicable(), this.dismissedIds()));
 

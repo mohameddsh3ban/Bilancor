@@ -1,7 +1,15 @@
 import { CATEGORIES } from '../data/categories';
 import type { Doc } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
-import { docName, docNeedsYou, docStatus, docsNeedingYouCount, missingField, visibleDocuments } from './document-status';
+import {
+  docName,
+  docNeedsYou,
+  docStatus,
+  docsNeedingYouCount,
+  docsToCheckCount,
+  missingField,
+  visibleDocuments,
+} from './document-status';
 
 const base: Doc = {
   id: 'd',
@@ -111,6 +119,28 @@ describe('docsNeedingYouCount', () => {
     expect(docsNeedingYouCount(documentsOf('weber-design'))).toBe(1);
     expect(docsNeedingYouCount(documentsOf('sara-yoga'))).toBe(0);
     expect(docsNeedingYouCount(documentsOf('cafe-linde'))).toBe(0);
+  });
+});
+
+describe('docsToCheckCount', () => {
+  it('counts the documents with an amount, a date or a name to check, and nothing else', () => {
+    expect(docsToCheckCount([])).toBe(0);
+    const docs = [
+      doc({ amountCents: null }),
+      doc({ date: null }),
+      doc({ name: null }),
+      doc({}),
+      doc({ direction: null }),
+      doc({ duplicateOf: 'x' }),
+      doc({ reading: true, amountCents: null }),
+    ];
+    expect(docsToCheckCount(docs)).toBe(3);
+  });
+
+  it('matches the sample businesses', () => {
+    expect(docsToCheckCount(documentsOf('weber-design'))).toBe(1);
+    expect(docsToCheckCount(documentsOf('sara-yoga'))).toBe(0);
+    expect(docsToCheckCount(documentsOf('cafe-linde'))).toBe(0);
   });
 });
 

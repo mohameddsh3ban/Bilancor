@@ -1,5 +1,6 @@
 import type { Account, Transaction } from '../data/models';
-import { decisionMinutes, newestTransactions, totalAvailableCents } from './home-figures';
+import { BUSINESSES } from '../data/sample-data';
+import { decisionCount, decisionMinutes, newestTransactions, totalAvailableCents } from './home-figures';
 
 const account = (balanceCents: number): Account => ({
   id: String(balanceCents),
@@ -43,5 +44,20 @@ describe('home figures', () => {
     const input = [tx('a', '2026-10-01'), tx('b', '2026-10-05'), tx('c', '2026-10-03')];
     expect(newestTransactions(input, 2).map((t) => t.id)).toEqual(['b', 'c']);
     expect(input.map((t) => t.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  describe('decisionCount', () => {
+    const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
+
+    it('adds the documents that need the person to the payments that need them', () => {
+      expect(decisionCount(business('weber-design'), 'active')).toBe(5);
+      expect(decisionCount(business('sara-yoga'), 'active')).toBe(3);
+      expect(decisionCount(business('cafe-linde'), 'active')).toBe(0);
+    });
+
+    it('leaves out the documents that are not shown yet', () => {
+      // Before a bank is connected only documents added in the demo show, and the sample ones were not added in it.
+      expect(decisionCount(business('weber-design'), 'new')).toBe(4);
+    });
   });
 });

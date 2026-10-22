@@ -83,7 +83,7 @@ describe('AppShell', () => {
     expect(open).toContain('Needs action');
     expect(open).toContain('New terms from our bank-connection provider need your review');
     expect(open).toContain('Your Qonto connection expires in 5 days');
-    expect(open).toContain('Receipts that could not be read: 2');
+    expect(open).toContain('Receipts that could not be read: 1');
     const history = text('bell-history');
     expect(history).toContain('Earlier');
     expect(history).toContain('Your Qonto connection expires in 30 days');

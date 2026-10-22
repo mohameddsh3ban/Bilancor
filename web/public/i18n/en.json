@@ -213,6 +213,7 @@
         "missingHint": "Add one, or say that this payment needs none.",
         "takePhoto": "Take photo",
         "pickDocument": "Pick from Documents",
+        "openDocument": "Open document",
         "noReceiptNeeded": "No receipt needed"
       },
       "booking": {
@@ -226,12 +227,20 @@
         "noVat": "No VAT",
         "kind": "This payment is",
         "business": "Business",
-        "private": "Private"
+        "private": "Private",
+        "privateBlocked": "This payment has a document. Unlink it first."
       },
       "picker": {
         "search": "Search categories",
         "placeholder": "Name or number",
         "empty": "No category matches"
+      },
+      "docPicker": {
+        "search": "Search documents",
+        "placeholder": "Name or amount",
+        "empty": "No unlinked documents fit this payment",
+        "noMatch": "No document matches",
+        "add": "Add a document"
       },
       "bank": {
         "title": "Bank details",

@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { NoticeKind } from '../../data/models';
 import { NoticeService } from '../../state/notice.service';
 
 /** The notices that need action: the two most urgent, a dismiss for the non-blocking ones, and "+N more". */
@@ -33,7 +34,7 @@ import { NoticeService } from '../../state/notice.service';
               size="sm"
               variant="outline"
               class="shrink-0"
-              [routerLink]="['/soon', notice.kind]"
+              [routerLink]="link(notice.kind)"
               [attr.data-testid]="'notice-action-' + notice.id"
             >
               {{ 'notice.' + notice.kind + '.action' | transloco }}
@@ -73,4 +74,9 @@ import { NoticeService } from '../../state/notice.service';
 })
 export class NoticesCard {
   protected readonly notices = inject(NoticeService);
+
+  /** Fixing unreadable receipts happens in Documents; the other actions are not built yet. */
+  protected link(kind: NoticeKind): string[] {
+    return kind === 'unreadable' ? ['/documents'] : ['/soon', kind];
+  }
 }

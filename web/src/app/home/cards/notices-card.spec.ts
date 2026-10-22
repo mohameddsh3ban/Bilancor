@@ -28,6 +28,15 @@ describe('NoticesCard', () => {
     expect(q(el, 'notice-action-wd-n2')?.getAttribute('href')).toBe('/soon/bankExpiry');
   });
 
+  it('Fix opens Documents', () => {
+    const { fixture, el } = render();
+    q(el, 'notice-dismiss-wd-n2')!.click();
+    fixture.detectChanges();
+    expect(q(el, 'notice-wd-n3')?.textContent).toContain('Receipts that could not be read: 1');
+    expect(q(el, 'notice-action-wd-n3')?.textContent?.trim()).toBe('Fix');
+    expect(q(el, 'notice-action-wd-n3')?.getAttribute('href')).toBe('/documents');
+  });
+
   it('blocking notice has no dismiss', () => {
     const { el } = render();
     expect(q(el, 'notice-dismiss-wd-n1')).toBeNull();

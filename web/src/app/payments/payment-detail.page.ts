@@ -19,7 +19,7 @@ import { formatIban } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
-import { Account, Booking, Transaction } from '../data/models';
+import { Account, Booking, Doc, Transaction } from '../data/models';
 import {
   changeCategory,
   confirmBooking,
@@ -31,13 +31,16 @@ import { vatRateShown } from '../domain/tax-rules';
 import { DemoStateService } from '../state/demo-state.service';
 import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
+import { DocumentPicker } from './document-picker';
 import { PaymentHistory } from './payment-history';
 import { PaymentStatusChip } from './payment-status-chip';
 
 /**
  * One payment of the open business: what it is, its receipt, its booking, the other party's bank details and
- * what happened to it. Confirming, "no receipt needed", changing the category and business/private really
- * change the sample data. Below `lg` it is a page of its own; from `lg` it is the panel beside the list.
+ * what happened to it. Confirming, "no receipt needed", picking a document as the receipt, changing the category
+ * and business/private really change the sample data. A payment that a document links to can't be marked private
+ * (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
+ * the list.
  * When the payment is not there (another business opened, an unknown id, no bank yet) it goes back to the list.
  */
 @Component({
@@ -47,6 +50,7 @@ import { PaymentStatusChip } from './payment-status-chip';
     AppDatePipe,
     BookingLabel,
     CategoryPicker,
+    DocumentPicker,
     HlmButton,
     HlmTooltip,
     MoneyPipe,
@@ -129,6 +133,18 @@ import { PaymentStatusChip } from './payment-status-chip';
                   <span data-testid="receipt-state">{{ tx.receiptFile }}</span>
                 </bdi>
               </div>
+              @if (linkedDoc(); as linked) {
+                <a
+                  hlmBtn
+                  variant="outline"
+                  size="lg"
+                  class="self-start"
+                  data-testid="open-document"
+                  [routerLink]="['/documents', linked.id]"
+                >
+                  {{ 'payments.detail.receipt.openDocument' | transloco }}
+                </a>
+              }
             }
             @case ('notNeeded') {
               <p class="text-sm" data-testid="receipt-state">
@@ -162,15 +178,7 @@ import { PaymentStatusChip } from './payment-status-chip';
                   >
                     {{ 'payments.detail.receipt.takePhoto' | transloco }}
                   </a>
-                  <a
-                    hlmBtn
-                    variant="outline"
-                    size="lg"
-                    data-testid="pick-document"
-                    [routerLink]="['/soon', 'documents']"
-                  >
-                    {{ 'payments.detail.receipt.pickDocument' | transloco }}
-                  </a>
+                  <app-document-picker [payment]="tx" (picked)="pickDocument($event)" />
                   <a
                     hlmBtn
                     variant="outline"
@@ -246,38 +254,44 @@ import { PaymentStatusChip } from './payment-status-chip';
             }
           </div>
 
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-muted-foreground text-sm">
-              {{ 'payments.detail.booking.kind' | transloco }}
-            </span>
-            <div
-              role="group"
-              class="border-border bg-card flex overflow-hidden rounded-md border text-sm"
-              [attr.aria-label]="'payments.detail.booking.kind' | transloco"
-            >
-              @for (isPrivate of [false, true]; track isPrivate) {
-                <button
-                  type="button"
-                  class="border-border min-h-10 border-s px-4 py-2 first:border-s-0"
-                  [class]="
-                    tx.isPrivate === isPrivate
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  "
-                  [attr.data-testid]="isPrivate ? 'kind-private' : 'kind-business'"
-                  [attr.aria-pressed]="tx.isPrivate === isPrivate"
-                  (click)="markPrivate(isPrivate)"
-                >
-                  {{
-                    (isPrivate
-                      ? 'payments.detail.booking.private'
-                      : 'payments.detail.booking.business'
-                    ) | transloco
-                  }}
-                </button>
-              }
+          @if (linkedDoc()) {
+            <p class="text-muted-foreground text-sm" data-testid="private-blocked">
+              {{ 'payments.detail.booking.privateBlocked' | transloco }}
+            </p>
+          } @else {
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-muted-foreground text-sm">
+                {{ 'payments.detail.booking.kind' | transloco }}
+              </span>
+              <div
+                role="group"
+                class="border-border bg-card flex overflow-hidden rounded-md border text-sm"
+                [attr.aria-label]="'payments.detail.booking.kind' | transloco"
+              >
+                @for (isPrivate of [false, true]; track isPrivate) {
+                  <button
+                    type="button"
+                    class="border-border min-h-10 border-s px-4 py-2 first:border-s-0"
+                    [class]="
+                      tx.isPrivate === isPrivate
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted'
+                    "
+                    [attr.data-testid]="isPrivate ? 'kind-private' : 'kind-business'"
+                    [attr.aria-pressed]="tx.isPrivate === isPrivate"
+                    (click)="markPrivate(isPrivate)"
+                  >
+                    {{
+                      (isPrivate
+                        ? 'payments.detail.booking.private'
+                        : 'payments.detail.booking.business'
+                      ) | transloco
+                    }}
+                  </button>
+                }
+              </div>
             </div>
-          </div>
+          }
         </section>
 
         <section class="flex flex-col gap-3" data-testid="bank-section">
@@ -352,6 +366,12 @@ export class PaymentDetailPage {
     return this.demo.business().transactions.find((tx) => tx.id === this.id()) ?? null;
   });
 
+  /** The document linked to the open payment, if there is one. */
+  protected readonly linkedDoc = computed<Doc | null>(() => {
+    const id = this.payment()?.id;
+    return id ? (this.demo.documents().find((doc) => doc.paymentId === id) ?? null) : null;
+  });
+
   protected readonly paymentStatus = paymentStatus;
   protected readonly formatIban = formatIban;
 
@@ -392,6 +412,12 @@ export class PaymentDetailPage {
 
   protected markPrivate(isPrivate: boolean): void {
     this.change((tx) => setPrivate(tx, isPrivate));
+  }
+
+  /** The service links only while the receipt is still missing and the document is not linked, so a double tap links once. */
+  protected pickDocument(docId: string): void {
+    const id = this.payment()?.id;
+    if (id) this.demo.link(docId, id);
   }
 
   private change(action: (tx: Transaction) => Transaction): void {
