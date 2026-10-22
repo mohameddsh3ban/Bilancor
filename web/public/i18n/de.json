@@ -233,6 +233,78 @@
       "download": "PDF herunterladen"
     }
   },
+  "documents": {
+    "title": "Dokumente",
+    "add": "Hinzufügen",
+    "search": {
+      "label": "Dokumente durchsuchen",
+      "placeholder": "Name, Betrag oder Rechnungsnummer"
+    },
+    "inbox": {
+      "text": "Oder leite Belege weiter an",
+      "copy": "Kopieren",
+      "copied": "Kopiert"
+    },
+    "direction": {
+      "received": "Empfangen",
+      "sent": "Gesendet"
+    },
+    "status": {
+      "reading": "Wird gelesen…",
+      "duplicate": "Mögliches Duplikat",
+      "direction": "Empfangen oder gesendet?",
+      "checkAmount": "Betrag prüfen",
+      "checkDate": "Datum prüfen",
+      "checkName": "Name prüfen",
+      "waiting": "Wartet auf Zahlung",
+      "waitingDue": "Wartet auf Zahlung · fällig {{date}}",
+      "overdue": "Überfällig seit {{date}}",
+      "done": "Erledigt"
+    },
+    "needsYou": {
+      "title": "Braucht dich · {{count}}",
+      "duplicate": "Sieht aus wie der Beleg, den du am {{date}} hinzugefügt hast.",
+      "duplicateUnknown": "Sieht aus wie ein Beleg, den du schon hinzugefügt hast.",
+      "direction": "Ist das ein Beleg, den du erhalten hast, oder eine Rechnung, die du gesendet hast?",
+      "checkAmount": "Wir konnten den Betrag nicht lesen.",
+      "checkDate": "Wir konnten das Datum nicht lesen.",
+      "checkName": "Wir konnten den Namen nicht lesen.",
+      "fix": {
+        "keepBoth": "Beide behalten",
+        "remove": "Entfernen",
+        "typeItIn": "Eintippen"
+      }
+    },
+    "col": {
+      "date": "Datum",
+      "name": "Name",
+      "type": "Art",
+      "status": "Status",
+      "amount": "Betrag"
+    },
+    "empty": {
+      "new": {
+        "title": "Füge deinen ersten Beleg hinzu",
+        "body": "Belege und Rechnungen, die du hinzufügst, erscheinen hier. Es gibt drei Wege:",
+        "photo": {
+          "title": "Foto aufnehmen",
+          "hint": "Mehrere Seiten werden zu einem Beleg"
+        },
+        "file": {
+          "title": "Datei auswählen",
+          "hint": "PDF, JPG, PNG oder E-Rechnung (XML), bis 20 MB"
+        },
+        "email": {
+          "title": "Per E-Mail weiterleiten"
+        }
+      },
+      "noMatch": "Kein Dokument passt zu deiner Suche",
+      "clearSearch": "Suche löschen"
+    },
+    "detail": {
+      "back": "Dokumente"
+    }
+  },
   "print": {
     "back": "Zurück",
     "nothing": "Hier gibt es nichts zu drucken.",

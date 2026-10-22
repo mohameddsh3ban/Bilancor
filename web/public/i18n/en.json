@@ -233,6 +233,78 @@
       "download": "Download PDF"
     }
   },
+  "documents": {
+    "title": "Documents",
+    "add": "Add",
+    "search": {
+      "label": "Search documents",
+      "placeholder": "Name, amount or invoice number"
+    },
+    "inbox": {
+      "text": "Or forward receipts to",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "direction": {
+      "received": "Received",
+      "sent": "Sent"
+    },
+    "status": {
+      "reading": "Reading…",
+      "duplicate": "Possible duplicate",
+      "direction": "Received or sent?",
+      "checkAmount": "Check amount",
+      "checkDate": "Check date",
+      "checkName": "Check name",
+      "waiting": "Waiting for payment",
+      "waitingDue": "Waiting for payment · due {{date}}",
+      "overdue": "Overdue since {{date}}",
+      "done": "Done"
+    },
+    "needsYou": {
+      "title": "Needs you · {{count}}",
+      "duplicate": "Looks like the one you added on {{date}}.",
+      "duplicateUnknown": "Looks like a document you added before.",
+      "direction": "Is this a bill you received or an invoice you sent?",
+      "checkAmount": "We couldn't read the amount.",
+      "checkDate": "We couldn't read the date.",
+      "checkName": "We couldn't read the name.",
+      "fix": {
+        "keepBoth": "Keep both",
+        "remove": "Remove",
+        "typeItIn": "Type it in"
+      }
+    },
+    "col": {
+      "date": "Date",
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "amount": "Amount"
+    },
+    "empty": {
+      "new": {
+        "title": "Add your first document",
+        "body": "Receipts and invoices you add show up here. There are three ways to add one:",
+        "photo": {
+          "title": "Take a photo",
+          "hint": "Several pages become one document"
+        },
+        "file": {
+          "title": "Choose a file",
+          "hint": "PDF, JPG, PNG or e-invoice (XML), up to 20 MB"
+        },
+        "email": {
+          "title": "Forward by email"
+        }
+      },
+      "noMatch": "No documents match your search",
+      "clearSearch": "Clear search"
+    },
+    "detail": {
+      "back": "Documents"
+    }
+  },
   "print": {
     "back": "Back",
     "nothing": "Nothing to print here.",

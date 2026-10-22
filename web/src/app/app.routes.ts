@@ -23,6 +23,17 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: 'documents',
+        loadComponent: () => import('./documents/documents.page').then((m) => m.DocumentsPage),
+        children: [
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./documents/document-detail.page').then((m) => m.DocumentDetailPage),
+          },
+        ],
+      },
       { path: 'soon/:feature', component: ComingSoonPage },
     ],
   },
