@@ -4,17 +4,18 @@ import type { Booking, Doc } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docsNeedingYouCount } from '../domain/document-status';
+import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
 import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
 
 describe('DemoStateService', () => {
-  it('starts with weber-design and an active setup', () => {
+  it('starts with weber-design and every setup step done', () => {
     const state = TestBed.inject(DemoStateService);
     expect(state.person).toBe(PERSON);
     expect(state.businesses.map((b) => b.id)).toEqual(PERSON.businessIds);
     expect(state.business().id).toBe('weber-design');
-    expect(state.setup()).toBe('active');
+    expect(state.setup()).toEqual(ALL_DONE);
   });
 
   it('setBusiness switches data', () => {
@@ -29,10 +30,66 @@ describe('DemoStateService', () => {
     expect(state.business().id).toBe('weber-design');
   });
 
-  it('setSetup changes the setup state', () => {
+  it('setSetup changes the steps of the open business', () => {
     const state = TestBed.inject(DemoStateService);
     state.setSetup('new');
-    expect(state.setup()).toBe('new');
+    expect(state.setup()).toEqual(presetSteps('new'));
+    expect(presetOf(state.setup())).toBe('new');
+  });
+
+  it("a shortcut only sets the open business's steps", () => {
+    const state = TestBed.inject(DemoStateService);
+    const accounts = state.business().accounts;
+    const taxProfile = state.business().taxProfile;
+    state.setSetup('new');
+    expect(state.setup()).toEqual(presetSteps('new'));
+    state.setBusiness('cafe-linde');
+    expect(state.setup()).toEqual(ALL_DONE);
+    state.setBusiness('weber-design');
+    expect(state.setup().bank).toBe(false);
+    state.setSetup('active');
+    expect(state.setup()).toEqual(ALL_DONE);
+    expect(state.business().accounts).toBe(accounts);
+    expect(state.business().taxProfile).toBe(taxProfile);
+  });
+
+  it('completeStep ticks one step of one business', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('new');
+    state.completeStep('tax');
+    expect(state.setup()).toEqual({ bank: false, tax: true, receipt: false });
+    state.setSetup('new');
+    state.completeStep('receipt', 'weber-design');
+    expect(state.setup()).toEqual({ bank: false, tax: false, receipt: true });
+    state.setBusiness('sara-yoga');
+    state.setSetup('halfway');
+    state.completeStep('tax', 'weber-design');
+    expect(state.setup()).toEqual(presetSteps('halfway'));
+    state.setBusiness('weber-design');
+    expect(state.setup()).toEqual({ bank: false, tax: true, receipt: true });
+  });
+
+  it('completeStep on a step that is done changes nothing', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('halfway');
+    const steps = state.setup();
+    state.completeStep('bank');
+    expect(state.setup()).toBe(steps);
+    state.completeStep('tax', 'cafe-linde'); // never touched, so all done already
+    state.completeStep('tax', 'nope');
+    state.setBusiness('cafe-linde');
+    expect(state.setup()).toBe(ALL_DONE);
+  });
+
+  it('resetData sets every business back to all done', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('new');
+    state.setBusiness('sara-yoga');
+    state.setSetup('halfway');
+    state.resetData();
+    expect(state.setup()).toEqual(ALL_DONE);
+    state.setBusiness('weber-design');
+    expect(state.setup()).toEqual(ALL_DONE);
   });
 
   it('bankConnected follows the setup state: no bank yet in "new", connected in "halfway" and "active"', () => {

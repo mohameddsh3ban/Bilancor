@@ -1,5 +1,6 @@
 import type { Business } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { presetSteps } from './home-cards';
 import { decisionCount } from './home-figures';
 import { reviewItems } from './review-queue';
 
@@ -12,7 +13,7 @@ function weberWith(change: Partial<Business>): Business {
 
 describe('reviewItems', () => {
   it('review items are oldest first across payments and documents', () => {
-    expect(reviewItems(business('weber-design'), 'active')).toEqual([
+    expect(reviewItems(business('weber-design'), presetSteps('active'))).toEqual([
       { kind: 'payment', id: 'wd-t18', date: '2026-10-02', problem: 'unclear' },
       { kind: 'payment', id: 'wd-t17', date: '2026-10-08', problem: 'noReceipt' },
       { kind: 'payment', id: 'wd-t4', date: '2026-10-15', problem: 'unclear' },
@@ -24,15 +25,15 @@ describe('reviewItems', () => {
   });
 
   it('sara-yoga has its three payments, oldest first', () => {
-    expect(reviewItems(business('sara-yoga'), 'active').map((item) => item.id)).toEqual(['sy-t8', 'sy-t7', 'sy-t2']);
+    expect(reviewItems(business('sara-yoga'), presetSteps('active')).map((item) => item.id)).toEqual(['sy-t8', 'sy-t7', 'sy-t2']);
   });
 
   it('cafe-linde has none', () => {
-    expect(reviewItems(business('cafe-linde'), 'active')).toEqual([]);
+    expect(reviewItems(business('cafe-linde'), presetSteps('active'))).toEqual([]);
   });
 
   it('new client has no payment items', () => {
-    const items = reviewItems(business('weber-design'), 'new');
+    const items = reviewItems(business('weber-design'), presetSteps('new'));
     expect(items.filter((item) => item.kind === 'payment')).toEqual([]);
     // The sample documents were not added in the demo, so none of them shows yet either.
     expect(items).toEqual([]);
@@ -41,19 +42,19 @@ describe('reviewItems', () => {
   it('a document added in the demo shows even before a bank is connected', () => {
     const wd = business('weber-design');
     const added = wd.documents.map((d) => (d.id === 'wd-d1' ? { ...d, fromUpload: true } : d));
-    expect(reviewItems(weberWith({ documents: added }), 'new')).toEqual([
+    expect(reviewItems(weberWith({ documents: added }), presetSteps('new'))).toEqual([
       { kind: 'document', id: 'wd-d1', date: '2026-10-20', problem: 'checkAmount' },
     ]);
   });
 
   it('halfway counts payments and documents, since a bank is connected', () => {
-    expect(reviewItems(business('weber-design'), 'halfway')).toHaveLength(6);
+    expect(reviewItems(business('weber-design'), presetSteps('halfway'))).toHaveLength(6);
   });
 
   it('a document with no date is dated by the day it was added', () => {
     const wd = business('weber-design');
     const undated = wd.documents.map((d) => (d.id === 'wd-d1' ? { ...d, date: null, addedOn: '2026-10-01' } : d));
-    const items = reviewItems(weberWith({ documents: undated }), 'active');
+    const items = reviewItems(weberWith({ documents: undated }), presetSteps('active'));
     expect(items[0]).toEqual({ kind: 'document', id: 'wd-d1', date: '2026-10-01', problem: 'checkAmount' });
     expect(items).toHaveLength(6);
   });
@@ -66,7 +67,7 @@ describe('reviewItems', () => {
       if (d.id === 'wd-d4') return { ...d, date: null };
       return d;
     });
-    const found = reviewItems(weberWith({ documents: docs }), 'active').filter((item) => item.kind === 'document');
+    const found = reviewItems(weberWith({ documents: docs }), presetSteps('active')).filter((item) => item.kind === 'document');
     expect(found.map((item) => [item.id, item.problem])).toEqual([
       ['wd-d3', 'direction'],
       ['wd-d4', 'checkDate'],
@@ -82,7 +83,7 @@ describe('reviewItems', () => {
       { ...needsYou, id: 'x-b', date: '2026-10-01' },
       { ...needsYou, id: 'x-a', date: '2026-10-01' },
     ];
-    expect(reviewItems(weberWith({ transactions: tied, documents: [] }), 'active').map((item) => item.id)).toEqual([
+    expect(reviewItems(weberWith({ transactions: tied, documents: [] }), presetSteps('active')).map((item) => item.id)).toEqual([
       'x-a',
       'x-b',
     ]);
@@ -91,22 +92,22 @@ describe('reviewItems', () => {
   it('does not change the business it reads', () => {
     const wd = business('weber-design');
     const order = wd.transactions.map((t) => t.id);
-    reviewItems(wd, 'active');
+    reviewItems(wd, presetSteps('active'));
     expect(wd.transactions.map((t) => t.id)).toEqual(order);
   });
 });
 
 describe('the shared needs-you count', () => {
   it('decisionCount is 6 for weber-design, 3 for sara-yoga and 0 for cafe-linde', () => {
-    expect(decisionCount(business('weber-design'), 'active')).toBe(6);
-    expect(decisionCount(business('sara-yoga'), 'active')).toBe(3);
-    expect(decisionCount(business('cafe-linde'), 'active')).toBe(0);
+    expect(decisionCount(business('weber-design'), presetSteps('active'))).toBe(6);
+    expect(decisionCount(business('sara-yoga'), presetSteps('active'))).toBe(3);
+    expect(decisionCount(business('cafe-linde'), presetSteps('active'))).toBe(0);
   });
 
   it('is always the length of the review queue', () => {
     for (const b of BUSINESSES) {
       for (const setup of ['new', 'halfway', 'active'] as const) {
-        expect(decisionCount(b, setup), `${b.id} ${setup}`).toBe(reviewItems(b, setup).length);
+        expect(decisionCount(b, presetSteps(setup)), `${b.id} ${setup}`).toBe(reviewItems(b, presetSteps(setup)).length);
       }
     }
   });

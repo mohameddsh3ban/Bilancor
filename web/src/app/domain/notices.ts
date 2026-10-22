@@ -1,5 +1,4 @@
-import { Notice, NoticeKind } from '../data/models';
-import { SetupSteps } from './home-cards';
+import { Notice, NoticeKind, SetupSteps } from '../data/models';
 
 /** The setup step a notice kind needs: until it is done, the notice has nothing to talk about. */
 const STEP_FOR_KIND: Record<NoticeKind, keyof SetupSteps> = {

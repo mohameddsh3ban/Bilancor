@@ -1,5 +1,8 @@
 export type Lang = 'en' | 'de' | 'ar';
+/** The demo toolbar's three shortcuts for how far a business is set up. */
 export type SetupState = 'new' | 'halfway' | 'active';
+/** The three setup steps of a business, each done or not. */
+export interface SetupSteps { bank: boolean; tax: boolean; receipt: boolean }
 export type TxStatus = 'booked' | 'confirm' | 'noReceipt' | 'unclear';
 export interface Account { id: string; kind: 'bank' | 'cash'; name: string; balanceCents: number; lastUpdate: string } // ISO date
 export type ReceiptState = 'attached' | 'missing' | 'notNeeded';

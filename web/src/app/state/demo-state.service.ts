@@ -1,9 +1,9 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Business, Doc, Person, SetupState, Transaction } from '../data/models';
+import { Business, Doc, Person, SetupState, SetupSteps, Transaction } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
-import { setupSteps } from '../domain/home-cards';
+import { ALL_DONE, presetSteps } from '../domain/home-cards';
 
 const DEFAULT_BUSINESS_ID = 'weber-design';
 
@@ -20,7 +20,8 @@ export class DemoStateService {
   /** The working copy of the sample data; every edit replaces objects, never changes them in place. */
   private readonly data = signal<Business[]>(freshBusinesses());
   private readonly businessIdSignal = signal(DEFAULT_BUSINESS_ID);
-  private readonly setupSignal = signal<SetupState>('active');
+  /** The setup steps of each business that was ever changed; a business with no entry has every step done. */
+  private readonly stepsByBusiness = signal<Record<string, SetupSteps>>({});
   private readonly generationSignal = signal(0);
 
   readonly business = computed<Business>(() => {
@@ -29,11 +30,12 @@ export class DemoStateService {
   });
   /** The open business's documents as they are now, unfiltered. */
   readonly documents = computed<Doc[]>(() => this.business().documents);
-  readonly setup = this.setupSignal.asReadonly();
+  /** The open business's setup steps. */
+  readonly setup = computed<SetupSteps>(() => this.stepsByBusiness()[this.businessIdSignal()] ?? ALL_DONE);
   /** Goes up on every `resetData()`, so work that started before a reset can tell its data is gone. */
   readonly dataGeneration = this.generationSignal.asReadonly();
   /** Whether the person has connected a bank yet; until then there are no payments to show. */
-  readonly bankConnected = computed(() => setupSteps(this.setupSignal()).bank);
+  readonly bankConnected = computed(() => this.setup().bank);
 
   /** The person's businesses as they are now (including edits). */
   get businesses(): Business[] {
@@ -44,8 +46,17 @@ export class DemoStateService {
     if (this.data().some((b) => b.id === id)) this.businessIdSignal.set(id);
   }
 
-  setSetup(state: SetupState): void {
-    this.setupSignal.set(state);
+  /** Sets the open business's steps to one of the demo toolbar's shortcuts; other businesses, accounts and answers stay as they are. */
+  setSetup(preset: SetupState): void {
+    const businessId = this.businessIdSignal();
+    this.stepsByBusiness.update((all) => ({ ...all, [businessId]: presetSteps(preset) }));
+  }
+
+  /** Marks one setup step of a business (the open one unless named) as done. Ignored when it is done already. */
+  completeStep(step: keyof SetupSteps, businessId: string = this.businessIdSignal()): void {
+    const current = this.stepsByBusiness()[businessId] ?? ALL_DONE;
+    if (current[step]) return;
+    this.stepsByBusiness.update((all) => ({ ...all, [businessId]: { ...current, [step]: true } }));
   }
 
   /**
@@ -161,9 +172,10 @@ export class DemoStateService {
     );
   }
 
-  /** Puts every edited payment and document back to the sample data (demo only). */
+  /** Puts every edited payment and document back to the sample data, and every business back to all steps done (demo only). */
   resetData(): void {
     this.data.set(freshBusinesses());
+    this.stepsByBusiness.set({});
     this.generationSignal.update((n) => n + 1);
   }
 

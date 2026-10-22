@@ -1,10 +1,7 @@
-import type { SetupState } from '../data/models';
+import type { SetupState, SetupSteps } from '../data/models';
 
-export interface SetupSteps {
-  bank: boolean;
-  tax: boolean;
-  receipt: boolean;
-}
+/** A business that was never touched has finished its setup. */
+export const ALL_DONE: SetupSteps = Object.freeze({ bank: true, tax: true, receipt: true });
 
 export interface HomeCards {
   checklist: boolean;
@@ -14,8 +11,9 @@ export interface HomeCards {
   decisions: boolean;
 }
 
-export function setupSteps(state: SetupState): SetupSteps {
-  switch (state) {
+/** The steps a demo toolbar shortcut sets. */
+export function presetSteps(preset: SetupState): SetupSteps {
+  switch (preset) {
     case 'new':
       return { bank: false, tax: false, receipt: false };
     case 'halfway':
@@ -25,8 +23,18 @@ export function setupSteps(state: SetupState): SetupSteps {
   }
 }
 
-export function homeCards(state: SetupState): HomeCards {
-  const steps = setupSteps(state);
+/** The shortcut whose steps these are exactly, or null for any other mix. */
+export function presetOf(steps: SetupSteps): SetupState | null {
+  const presets: readonly SetupState[] = ['new', 'halfway', 'active'];
+  return (
+    presets.find((preset) => {
+      const wanted = presetSteps(preset);
+      return wanted.bank === steps.bank && wanted.tax === steps.tax && wanted.receipt === steps.receipt;
+    }) ?? null
+  );
+}
+
+export function homeCards(steps: SetupSteps): HomeCards {
   const allDone = steps.bank && steps.tax && steps.receipt;
   return {
     checklist: !allDone,

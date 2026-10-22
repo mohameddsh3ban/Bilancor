@@ -3,6 +3,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { presetOf } from '../domain/home-cards';
 import { DemoStateService } from '../state/demo-state.service';
 import { NoticeService } from '../state/notice.service';
 import { AppShell } from './app-shell';
@@ -163,7 +164,26 @@ describe('AppShell', () => {
     const demo = TestBed.inject(DemoStateService);
     const halfway = qa('[data-testid="demo-toolbar"] button').find((b) => b.textContent?.includes('Halfway'));
     halfway!.click();
-    expect(demo.setup()).toBe('halfway');
+    expect(presetOf(demo.setup())).toBe('halfway');
+  });
+
+  it('the demo switch presses the choice that matches the open business', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const pressed = () =>
+      qa('[data-testid="demo-toolbar"] [aria-pressed="true"]').map((b) => b.textContent?.trim());
+    expect(pressed()).toEqual(['Active client']);
+    demo.setSetup('halfway');
+    harness.detectChanges();
+    expect(pressed()).toEqual(['Halfway']);
+  });
+
+  it('no choice is pressed for a mixed set', () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setSetup('halfway');
+    demo.completeStep('tax');
+    harness.detectChanges();
+    expect(qa('[data-testid="demo-toolbar"] [aria-pressed="true"]')).toEqual([]);
+    expect(qa('[data-testid="demo-toolbar"] [aria-pressed="false"]')).toHaveLength(3);
   });
 
   it('reset demo brings dismissed notices back', () => {

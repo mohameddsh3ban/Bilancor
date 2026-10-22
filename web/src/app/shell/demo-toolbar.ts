@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SetupState } from '../data/models';
+import { presetOf } from '../domain/home-cards';
 import { DemoStateService } from '../state/demo-state.service';
 import { NoticeService } from '../state/notice.service';
 
@@ -23,9 +24,9 @@ import { NoticeService } from '../state/notice.service';
           <button
             type="button"
             class="rounded-sm border border-current px-2 py-0.5"
-            [class.bg-primary-foreground]="demo.setup() === state"
-            [class.text-primary]="demo.setup() === state"
-            [attr.aria-pressed]="demo.setup() === state"
+            [class.bg-primary-foreground]="pressed() === state"
+            [class.text-primary]="pressed() === state"
+            [attr.aria-pressed]="pressed() === state"
             (click)="demo.setSetup(state)"
           >
             {{ 'demo.' + state | transloco }}
@@ -47,6 +48,8 @@ export class DemoToolbar {
   protected readonly demo = inject(DemoStateService);
   protected readonly notices = inject(NoticeService);
   protected readonly states: readonly SetupState[] = ['new', 'halfway', 'active'];
+  /** The shortcut that matches the open business's steps exactly; none for a mixed set. */
+  protected readonly pressed = computed(() => presetOf(this.demo.setup()));
 
   protected reset(): void {
     this.notices.resetDismissals();

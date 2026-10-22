@@ -2,7 +2,6 @@ import { Injectable, WritableSignal, computed, inject, signal } from '@angular/c
 import { SafeStorage } from '../core/storage/safe-storage';
 import { Notice } from '../data/models';
 import { docsToCheckCount, visibleDocuments } from '../domain/document-status';
-import { setupSteps } from '../domain/home-cards';
 import { noticesForSetup, splitNotices, withUnreadableCount } from '../domain/notices';
 import { DemoStateService } from './demo-state.service';
 
@@ -20,8 +19,6 @@ export class NoticeService {
     return new Set(this.dismissedByBusiness()[businessId] ?? this.read(businessId));
   });
 
-  private readonly steps = computed(() => setupSteps(this.demo.setup()));
-
   /** How many documents the open business shows that have a field to check; the "unreadable" notice counts them live. */
   private readonly unreadable = computed(() =>
     docsToCheckCount(visibleDocuments(this.demo.documents(), this.demo.setup())),
@@ -30,7 +27,7 @@ export class NoticeService {
   /** The business's open notices whose setup step is done, with the live count of unreadable receipts. */
   private readonly applicable = computed(() =>
     withUnreadableCount(
-      noticesForSetup(this.demo.business().notices, this.steps()),
+      noticesForSetup(this.demo.business().notices, this.demo.setup()),
       this.unreadable(),
     ),
   );
@@ -47,7 +44,7 @@ export class NoticeService {
   readonly history = computed<Notice[]>(() => {
     const ids = this.dismissedIds();
     const dismissed = this.applicable().filter((n) => !n.blocking && ids.has(n.id));
-    const earlier = noticesForSetup(this.demo.business().noticeHistory, this.steps());
+    const earlier = noticesForSetup(this.demo.business().noticeHistory, this.demo.setup());
     return [...dismissed, ...earlier].sort((a, b) => b.date.localeCompare(a.date));
   });
 

@@ -5,7 +5,6 @@ import { Params, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { setupSteps } from '../../domain/home-cards';
 import { DemoStateService } from '../../state/demo-state.service';
 
 type StepId = 'bank' | 'tax' | 'receipt';
@@ -64,7 +63,7 @@ export class SetupChecklist {
   private readonly demo = inject(DemoStateService);
 
   protected readonly steps = computed(() => {
-    const done = setupSteps(this.demo.setup());
+    const done = this.demo.setup();
     return STEP_IDS.map((id) => ({ id, done: done[id], ...this.target(id, done[id]) }));
   });
 

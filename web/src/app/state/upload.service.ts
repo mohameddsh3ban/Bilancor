@@ -117,6 +117,7 @@ export class UploadService {
     const summaryVersion = ++this.summaryVersion;
     this.latest.set({ summary: { added: 0, needsYou: 0, refused }, generation, businessId });
     if (reading.length === 0) return;
+    this.demo.completeStep('receipt', businessId);
     setTimeout(
       () => this.finish({ businessId, generation, reading, refused, summaryVersion }),
       READING_MS,

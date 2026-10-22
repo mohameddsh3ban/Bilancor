@@ -276,6 +276,23 @@ describe('UploadService', () => {
     expect(upload.summary()).toEqual({ added: 1, needsYou: 0, refused: [] });
   });
 
+  it('adding a document ticks the receipt step of its business', () => {
+    demo.setSetup('new');
+    demo.setBusiness('sara-yoga');
+    demo.setSetup('new');
+    demo.setBusiness('weber-design');
+    upload.add([file('ticket.pdf')], 'file');
+    expect(demo.setup()).toEqual({ bank: false, tax: false, receipt: true });
+    demo.setBusiness('sara-yoga');
+    expect(demo.setup()).toEqual({ bank: false, tax: false, receipt: false });
+  });
+
+  it('a drop with no accepted file ticks nothing', () => {
+    demo.setSetup('new');
+    upload.add([file('notes.docx')], 'file');
+    expect(demo.setup().receipt).toBe(false);
+  });
+
   it('a new drop replaces the summary, and the batch before it does not bring its own back', () => {
     upload.add([file('a.pdf'), file('b.pdf')], 'file');
     vi.advanceTimersByTime(1000);
