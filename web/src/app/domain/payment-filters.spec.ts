@@ -1,6 +1,6 @@
 import { Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
-import { EMPTY_FILTER, PaymentFilter, filterPayments, groupByMonth, matchesSearch, monthsOf } from './payment-filters';
+import { EMPTY_FILTER, PaymentFilter, filterPayments, groupByMonth, isFilterActive, matchesSearch, monthsOf } from './payment-filters';
 import { paymentStatus } from './payment-status';
 
 function sample(id: string): Transaction {
@@ -102,5 +102,14 @@ describe('payment filters', () => {
   it('monthsOf lists months newest first', () => {
     expect(monthsOf(weber)).toEqual(['2026-10', '2026-09', '2026-08']);
     expect(monthsOf([])).toEqual([]);
+  });
+
+  it('isFilterActive is false only when nothing is set', () => {
+    expect(isFilterActive(EMPTY_FILTER)).toBe(false);
+    expect(isFilterActive({ ...EMPTY_FILTER, search: '   ' })).toBe(false);
+    expect(isFilterActive({ ...EMPTY_FILTER, quick: 'in' })).toBe(true);
+    expect(isFilterActive({ ...EMPTY_FILTER, accountId: 'wd-cash' })).toBe(true);
+    expect(isFilterActive({ ...EMPTY_FILTER, month: '2026-10' })).toBe(true);
+    expect(isFilterActive({ ...EMPTY_FILTER, search: 'bahn' })).toBe(true);
   });
 });

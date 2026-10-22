@@ -129,6 +129,49 @@
     "markedPrivate": "You marked it as private",
     "markedBusiness": "You marked it as business"
   },
+  "payments": {
+    "title": "Payments",
+    "search": {
+      "label": "Search payments",
+      "placeholder": "Name, amount or reference"
+    },
+    "quick": {
+      "label": "Show",
+      "all": "All",
+      "needsYou": "Needs you",
+      "in": "Money in",
+      "out": "Money out"
+    },
+    "account": {
+      "label": "Account",
+      "all": "All accounts"
+    },
+    "month": {
+      "label": "Month",
+      "all": "All months"
+    },
+    "chip": {
+      "search": "Search: {{text}}",
+      "remove": "Remove filter: {{name}}"
+    },
+    "clearAll": "Clear all",
+    "download": "Download month",
+    "monthIn": "In",
+    "monthOut": "Out",
+    "empty": {
+      "noMatch": "No payments match",
+      "allClear": {
+        "title": "Nothing needs you",
+        "body": "Every payment is booked.",
+        "showAll": "Show all payments"
+      },
+      "new": {
+        "title": "Connect your bank to see your payments",
+        "body": "Your payments show up here as soon as your bank is connected.",
+        "action": "Connect your bank"
+      }
+    }
+  },
   "home": {
     "notices": {
       "dismiss": "Dismiss",

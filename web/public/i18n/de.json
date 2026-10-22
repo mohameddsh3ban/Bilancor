@@ -129,6 +129,49 @@
     "markedPrivate": "Du hast es als privat markiert",
     "markedBusiness": "Du hast es als geschäftlich markiert"
   },
+  "payments": {
+    "title": "Zahlungen",
+    "search": {
+      "label": "Zahlungen durchsuchen",
+      "placeholder": "Name, Betrag oder Verwendungszweck"
+    },
+    "quick": {
+      "label": "Anzeigen",
+      "all": "Alle",
+      "needsYou": "Braucht dich",
+      "in": "Geld rein",
+      "out": "Geld raus"
+    },
+    "account": {
+      "label": "Konto",
+      "all": "Alle Konten"
+    },
+    "month": {
+      "label": "Monat",
+      "all": "Alle Monate"
+    },
+    "chip": {
+      "search": "Suche: {{text}}",
+      "remove": "Filter entfernen: {{name}}"
+    },
+    "clearAll": "Alle zurücksetzen",
+    "download": "Monat herunterladen",
+    "monthIn": "Eingang",
+    "monthOut": "Ausgang",
+    "empty": {
+      "noMatch": "Keine Zahlung passt",
+      "allClear": {
+        "title": "Nichts braucht dich",
+        "body": "Alle Zahlungen sind gebucht.",
+        "showAll": "Alle Zahlungen anzeigen"
+      },
+      "new": {
+        "title": "Verbinde deine Bank, um deine Zahlungen zu sehen",
+        "body": "Deine Zahlungen erscheinen hier, sobald deine Bank verbunden ist.",
+        "action": "Bank verbinden"
+      }
+    }
+  },
   "home": {
     "notices": {
       "dismiss": "Schließen",

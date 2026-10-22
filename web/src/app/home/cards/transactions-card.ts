@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronRight } from '@ng-icons/lucide';
@@ -8,21 +7,15 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { LanguageService } from '../../core/i18n/language.service';
-import { Account, Booking, TxStatus } from '../../data/models';
+import { Account, Booking } from '../../data/models';
 import { newestTransactions } from '../../domain/home-figures';
 import { paymentStatus } from '../../domain/payment-status';
+import { PaymentStatusChip } from '../../payments/payment-status-chip';
 import { DemoStateService } from '../../state/demo-state.service';
-
-const CHIP_CLASSES: Record<TxStatus, string> = {
-  booked: 'bg-positive/10 text-positive',
-  confirm: 'bg-warning/10 text-warning',
-  unclear: 'bg-warning/10 text-warning',
-  noReceipt: 'bg-negative/10 text-negative',
-};
 
 /**
  * The five newest payments with their status. Below `lg` a list, from `lg` a table with account and booking;
- * every row and "See all" open the (coming soon) payments page.
+ * every row opens its payment and "See all" opens the payments page.
  */
 @Component({
   selector: 'app-transactions-card',
@@ -32,7 +25,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
     HlmCardImports,
     MoneyPipe,
     NgIcon,
-    NgTemplateOutlet,
+    PaymentStatusChip,
     RouterLink,
     TranslocoPipe,
   ],
@@ -45,7 +38,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
         <a
           class="text-primary text-sm font-medium underline-offset-4 hover:underline"
           data-testid="tx-see-all"
-          [routerLink]="['/soon', 'payments']"
+          routerLink="/payments"
         >
           {{ 'home.transactions.seeAll' | transloco }}
         </a>
@@ -56,7 +49,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
             <a
               class="hover:bg-muted flex items-center gap-3 py-2.5"
               data-testid="tx-row"
-              [routerLink]="['/soon', 'payments']"
+              [routerLink]="['/payments', tx.id]"
             >
               <span class="flex min-w-0 flex-1 flex-col gap-1">
                 <span class="truncate font-medium" dir="auto" data-testid="tx-counterparty">{{
@@ -64,10 +57,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                 }}</span>
                 <span class="text-muted-foreground flex items-center gap-2 text-xs">
                   <span>{{ tx.date | appDate }}</span>
-                  <ng-container
-                    [ngTemplateOutlet]="statusChip"
-                    [ngTemplateOutletContext]="{ $implicit: tx }"
-                  />
+                  <app-payment-status-chip [status]="status(tx)" />
                 </span>
               </span>
               <bdi dir="ltr" class="shrink-0 font-medium">
@@ -139,7 +129,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                     [attr.title]="
                       bookingText ? tx.counterparty + ' · ' + bookingText : tx.counterparty
                     "
-                    [routerLink]="['/soon', 'payments']"
+                    [routerLink]="['/payments', tx.id]"
                   >
                     {{ tx.counterparty }}
                   </a>
@@ -161,10 +151,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                   </span>
                 </td>
                 <td class="py-2.5 pe-3">
-                  <ng-container
-                    [ngTemplateOutlet]="statusChip"
-                    [ngTemplateOutletContext]="{ $implicit: tx }"
-                  />
+                  <app-payment-status-chip [status]="status(tx)" />
                 </td>
                 <td class="py-2.5 text-end">
                   <bdi dir="ltr" class="font-medium">
@@ -182,15 +169,6 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
         </table>
       </div>
     </section>
-    <ng-template #statusChip let-tx>
-      <span
-        class="rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
-        data-testid="tx-status"
-        [class]="chip(status(tx))"
-      >
-        {{ 'home.status.' + status(tx) | transloco }}
-      </span>
-    </ng-template>
   `,
 })
 export class TransactionsCard {
@@ -211,8 +189,4 @@ export class TransactionsCard {
   }
 
   protected readonly status = paymentStatus;
-
-  protected chip(status: TxStatus): string {
-    return CHIP_CLASSES[status];
-  }
 }

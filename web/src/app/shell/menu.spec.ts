@@ -14,10 +14,16 @@ describe('menu', () => {
     ]);
   });
 
-  it('only Home is a real page; everything else opens coming soon', () => {
+  it('Home and Payments are real pages; everything else opens coming soon', () => {
     for (const item of MENU_ITEMS) {
-      expect(item.route).toBe(item.id === 'home' ? '/' : `/soon/${item.id}`);
+      const real: Record<string, string> = { home: '/', payments: '/payments' };
+      expect(item.route).toBe(real[item.id] ?? `/soon/${item.id}`);
     }
+  });
+
+  it('menu Payments goes to /payments', () => {
+    expect(MENU_ITEMS.find((i) => i.id === 'payments')?.route).toBe('/payments');
+    expect(BOTTOM_BAR_ITEMS.find((i) => i.id === 'payments')?.route).toBe('/payments');
   });
 
   it('bottom bar has the camera in the centre and a more slot', () => {

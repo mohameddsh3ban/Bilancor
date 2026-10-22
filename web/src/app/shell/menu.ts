@@ -30,10 +30,10 @@ export interface MenuItem {
   icon: string;
 }
 
-/** The main menu, in display order. Only Home is a real page; the rest open "coming soon". */
+/** The main menu, in display order. Home and Payments are real pages; the rest open "coming soon". */
 export const MENU_ITEMS: MenuItem[] = [
   { id: 'home', route: '/', icon: 'lucideHouse' },
-  { id: 'payments', route: '/soon/payments', icon: 'lucideCreditCard' },
+  { id: 'payments', route: '/payments', icon: 'lucideCreditCard' },
   { id: 'documents', route: '/soon/documents', icon: 'lucideFileText' },
   { id: 'invoices', route: '/soon/invoices', icon: 'lucideReceipt' },
   { id: 'taxes', route: '/soon/taxes', icon: 'lucideLandmark' },

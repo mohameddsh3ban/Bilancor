@@ -17,12 +17,21 @@ describe('TransactionsCard', () => {
 
   const rows = () => Array.from(el.querySelectorAll<HTMLElement>('[data-testid="tx-row"]'));
 
-  it('shows the 5 newest transactions, linking to payments', () => {
+  it('shows the 5 newest transactions', () => {
     expect(rows()).toHaveLength(5);
     expect(rows()[0].textContent).toContain('Müller GmbH');
     expect(el.textContent).not.toContain('Adobe');
-    for (const row of rows()) expect(row.getAttribute('href')).toBe('/soon/payments');
-    expect(el.querySelector('[data-testid="tx-see-all"]')?.getAttribute('href')).toBe('/soon/payments');
+  });
+
+  it('homepage rows link to their payment, and See all to the payments page', () => {
+    expect(rows().map((r) => r.getAttribute('href'))).toEqual([
+      '/payments/wd-t1',
+      '/payments/wd-t2',
+      '/payments/wd-t3',
+      '/payments/wd-t4',
+      '/payments/wd-t6',
+    ]);
+    expect(el.querySelector('[data-testid="tx-see-all"]')?.getAttribute('href')).toBe('/payments');
   });
 
   it('shows a status chip for each row', () => {
@@ -124,7 +133,7 @@ describe('TransactionsCard', () => {
       for (const name of names) {
         expect(name.classList).toContain('truncate');
         expect(name.getAttribute('dir')).toBe('auto');
-        expect(name.getAttribute('href')).toBe('/soon/payments');
+        expect(name.getAttribute('href')).toMatch(/^\/payments\/wd-t\d+$/);
       }
       const amounts = Array.from(root.querySelectorAll('[data-testid="tx-table-amount"]'));
       expect(amounts).toHaveLength(5);
@@ -174,7 +183,7 @@ describe('TransactionsCard', () => {
       }
     });
 
-    it('the whole row opens payments: row is relative and the counterparty link is stretched over it', () => {
+    it('the whole row opens its payment: row is relative and the counterparty link is stretched over it', () => {
       const root = renderTable();
       expect(tableRows(root)).toHaveLength(5);
       for (const row of tableRows(root)) {
@@ -182,7 +191,7 @@ describe('TransactionsCard', () => {
         const link = row.querySelector('[data-testid="tx-table-counterparty"]')!;
         expect(link.classList).toContain('after:absolute');
         expect(link.classList).toContain('after:inset-0');
-        expect(link.getAttribute('href')).toBe('/soon/payments');
+        expect(link.getAttribute('href')).toMatch(/^\/payments\/wd-t\d+$/);
       }
     });
   });

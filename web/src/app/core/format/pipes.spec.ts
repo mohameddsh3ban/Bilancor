@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { LanguageService } from '../i18n/language.service';
 import { provideTranslocoTesting } from '../i18n/transloco-testing';
 import { AppDatePipe } from './date.pipe';
+import { AppMonthPipe } from './month.pipe';
 import { MoneyPipe } from './money.pipe';
 
 describe('format pipes', () => {
@@ -33,5 +34,15 @@ describe('format pipes', () => {
     expect(pipe.transform('2026-10-21')).toContain('21 Oct');
     TestBed.inject(LanguageService).setLang('de');
     expect(pipe.transform('2026-10-21')).toContain('21. Okt');
+  });
+
+  it('appMonth pipe names the month in the current language', () => {
+    const pipe = TestBed.runInInjectionContext(() => new AppMonthPipe());
+    expect(pipe.transform('2026-10')).toBe('October 2026');
+    TestBed.inject(LanguageService).setLang('de');
+    expect(pipe.transform('2026-10')).toBe('Oktober 2026');
+    TestBed.inject(LanguageService).setLang('ar');
+    expect(pipe.transform('2026-10')).toMatch(/2026/);
+    expect(pipe.transform('2026-10')).not.toMatch(/[٠-٩]/);
   });
 });

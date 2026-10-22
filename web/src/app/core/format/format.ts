@@ -27,3 +27,12 @@ export function formatDate(iso: string, lang: Lang): string {
     timeZone: 'UTC',
   }).format(new Date(iso));
 }
+
+/** The name of a 'YYYY-MM' month with its year, e.g. "October 2026". */
+export function formatMonth(month: string, lang: Lang): string {
+  return new Intl.DateTimeFormat(LOCALES[lang], {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${month}-01`));
+}

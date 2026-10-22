@@ -12,6 +12,11 @@ export interface PaymentFilter {
 
 export const EMPTY_FILTER: PaymentFilter = { quick: 'all', accountId: null, month: null, search: '' };
 
+/** True when any filter is set (a search of only spaces counts as none). */
+export function isFilterActive(f: PaymentFilter): boolean {
+  return f.quick !== 'all' || f.accountId !== null || f.month !== null || f.search.trim() !== '';
+}
+
 export interface MonthGroup {
   month: string; // 'YYYY-MM'
   inCents: number; // sum of the incoming payments
