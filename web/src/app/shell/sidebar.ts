@@ -18,7 +18,13 @@ import { MENU_ITEMS, SHELL_ICONS, UPLOAD_ITEM } from './menu';
         <span class="text-muted-foreground text-sm">{{ 'shell.logo' | transloco }}</span>
       </div>
 
-      <a hlmBtn size="lg" [routerLink]="upload.route" class="w-full">
+      <a
+        hlmBtn
+        size="lg"
+        class="w-full"
+        [routerLink]="upload.route"
+        [queryParams]="upload.queryParams"
+      >
         <ng-icon [name]="upload.icon" aria-hidden="true" />
         {{ 'menu.upload' | transloco }}
       </a>

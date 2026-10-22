@@ -48,12 +48,20 @@ export interface BottomBarItem {
   id: BottomBarId;
   /** `null` for "more", which opens a menu instead of navigating. */
   route: string | null;
+  /** Query parameters the link carries, if any. */
+  queryParams?: Record<string, string>;
   icon: string;
 }
 
 const menuItem = (id: MenuId): MenuItem => MENU_ITEMS.find((i) => i.id === id)!;
 
-export const UPLOAD_ITEM = { id: 'upload', route: '/soon/upload', icon: 'lucideCamera' } as const;
+/** "Upload receipt" opens Documents with the Add choices open (`?add=1`; the page removes it again). */
+export const UPLOAD_ITEM = {
+  id: 'upload',
+  route: '/documents',
+  queryParams: { add: '1' },
+  icon: 'lucideCamera',
+} as const;
 
 /** Phone bottom bar: the camera button sits raised in the centre, "more" holds the rest of the menu. */
 export const BOTTOM_BAR_ITEMS: BottomBarItem[] = [

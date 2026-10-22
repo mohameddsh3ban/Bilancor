@@ -243,7 +243,47 @@
     "inbox": {
       "text": "Oder leite Belege weiter an",
       "copy": "Kopieren",
-      "copied": "Kopiert"
+      "copied": "Kopiert",
+      "copyFailed": "Kopieren hat nicht geklappt – markiere die Adresse"
+    },
+    "ways": {
+      "photo": {
+        "title": "Foto aufnehmen",
+        "hint": "Mehrere Seiten werden zu einem Beleg"
+      },
+      "file": {
+        "title": "Datei auswählen",
+        "hint": "PDF, JPG, PNG oder E-Rechnung (XML), bis 20 MB"
+      },
+      "email": {
+        "title": "Per E-Mail weiterleiten"
+      }
+    },
+    "upload": {
+      "reading": {
+        "one": "1 Dokument wird gelesen…",
+        "many": "{{count}} Dokumente werden gelesen…"
+      },
+      "added": {
+        "one": "1 Dokument hinzugefügt",
+        "many": "{{count}} Dokumente hinzugefügt"
+      },
+      "needsYou": {
+        "one": "1 braucht dich",
+        "many": "{{count}} brauchen dich"
+      },
+      "allSorted": "alles erledigt",
+      "refusedTitle": "Nicht hinzugefügt:",
+      "refused": {
+        "type": "nur PDF, JPG, PNG oder XML",
+        "size": "über 20 MB"
+      },
+      "dismiss": "Schließen"
+    },
+    "drop": {
+      "one": "Loslassen, um 1 Datei hinzuzufügen",
+      "many": "Loslassen, um {{count}} Dateien hinzuzufügen",
+      "hint": "Wir sortieren Rechnungen und Belege für dich"
     },
     "direction": {
       "received": "Empfangen",
@@ -285,18 +325,7 @@
     "empty": {
       "new": {
         "title": "Füge deinen ersten Beleg hinzu",
-        "body": "Belege und Rechnungen, die du hinzufügst, erscheinen hier. Es gibt drei Wege:",
-        "photo": {
-          "title": "Foto aufnehmen",
-          "hint": "Mehrere Seiten werden zu einem Beleg"
-        },
-        "file": {
-          "title": "Datei auswählen",
-          "hint": "PDF, JPG, PNG oder E-Rechnung (XML), bis 20 MB"
-        },
-        "email": {
-          "title": "Per E-Mail weiterleiten"
-        }
+        "body": "Belege und Rechnungen, die du hinzufügst, erscheinen hier. So kannst du sie hinzufügen:"
       },
       "noMatch": "Kein Dokument passt zu deiner Suche",
       "clearSearch": "Suche löschen"

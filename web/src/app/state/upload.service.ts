@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import type { Business, Doc, PoolResult } from '../data/models';
 import { UPLOAD_POOLS } from '../data/sample-documents';
 import { certainMatch } from '../domain/document-matching';
@@ -43,9 +43,15 @@ interface Batch {
 export class UploadService {
   private readonly demo = inject(DemoStateService);
 
-  private readonly summarySignal = signal<UploadSummary | null>(null);
-  /** The summary of the last drop, or null when there is none or it was cleared. */
-  readonly summary = this.summarySignal.asReadonly();
+  /** The summary of the last drop, with the data generation it belongs to. */
+  private readonly latest = signal<{ summary: UploadSummary; generation: number } | null>(null);
+  /** The summary of the last drop, or null when there is none, it was cleared, or Reset demo has wiped the data it speaks of. */
+  readonly summary = computed(() => {
+    const latest = this.latest();
+    return latest !== null && latest.generation === this.demo.dataGeneration()
+      ? latest.summary
+      : null;
+  });
 
   /** Never goes back, so a document id is never used twice in one page load, not even after a reset. */
   private idCounter = 0;
@@ -75,7 +81,7 @@ export class UploadService {
       reading.push({ id, result: this.nextResult(businessId, generation) });
     }
     const summaryVersion = ++this.summaryVersion;
-    this.summarySignal.set({ added: 0, needsYou: 0, refused });
+    this.latest.set({ summary: { added: 0, needsYou: 0, refused }, generation });
     if (reading.length === 0) return;
     setTimeout(
       () => this.finish({ businessId, generation, reading, refused, summaryVersion }),
@@ -86,7 +92,7 @@ export class UploadService {
   /** Removes the summary, and with it whatever a drop that is still being read would have said. */
   clearSummary(): void {
     this.summaryVersion++;
-    this.summarySignal.set(null);
+    this.latest.set(null);
   }
 
   private nextResult(businessId: string, generation: number): PoolResult {
@@ -109,7 +115,10 @@ export class UploadService {
       }
     }
     if (this.summaryVersion === batch.summaryVersion) {
-      this.summarySignal.set({ added, needsYou, refused: batch.refused });
+      this.latest.set({
+        summary: { added, needsYou, refused: batch.refused },
+        generation: batch.generation,
+      });
     }
   }
 

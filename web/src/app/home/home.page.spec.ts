@@ -69,9 +69,10 @@ describe('HomePage', () => {
     const step = (id: string) => el.querySelector<HTMLElement>(`[data-testid="step-${id}"]`)!;
     expect(step('bank').getAttribute('data-done')).toBe('true');
     expect(step('tax').getAttribute('data-done')).toBe('false');
-    for (const id of ['bank', 'tax', 'receipt']) {
+    for (const id of ['bank', 'tax']) {
       expect(step(id).querySelector('a')?.getAttribute('href')).toBe(`/soon/${id}`);
     }
+    expect(step('receipt').querySelector('a')?.getAttribute('href')).toBe('/documents?add=1');
   });
 
   it('shows the key-number tiles from lg while the phone cards for decisions, balances and tax hide', () => {

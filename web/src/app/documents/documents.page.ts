@@ -10,24 +10,22 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCamera,
-  lucideFileUp,
-  lucideMail,
-  lucidePlus,
-  lucideSearch,
-  lucideSearchX,
-} from '@ng-icons/lucide';
+import { lucideFileUp, lucideSearch, lucideSearchX } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { filter as only, map, startWith } from 'rxjs';
+import { isComputerScreen } from '../core/layout/computer-screen';
 import { filterDocuments, groupDocsByMonth } from '../domain/document-search';
 import { docNeedsYou, visibleDocuments } from '../domain/document-status';
 import { DemoStateService } from '../state/demo-state.service';
+import { AddMenu } from './add-menu';
+import { ADD_WAYS, AddWayLabel, PHONE_ONLY } from './add-ways';
 import { DocumentList } from './document-list';
 import { DocumentTable } from './document-table';
+import { DropOverlay } from './drop-overlay';
 import { InboxLine } from './inbox-line';
 import { NeedsYouBox } from './needs-you-box';
+import { UploadMessage } from './upload-message';
 
 type EmptyKind = 'new' | 'noMatch' | null;
 
@@ -40,25 +38,20 @@ type EmptyKind = 'new' | 'noMatch' | null;
   selector: 'app-documents-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AddMenu,
+    AddWayLabel,
     DocumentList,
     DocumentTable,
+    DropOverlay,
     HlmButton,
     InboxLine,
     NeedsYouBox,
     NgIcon,
     RouterOutlet,
     TranslocoPipe,
+    UploadMessage,
   ],
-  viewProviders: [
-    provideIcons({
-      lucideCamera,
-      lucideFileUp,
-      lucideMail,
-      lucidePlus,
-      lucideSearch,
-      lucideSearchX,
-    }),
-  ],
+  viewProviders: [provideIcons({ lucideFileUp, lucideSearch, lucideSearchX })],
   template: `
     <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
       <section
@@ -68,12 +61,10 @@ type EmptyKind = 'new' | 'noMatch' | null;
       >
         <div class="flex items-center justify-between gap-3">
           <h1 class="text-2xl font-semibold">{{ 'documents.title' | transloco }}</h1>
-          <button hlmBtn type="button" data-testid="add-button">
-            <ng-icon name="lucidePlus" size="16" aria-hidden="true" />
-            {{ 'documents.add' | transloco }}
-          </button>
+          <app-add-menu [email]="inboxEmail()" [open]="addRequested()" />
         </div>
         <app-inbox-line [email]="inboxEmail()" />
+        <app-upload-message />
         <app-needs-you-box [docs]="needsYou()" />
 
         @if (empty() !== 'new') {
@@ -107,55 +98,12 @@ type EmptyKind = 'new' | 'noMatch' | null;
               <p class="text-muted-foreground max-w-sm">
                 {{ 'documents.empty.new.body' | transloco }}
               </p>
-              <ul class="flex w-full max-w-sm flex-col gap-4 pt-2 text-start">
-                <li class="flex items-start gap-3" data-testid="empty-new-way">
-                  <ng-icon
-                    name="lucideCamera"
-                    size="20"
-                    class="text-primary mt-0.5 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span class="flex min-w-0 flex-col">
-                    <span class="font-medium" data-testid="empty-new-way-title">{{
-                      'documents.empty.new.photo.title' | transloco
-                    }}</span>
-                    <span class="text-muted-foreground text-sm">{{
-                      'documents.empty.new.photo.hint' | transloco
-                    }}</span>
-                  </span>
-                </li>
-                <li class="flex items-start gap-3" data-testid="empty-new-way">
-                  <ng-icon
-                    name="lucideFileUp"
-                    size="20"
-                    class="text-primary mt-0.5 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span class="flex min-w-0 flex-col">
-                    <span class="font-medium" data-testid="empty-new-way-title">{{
-                      'documents.empty.new.file.title' | transloco
-                    }}</span>
-                    <span class="text-muted-foreground text-sm">{{
-                      'documents.empty.new.file.hint' | transloco
-                    }}</span>
-                  </span>
-                </li>
-                <li class="flex items-start gap-3" data-testid="empty-new-way">
-                  <ng-icon
-                    name="lucideMail"
-                    size="20"
-                    class="text-primary mt-0.5 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span class="flex min-w-0 flex-col">
-                    <span class="font-medium" data-testid="empty-new-way-title">{{
-                      'documents.empty.new.email.title' | transloco
-                    }}</span>
-                    <bdi dir="ltr" class="text-muted-foreground text-sm break-all">{{
-                      inboxEmail()
-                    }}</bdi>
-                  </span>
-                </li>
+              <ul class="flex w-full max-w-sm flex-col gap-4 pt-2">
+                @for (way of ways; track way.id) {
+                  <li [class]="way.phoneOnly ? phoneOnly : ''" data-testid="empty-new-way">
+                    <app-add-way [way]="way" [email]="inboxEmail()" />
+                  </li>
+                }
               </ul>
             </div>
           }
@@ -207,6 +155,7 @@ type EmptyKind = 'new' | 'noMatch' | null;
         <router-outlet />
       </div>
     </div>
+    <app-drop-overlay />
   `,
 })
 export class DocumentsPage {
@@ -214,6 +163,9 @@ export class DocumentsPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+
+  protected readonly ways = ADD_WAYS;
+  protected readonly phoneOnly = PHONE_ONLY;
 
   /** The search lives here, not in the URL; it starts over when another business opens. */
   protected readonly search = linkedSignal<string, string>({
@@ -229,6 +181,12 @@ export class DocumentsPage {
       map(() => this.route.firstChild?.snapshot?.paramMap.get('id') ?? null),
     ),
     { initialValue: null },
+  );
+
+  /** Whether the address asks for the Add menu to be open (`?add=1`, from Upload receipt). */
+  protected readonly addRequested = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('add') === '1')),
+    { initialValue: this.route.snapshot.queryParamMap.get('add') === '1' },
   );
 
   protected readonly inboxEmail = computed(() => this.demo.business().inboxEmail);
@@ -248,16 +206,24 @@ export class DocumentsPage {
   });
 
   constructor() {
+    // The menu opens from the address once; the address is cleaned at once, so a reload or the back button
+    // does not open it again, and the next Upload receipt can ask again.
+    effect(() => {
+      if (!this.addRequested()) return;
+      void this.router.navigate([], {
+        queryParams: { add: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    });
+
     // On a phone a document is a page of its own: show it from its top, not from where the list or the homepage
     // was scrolled to. From `lg` it is a panel beside the list, which stays where it is (the panel is sticky).
     effect(() => {
-      if (this.selectedId() && !this.isComputer()) this.document.documentElement.scrollTop = 0;
+      if (this.selectedId() && !isComputerScreen(this.document)) {
+        this.document.documentElement.scrollTop = 0;
+      }
     });
-  }
-
-  /** Whether the screen is at least Tailwind's `lg` wide (one that matches the `lg:` classes in the template). */
-  private isComputer(): boolean {
-    return this.document.defaultView?.matchMedia?.('(min-width: 64rem)').matches ?? false;
   }
 
   protected setSearch(event: Event): void {

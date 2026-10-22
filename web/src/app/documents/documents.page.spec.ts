@@ -40,9 +40,11 @@ describe('DocumentsPage', () => {
   let demo: DemoStateService;
   let harness: RouterTestingHarness;
   let el: HTMLElement;
+  let originalMatchMedia: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     localStorage.clear();
+    originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
     TestBed.configureTestingModule({
       providers: [
         provideTranslocoTesting(),
@@ -60,10 +62,24 @@ describe('DocumentsPage', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    if (originalMatchMedia) Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+    else delete (window as { matchMedia?: unknown }).matchMedia;
     TestBed.inject(LanguageService).setLang('en');
     document.documentElement.lang = '';
     document.documentElement.dir = '';
   });
+
+  /** jsdom has no media queries; a computer is a screen where `(min-width: 64rem)` (Tailwind's lg) matches. */
+  function screenIs(computer: boolean): void {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: (query: string) => ({
+        matches: computer && query === '(min-width: 64rem)',
+        media: query,
+      }),
+    });
+  }
 
   async function render(url = '/documents'): Promise<void> {
     harness = await RouterTestingHarness.create(url);
@@ -88,6 +104,12 @@ describe('DocumentsPage', () => {
 
   async function click(node: HTMLElement | null): Promise<void> {
     node!.click();
+    await settle();
+  }
+
+  /** The clipboard answers after a moment; wait for it, then show what the page made of it. */
+  async function clipboardAnswers(): Promise<void> {
+    await new Promise<void>((resolve) => setTimeout(resolve));
     await settle();
   }
 
@@ -145,48 +167,48 @@ describe('DocumentsPage', () => {
       expect(email.getAttribute('dir')).toBe('ltr');
     });
 
-    it('Copy puts the address on the clipboard and says Copied for two seconds', async () => {
+    it('Copy shows Copied', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
       try {
         await render();
-        expect(text(q('inbox-copy'))).toBe('Copy');
-        vi.useFakeTimers();
-        q('inbox-copy')!.click();
-        harness.detectChanges();
+        const copy = inside(q('inbox-line'), 'copy-button')!;
+        expect(text(copy)).toBe('Copy');
+        copy.click();
+        await clipboardAnswers();
         expect(writeText).toHaveBeenCalledWith('weber-design@inbox.example');
-        expect(text(q('inbox-copy'))).toBe('Copied');
-        vi.advanceTimersByTime(1999);
-        harness.detectChanges();
-        expect(text(q('inbox-copy'))).toBe('Copied');
-        vi.advanceTimersByTime(1);
-        harness.detectChanges();
-        expect(text(q('inbox-copy'))).toBe('Copy');
+        expect(text(copy)).toBe('Copied');
+        expect(text(inside(q('inbox-line'), 'copy-status'))).toBe('Copied');
       } finally {
         Reflect.deleteProperty(navigator, 'clipboard');
       }
     });
 
-    it('Copy does not break where the clipboard is not available, such as a demo opened over plain http', async () => {
+    it('Copy does not say Copied where the clipboard is not available, such as a demo opened over plain http', async () => {
       expect(navigator.clipboard).toBeUndefined();
       await render();
-      vi.useFakeTimers();
-      expect(() => q('inbox-copy')!.click()).not.toThrow();
-      harness.detectChanges();
-      expect(text(q('inbox-copy'))).toBe('Copied');
-      vi.advanceTimersByTime(2000);
-      harness.detectChanges();
-      expect(text(q('inbox-copy'))).toBe('Copy');
+      const copy = inside(q('inbox-line'), 'copy-button')!;
+      expect(() => copy.click()).not.toThrow();
+      await clipboardAnswers();
+      expect(text(copy)).toBe('Copy');
+      expect(text(inside(q('inbox-line'), 'copy-status'))).toBe(
+        "Couldn't copy — select the address",
+      );
+      expect(inside(q('inbox-line'), 'inbox-email')!.classList).toContain('select-all');
     });
 
-    it('Copy copes with a clipboard that refuses', async () => {
+    it('Copy says so too when the clipboard refuses', async () => {
       const writeText = vi.fn().mockRejectedValue(new Error('denied'));
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
       try {
         await render();
-        q('inbox-copy')!.click();
-        await settle();
+        inside(q('inbox-line'), 'copy-button')!.click();
+        await clipboardAnswers();
         expect(writeText).toHaveBeenCalled();
+        expect(text(inside(q('inbox-line'), 'copy-button'))).toBe('Copy');
+        expect(text(inside(q('inbox-line'), 'copy-status'))).toBe(
+          "Couldn't copy — select the address",
+        );
       } finally {
         Reflect.deleteProperty(navigator, 'clipboard');
       }
@@ -549,11 +571,13 @@ describe('DocumentsPage', () => {
       const empty = q('empty-new')!;
       expect(text(empty)).toContain('Add your first document');
       const ways = qa('empty-new-way');
-      expect(ways.map((w) => text(inside(w, 'empty-new-way-title')))).toEqual([
+      expect(ways.map((w) => text(inside(w, 'add-way-title')))).toEqual([
         'Take a photo',
         'Choose a file',
         'Forward by email',
       ]);
+      // Taking a photo is for phones; a computer is offered the other two.
+      expect(ways.map((w) => w.classList.contains('lg:hidden'))).toEqual([true, false, false]);
       expect(text(ways[0])).toContain('Several pages become one document');
       expect(text(ways[1])).toContain('PDF, JPG, PNG or e-invoice (XML), up to 20 MB');
       const email = ways[2].querySelector('bdi')!;
@@ -679,31 +703,222 @@ describe('DocumentsPage', () => {
     });
   });
 
-  describe('scrolling when a document opens', () => {
-    const root = () => document.documentElement;
-    let originalMatchMedia: PropertyDescriptor | undefined;
+  describe('adding documents', () => {
+    const MB_25 = 25 * 1024 * 1024;
+    const inBody = (testId: string) =>
+      document.body.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
 
-    /** jsdom has no media queries; a computer is a screen where `(min-width: 64rem)` (Tailwind's lg) matches. */
-    function screenIs(computer: boolean): void {
-      Object.defineProperty(window, 'matchMedia', {
-        configurable: true,
-        writable: true,
-        value: (query: string) => ({
-          matches: computer && query === '(min-width: 64rem)',
-          media: query,
-        }),
-      });
+    /** A file as the browser hands it over; only its name and size matter here. */
+    function file(name: string, size = 1000): File {
+      return Object.defineProperty(new File(['x'], name), 'size', { value: size });
     }
 
+    /** Hands files to one of the hidden file inputs the way the browser does once the person has picked them. */
+    function choose(testId: string, files: File[]): void {
+      const input = q(testId) as HTMLInputElement;
+      Object.defineProperty(input, 'files', { configurable: true, value: files });
+      input.dispatchEvent(new Event('change'));
+    }
+
+    /** Sends a drag event for files from the computer, as a browser does. */
+    function dragFiles(type: 'dragenter' | 'drop', files: File[]): Event {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'dataTransfer', {
+        value: { types: ['Files'], items: files.map(() => ({ kind: 'file' })), files },
+      });
+      document.body.dispatchEvent(event);
+      harness.detectChanges();
+      return event;
+    }
+
+    /** Opens the page the way the sidebar's and the phone bar's Upload receipt do: through the real routes. */
+    async function renderShell(): Promise<void> {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [provideTranslocoTesting(), provideRouter(routes)],
+      });
+      harness = await RouterTestingHarness.create('/');
+      el = harness.routeNativeElement as HTMLElement;
+    }
+
+    it('+ Add opens the ways to add: Choose a file and the address on a computer', async () => {
+      await render();
+      expect(inBody('add-ways')).toBeNull();
+      await click(q('add-button'));
+      expect(inBody('add-ways')).not.toBeNull();
+      expect(text(inBody('add-file'))).toContain('Choose a file');
+      expect(inBody('add-email')!.querySelector('bdi')!.textContent?.trim()).toBe(
+        'weber-design@inbox.example',
+      );
+    });
+
+    it('the menu and the empty state offer the same ways, from one source', async () => {
+      demo.setSetup('new');
+      await render();
+      const titles = (nodes: Element[]) =>
+        nodes.map((n) => text(n.querySelector('[data-testid="add-way-title"]')));
+      const onPage = titles(qa('empty-new-way'));
+      await click(q('add-button'));
+      const inMenu = titles(Array.from(inBody('add-ways')!.querySelectorAll('li')));
+      expect(inMenu).toEqual(onPage);
+      expect(inMenu).toEqual(['Take a photo', 'Choose a file', 'Forward by email']);
+    });
+
+    it('?add=1 opens the menu on arrival and then leaves the address', async () => {
+      await render('/documents?add=1');
+      await settle();
+      expect(inBody('add-ways')).not.toBeNull();
+      expect(TestBed.inject(Router).url).toBe('/documents');
+    });
+
+    it('Upload receipt opens Documents with the Add menu open', async () => {
+      await renderShell();
+      const link = el.querySelector<HTMLAnchorElement>('aside a[href="/documents?add=1"]')!;
+      expect(link.textContent).toContain('Upload receipt');
+      link.click();
+      await settle();
+      await settle();
+      expect(text(q('documents-list')!.querySelector('h1'))).toBe('Documents');
+      expect(inBody('add-ways')).not.toBeNull();
+      expect(TestBed.inject(Router).url).toBe('/documents');
+    });
+
+    it('the phone bar Upload receipt opens it too, also when Documents is already open', async () => {
+      await renderShell();
+      const camera = () =>
+        el.querySelector<HTMLAnchorElement>(
+          '[data-testid="bottom-bar"] a[aria-label="Upload receipt"]',
+        )!;
+      camera().click();
+      await settle();
+      await settle();
+      expect(inBody('add-ways')).not.toBeNull();
+
+      // Close it and ask again from the bar.
+      el.querySelector<HTMLElement>('[data-testid="add-button"]')!.click();
+      await settle();
+      expect(inBody('add-ways')).toBeNull();
+      camera().click();
+      await settle();
+      await settle();
+      expect(inBody('add-ways')).not.toBeNull();
+      expect(TestBed.inject(Router).url).toBe('/documents');
+    });
+
+    it('choosing two files shows Reading… then the summary', async () => {
+      await render();
+      await click(q('add-button'));
+      await click(inBody('add-file'));
+      vi.useFakeTimers();
+      choose('file-input', [file('a.pdf'), file('b.pdf')]);
+      harness.detectChanges();
+
+      expect(text(q('upload-line'))).toBe('Reading 2 documents…');
+      expect(demo.documents().filter((d) => d.reading)).toHaveLength(2);
+      vi.advanceTimersByTime(READING_MS);
+      harness.detectChanges();
+      // Deutsche Bahn links itself to its payment; the Telekom duplicate waits for the person.
+      expect(text(q('upload-line'))).toBe('2 documents added · 1 needs you');
+      expect(demo.documents().filter((d) => d.reading)).toHaveLength(0);
+    });
+
+    it('a photo is added like a file', async () => {
+      await render();
+      vi.useFakeTimers();
+      choose('photo-input', [file('IMG_1.jpg')]);
+      harness.detectChanges();
+      expect(demo.documents().find((d) => d.fileName === 'IMG_1.jpg')!.source).toBe('photo');
+      vi.advanceTimersByTime(READING_MS);
+      harness.detectChanges();
+      expect(text(q('upload-line'))).toBe('1 document added · all sorted');
+    });
+
+    it('dropping mixed files adds the good ones and lists the rest', async () => {
+      screenIs(true);
+      await render();
+      vi.useFakeTimers();
+      const before = demo.documents().length;
+      const dropped = dragFiles('drop', [
+        file('notes.docx'),
+        file('big.pdf', MB_25),
+        file('a.pdf'),
+        file('b.pdf'),
+      ]);
+
+      expect(dropped.defaultPrevented).toBe(true);
+      expect(demo.documents()).toHaveLength(before + 2);
+      expect(
+        demo
+          .documents()
+          .filter((d) => d.fromUpload)
+          .map((d) => d.fileName)
+          .sort(),
+      ).toEqual(['a.pdf', 'b.pdf']);
+      expect(text(q('upload-line'))).toBe('Reading 2 documents…');
+      expect(qa('upload-refused').map((line) => text(line))).toEqual([
+        'notes.docx — only PDF, JPG, PNG or XML',
+        'big.pdf — over 20 MB',
+      ]);
+
+      vi.advanceTimersByTime(READING_MS);
+      harness.detectChanges();
+      expect(text(q('upload-line'))).toBe('2 documents added · 1 needs you');
+      expect(qa('upload-refused')).toHaveLength(2);
+    });
+
+    it('dragging files over the page shows the drop overlay on a computer', async () => {
+      screenIs(true);
+      await render();
+      expect(q('drop-overlay')).toBeNull();
+      dragFiles('dragenter', [file('a.pdf'), file('b.pdf'), file('c.pdf')]);
+      expect(text(q('drop-overlay'))).toContain('Drop to add 3 files');
+    });
+
+    it('the message sits at the top of the list, above the Needs-you box', async () => {
+      await render();
+      vi.useFakeTimers();
+      choose('file-input', [file('a.pdf')]);
+      harness.detectChanges();
+      const position = q('upload-message')!.compareDocumentPosition(q('needs-you-box')!);
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('the cross closes the message', async () => {
+      await render();
+      vi.useFakeTimers();
+      choose('file-input', [file('notes.docx')]);
+      harness.detectChanges();
+      expect(q('upload-message')).not.toBeNull();
+      q('upload-dismiss')!.click();
+      harness.detectChanges();
+      expect(q('upload-message')).toBeNull();
+    });
+
+    it('Reset demo clears the message', async () => {
+      await render();
+      vi.useFakeTimers();
+      choose('file-input', [file('a.pdf'), file('notes.docx')]);
+      harness.detectChanges();
+      vi.advanceTimersByTime(READING_MS);
+      harness.detectChanges();
+      expect(q('upload-message')).not.toBeNull();
+
+      demo.resetData();
+      harness.detectChanges();
+      expect(q('upload-message')).toBeNull();
+      expect(demo.documents().some((d) => d.fromUpload)).toBe(false);
+    });
+  });
+
+  describe('scrolling when a document opens', () => {
+    const root = () => document.documentElement;
+
     beforeEach(() => {
-      originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
       root().scrollTop = 600;
     });
 
     afterEach(() => {
       root().scrollTop = 0;
-      if (originalMatchMedia) Object.defineProperty(window, 'matchMedia', originalMatchMedia);
-      else delete (window as { matchMedia?: unknown }).matchMedia;
     });
 
     it('on a phone, a document opens at the top of the page', async () => {

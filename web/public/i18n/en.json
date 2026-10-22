@@ -243,7 +243,47 @@
     "inbox": {
       "text": "Or forward receipts to",
       "copy": "Copy",
-      "copied": "Copied"
+      "copied": "Copied",
+      "copyFailed": "Couldn't copy — select the address"
+    },
+    "ways": {
+      "photo": {
+        "title": "Take a photo",
+        "hint": "Several pages become one document"
+      },
+      "file": {
+        "title": "Choose a file",
+        "hint": "PDF, JPG, PNG or e-invoice (XML), up to 20 MB"
+      },
+      "email": {
+        "title": "Forward by email"
+      }
+    },
+    "upload": {
+      "reading": {
+        "one": "Reading 1 document…",
+        "many": "Reading {{count}} documents…"
+      },
+      "added": {
+        "one": "1 document added",
+        "many": "{{count}} documents added"
+      },
+      "needsYou": {
+        "one": "1 needs you",
+        "many": "{{count}} need you"
+      },
+      "allSorted": "all sorted",
+      "refusedTitle": "Not added:",
+      "refused": {
+        "type": "only PDF, JPG, PNG or XML",
+        "size": "over 20 MB"
+      },
+      "dismiss": "Dismiss"
+    },
+    "drop": {
+      "one": "Drop to add 1 file",
+      "many": "Drop to add {{count}} files",
+      "hint": "We'll sort out bills and invoices for you"
     },
     "direction": {
       "received": "Received",
@@ -285,18 +325,7 @@
     "empty": {
       "new": {
         "title": "Add your first document",
-        "body": "Receipts and invoices you add show up here. There are three ways to add one:",
-        "photo": {
-          "title": "Take a photo",
-          "hint": "Several pages become one document"
-        },
-        "file": {
-          "title": "Choose a file",
-          "hint": "PDF, JPG, PNG or e-invoice (XML), up to 20 MB"
-        },
-        "email": {
-          "title": "Forward by email"
-        }
+        "body": "Receipts and invoices you add show up here. You can add them like this:"
       },
       "noMatch": "No documents match your search",
       "clearSearch": "Clear search"

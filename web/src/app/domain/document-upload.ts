@@ -10,6 +10,8 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 export const READING_MS = 2000;
 
 const ACCEPTED_NAME = /\.(pdf|jpe?g|png|xml)$/i;
+/** The same extensions as the file picker's `accept` list, so it offers what `checkFile` takes. */
+export const ACCEPT_ATTRIBUTE = '.pdf,.jpg,.jpeg,.png,.xml';
 
 export type RefuseReason = 'type' | 'size';
 

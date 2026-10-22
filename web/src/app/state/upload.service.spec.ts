@@ -180,7 +180,30 @@ describe('UploadService', () => {
 
     expect(uploadsOf('weber-design')).toEqual([]);
     expect(paymentOf('wd-t3').receipt).toBe('missing');
-    expect(upload.summary()).toEqual({ added: 0, needsYou: 0, refused: [] });
+    expect(upload.summary()).toBeNull();
+  });
+
+  it('Reset demo clears the summary, whether the drop was read or is still being read', () => {
+    upload.add([file('a.pdf'), file('notes.docx')], 'file');
+    expect(upload.summary()).not.toBeNull();
+    demo.resetData();
+    expect(upload.summary()).toBeNull();
+
+    upload.add([file('b.pdf')], 'file');
+    vi.advanceTimersByTime(READING_MS);
+    expect(upload.summary()).toEqual({ added: 1, needsYou: 0, refused: [] });
+    demo.resetData();
+    expect(upload.summary()).toBeNull();
+  });
+
+  it('a drop added after a reset shows its own summary', () => {
+    demo.resetData();
+    upload.add([file('notes.docx')], 'file');
+    expect(upload.summary()).toEqual({
+      added: 0,
+      needsYou: 0,
+      refused: [{ name: 'notes.docx', reason: 'type' }],
+    });
   });
 
   it('a file added after a reset reads normally and the pool starts over', () => {

@@ -4,6 +4,7 @@ import type { PoolResult } from '../data/models';
 import { UPLOAD_POOLS } from '../data/sample-documents';
 import { docStatus } from './document-status';
 import {
+  ACCEPT_ATTRIBUTE,
   MAX_FILE_BYTES,
   READING_MS,
   applyReadResult,
@@ -18,6 +19,16 @@ describe('the limits', () => {
   it('allow 20 MB per file and show Reading… for two seconds', () => {
     expect(MAX_FILE_BYTES).toBe(20 * 1024 * 1024);
     expect(READING_MS).toBe(2000);
+  });
+});
+
+describe('ACCEPT_ATTRIBUTE', () => {
+  it('lists exactly the extensions checkFile accepts, for the file picker', () => {
+    const extensions = ACCEPT_ATTRIBUTE.split(',');
+    expect(extensions).toEqual(['.pdf', '.jpg', '.jpeg', '.png', '.xml']);
+    for (const extension of extensions) {
+      expect(checkFile({ name: `scan${extension}`, size: 1000 })).toBeNull();
+    }
   });
 });
 

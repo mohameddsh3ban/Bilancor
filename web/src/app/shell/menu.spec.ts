@@ -1,4 +1,4 @@
-import { BOTTOM_BAR_ITEMS, MENU_ITEMS, MORE_ITEMS } from './menu';
+import { BOTTOM_BAR_ITEMS, MENU_ITEMS, MORE_ITEMS, UPLOAD_ITEM } from './menu';
 
 describe('menu', () => {
   it('lists the eight items in order', () => {
@@ -32,7 +32,13 @@ describe('menu', () => {
 
   it('bottom bar has the camera in the centre and a more slot', () => {
     expect(BOTTOM_BAR_ITEMS.map((i) => i.id)).toEqual(['home', 'payments', 'upload', 'invoices', 'more']);
-    expect(BOTTOM_BAR_ITEMS[2].route).toBe('/soon/upload');
+    expect(BOTTOM_BAR_ITEMS[2].route).toBe('/documents');
+  });
+
+  it('Upload receipt opens Documents with the Add menu open', () => {
+    expect(UPLOAD_ITEM.route).toBe('/documents');
+    expect(UPLOAD_ITEM.queryParams).toEqual({ add: '1' });
+    expect(BOTTOM_BAR_ITEMS[2]).toBe(UPLOAD_ITEM);
   });
 
   it('more lists the menu items that have no bottom bar slot', () => {
