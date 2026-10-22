@@ -9,8 +9,7 @@ import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
 import { homeCards } from '../../domain/home-cards';
-import { decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
-import { needsYouCount } from '../../domain/payment-status';
+import { decisionCount, decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
@@ -131,7 +130,7 @@ export class KeyNumbers {
 
   protected readonly business = this.demo.business;
   protected readonly cards = computed(() => homeCards(this.demo.setup()));
-  protected readonly decisions = computed(() => needsYouCount(this.business().transactions));
+  protected readonly decisions = computed(() => decisionCount(this.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.decisions()));
   protected readonly total = computed(() => totalAvailableCents(this.business().accounts));
 }

@@ -24,6 +24,16 @@
       "label": "Self-issued receipt",
       "de": "Eigenbeleg",
       "explain": "A receipt you write yourself when the original is lost or never existed."
+    },
+    "eingangsbeleg": {
+      "label": "Received",
+      "de": "Eingangsbeleg",
+      "explain": "A bill or receipt from someone else, such as an invoice you pay or have paid."
+    },
+    "ausgangsbeleg": {
+      "label": "Sent",
+      "de": "Ausgangsbeleg",
+      "explain": "An invoice you issued to a customer."
     }
   },
   "account": {
@@ -44,13 +54,11 @@
   "soon": {
     "home": "Home",
     "payments": "Payments",
-    "documents": "Documents",
     "invoices": "Invoices",
     "taxes": "Taxes",
     "reports": "Reports",
     "settings": "Settings",
     "help": "Help",
-    "upload": "Upload receipt",
     "more": "More",
     "decisions": "Your decisions",
     "terms": "Bank connection terms",
@@ -63,6 +71,7 @@
     "account": "Account",
     "photo": "Take a photo",
     "selfReceipt": "Self-issued receipt",
+    "cashPayment": "Paid in cash or privately",
     "default": "This page"
   },
   "comingSoon": {
@@ -134,7 +143,21 @@
     "receiptNotNeeded": "You marked: no receipt needed",
     "categoryChanged": "You changed the category to {{category}}",
     "markedPrivate": "You marked it as private",
-    "markedBusiness": "You marked it as business"
+    "markedBusiness": "You marked it as business",
+    "addedPhoto": "Photo added",
+    "addedFile": "File added",
+    "addedEmail": "Added from email",
+    "docRead": "Read automatically, suggested {{category}}",
+    "docEdited": "You corrected the details",
+    "markedReceived": "You marked it as received",
+    "markedSent": "You marked it as sent",
+    "keptDuplicate": "You kept it although it looks like a duplicate",
+    "linked": "You linked it to the {{name}} payment",
+    "linkedAuto": "Linked automatically to the {{name}} payment",
+    "unlinked": "You unlinked it from the {{name}} payment",
+    "receiptLinked": "You linked the document {{name}}",
+    "receiptLinkedAuto": "The document {{name}} was linked automatically",
+    "receiptUnlinked": "You unlinked the document {{name}}"
   },
   "payments": {
     "title": "Payments",
@@ -188,6 +211,7 @@
         "missingHint": "Add one, or say that this payment needs none.",
         "takePhoto": "Take photo",
         "pickDocument": "Pick from Documents",
+        "openDocument": "Open document",
         "noReceiptNeeded": "No receipt needed"
       },
       "booking": {
@@ -201,12 +225,20 @@
         "noVat": "No VAT",
         "kind": "This payment is",
         "business": "Business",
-        "private": "Private"
+        "private": "Private",
+        "privateBlocked": "This payment has a document. Unlink it first."
       },
       "picker": {
         "search": "Search categories",
         "placeholder": "Name or number",
         "empty": "No category matches"
+      },
+      "docPicker": {
+        "search": "Search documents",
+        "placeholder": "Name or amount",
+        "empty": "No unlinked documents fit this payment",
+        "noMatch": "No document matches",
+        "add": "Add a document"
       },
       "bank": {
         "title": "Bank details",
@@ -217,6 +249,174 @@
         "title": "History"
       },
       "download": "Download PDF"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "add": "Add",
+    "search": {
+      "label": "Search documents",
+      "placeholder": "Name, amount or invoice number"
+    },
+    "inbox": {
+      "text": "Or forward receipts to",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Couldn't copy — select the address"
+    },
+    "ways": {
+      "photo": {
+        "title": "Take a photo",
+        "hint": "Several pages become one document"
+      },
+      "file": {
+        "title": "Choose a file",
+        "hint": "PDF, JPG, PNG or e-invoice (XML), up to 20 MB"
+      },
+      "email": {
+        "title": "Forward by email"
+      }
+    },
+    "upload": {
+      "reading": {
+        "one": "Reading 1 document…",
+        "many": "Reading {{count}} documents…"
+      },
+      "added": {
+        "one": "1 document added",
+        "many": "{{count}} documents added"
+      },
+      "needsYou": {
+        "one": "1 needs you",
+        "many": "{{count}} need you"
+      },
+      "allSorted": "all sorted",
+      "refusedTitle": "Not added:",
+      "refused": {
+        "type": "only PDF, JPG, PNG or XML",
+        "size": "over 20 MB"
+      },
+      "dismiss": "Dismiss"
+    },
+    "drop": {
+      "one": "Drop to add 1 file",
+      "many": "Drop to add {{count}} files",
+      "hint": "We'll sort out bills and invoices for you"
+    },
+    "direction": {
+      "received": "Received",
+      "sent": "Sent"
+    },
+    "status": {
+      "reading": "Reading…",
+      "duplicate": "Possible duplicate",
+      "direction": "Received or sent?",
+      "checkAmount": "Check amount",
+      "checkDate": "Check date",
+      "checkName": "Check name",
+      "waiting": "Waiting for payment",
+      "waitingDue": "Waiting for payment · due {{date}}",
+      "overdue": "Overdue since {{date}}",
+      "done": "Done"
+    },
+    "needsYou": {
+      "title": "Needs you · {{count}}",
+      "duplicate": "Looks like the one you added on {{date}}.",
+      "duplicateUnknown": "Looks like a document you added before.",
+      "direction": "Is this a bill you received or an invoice you sent?",
+      "checkAmount": "We couldn't read the amount.",
+      "checkDate": "We couldn't read the date.",
+      "checkName": "We couldn't read the name.",
+      "fix": {
+        "keepBoth": "Keep both",
+        "remove": "Remove",
+        "typeItIn": "Type it in"
+      }
+    },
+    "col": {
+      "date": "Date",
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "amount": "Amount"
+    },
+    "empty": {
+      "new": {
+        "title": "Add your first document",
+        "body": "Receipts and invoices you add show up here. You can add them like this:"
+      },
+      "noMatch": "No documents match your search",
+      "clearSearch": "Clear search"
+    },
+    "detail": {
+      "back": "Documents",
+      "close": "Close",
+      "paper": {
+        "invoiceNo": "Invoice no.",
+        "date": "Date",
+        "total": "Total"
+      },
+      "fix": {
+        "amount": "We couldn't read the amount; it's marked on the scan.",
+        "date": "We couldn't read the date; it's marked on the scan.",
+        "name": "We couldn't read the name; it's marked on the scan.",
+        "save": "Save",
+        "amountError": "Type an amount above 0, like 71.39.",
+        "dateError": "Pick the date.",
+        "nameError": "Type the name."
+      },
+      "kind": {
+        "received": "Received",
+        "sent": "Invoice you sent"
+      },
+      "steps": {
+        "title": "Progress",
+        "read": "Read",
+        "booked": "Booked",
+        "confirm": "Confirm",
+        "paid": "Paid",
+        "waiting": "Waiting for payment",
+        "done": "done",
+        "current": "current step"
+      },
+      "fields": {
+        "title": "What we read",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "direction": "Type",
+        "directionLocked": "Linked to a payment — unlink it to change Received or Sent.",
+        "parties": "From / to",
+        "name": "Name",
+        "invoiceNo": "Invoice number",
+        "date": "Date",
+        "amount": "Amount",
+        "vat": "VAT",
+        "dueDate": "Due date"
+      },
+      "why": {
+        "received": "We set Received because the document comes from someone else.",
+        "sent": "We set Sent because the invoice comes from your business."
+      },
+      "booking": {
+        "hint": "This is the booking of the linked payment. Changing it here changes it there too."
+      },
+      "payment": {
+        "title": "Payment",
+        "intro": "No payment yet. These might be it:",
+        "none": "No payment yet.",
+        "noMatch": "No matching payments yet",
+        "thisOne": "This one",
+        "searchAll": "Search all payments",
+        "cash": "Paid in cash or privately",
+        "notThis": "Not this payment"
+      },
+      "picker": {
+        "search": "Search payments",
+        "placeholder": "Name or amount",
+        "empty": "No payments match"
+      },
+      "remove": "Remove"
     }
   },
   "print": {

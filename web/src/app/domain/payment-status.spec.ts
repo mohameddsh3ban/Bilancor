@@ -18,6 +18,7 @@ const base: Transaction = {
   reference: 'Test',
   history: [],
   beforePrivate: null,
+  beforeLink: null,
 };
 const tx = (patch: Partial<Transaction>): Transaction => ({ ...base, ...patch });
 
@@ -56,7 +57,7 @@ describe('needsYouCount', () => {
   });
 
   it('matches the sample businesses', () => {
-    expect(count('weber-design')).toBe(3);
+    expect(count('weber-design')).toBe(4);
     expect(count('sara-yoga')).toBe(3);
     expect(count('cafe-linde')).toBe(0);
   });

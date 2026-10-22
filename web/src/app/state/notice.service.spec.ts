@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { BUSINESSES } from '../data/sample-data';
 import { SafeStorage } from '../core/storage/safe-storage';
+import { editDocument } from '../domain/document-actions';
 import { DemoStateService } from './demo-state.service';
 import { NoticeService } from './notice.service';
 
@@ -145,5 +146,68 @@ describe('NoticeService.resetDismissals', () => {
     TestBed.inject(NoticeService).resetDismissals();
     const second = TestBed.runInInjectionContext(() => new NoticeService());
     expect(second.unreadCount()).toBe(3);
+  });
+});
+
+describe('NoticeService and the unreadable receipts', () => {
+  beforeEach(() => localStorage.clear());
+
+  const countOf = (service: NoticeService) =>
+    [...service.shown(), ...service.overflow()].find((n) => n.kind === 'unreadable')?.params['count'];
+
+  it('the unreadable notice counts 1 for weber-design and disappears once the amount is typed', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    // The stored count (2) is only a sample; the notice counts the documents that need a check now.
+    expect(countOf(service)).toBe(1);
+    expect(service.unreadCount()).toBe(3);
+
+    demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
+    expect([...service.shown(), ...service.overflow()].map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.unreadCount()).toBe(2);
+  });
+
+  it('counts a missing date or name as well, and the notice comes back with the next one', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.updateDocument('wd-d4', (doc) => ({ ...doc, date: null }));
+    demo.updateDocument('wd-d2', (doc) => ({ ...doc, name: null }));
+    expect(countOf(service)).toBe(3);
+    demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
+    demo.updateDocument('wd-d4', (doc) => editDocument(doc, { date: '2026-10-08' }));
+    demo.updateDocument('wd-d2', (doc) => editDocument(doc, { name: 'Studio Kern' }));
+    expect(countOf(service)).toBeUndefined();
+    demo.updateDocument('wd-d3', (doc) => ({ ...doc, amountCents: null }));
+    expect(countOf(service)).toBe(1);
+  });
+
+  it('keeps the counts of the earlier notices', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
+    expect(service.history().map((n) => [n.id, n.params['count']])).toEqual(
+      weber.noticeHistory.map((n) => [n.id, n.params['count']]),
+    );
+  });
+
+  it('a dismissed unreadable notice goes to the history with its live count', () => {
+    const service = TestBed.inject(NoticeService);
+    service.dismiss(unreadable.id);
+    expect(service.history()[0]).toMatchObject({ id: unreadable.id, params: { count: 1 } });
+  });
+
+  it('counts only what is visible: nothing before the receipt step is done', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setSetup('halfway');
+    expect(countOf(service)).toBeUndefined();
+  });
+
+  it('a business without an unreadable notice gets none, whatever its documents', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setBusiness('sara-yoga');
+    demo.updateDocument('sy-d1', (doc) => ({ ...doc, amountCents: null }));
+    expect(countOf(service)).toBeUndefined();
   });
 });

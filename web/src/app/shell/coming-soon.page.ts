@@ -9,13 +9,11 @@ import { map } from 'rxjs';
 const FEATURES: readonly string[] = [
   'home',
   'payments',
-  'documents',
   'invoices',
   'taxes',
   'reports',
   'settings',
   'help',
-  'upload',
   'more',
   'decisions',
   'terms',
@@ -28,6 +26,7 @@ const FEATURES: readonly string[] = [
   'account',
   'photo',
   'selfReceipt',
+  'cashPayment',
 ];
 
 /** Where every link to a page that is not designed yet lands. */

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircle, lucideCircleCheck } from '@ng-icons/lucide';
-import { RouterLink } from '@angular/router';
+import { Params, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -11,7 +11,10 @@ import { DemoStateService } from '../../state/demo-state.service';
 type StepId = 'bank' | 'tax' | 'receipt';
 const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
 
-/** The three setup steps with a tick on the finished ones; each step links to its (coming soon) page. */
+/**
+ * The three setup steps with a tick on the finished ones. Uploading the first receipt opens Documents with the
+ * Add choices open; the other steps link to their (coming soon) pages.
+ */
 @Component({
   selector: 'app-setup-checklist',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,7 +48,8 @@ const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
               size="sm"
               class="shrink-0"
               [variant]="step.done ? 'ghost' : 'outline'"
-              [routerLink]="['/soon', step.id]"
+              [routerLink]="step.link"
+              [queryParams]="step.queryParams"
               [attr.data-testid]="'step-action-' + step.id"
             >
               {{ (step.done ? 'home.checklist.view' : 'home.checklist.start') | transloco }}
@@ -61,6 +65,12 @@ export class SetupChecklist {
 
   protected readonly steps = computed(() => {
     const done = setupSteps(this.demo.setup());
-    return STEP_IDS.map((id) => ({ id, done: done[id] }));
+    return STEP_IDS.map((id) => ({ id, done: done[id], ...this.target(id, done[id]) }));
   });
+
+  /** Where a step leads: the Add menu for a receipt that is still to do, Documents once it is done, else its coming-soon page. */
+  private target(id: StepId, done: boolean): { link: string[]; queryParams: Params | undefined } {
+    if (id !== 'receipt') return { link: ['/soon', id], queryParams: undefined };
+    return { link: ['/documents'], queryParams: done ? undefined : { add: '1' } };
+  }
 }

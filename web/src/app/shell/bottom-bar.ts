@@ -21,6 +21,7 @@ import { BOTTOM_BAR_ITEMS, MORE_ITEMS, SHELL_ICONS } from './menu';
         @if (item.id === 'upload') {
           <a
             [routerLink]="item.route"
+            [queryParams]="item.queryParams"
             class="bg-primary text-primary-foreground -mt-6 mb-2 flex size-14 items-center justify-center place-self-center rounded-full shadow-lg"
             [attr.aria-label]="'menu.upload' | transloco"
           >

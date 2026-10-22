@@ -5,11 +5,10 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { decisionMinutes } from '../../domain/home-figures';
-import { needsYouCount } from '../../domain/payment-status';
+import { decisionCount, decisionMinutes } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 
-/** How many things wait for the person's decision, with a time estimate and a Start button. */
+/** How many things wait for the person's decision (payments and documents), with a time estimate and a Start button. */
 @Component({
   selector: 'app-decisions-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,6 +45,6 @@ import { DemoStateService } from '../../state/demo-state.service';
 export class DecisionsCard {
   private readonly demo = inject(DemoStateService);
 
-  protected readonly count = computed(() => needsYouCount(this.demo.business().transactions));
+  protected readonly count = computed(() => decisionCount(this.demo.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.count()));
 }

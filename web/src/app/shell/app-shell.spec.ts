@@ -83,7 +83,7 @@ describe('AppShell', () => {
     expect(open).toContain('Needs action');
     expect(open).toContain('New terms from our bank-connection provider need your review');
     expect(open).toContain('Your Qonto connection expires in 5 days');
-    expect(open).toContain('Receipts that could not be read: 2');
+    expect(open).toContain('Receipts that could not be read: 1');
     const history = text('bell-history');
     expect(history).toContain('Earlier');
     expect(history).toContain('Your Qonto connection expires in 30 days');
@@ -170,7 +170,7 @@ describe('AppShell', () => {
 
   it('has Upload receipt in the sidebar and the full menu', () => {
     const sidebar = q('aside');
-    expect(sidebar.querySelector('a[href="/soon/upload"]')?.textContent).toContain('Upload receipt');
+    expect(sidebar.querySelector('a[href="/documents?add=1"]')?.textContent).toContain('Upload receipt');
     const labels = Array.from(sidebar.querySelectorAll('nav a')).map((a) => a.textContent?.trim());
     expect(labels).toEqual(['Home', 'Payments', 'Documents', 'Invoices', 'Taxes', 'Reports', 'Settings', 'Help']);
   });
@@ -178,7 +178,7 @@ describe('AppShell', () => {
   it('has the bottom bar with the camera in the centre', () => {
     const slots = Array.from(q('[data-testid="bottom-bar"]').querySelectorAll<HTMLElement>('a, button'));
     expect(slots).toHaveLength(5);
-    expect(slots[2].getAttribute('href')).toBe('/soon/upload');
+    expect(slots[2].getAttribute('href')).toBe('/documents?add=1');
   });
 
   it('more opens the remaining menu items', async () => {

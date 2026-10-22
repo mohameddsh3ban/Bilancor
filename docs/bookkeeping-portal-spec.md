@@ -149,6 +149,8 @@ Linking documents to payments is the core daily work in the portal: every paymen
 
 Studied Oct 22, 2026, in the original German (no browser translation), by reading the page and its structure only.
 
+Our own version of the Documents page is described in `docs/specs/2026-10-22-documents-mockup-design.md`.
+
 **The portal is BuchhaltungsButler.** The empty-folder text says documents are sent "zu BuchhaltungsButler", so Bilancor's portal is a white-labelled BuchhaltungsButler. What we study here is BuchhaltungsButler's product, which has public help pages and prices we can read without touching the account.
 
 ### Folder overview (Belegverwaltung)

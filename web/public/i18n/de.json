@@ -24,6 +24,16 @@
       "label": "Eigenbeleg",
       "de": "Eigenbeleg",
       "explain": "Ein Beleg, den du selbst ausstellst, wenn das Original verloren ging oder es nie einen gab."
+    },
+    "eingangsbeleg": {
+      "label": "Eingangsbeleg",
+      "de": "Eingangsbeleg",
+      "explain": "Ein Beleg von jemand anderem, zum Beispiel eine Rechnung, die du bezahlst oder bezahlt hast."
+    },
+    "ausgangsbeleg": {
+      "label": "Ausgangsbeleg",
+      "de": "Ausgangsbeleg",
+      "explain": "Eine Rechnung, die du selbst an einen Kunden gestellt hast."
     }
   },
   "account": {
@@ -44,13 +54,11 @@
   "soon": {
     "home": "Start",
     "payments": "Zahlungen",
-    "documents": "Dokumente",
     "invoices": "Rechnungen",
     "taxes": "Steuern",
     "reports": "Auswertungen",
     "settings": "Einstellungen",
     "help": "Hilfe",
-    "upload": "Beleg hochladen",
     "more": "Mehr",
     "decisions": "Deine Entscheidungen",
     "terms": "Bedingungen der Bankanbindung",
@@ -63,6 +71,7 @@
     "account": "Konto",
     "photo": "Foto aufnehmen",
     "selfReceipt": "Eigenbeleg",
+    "cashPayment": "Bar oder privat bezahlt",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -134,7 +143,21 @@
     "receiptNotNeeded": "Du hast markiert: kein Beleg nötig",
     "categoryChanged": "Du hast die Kategorie auf {{category}} geändert",
     "markedPrivate": "Du hast es als privat markiert",
-    "markedBusiness": "Du hast es als geschäftlich markiert"
+    "markedBusiness": "Du hast es als geschäftlich markiert",
+    "addedPhoto": "Foto hinzugefügt",
+    "addedFile": "Datei hinzugefügt",
+    "addedEmail": "Per E-Mail hinzugefügt",
+    "docRead": "Automatisch gelesen, Vorschlag: {{category}}",
+    "docEdited": "Du hast die Angaben korrigiert",
+    "markedReceived": "Du hast es als empfangen markiert",
+    "markedSent": "Du hast es als gesendet markiert",
+    "keptDuplicate": "Du hast es behalten, obwohl es wie ein Duplikat aussieht",
+    "linked": "Du hast es mit der Zahlung {{name}} verknüpft",
+    "linkedAuto": "Automatisch mit der Zahlung {{name}} verknüpft",
+    "unlinked": "Du hast die Verknüpfung mit der Zahlung {{name}} gelöst",
+    "receiptLinked": "Du hast den Beleg {{name}} verknüpft",
+    "receiptLinkedAuto": "Der Beleg {{name}} wurde automatisch verknüpft",
+    "receiptUnlinked": "Du hast die Verknüpfung mit dem Beleg {{name}} gelöst"
   },
   "payments": {
     "title": "Zahlungen",
@@ -188,6 +211,7 @@
         "missingHint": "Füge einen hinzu oder sag, dass diese Zahlung keinen braucht.",
         "takePhoto": "Foto aufnehmen",
         "pickDocument": "Aus Dokumenten wählen",
+        "openDocument": "Dokument öffnen",
         "noReceiptNeeded": "Kein Beleg nötig"
       },
       "booking": {
@@ -201,12 +225,20 @@
         "noVat": "Keine USt",
         "kind": "Diese Zahlung ist",
         "business": "Geschäftlich",
-        "private": "Privat"
+        "private": "Privat",
+        "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung."
       },
       "picker": {
         "search": "Kategorien durchsuchen",
         "placeholder": "Name oder Nummer",
         "empty": "Keine Kategorie passt"
+      },
+      "docPicker": {
+        "search": "Dokumente durchsuchen",
+        "placeholder": "Name oder Betrag",
+        "empty": "Kein nicht verknüpftes Dokument passt zu dieser Zahlung",
+        "noMatch": "Kein Dokument passt",
+        "add": "Dokument hinzufügen"
       },
       "bank": {
         "title": "Bankdaten",
@@ -217,6 +249,174 @@
         "title": "Verlauf"
       },
       "download": "PDF herunterladen"
+    }
+  },
+  "documents": {
+    "title": "Dokumente",
+    "add": "Hinzufügen",
+    "search": {
+      "label": "Dokumente durchsuchen",
+      "placeholder": "Name, Betrag oder Rechnungsnummer"
+    },
+    "inbox": {
+      "text": "Oder leite Belege weiter an",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "copyFailed": "Kopieren hat nicht geklappt – markiere die Adresse"
+    },
+    "ways": {
+      "photo": {
+        "title": "Foto aufnehmen",
+        "hint": "Mehrere Seiten werden zu einem Beleg"
+      },
+      "file": {
+        "title": "Datei auswählen",
+        "hint": "PDF, JPG, PNG oder E-Rechnung (XML), bis 20 MB"
+      },
+      "email": {
+        "title": "Per E-Mail weiterleiten"
+      }
+    },
+    "upload": {
+      "reading": {
+        "one": "1 Dokument wird gelesen…",
+        "many": "{{count}} Dokumente werden gelesen…"
+      },
+      "added": {
+        "one": "1 Dokument hinzugefügt",
+        "many": "{{count}} Dokumente hinzugefügt"
+      },
+      "needsYou": {
+        "one": "1 braucht dich",
+        "many": "{{count}} brauchen dich"
+      },
+      "allSorted": "alles erledigt",
+      "refusedTitle": "Nicht hinzugefügt:",
+      "refused": {
+        "type": "nur PDF, JPG, PNG oder XML",
+        "size": "über 20 MB"
+      },
+      "dismiss": "Schließen"
+    },
+    "drop": {
+      "one": "Loslassen, um 1 Datei hinzuzufügen",
+      "many": "Loslassen, um {{count}} Dateien hinzuzufügen",
+      "hint": "Wir sortieren Rechnungen und Belege für dich"
+    },
+    "direction": {
+      "received": "Empfangen",
+      "sent": "Gesendet"
+    },
+    "status": {
+      "reading": "Wird gelesen…",
+      "duplicate": "Mögliches Duplikat",
+      "direction": "Empfangen oder gesendet?",
+      "checkAmount": "Betrag prüfen",
+      "checkDate": "Datum prüfen",
+      "checkName": "Name prüfen",
+      "waiting": "Wartet auf Zahlung",
+      "waitingDue": "Wartet auf Zahlung · fällig {{date}}",
+      "overdue": "Überfällig seit {{date}}",
+      "done": "Erledigt"
+    },
+    "needsYou": {
+      "title": "Braucht dich · {{count}}",
+      "duplicate": "Sieht aus wie der Beleg, den du am {{date}} hinzugefügt hast.",
+      "duplicateUnknown": "Sieht aus wie ein Beleg, den du schon hinzugefügt hast.",
+      "direction": "Ist das ein Beleg, den du erhalten hast, oder eine Rechnung, die du gesendet hast?",
+      "checkAmount": "Wir konnten den Betrag nicht lesen.",
+      "checkDate": "Wir konnten das Datum nicht lesen.",
+      "checkName": "Wir konnten den Namen nicht lesen.",
+      "fix": {
+        "keepBoth": "Beide behalten",
+        "remove": "Entfernen",
+        "typeItIn": "Eintippen"
+      }
+    },
+    "col": {
+      "date": "Datum",
+      "name": "Name",
+      "type": "Art",
+      "status": "Status",
+      "amount": "Betrag"
+    },
+    "empty": {
+      "new": {
+        "title": "Füge deinen ersten Beleg hinzu",
+        "body": "Belege und Rechnungen, die du hinzufügst, erscheinen hier. So kannst du sie hinzufügen:"
+      },
+      "noMatch": "Kein Dokument passt zu deiner Suche",
+      "clearSearch": "Suche löschen"
+    },
+    "detail": {
+      "back": "Dokumente",
+      "close": "Schließen",
+      "paper": {
+        "invoiceNo": "Rechnungsnr.",
+        "date": "Datum",
+        "total": "Gesamt"
+      },
+      "fix": {
+        "amount": "Wir konnten den Betrag nicht lesen; er ist auf dem Scan markiert.",
+        "date": "Wir konnten das Datum nicht lesen; es ist auf dem Scan markiert.",
+        "name": "Wir konnten den Namen nicht lesen; er ist auf dem Scan markiert.",
+        "save": "Speichern",
+        "amountError": "Gib einen Betrag über 0 ein, zum Beispiel 71,39.",
+        "dateError": "Wähle das Datum aus.",
+        "nameError": "Gib den Namen ein."
+      },
+      "kind": {
+        "received": "Empfangen",
+        "sent": "Von dir gesendete Rechnung"
+      },
+      "steps": {
+        "title": "Fortschritt",
+        "read": "Gelesen",
+        "booked": "Gebucht",
+        "confirm": "Bestätigen",
+        "paid": "Bezahlt",
+        "waiting": "Wartet auf Zahlung",
+        "done": "erledigt",
+        "current": "aktueller Schritt"
+      },
+      "fields": {
+        "title": "Das haben wir gelesen",
+        "edit": "Bearbeiten",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "direction": "Art",
+        "directionLocked": "Mit einer Zahlung verknüpft — löse die Verknüpfung, um Empfangen oder Gesendet zu ändern.",
+        "parties": "Von / an",
+        "name": "Name",
+        "invoiceNo": "Rechnungsnummer",
+        "date": "Datum",
+        "amount": "Betrag",
+        "vat": "USt",
+        "dueDate": "Fällig am"
+      },
+      "why": {
+        "received": "Wir haben „Empfangen“ gewählt, weil der Beleg von jemand anderem kommt.",
+        "sent": "Wir haben „Gesendet“ gewählt, weil die Rechnung von deinem Unternehmen kommt."
+      },
+      "booking": {
+        "hint": "Das ist die Buchung der verknüpften Zahlung. Wenn du sie hier änderst, ändert sie sich auch dort."
+      },
+      "payment": {
+        "title": "Zahlung",
+        "intro": "Noch keine Zahlung. Diese könnten passen:",
+        "none": "Noch keine Zahlung.",
+        "noMatch": "Noch keine passenden Zahlungen",
+        "thisOne": "Diese",
+        "searchAll": "Alle Zahlungen durchsuchen",
+        "cash": "Bar oder privat bezahlt",
+        "notThis": "Nicht diese Zahlung"
+      },
+      "picker": {
+        "search": "Zahlungen durchsuchen",
+        "placeholder": "Name oder Betrag",
+        "empty": "Keine Zahlung passt"
+      },
+      "remove": "Entfernen"
     }
   },
   "print": {

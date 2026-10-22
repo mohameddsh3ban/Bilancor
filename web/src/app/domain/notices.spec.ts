@@ -1,5 +1,5 @@
 import { BUSINESSES } from '../data/sample-data';
-import { noticesForSetup, splitNotices } from './notices';
+import { noticesForSetup, splitNotices, withUnreadableCount } from './notices';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
 const [terms, bankExpiry, unreadable] = weber.notices;
@@ -50,5 +50,24 @@ describe('noticesForSetup', () => {
 
   it('hides the revenue limit notice until the tax step is done', () => {
     expect(noticesForSetup(sara.notices, { ...done, tax: false })).toEqual([]);
+  });
+});
+
+describe('withUnreadableCount', () => {
+  it('puts the live count on the unreadable notice and leaves the others as they are', () => {
+    const result = withUnreadableCount(weber.notices, 4);
+    expect(result.map((n) => n.id)).toEqual(weber.notices.map((n) => n.id));
+    expect(result[2].params).toEqual({ count: 4 });
+    expect(result[0]).toBe(terms);
+    expect(result[1]).toBe(bankExpiry);
+  });
+
+  it('leaves the unreadable notice out at 0', () => {
+    expect(withUnreadableCount(weber.notices, 0).map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+  });
+
+  it('does not change the notices it is given', () => {
+    withUnreadableCount(weber.notices, 7);
+    expect(weber.notices[2].params).toEqual({ count: 2 });
   });
 });

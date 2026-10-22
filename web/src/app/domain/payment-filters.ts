@@ -36,7 +36,7 @@ function newestFirst(txs: readonly Transaction[]): Transaction[] {
  * The last `.` or `,` followed by 1-2 digits at the very end is the decimal mark; any other `.` or `,` is a thousands separator.
  * Returns null when the query is not a number.
  */
-function parseAmountQuery(query: string): { cents: number; negative: boolean } | null {
+export function parseAmountQuery(query: string): { cents: number; negative: boolean } | null {
   const text = query.replace(/[\s€+]/g, '');
   const match = /^(-?)([\d.,]*\d[\d.,]*)$/.exec(text);
   if (!match) return null;

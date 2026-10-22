@@ -15,6 +15,17 @@ export function noticesForSetup(notices: Notice[], steps: SetupSteps): Notice[] 
 }
 
 /**
+ * Puts the number of documents to check on the "receipts that could not be read" notice, which is left out when
+ * there are none. Other notices are kept as they are.
+ */
+export function withUnreadableCount(notices: Notice[], count: number): Notice[] {
+  return notices.flatMap((notice) => {
+    if (notice.kind !== 'unreadable') return [notice];
+    return count > 0 ? [{ ...notice, params: { ...notice.params, count } }] : [];
+  });
+}
+
+/**
  * Hides dismissed notices (blocking ones can never be dismissed), orders the rest
  * most urgent first and splits them into the ones shown on the page and the overflow.
  */
