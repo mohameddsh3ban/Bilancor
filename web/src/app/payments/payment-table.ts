@@ -5,9 +5,10 @@ import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppMonthPipe } from '../core/format/month.pipe';
 import { LanguageService } from '../core/i18n/language.service';
-import { Account, Booking } from '../data/models';
+import { Account } from '../data/models';
 import { MonthGroup } from '../domain/payment-filters';
 import { paymentStatus } from '../domain/payment-status';
+import { BookingLabel, showsBookingLabel, skr03Text } from './booking-label';
 import { PaymentStatusChip } from './payment-status-chip';
 
 /**
@@ -18,7 +19,15 @@ import { PaymentStatusChip } from './payment-status-chip';
 @Component({
   selector: 'app-payment-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppDatePipe, AppMonthPipe, MoneyPipe, PaymentStatusChip, RouterLink, TranslocoPipe],
+  imports: [
+    AppDatePipe,
+    AppMonthPipe,
+    BookingLabel,
+    MoneyPipe,
+    PaymentStatusChip,
+    RouterLink,
+    TranslocoPipe,
+  ],
   host: { class: 'block' },
   template: `
     <div
@@ -118,10 +127,7 @@ import { PaymentStatusChip } from './payment-status-chip';
                 <td class="py-2.5 pe-3">
                   <span class="block truncate" data-testid="payment-table-booking">
                     @if (booking) {
-                      @if (showLabel()) {
-                        {{ 'booking.' + booking.labelKey | transloco }} ·
-                      }
-                      <bdi dir="ltr">{{ skr03(booking) }}</bdi>
+                      <app-booking-label [booking]="booking" />
                     } @else {
                       —
                     }
@@ -157,16 +163,12 @@ export class PaymentTable {
   /** A payment is open beside the table, so the table shows only from `2xl` where it has room. */
   readonly panelOpen = input(false);
 
-  /** German keeps only the SKR03 account; English and Arabic put a short translated label in front of it. */
-  protected readonly showLabel = computed(() => this.language.lang() !== 'de');
+  /** For the row's hover title; the booking cell itself is the shared `app-booking-label`. */
+  protected readonly showLabel = computed(() => showsBookingLabel(this.language.lang()));
+  protected readonly skr03 = skr03Text;
   protected readonly status = paymentStatus;
 
   protected accountOf(accountId: string): Account | undefined {
     return this.accounts().find((a) => a.id === accountId);
-  }
-
-  /** The SKR03 number with its German name; the caller keeps it left-to-right. */
-  protected skr03(booking: Booking): string {
-    return `${booking.skr03} ${booking.nameDe}`;
   }
 }

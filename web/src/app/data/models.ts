@@ -11,7 +11,7 @@ export interface Transaction {
   booking: Booking | null; confirmed: boolean; isPrivate: boolean;
   receipt: ReceiptState; receiptFile: string | null;
   counterpartyIban: string; reference: string;
-  history: HistoryEntry[];
+  history: HistoryEntry[]; // newest first: every action adds its line at the front
   beforePrivate: { booking: Booking | null; confirmed: boolean; receipt: ReceiptState } | null;
 } // the status is calculated by paymentStatus(), never stored
 export type NoticeKind = 'terms' | 'bankExpiry' | 'unreadable' | 'revenueLimit';

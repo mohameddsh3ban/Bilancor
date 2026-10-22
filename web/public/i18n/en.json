@@ -56,6 +56,8 @@
     "tax": "Your tax details",
     "receipt": "Upload your first receipt",
     "account": "Account",
+    "photo": "Take a photo",
+    "selfReceipt": "Self-issued receipt",
     "default": "This page"
   },
   "comingSoon": {
@@ -170,6 +172,47 @@
         "body": "Your payments show up here as soon as your bank is connected.",
         "action": "Connect your bank"
       }
+    },
+    "detail": {
+      "back": "Payments",
+      "close": "Close",
+      "receipt": {
+        "title": "Receipt",
+        "notNeeded": "No receipt needed",
+        "missing": "Receipt missing",
+        "missingHint": "Add one, or say that this payment needs none.",
+        "takePhoto": "Take photo",
+        "pickDocument": "Pick from Documents",
+        "noReceiptNeeded": "No receipt needed",
+        "selfReceipt": "Self-issued receipt"
+      },
+      "booking": {
+        "title": "Booking",
+        "none": "No category yet",
+        "change": "Change",
+        "choose": "Choose",
+        "confirm": "Confirm",
+        "vat": "VAT",
+        "vatRate": "{{rate}}%",
+        "noVat": "No VAT",
+        "kind": "This payment is",
+        "business": "Business",
+        "private": "Private"
+      },
+      "picker": {
+        "search": "Search categories",
+        "placeholder": "Name or number",
+        "empty": "No category matches"
+      },
+      "bank": {
+        "title": "Bank details",
+        "iban": "IBAN",
+        "reference": "Reference"
+      },
+      "history": {
+        "title": "History"
+      },
+      "download": "Download PDF"
     }
   },
   "home": {

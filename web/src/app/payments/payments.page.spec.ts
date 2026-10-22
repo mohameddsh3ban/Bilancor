@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
@@ -345,6 +345,29 @@ describe('PaymentsPage', () => {
       ).toBe(false);
       expect(q('payments-list')!.classList).not.toContain('hidden');
       expect(q('payments-detail')!.classList).toContain('hidden');
+    });
+
+    it('keeps the filters while a payment is open and after going back to the list', async () => {
+      await render();
+      await click('quick-needsYou');
+      await type('bahn');
+      expect(qa('payment-row')).toHaveLength(1);
+
+      qa('payment-row')[0].click();
+      await settle();
+      expect(TestBed.inject(Router).url).toBe('/payments/wd-t3');
+      expect(q('payment-detail')).not.toBeNull();
+      expect(q('quick-needsYou')!.getAttribute('aria-pressed')).toBe('true');
+      expect((q('payment-search') as HTMLInputElement).value).toBe('bahn');
+
+      q('back-link')!.click();
+      await settle();
+      expect(TestBed.inject(Router).url).toBe('/payments');
+      expect(q('payment-detail')).toBeNull();
+      expect(q('quick-needsYou')!.getAttribute('aria-pressed')).toBe('true');
+      expect((q('payment-search') as HTMLInputElement).value).toBe('bahn');
+      expect(text(q('chip-search'))).toContain('bahn');
+      expect(qa('payment-row')).toHaveLength(1);
     });
 
     it('moves the highlight when another payment opens', async () => {

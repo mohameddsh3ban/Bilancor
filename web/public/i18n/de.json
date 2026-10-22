@@ -56,6 +56,8 @@
     "tax": "Deine Steuerangaben",
     "receipt": "Ersten Beleg hochladen",
     "account": "Konto",
+    "photo": "Foto aufnehmen",
+    "selfReceipt": "Eigenbeleg",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -170,6 +172,47 @@
         "body": "Deine Zahlungen erscheinen hier, sobald deine Bank verbunden ist.",
         "action": "Bank verbinden"
       }
+    },
+    "detail": {
+      "back": "Zahlungen",
+      "close": "Schließen",
+      "receipt": {
+        "title": "Beleg",
+        "notNeeded": "Kein Beleg nötig",
+        "missing": "Beleg fehlt",
+        "missingHint": "Füge einen hinzu oder sag, dass diese Zahlung keinen braucht.",
+        "takePhoto": "Foto aufnehmen",
+        "pickDocument": "Aus Dokumenten wählen",
+        "noReceiptNeeded": "Kein Beleg nötig",
+        "selfReceipt": "Eigenbeleg"
+      },
+      "booking": {
+        "title": "Buchung",
+        "none": "Noch keine Kategorie",
+        "change": "Ändern",
+        "choose": "Wählen",
+        "confirm": "Bestätigen",
+        "vat": "USt",
+        "vatRate": "{{rate}} %",
+        "noVat": "Keine USt",
+        "kind": "Diese Zahlung ist",
+        "business": "Geschäftlich",
+        "private": "Privat"
+      },
+      "picker": {
+        "search": "Kategorien durchsuchen",
+        "placeholder": "Name oder Nummer",
+        "empty": "Keine Kategorie passt"
+      },
+      "bank": {
+        "title": "Bankdaten",
+        "iban": "IBAN",
+        "reference": "Verwendungszweck"
+      },
+      "history": {
+        "title": "Verlauf"
+      },
+      "download": "PDF herunterladen"
     }
   },
   "home": {

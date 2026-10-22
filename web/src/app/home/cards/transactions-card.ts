@@ -7,9 +7,10 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { LanguageService } from '../../core/i18n/language.service';
-import { Account, Booking } from '../../data/models';
+import { Account } from '../../data/models';
 import { newestTransactions } from '../../domain/home-figures';
 import { paymentStatus } from '../../domain/payment-status';
+import { BookingLabel, showsBookingLabel, skr03Text } from '../../payments/booking-label';
 import { PaymentStatusChip } from '../../payments/payment-status-chip';
 import { DemoStateService } from '../../state/demo-state.service';
 
@@ -22,6 +23,7 @@ import { DemoStateService } from '../../state/demo-state.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppDatePipe,
+    BookingLabel,
     HlmCardImports,
     MoneyPipe,
     NgIcon,
@@ -141,10 +143,7 @@ import { DemoStateService } from '../../state/demo-state.service';
                 <td class="py-2.5 pe-3">
                   <span class="block truncate" data-testid="tx-table-booking">
                     @if (booking) {
-                      @if (showLabel()) {
-                        {{ 'booking.' + booking.labelKey | transloco }} ·
-                      }
-                      <bdi dir="ltr">{{ skr03(booking) }}</bdi>
+                      <app-booking-label [booking]="booking" />
                     } @else {
                       —
                     }
@@ -176,16 +175,12 @@ export class TransactionsCard {
   private readonly language = inject(LanguageService);
 
   protected readonly rows = computed(() => newestTransactions(this.demo.business().transactions));
-  /** German keeps only the SKR03 account; English and Arabic put a short translated label in front of it. */
-  protected readonly showLabel = computed(() => this.language.lang() !== 'de');
+  /** For the row's hover title; the booking cell itself is the shared `app-booking-label`. */
+  protected readonly showLabel = computed(() => showsBookingLabel(this.language.lang()));
+  protected readonly skr03 = skr03Text;
 
   protected accountOf(accountId: string): Account | undefined {
     return this.demo.business().accounts.find((a) => a.id === accountId);
-  }
-
-  /** The SKR03 number with its German name; the caller keeps it left-to-right. */
-  protected skr03(booking: Booking): string {
-    return `${booking.skr03} ${booking.nameDe}`;
   }
 
   protected readonly status = paymentStatus;

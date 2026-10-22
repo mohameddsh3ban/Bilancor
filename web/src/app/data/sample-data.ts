@@ -34,12 +34,13 @@ interface PaySpec {
   priv?: boolean;
 }
 
-/** A payment as the bank import would have created it, with its history so far. */
+/** A payment as the bank import would have created it, with its history so far (newest first, like every action adds it). */
 function pay(p: PaySpec): Transaction {
   const receipt = p.receipt ?? 'attached';
-  const history: HistoryEntry[] = [{ date: p.date, key: 'imported', params: { account: p.acct.name } }];
-  if (p.booking) history.push({ date: p.date, key: 'autoBooked', params: { category: p.booking.labelKey } });
+  const history: HistoryEntry[] = [];
   if (p.priv) history.push({ date: p.date, key: 'markedPrivate', params: {} });
+  if (p.booking) history.push({ date: p.date, key: 'autoBooked', params: { category: p.booking.labelKey } });
+  history.push({ date: p.date, key: 'imported', params: { account: p.acct.name } });
   return {
     id: p.id,
     date: p.date,

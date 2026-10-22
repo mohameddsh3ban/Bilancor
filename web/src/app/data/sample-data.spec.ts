@@ -89,6 +89,22 @@ describe('sample payments', () => {
     }
   });
 
+  it('every payment keeps its history newest first: imported is the oldest line', () => {
+    for (const b of BUSINESSES) {
+      for (const t of b.transactions) {
+        expect(t.history.at(-1)?.key, t.id).toBe('imported');
+        expect(t.history.filter((h) => h.key === 'imported'), t.id).toHaveLength(1);
+        const dates = t.history.map((h) => h.date);
+        expect([...dates].sort().reverse(), t.id).toEqual(dates);
+      }
+    }
+  });
+
+  it('an automatic booking comes after the import and before a private mark', () => {
+    const tx = BUSINESSES.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t15')!;
+    expect(tx.history.map((h) => h.key)).toEqual(['markedPrivate', 'autoBooked', 'imported']);
+  });
+
   it('payment ids are unique across the sample data', () => {
     const ids = BUSINESSES.flatMap((b) => b.transactions.map((t) => t.id));
     expect(new Set(ids).size).toBe(ids.length);

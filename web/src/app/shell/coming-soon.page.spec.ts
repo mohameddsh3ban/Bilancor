@@ -58,6 +58,8 @@ describe('ComingSoonPage', () => {
       'tax',
       'receipt',
       'account',
+      'photo',
+      'selfReceipt',
     ];
     const harness = await RouterTestingHarness.create('/soon/home');
     for (const feature of features) {
