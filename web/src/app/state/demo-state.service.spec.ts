@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { OFFICE, SOFTWARE, TRAVEL } from '../data/categories';
-import type { Booking, Doc } from '../data/models';
+import { DEMO_TODAY } from '../data/demo-date';
+import type { Booking, Doc, TaxProfile } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docsNeedingYouCount } from '../domain/document-status';
@@ -490,6 +491,91 @@ describe('DemoStateService', () => {
       state.resetData();
       expect(state.business().categoryRules).toEqual([]);
       expect(paymentStatus(payment(state, 'wd-t18'))).toBe('unclear');
+    });
+  });
+
+  describe('saveTaxProfile', () => {
+    const quarterly = (state: DemoStateService): TaxProfile => ({
+      ...state.business().taxProfile,
+      vatPeriod: 'quarterly',
+    });
+
+    it('sets the profile of the open business, adds one history line and ticks the tax step', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const profile = quarterly(state);
+      state.saveTaxProfile(profile);
+      expect(state.business().taxProfile).toEqual(profile);
+      expect(state.business().history).toEqual([{ date: DEMO_TODAY, key: 'taxChanged', params: {} }]);
+      expect(state.setup()).toEqual({ bank: false, tax: true, receipt: false });
+    });
+
+    it('a save with the same answers changes nothing: no second line, the very same business', () => {
+      const state = TestBed.inject(DemoStateService);
+      const profile = quarterly(state);
+      state.saveTaxProfile(profile);
+      const business = state.business();
+      state.saveTaxProfile({ ...profile });
+      expect(state.business()).toBe(business);
+      expect(state.business().history).toHaveLength(1);
+    });
+
+    it('a save with the answers the business already has writes no line, but still ticks the tax step', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const business = state.business();
+      state.saveTaxProfile({ ...business.taxProfile });
+      expect(state.business()).toBe(business);
+      expect(state.setup().tax).toBe(true);
+    });
+
+    it('every field counts as a change: one different answer writes a line', () => {
+      const state = TestBed.inject(DemoStateService);
+      const base = state.business().taxProfile;
+      const variants: TaxProfile[] = [
+        { ...base, businessKind: 'trade' },
+        { ...base, kleinunternehmer: true, vatPeriod: null, vatBasis: null },
+        { ...base, vatPeriod: 'yearly' },
+        { ...base, permanentExtension: true },
+        { ...base, vatBasis: 'soll' },
+        { ...base, taxState: 'hamburg' },
+        { ...base, taxNumber: '21/456/78901' },
+        { ...base, vatId: 'DE123456789' },
+        { ...base, fiscalYearStart: '07-01' },
+      ];
+      for (const [index, variant] of variants.entries()) {
+        state.resetData();
+        state.saveTaxProfile(variant);
+        expect(state.business().taxProfile, 'variant ' + index).toEqual(variant);
+        expect(state.business().history, 'variant ' + index).toHaveLength(1);
+      }
+    });
+
+    it('changes only the open business, and a second change puts its line in front', () => {
+      const state = TestBed.inject(DemoStateService);
+      const other = state.businesses.find((b) => b.id === 'cafe-linde')!;
+      state.saveTaxProfile(quarterly(state));
+      state.saveTaxProfile({ ...quarterly(state), vatPeriod: 'yearly' });
+      expect(state.business().history.map((entry) => entry.key)).toEqual(['taxChanged', 'taxChanged']);
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')).toBe(other);
+      expect(other.history).toEqual([]);
+    });
+
+    it('keeps its own copy of the profile it was given', () => {
+      const state = TestBed.inject(DemoStateService);
+      const profile = quarterly(state);
+      state.saveTaxProfile(profile);
+      profile.vatPeriod = 'yearly';
+      expect(state.business().taxProfile.vatPeriod).toBe('quarterly');
+    });
+
+    it('resetData brings the sample answers back and clears the line', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sample = state.business().taxProfile;
+      state.saveTaxProfile(quarterly(state));
+      state.resetData();
+      expect(state.business().taxProfile).toEqual(sample);
+      expect(state.business().history).toEqual([]);
     });
   });
 });

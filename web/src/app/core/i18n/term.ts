@@ -10,7 +10,15 @@ export type TermKey =
   | 'kleinunternehmer'
   | 'skr03'
   | 'eingangsbeleg'
-  | 'ausgangsbeleg';
+  | 'ausgangsbeleg'
+  | 'freiberufler'
+  | 'gewerbe'
+  | 'dauerfristverlaengerung'
+  | 'istVersteuerung'
+  | 'sollVersteuerung'
+  | 'steuernummer'
+  | 'ustIdNr'
+  | 'finanzamt';
 
 /** A German tax term: translation plus the German original, explained on hover (tooltip) or tap (popover). */
 @Component({

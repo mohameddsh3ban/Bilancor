@@ -34,6 +34,46 @@
       "label": "Ausgangsbeleg",
       "de": "Ausgangsbeleg",
       "explain": "Eine Rechnung, die du selbst an einen Kunden gestellt hast."
+    },
+    "freiberufler": {
+      "label": "Freiberufler",
+      "de": "Freiberufler",
+      "explain": "Selbstständige Arbeit in einem freien Beruf, zum Beispiel Design, Beratung, Texten oder Unterricht. Welche Art Unternehmen du hast, steht in deinem Brief vom Finanzamt."
+    },
+    "gewerbe": {
+      "label": "Gewerbe",
+      "de": "Gewerbe",
+      "explain": "Ein Betrieb, der Waren oder Leistungen verkauft und als Gewerbe angemeldet ist, zum Beispiel ein Laden, ein Café oder ein Handwerksbetrieb. Welche Art du hast, steht in deinem Brief vom Finanzamt."
+    },
+    "dauerfristverlaengerung": {
+      "label": "Dauerfristverlängerung",
+      "de": "Dauerfristverlängerung",
+      "explain": "Eine Genehmigung des Finanzamts, die dir einen Monat mehr Zeit gibt, die Umsatzsteuer-Voranmeldung abzugeben und zu zahlen."
+    },
+    "istVersteuerung": {
+      "label": "Wenn mein Kunde zahlt (Ist-Versteuerung)",
+      "de": "Ist-Versteuerung",
+      "explain": "Du schuldest die Umsatzsteuer für einen Verkauf, sobald dein Kunde dich bezahlt hat, nicht schon bei der Rechnung."
+    },
+    "sollVersteuerung": {
+      "label": "Wenn ich die Rechnung schicke (Soll-Versteuerung)",
+      "de": "Soll-Versteuerung",
+      "explain": "Du schuldest die Umsatzsteuer für einen Verkauf in dem Monat, in dem du die Rechnung schickst, auch wenn dein Kunde später zahlt."
+    },
+    "steuernummer": {
+      "label": "Steuernummer",
+      "de": "Steuernummer",
+      "explain": "Die Nummer, die dein Finanzamt deinem Unternehmen gegeben hat. Du findest sie oben auf seinen Briefen."
+    },
+    "ustIdNr": {
+      "label": "USt-IdNr.",
+      "de": "USt-IdNr.",
+      "explain": "Die EU-Nummer für die Umsatzsteuer. Sie beginnt mit DE und hat neun Ziffern. Du hast sie nur, wenn du sie beantragt hast, sonst lass das Feld leer."
+    },
+    "finanzamt": {
+      "label": "Finanzamt",
+      "de": "Finanzamt",
+      "explain": "Das örtliche Amt, das deine Steuern bearbeitet. Sein Name steht auf seinen Briefen."
     }
   },
   "account": {
@@ -561,5 +601,69 @@
       "vatDue": "als Nächstes fällig am {{date}}",
       "back": "Zurück"
     }
+  },
+  "taxDetails": {
+    "back": {
+      "home": "Zurück zur Startseite",
+      "settings": "Zurück zu den Einstellungen"
+    },
+    "title": "Deine Steuerangaben",
+    "intro": "Damit wir richtig buchen und melden. Die meisten Antworten findest du im Brief vom Finanzamt.",
+    "hint": {
+      "text": "Nicht sicher? Es steht in deinem Brief vom Finanzamt",
+      "form": "Fragebogen zur steuerlichen Erfassung"
+    },
+    "kind": {
+      "title": "Was für ein Unternehmen ist es?",
+      "error": "Wähle, was für ein Unternehmen es ist."
+    },
+    "vat": {
+      "title": "Berechnest du Umsatzsteuer?",
+      "yes": "Ja, ich berechne Umsatzsteuer",
+      "no": "Nein",
+      "limits": "Umsatz unter {{last}} im letzten Jahr und unter {{current}} in diesem Jahr.",
+      "error": "Beantworte, ob du Umsatzsteuer berechnest."
+    },
+    "period": {
+      "titleBefore": "Wie oft gibst du deine ",
+      "titleAfter": " ab?",
+      "monthly": "Monatlich",
+      "quarterly": "Vierteljährlich",
+      "yearly": "Nur einmal im Jahr",
+      "error": "Wähle, wie oft du sie abgibst."
+    },
+    "extension": {
+      "hint": "Setze den Haken, wenn das Finanzamt dir einen Monat mehr Zeit gegeben hat."
+    },
+    "basis": {
+      "title": "Wann ist die Umsatzsteuer fällig?",
+      "error": "Wähle, wann die Umsatzsteuer fällig ist."
+    },
+    "number": {
+      "state": "Bundesland",
+      "statePlaceholder": "Wähle dein Bundesland",
+      "number": "Nummer",
+      "hint": "Schreibe sie so, wie sie im Brief steht, mit Schrägstrichen oder Leerzeichen.",
+      "errorState": "Wähle dein Bundesland.",
+      "errorEmpty": "Gib deine Steuernummer ein.",
+      "errorUnknown": "Wir haben für diese Nummer kein Finanzamt gefunden. Bitte prüfe sie."
+    },
+    "vatId": {
+      "optional": "Optional",
+      "hint": "Nur wenn du eine hast: DE und neun Ziffern.",
+      "error": "Eine USt-IdNr. besteht aus DE und neun Ziffern, zum Beispiel DE123456789."
+    },
+    "year": {
+      "title": "Geschäftsjahr",
+      "calendar": "Kalenderjahr",
+      "calendarRange": "1. Januar bis 31. Dezember",
+      "different": "Meins ist anders",
+      "startsOn": "Mein Geschäftsjahr beginnt am",
+      "day": "Tag",
+      "month": "Monat",
+      "useCalendar": "Kalenderjahr verwenden",
+      "error": "Gib einen echten Tag und Monat ein, zum Beispiel Tag 1 und Monat 7 für den 1. Juli."
+    },
+    "save": "Speichern"
   }
 }

@@ -37,7 +37,24 @@ describe('translation files', () => {
   });
 
   it('has the German tax terms with label, de and explain', () => {
-    for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03', 'eigenbeleg', 'eingangsbeleg', 'ausgangsbeleg']) {
+    const terms = [
+      'ustva',
+      'euer',
+      'kleinunternehmer',
+      'skr03',
+      'eigenbeleg',
+      'eingangsbeleg',
+      'ausgangsbeleg',
+      'freiberufler',
+      'gewerbe',
+      'dauerfristverlaengerung',
+      'istVersteuerung',
+      'sollVersteuerung',
+      'steuernummer',
+      'ustIdNr',
+      'finanzamt',
+    ];
+    for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {
         expect(enKeys).toContain(`terms.${term}.${part}`);
       }

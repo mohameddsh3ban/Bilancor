@@ -38,6 +38,11 @@ export const routes: Routes = [
         path: 'review',
         loadComponent: () => import('./review/review.page').then((m) => m.ReviewPage),
       },
+      {
+        path: 'settings/tax',
+        loadComponent: () =>
+          import('./settings/tax-details.page').then((m) => m.TaxDetailsPage),
+      },
       { path: 'soon/:feature', component: ComingSoonPage },
     ],
   },

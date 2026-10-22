@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Business, Doc, Person, SetupState, SetupSteps, Transaction } from '../data/models';
+import { DEMO_TODAY } from '../data/demo-date';
+import { Business, Doc, Person, SetupState, SetupSteps, TaxProfile, Transaction } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
@@ -10,6 +11,12 @@ const DEFAULT_BUSINESS_ID = 'weber-design';
 /** A fresh copy of the sample businesses, so edits never touch the shared sample data. */
 function freshBusinesses(): Business[] {
   return structuredClone(BUSINESSES).filter((b) => PERSON.businessIds.includes(b.id));
+}
+
+/** Whether two sets of tax answers are the same, field by field. */
+function sameTaxProfile(a: TaxProfile, b: TaxProfile): boolean {
+  const keys = Object.keys(a) as (keyof TaxProfile)[];
+  return keys.length === Object.keys(b).length && keys.every((key) => a[key] === b[key]);
 }
 
 /** The demo's "who is signed in, which business is open, how far setup is" state, plus the editable sample data. */
@@ -62,6 +69,24 @@ export class DemoStateService {
     const current = this.stepsOf(businessId);
     if (current[step]) return;
     this.stepsByBusiness.update((all) => ({ ...all, [businessId]: { ...current, [step]: true } }));
+  }
+
+  /**
+   * Saves the tax answers of the open business, adds one `taxChanged` line to its history and ticks the tax step. Answers
+   * identical to the saved ones change nothing and add no line (the step is still ticked, so the page never has to be
+   * saved twice to finish setup).
+   */
+  saveTaxProfile(profile: TaxProfile): void {
+    this.updateBusiness(this.businessIdSignal(), (business) =>
+      sameTaxProfile(business.taxProfile, profile)
+        ? business
+        : {
+            ...business,
+            taxProfile: { ...profile },
+            history: [{ date: DEMO_TODAY, key: 'taxChanged', params: {} }, ...business.history],
+          },
+    );
+    this.completeStep('tax');
   }
 
   /**

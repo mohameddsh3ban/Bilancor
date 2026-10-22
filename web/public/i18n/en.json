@@ -34,6 +34,46 @@
       "label": "Sent",
       "de": "Ausgangsbeleg",
       "explain": "An invoice you issued to a customer."
+    },
+    "freiberufler": {
+      "label": "Freelance work",
+      "de": "Freiberufler",
+      "explain": "Self-employed work in a profession, such as design, consulting, writing or teaching. Your letter from the tax office says which kind of business you have."
+    },
+    "gewerbe": {
+      "label": "A trade",
+      "de": "Gewerbe",
+      "explain": "A business that sells goods or services and is registered as a trade, such as a shop, a café or a craft business. Your letter from the tax office says which kind you have."
+    },
+    "dauerfristverlaengerung": {
+      "label": "Permanent extension",
+      "de": "Dauerfristverlängerung",
+      "explain": "An approval from the tax office that gives you one more month to file and pay your VAT return."
+    },
+    "istVersteuerung": {
+      "label": "When my customer pays",
+      "de": "Ist-Versteuerung",
+      "explain": "You owe the VAT for a sale once your customer has paid you, not when you send the invoice."
+    },
+    "sollVersteuerung": {
+      "label": "When I send the invoice",
+      "de": "Soll-Versteuerung",
+      "explain": "You owe the VAT for a sale in the month you send the invoice, even if your customer pays later."
+    },
+    "steuernummer": {
+      "label": "Tax number",
+      "de": "Steuernummer",
+      "explain": "The number your tax office gave your business. You find it at the top of its letters."
+    },
+    "ustIdNr": {
+      "label": "VAT ID",
+      "de": "USt-IdNr.",
+      "explain": "The EU ID number for VAT. It starts with DE and has nine digits. You only have one if you applied for it, so you can leave it empty."
+    },
+    "finanzamt": {
+      "label": "Tax office",
+      "de": "Finanzamt",
+      "explain": "The local office that handles your taxes. Its name is on its letters."
     }
   },
   "account": {
@@ -561,5 +601,69 @@
       "vatDue": "next due {{date}}",
       "back": "Back"
     }
+  },
+  "taxDetails": {
+    "back": {
+      "home": "Back to home",
+      "settings": "Back to Settings"
+    },
+    "title": "Your tax details",
+    "intro": "So we book and file the right way. You'll find most answers in your letter from the tax office.",
+    "hint": {
+      "text": "Not sure? It's in your letter from the tax office",
+      "form": "Fragebogen zur steuerlichen Erfassung"
+    },
+    "kind": {
+      "title": "What kind of business is it?",
+      "error": "Choose what kind of business it is."
+    },
+    "vat": {
+      "title": "Do you charge VAT?",
+      "yes": "Yes, I charge VAT",
+      "no": "No",
+      "limits": "Revenue under {{last}} last year and under {{current}} this year.",
+      "error": "Answer whether you charge VAT."
+    },
+    "period": {
+      "titleBefore": "How often do you file your ",
+      "titleAfter": "?",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Only once a year",
+      "error": "Choose how often you file it."
+    },
+    "extension": {
+      "hint": "Tick this if the tax office has allowed you one more month to file."
+    },
+    "basis": {
+      "title": "When is VAT due?",
+      "error": "Choose when VAT is due."
+    },
+    "number": {
+      "state": "Federal state",
+      "statePlaceholder": "Choose your federal state",
+      "number": "Number",
+      "hint": "Type it as written in the letter, with its slashes or spaces.",
+      "errorState": "Choose your federal state.",
+      "errorEmpty": "Enter your tax number.",
+      "errorUnknown": "We couldn't find a tax office for this number. Please check it."
+    },
+    "vatId": {
+      "optional": "Optional",
+      "hint": "Only if you have one: DE followed by nine digits.",
+      "error": "A VAT ID is DE followed by nine digits, for example DE123456789."
+    },
+    "year": {
+      "title": "Financial year",
+      "calendar": "Calendar year",
+      "calendarRange": "1 January to 31 December",
+      "different": "Mine is different",
+      "startsOn": "My financial year starts on",
+      "day": "Day",
+      "month": "Month",
+      "useCalendar": "Use the calendar year",
+      "error": "Enter a real day and month, for example day 1 and month 7 for 1 July."
+    },
+    "save": "Save"
   }
 }
