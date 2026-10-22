@@ -40,13 +40,13 @@ The Payments page (`/payments`) opens from the menu (on a phone, from the bottom
 What works on sample data:
 
 - **Search** by name, amount or reference. Amounts can be typed as `120`, `120,00`, `120.00` or `-120`.
-- **Quick filters** (All, Needs you, Money in, Money out), plus **account** and **month** filters. Every active filter shows as a chip with ✕; **Clear all** removes them.
+- **Quick filters** (All, Needs you, Money in, Money out) are the segmented buttons under the search box; the one that is on is highlighted. **Account**, **month** and **search** show as removable chips with ✕, and **Clear all** removes everything.
 - **One payment:** full screen on a phone, a side panel beside the list from 1024 px wide.
-- **Actions**, where they apply: Confirm, No receipt needed, Change category, Business / Private. Each adds a line to the history.
-- **Print views:** Download PDF (one payment) and Download month (computer only; the filtered month, or the newest). They open the browser's Print dialog; choose Save as PDF to keep a file.
-- In the "New client" setup state, Payments shows a "Connect your bank" message instead of the list.
+- **Actions**, where they apply: Confirm, No receipt needed, **Change** (the category), Business / Private. Each adds a line to the history.
+- **Print views:** Download PDF (one payment), and Download month (computer only), which prints the whole selected month, with its account if one is chosen; search and the quick filter don't apply. Both open the browser's Print dialog; choose Save as PDF to keep a file.
+- In the "New client" setup state, Payments shows "Connect your bank to see your payments" with a button instead of the list.
 
-Coming soon (the buttons open a placeholder page): Take photo, Pick from Documents, Self-issued receipt, and the homepage's decisions Start button.
+Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Pick from Documents, Self-issued receipt, and the homepage's decisions Start button.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample data. The demo's "today" is 22 Oct 2026, so new history lines are dated 22 Oct.
 
