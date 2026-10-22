@@ -31,7 +31,7 @@ import { DemoStateService } from '../../state/demo-state.service';
               }}
             </p>
           </div>
-          <a hlmBtn size="sm" class="shrink-0" [routerLink]="['/soon', 'decisions']">
+          <a hlmBtn size="sm" class="shrink-0" routerLink="/review">
             {{ 'home.decisions.start' | transloco }}
           </a>
         } @else {

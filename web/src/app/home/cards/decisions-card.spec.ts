@@ -21,11 +21,11 @@ describe('DecisionsCard', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  it('shows the count, the minutes and a Start link', () => {
+  it('shows the count, the minutes and a Start link to the review inbox', () => {
     const el = render('weber-design');
     expect(el.textContent).toContain('6 things need your decision');
     expect(el.textContent).toContain('about 6 minutes');
-    expect(el.querySelector('a')?.getAttribute('href')).toBe('/soon/decisions');
+    expect(el.querySelector('a')?.getAttribute('href')).toBe('/review');
     expect(el.querySelector('a')?.textContent).toContain('Start');
   });
 

@@ -170,41 +170,48 @@ const QUICK_FILTERS: readonly QuickFilter[] = ['all', 'needsYou', 'in', 'out'];
       }
     </div>
 
-    <div
-      role="group"
-      class="border-border bg-card flex max-w-full self-start overflow-hidden rounded-md border text-sm"
-      [attr.aria-label]="'payments.quick.label' | transloco"
-    >
-      @for (quick of quickFilters; track quick) {
-        <button
-          type="button"
-          class="border-border flex min-w-0 items-center gap-1.5 border-s px-3 py-2 whitespace-nowrap first:border-s-0"
-          [class]="
-            filter().quick === quick
-              ? 'bg-primary text-primary-foreground'
-              : 'text-foreground hover:bg-muted'
-          "
-          [attr.data-testid]="'quick-' + quick"
-          [attr.aria-pressed]="filter().quick === quick"
-          (click)="setQuick(quick)"
-        >
-          {{ 'payments.quick.' + quick | transloco }}
-          @if (quick === 'needsYou') {
-            <span
-              class="rounded-full px-1.5 text-xs font-medium"
-              data-testid="needs-you-count"
-              [class]="
-                filter().quick === 'needsYou'
-                  ? 'bg-primary-foreground/20'
-                  : needsYou() > 0
-                    ? 'bg-warning/10 text-warning'
-                    : 'bg-muted'
-              "
-            >
-              {{ needsYou() }}
-            </span>
-          }
-        </button>
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div
+        role="group"
+        class="border-border bg-card flex max-w-full overflow-hidden rounded-md border text-sm"
+        [attr.aria-label]="'payments.quick.label' | transloco"
+      >
+        @for (quick of quickFilters; track quick) {
+          <button
+            type="button"
+            class="border-border flex min-w-0 items-center gap-1.5 border-s px-3 py-2 whitespace-nowrap first:border-s-0"
+            [class]="
+              filter().quick === quick
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground hover:bg-muted'
+            "
+            [attr.data-testid]="'quick-' + quick"
+            [attr.aria-pressed]="filter().quick === quick"
+            (click)="setQuick(quick)"
+          >
+            {{ 'payments.quick.' + quick | transloco }}
+            @if (quick === 'needsYou') {
+              <span
+                class="rounded-full px-1.5 text-xs font-medium"
+                data-testid="needs-you-count"
+                [class]="
+                  filter().quick === 'needsYou'
+                    ? 'bg-primary-foreground/20'
+                    : needsYou() > 0
+                      ? 'bg-warning/10 text-warning'
+                      : 'bg-muted'
+                "
+              >
+                {{ needsYou() }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+      @if (needsYou() > 0) {
+        <a hlmBtn size="sm" data-testid="needs-you-start" routerLink="/review">
+          {{ 'home.decisions.start' | transloco }}
+        </a>
       }
     </div>
 

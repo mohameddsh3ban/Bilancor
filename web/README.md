@@ -48,7 +48,7 @@ What works on sample data:
 
 **Pick from Documents** (in a payment's Receipt section) opens a list of unlinked documents of the matching direction; choosing one links it (see Documents). A payment with a linked document can't be marked Private: the switch says to unlink the document first. **Open document** on a payment with a linked document opens that document.
 
-Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Self-issued receipt, and the homepage's decisions Start button.
+Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Self-issued receipt.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample data. The demo's "today" is 22 Oct 2026, so new history lines are dated 22 Oct.
 

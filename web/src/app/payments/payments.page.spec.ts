@@ -130,6 +130,30 @@ describe('PaymentsPage', () => {
     ).toEqual(['Please confirm', 'Receipt missing', 'Unclear', 'Receipt missing', 'Unclear']);
   });
 
+  it('Start next to the Needs you quick filter opens the review inbox', async () => {
+    await render();
+    const start = q('needs-you-start')!;
+    expect(text(start)).toBe('Start');
+    expect(start.tagName).toBe('A');
+    expect(start.getAttribute('href')).toBe('/review');
+    // Right after the quick filters, not inside one of their buttons.
+    expect(start.closest('button')).toBeNull();
+    expect(start.previousElementSibling).toBe(q('quick-needsYou')!.closest('[role="group"]'));
+  });
+
+  it('has no Start when nothing needs you', async () => {
+    demo.setBusiness('cafe-linde');
+    await render();
+    expect(text(q('quick-needsYou'))).toContain('0');
+    expect(q('needs-you-start')).toBeNull();
+  });
+
+  it('has no Start before a bank is connected', async () => {
+    demo.setSetup('new');
+    await render();
+    expect(q('needs-you-start')).toBeNull();
+  });
+
   it('Money in and Money out narrow the list', async () => {
     await render();
     await click('quick-in');

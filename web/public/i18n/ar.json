@@ -488,6 +488,7 @@
   },
   "review": {
     "title": "مراجعة قراراتك",
+    "needsYouButton": "يحتاج إليك · {{count}}",
     "close": "إغلاق",
     "progressLabel": "التقدّم",
     "progress": "{{position}} من {{total}} · متبقي نحو {{minutes}} د",

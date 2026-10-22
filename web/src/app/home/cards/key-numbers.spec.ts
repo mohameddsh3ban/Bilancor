@@ -32,7 +32,7 @@ describe('KeyNumbers', () => {
     expect(ids).toEqual(['tile-decisions', 'tile-balances', 'tile-tax']);
   });
 
-  it('decisions tile shows the count and a Start button', () => {
+  it('decisions tile shows the count and a Start button to the review inbox', () => {
     const el = render();
     const t = tile(el, 'decisions')!;
     const count = decisionCount(demo.business(), demo.setup());
@@ -41,7 +41,7 @@ describe('KeyNumbers', () => {
     expect(t.textContent).toContain('about 6 minutes');
     const start = t.querySelector('a')!;
     expect(start.textContent).toContain('Start');
-    expect(start.getAttribute('href')).toBe('/soon/decisions');
+    expect(start.getAttribute('href')).toBe('/review');
   });
 
   it('decisions tile shows all clear when nothing waits', () => {

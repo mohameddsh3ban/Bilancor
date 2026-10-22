@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ReviewService } from '../state/review.service';
 import { BottomBar } from './bottom-bar';
 import { DemoToolbar } from './demo-toolbar';
 import { Sidebar } from './sidebar';
@@ -26,4 +27,10 @@ import { TopBar } from './top-bar';
     </div>
   `,
 })
-export class AppShell {}
+export class AppShell {
+  constructor() {
+    // The review inbox sends the person back to the page they came from. Start its service here, with the app, so it
+    // has seen that page before the first visit to /review.
+    inject(ReviewService);
+  }
+}

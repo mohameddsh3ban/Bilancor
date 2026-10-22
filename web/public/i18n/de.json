@@ -488,6 +488,7 @@
   },
   "review": {
     "title": "Entscheidungen prüfen",
+    "needsYouButton": "Braucht dich · {{count}}",
     "close": "Schließen",
     "progressLabel": "Fortschritt",
     "progress": "{{position}} von {{total}} · noch etwa {{minutes}} Min.",

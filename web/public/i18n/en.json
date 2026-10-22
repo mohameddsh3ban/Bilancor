@@ -488,6 +488,7 @@
   },
   "review": {
     "title": "Review your decisions",
+    "needsYouButton": "Needs you · {{count}}",
     "close": "Close",
     "progressLabel": "Progress",
     "progress": "{{position}} of {{total}} · about {{minutes}} min left",

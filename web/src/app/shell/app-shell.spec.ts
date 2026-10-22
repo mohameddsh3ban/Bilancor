@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { routes } from '../app.routes';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { DemoStateService } from '../state/demo-state.service';
 import { NoticeService } from '../state/notice.service';
@@ -61,6 +62,24 @@ describe('AppShell', () => {
     await settle();
     expect(demo.business().id).toBe('cafe-linde');
     expect(q('[data-testid="business-switcher"]').textContent).toContain('Café Linde GbR');
+  });
+
+  it('has the Needs you button in the top bar, right before the bell, linking to the review inbox', () => {
+    const button = q('[data-testid="needs-you-button"]');
+    expect(button.textContent?.replace(/\s+/g, ' ').trim()).toBe('Needs you · 6');
+    expect(button.getAttribute('href')).toBe('/review');
+    expect(q('header').contains(button)).toBe(true);
+    expect(button.closest('app-needs-you-button')!.nextElementSibling).toBe(q('app-bell-panel'));
+  });
+
+  it('the Needs you button follows the business that is open', () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setBusiness('cafe-linde');
+    harness.detectChanges();
+    expect(el.querySelector('[data-testid="needs-you-button"]')).toBeNull();
+    demo.setBusiness('sara-yoga');
+    harness.detectChanges();
+    expect(q('[data-testid="needs-you-button"]').textContent).toContain('Needs you · 3');
   });
 
   it('bell shows unread count', () => {
@@ -186,5 +205,40 @@ describe('AppShell', () => {
     await settle();
     const labels = body('[hlmDropdownMenuItem]').map((i) => i.textContent?.trim());
     expect(labels).toEqual(['Documents', 'Taxes', 'Reports', 'Settings', 'Help']);
+  });
+});
+
+describe('AppShell and the review inbox', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [provideTranslocoTesting(), provideRouter(routes)] });
+  });
+
+  afterEach(() => {
+    document.documentElement.lang = '';
+    document.documentElement.dir = '';
+  });
+
+  it('opened from the top bar, the review inbox closes back to the page the client was on', async () => {
+    const harness = await RouterTestingHarness.create('/payments');
+    harness.detectChanges();
+    const shell = harness.routeNativeElement as HTMLElement;
+    const settle = async () => {
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    };
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/payments');
+
+    shell.querySelector<HTMLElement>('[data-testid="needs-you-button"]')!.click();
+    await settle();
+    expect(router.url).toBe('/review');
+    expect(shell.querySelector('[data-testid="review-layer"]')).not.toBeNull();
+
+    shell.querySelector<HTMLElement>('[data-testid="review-close"]')!.click();
+    await settle();
+    expect(router.url).toBe('/payments');
+    expect(shell.querySelector('[data-testid="review-layer"]')).toBeNull();
   });
 });

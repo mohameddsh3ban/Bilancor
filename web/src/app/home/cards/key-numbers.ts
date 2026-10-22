@@ -48,7 +48,7 @@ import { RevenueTracker } from './revenue-tracker';
                   | transloco: { count: minutes() }
               }}
             </p>
-            <a hlmBtn size="sm" class="self-start" [routerLink]="['/soon', 'decisions']">
+            <a hlmBtn size="sm" class="self-start" routerLink="/review">
               {{ 'home.decisions.start' | transloco }}
             </a>
           } @else {

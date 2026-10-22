@@ -29,13 +29,18 @@ import { DemoStateService } from '../state/demo-state.service';
         data-testid="needs-you-box"
         aria-labelledby="needs-you-title"
       >
-        <h2
-          id="needs-you-title"
-          class="text-warning px-1 text-sm font-semibold"
-          data-testid="needs-you-title"
-        >
-          {{ 'documents.needsYou.title' | transloco: { count: sorted().length } }}
-        </h2>
+        <div class="flex items-center justify-between gap-3">
+          <h2
+            id="needs-you-title"
+            class="text-warning min-w-0 px-1 text-sm font-semibold"
+            data-testid="needs-you-title"
+          >
+            {{ 'documents.needsYou.title' | transloco: { count: sorted().length } }}
+          </h2>
+          <a hlmBtn size="sm" class="shrink-0" data-testid="needs-you-start" routerLink="/review">
+            {{ 'home.decisions.start' | transloco }}
+          </a>
+        </div>
         <ul class="flex flex-col gap-3">
           @for (doc of sorted(); track doc.id) {
             @let status = statusOf(doc);

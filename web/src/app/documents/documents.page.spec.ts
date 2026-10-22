@@ -236,10 +236,23 @@ describe('DocumentsPage', () => {
       expect(fix.getAttribute('href')).toBe('/documents/wd-d1');
     });
 
+    it('has a Start link that opens the review inbox', async () => {
+      await render();
+      const start = inside(q('needs-you-box'), 'needs-you-start')!;
+      expect(text(start)).toBe('Start');
+      expect(start.tagName).toBe('A');
+      expect(start.getAttribute('href')).toBe('/review');
+      // Beside the title, not inside it and not inside a card.
+      expect(start.closest('[data-testid="needs-you-title"]')).toBeNull();
+      expect(start.closest('[data-testid="needs-card"]')).toBeNull();
+      expect(text(q('needs-you-title'))).toBe('Needs you · 1');
+    });
+
     it('is hidden when no document needs you', async () => {
       demo.setBusiness('sara-yoga');
       await render();
       expect(q('needs-you-box')).toBeNull();
+      expect(q('needs-you-start')).toBeNull();
       demo.setBusiness('weber-design');
       await settle();
       expect(q('needs-you-box')).not.toBeNull();
