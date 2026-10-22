@@ -17,8 +17,9 @@ const SUGGESTIONS = 3;
 /**
  * The payment of a document. Not linked yet: the payments it might be (best first, at most three) each with "This
  * one", a search over all of them, and the way out for a payment that has no bank line. Linked: the payment, which
- * opens in Payments, and "Not this payment" to take the link away. Each action does something only while it still
- * applies, so a double tap writes one history line on each side.
+ * opens in Payments, and "Not this payment" to take the link away. While the document is still being read there is
+ * nothing to link yet, so only "No payment yet." shows. Each action does something only while it still applies, so a
+ * double tap writes one history line on each side.
  */
 @Component({
   selector: 'app-document-payment',
@@ -74,6 +75,10 @@ const SUGGESTIONS = 3;
             {{ 'documents.detail.payment.notThis' | transloco }}
           </button>
         </div>
+      } @else if (doc().reading) {
+        <p class="text-sm" data-testid="payment-intro">
+          {{ 'documents.detail.payment.none' | transloco }}
+        </p>
       } @else {
         @if (suggestions().length > 0) {
           <p class="text-sm" data-testid="payment-intro">

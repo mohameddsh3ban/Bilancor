@@ -25,7 +25,8 @@ import { DemoStateService } from '../state/demo-state.service';
 import { BookingLabel } from '../payments/booking-label';
 import { CategoryPicker } from '../payments/category-picker';
 import { PaymentHistory } from '../payments/payment-history';
-import { DocChanges, DocumentFields, parseDocAmount } from './document-fields';
+import { DocChanges, parseDocAmount } from './document-edit-form';
+import { DocumentFields } from './document-fields';
 import { DocumentPaper } from './document-paper';
 import { DocumentPayment } from './document-payment';
 import { DocumentStatusChip } from './document-status-chip';
@@ -185,7 +186,9 @@ import { DocumentSteps } from './document-steps';
             </p>
           }
           <div class="flex flex-wrap items-center gap-2">
-            <app-category-picker [current]="booking()" (picked)="pick($event)" />
+            @if (!doc.reading) {
+              <app-category-picker [current]="booking()" (picked)="pick($event)" />
+            }
             @if (needsConfirm()) {
               <button
                 hlmBtn
@@ -209,7 +212,7 @@ import { DocumentSteps } from './document-steps';
           <app-payment-history [entries]="doc.history" [accounts]="accounts()" />
         </section>
 
-        @if (doc.paymentId === null) {
+        @if (doc.paymentId === null && !doc.reading) {
           <button
             hlmBtn
             variant="destructive"
@@ -257,10 +260,13 @@ export class DocumentDetailPage {
 
   protected readonly accounts = computed(() => this.demo.business().accounts);
 
-  /** The field of the document that could not be read and is asked for in the box under the scan. */
+  /**
+   * The field of the document that could not be read and is asked for in the box under the scan. A document that is
+   * still being read has nothing "not read" yet: Reading… comes before Check in its status, and so before this box.
+   */
   protected readonly fixField = computed<DocField | null>(() => {
     const doc = this.doc();
-    return doc === null ? null : missingField(doc);
+    return doc === null || doc.reading ? null : missingField(doc);
   });
   /** What is typed in the box, and whether it was refused; both start over for another document or another field. */
   protected readonly fixText = linkedSignal<string, string>({

@@ -6,10 +6,12 @@ import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { ADVERTISING, OFFICE } from '../data/categories';
 import type { Doc } from '../data/models';
+import { READING_MS, newReadingDoc } from '../domain/document-upload';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
+import { UploadService } from '../state/upload.service';
 import { DocumentDetailPage } from './document-detail.page';
 import { DocumentsPage } from './documents.page';
 import de from '../../../public/i18n/de.json';
@@ -221,6 +223,88 @@ describe('DocumentDetailPage', () => {
         'date',
         'amount',
       ]);
+    });
+  });
+
+  describe('while the document is still being read', () => {
+    /** A document the way an upload leaves it until its result comes. */
+    function addReading(): void {
+      demo.addDocument('weber-design', newReadingDoc('up-1', 'scan.pdf', 'file'));
+    }
+
+    it('shows no fix box and no ? marks, only a Reading… note on the paper', async () => {
+      addReading();
+      await render('/documents/up-1');
+      expect(status()).toBe('Reading…');
+      expect(d('fix-box')).toBeNull();
+      expect(d('fix-input')).toBeNull();
+      expect(da('paper-missing')).toHaveLength(0);
+      expect(text(d('paper-reading'))).toBe('Reading…');
+      expect(d('paper-name')).toBeNull();
+      expect(d('paper-total')).toBeNull();
+    });
+
+    it('offers nothing to change yet: no Edit, category, This one, Search all payments or Remove', async () => {
+      addReading();
+      await render('/documents/up-1');
+      for (const testId of [
+        'edit-fields',
+        'change-category',
+        'confirm-booking',
+        'link-payment',
+        'search-payments',
+        'remove-document',
+      ]) {
+        expect(d(testId), testId).toBeNull();
+      }
+      expect(da('payment-suggestion')).toHaveLength(0);
+      expect(doc('up-1').history).toHaveLength(1);
+    });
+
+    it('still names the file, and the way back works', async () => {
+      addReading();
+      await render('/documents/up-1');
+      expect(text(d('document-detail-name'))).toBe('scan.pdf');
+      expect(q('back-link')!.getAttribute('href')).toBe('/documents');
+    });
+
+    it('after reading, the normal detail appears: the paper, the fields, Edit and the payment it was linked to', async () => {
+      await render('/documents');
+      vi.useFakeTimers();
+      TestBed.inject(UploadService).add([new File(['x'], 'scan.pdf')], 'file');
+      await harness.navigateByUrl('/documents/up-1');
+      harness.detectChanges();
+      expect(status()).toBe('Reading…');
+      expect(d('edit-fields')).toBeNull();
+      vi.advanceTimersByTime(READING_MS);
+      vi.useRealTimers();
+      await settle();
+      // the first ready-made result of Weber Design is the receipt of Deutsche Bahn, which links itself
+      expect(status()).toBe('Done');
+      expect(d('paper-reading')).toBeNull();
+      expect(text(d('paper-name'))).toBe('Deutsche Bahn');
+      expect(da('paper-missing')).toHaveLength(0);
+      expect(d('fix-box')).toBeNull();
+      expect(d('edit-fields')).not.toBeNull();
+      expect(d('change-category')).not.toBeNull();
+      expect(text(inside(d('linked-payment'), 'linked-name'))).toBe('Deutsche Bahn');
+    });
+
+    it('after reading, a document that needs the person shows its fix box', async () => {
+      addReading();
+      await render('/documents/up-1');
+      demo.updateDocument('up-1', (x) => ({
+        ...x,
+        reading: false,
+        name: 'Copyshop',
+        direction: 'received',
+        date: '2026-10-21',
+      }));
+      await settle();
+      expect(status()).toBe('Check amount');
+      expect(d('fix-box')).not.toBeNull();
+      expect(d('paper-reading')).toBeNull();
+      expect(da('paper-missing')).toHaveLength(1);
     });
   });
 
@@ -552,6 +636,27 @@ describe('DocumentDetailPage', () => {
         expect(detail().querySelector('form')!.contains(document.activeElement)).toBe(true);
         await click(d('edit-cancel'));
         expect(document.activeElement).toBe(d('edit-fields'));
+      });
+
+      it("never carries one document's values over to another document", async () => {
+        await render('/documents/wd-d2');
+        await edit();
+        await typeIn('edit-name', 'Typed on Studio Kern');
+        await typeIn('edit-invoice', 'RE-TYPED');
+        await typeIn('edit-amount', '1,00');
+        const studioKern = doc('wd-d2');
+        const baeckerei = doc('wd-d3');
+        // on a computer the panel stays: only the address changes, so the page is reused for the other document
+        await render('/documents/wd-d3');
+        expect(text(d('document-detail-name'))).toBe('Bäckerei Lange');
+        expect(d('edit-form')).toBeNull();
+        await edit();
+        expect((d('edit-name') as HTMLInputElement).value).toBe('Bäckerei Lange');
+        expect((d('edit-invoice') as HTMLInputElement).value).toBe('RE-2026-039');
+        expect((d('edit-amount') as HTMLInputElement).value).toBe('1190.00');
+        await click(d('edit-save'));
+        expect(doc('wd-d3')).toBe(baeckerei);
+        expect(doc('wd-d2')).toBe(studioKern);
       });
 
       it('Edit changes the direction and the why-note follows', async () => {
