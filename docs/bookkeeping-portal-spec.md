@@ -284,6 +284,96 @@ Listed in the empty-folder message ("Noch kein Eingangsbeleg hier, der verarbeit
 
 The ••• menu with documents selected, Zahlung buchen once a payment is assigned, and Beleg buchen on a document that has a booking. None of these can be seen in this account without changing data.
 
+## Settings: bank connection and tax details
+
+Studied Oct 22, 2026, in the original German, by reading the pages and their structure only. The gear icon next to the user name opens a menu with Unternehmensdaten (company data), Einstellungen (settings), Datenimport (data import), Meine Daten (my data) and Abmelden (log out). Bank connection and tax details are spread over two of these pages.
+
+### Einstellungen: one long page
+
+Twelve sections on one page, with a contents list at the top: Banken und Zahlungsdienstleister, Überweisungskonten, Kontenverwaltung, Belegübertragung, Schnittstellen und API-Zugang, Kostenstellen / Projektverwaltung, Steuerliche Einstellungen, Automatisierungsregeln, Rechnungseinstellungen, Rechnungsfreigabe, Layout-Einstellungen, Zahlungserinnerungen.
+
+**Banken und Zahlungsdienstleister** (banks and payment providers):
+
+- "Verknüpfen Sie hier Ihre Bankkonten, Kreditkarten und Zahlungsdienstleister wie PayPal, Amazon, eBay und Stripe": bank accounts, credit cards and payment providers are all connected here.
+- Each connection is a row with its bank and account (the studied account has one Qonto connection), and **Bearbeiten** (edit) and **Entfernen** (remove).
+- **Verbindung hinzufügen** (add connection) opens "Kontenabruf einrichten" (set up account retrieval), from the user's screenshot:
+  - A note: current availability of banks and payment providers is in Bilancor's "Banken-Monitoring", and "Wir empfehlen, die Anbindung von Banken über finAPI vorzunehmen".
+  - "Anbieter auswählen" (choose a provider), each with **Jetzt einrichten** (set up now): Bankverbindung über finAPI, Bankverbindung über Qwist, PayPal, Stripe, Amazon Marketplace, Amazon Marketplace (manueller Import), and more further down.
+  - So the client first picks a technical connection provider (finAPI or Qwist), not their bank.
+- **Bearbeiten** opens the connection's window (seen through the browser's translation, so the German names are unknown): "Edit bank details" with "Unlinked bank accounts" (an **Other accounts** button to add further accounts or credit cards from the same bank) and "Linked bank accounts", one row per account with its SKR03 account (1200), an **Import from** date (the date payments are fetched from) and **Remove**. It shows no connection status, no time of the last fetch and no date when the bank consent runs out.
+
+**Überweisungskonten** (accounts for transfers): connected banks can be used to pay invoices from the portal "sofern bankenseitig unterstützt". Other bank accounts can be added by IBAN and then pay "mit dem Sofortüberweisungs-Prinzip (bereitgestellt von finAPI)". Each row can be made the default transfer account or switched off. This confirms that the bank connection runs through **finAPI**.
+
+**Kontenverwaltung** (account management): one list of every account, 1,199 in the studied account, ten per page, with **Neues Konto** and a type filter. The money accounts sit at the top, each with a type and how it is fed:
+
+| Type | Example | How it gets its payments |
+| --- | --- | --- |
+| Kasse (cash) | Kasse (1), 1000 | "Beleg erzeugt Zahlung": a receipt creates the payment |
+| Bank/Geldinstitut | qonto, 1200 | "Anbindung über finAPI" (bank connection) |
+| Bank/Geldinstitut | Sparkasse alt (2024-25), 1201 | "Manuelles Konto": no connection, payments come from statement import |
+| Sonstiges Basiskonto | EÜR Verrechnungskonto, 1371 | "Beleg erzeugt Zahlung" |
+| Sachkonto | 10, 15, 20 … | "Standardkontenrahmen": the whole SKR03 chart of accounts, shown to the client |
+
+**Automatisierungsregeln** (automation rules): an automatic split of fees for payments imported through the connection, with a booking account per provider (finAPI: "ohne VSt."), and **Neue Regel hinzufügen** for the client's own booking rules (not opened).
+
+### Steuerliche Einstellungen (tax settings)
+
+Each field has a ? help text; the texts are already in the page, so they were read without opening them.
+
+| Field | German original | Choices | Help text, in short |
+| --- | --- | --- | --- |
+| VAT on cash or invoice basis | Besteuerungsart | Ist-Versteuerung / Soll-Versteuerung | Ist: VAT is due when the customer pays ("vereinnahmte Entgelte"); it has to be applied for at the tax office. Soll: due once the work is done or invoiced ("vereinbarte Entgelte"), "verpflichtend ab einem Umsatz von 600.000 €" |
+| Profit method | Gewinnermittlungsart | EÜR / Bilanz | The EÜR report is only offered with EÜR and with supplier/customer accounts switched off; the bookings always suit an EÜR made by a tax advisor |
+| Start of the financial year | Beginn Wirtschaftsjahr | Day and month, "TT.MM." | — |
+| VAT liability | Umsatzsteuerpflicht | Ja / Nein | Not liable: Kleinunternehmer, some freelance professions such as doctors, and associations without business activity |
+| VAT ID without VAT liability | (checkbox under Nein) | on / off | For a non-liable business (e.g. Kleinunternehmer) that has a VAT ID to trade within the EU (reverse charge) |
+| Default VAT rate on income | Standard-Steuersatz (Erlöse) | ohne USt., 19/16% USt., 7/5% USt., OSS – One-Stop-Shop, USt. (Regelsatz), USt. (ermäßigt), plus two alternative rates | The rate offered first when income is booked |
+| Split input VAT | Aufzuteilende Vorsteuer | deaktiviert / aktiviert | Extra tax options for costs shared between taxable and non-taxable parts of the business |
+
+One **Speichern** (save) button for the section.
+
+### Datenimport (data import)
+
+Opens from the gear menu as a window (seen through the browser's translation, so the German names are unknown). Each import has its own button:
+
+| Import | What it takes |
+| --- | --- |
+| Contacts (CSV) | Invoice contacts |
+| Articles (CSV) | Items for invoices |
+| Bank statements (CSV) | Bank statements, for accounts with no connection |
+| Journal entries (CSV) | Existing bookings, e.g. when moving from another program |
+| Accounts receivable/payable (CSV) | Customer and supplier lists |
+| Document archive (ZIP) | A ZIP of documents "for automatic processing" |
+
+At the bottom, an import history of the ten most recent CSV imports of bookings and bank statements.
+
+### Unternehmensdaten (company data)
+
+A separate page with four groups and one Speichern:
+
+| Group | Fields |
+| --- | --- |
+| Allgemeine Firmendaten | Firmenname, Unternehmensform (15 choices: Einzelunternehmen, GbR, OHG, PartG, UG, GmbH, AG, KG, GmbH & Co. KG, Ltd., e.V. …), street, address line 2, postcode, town, country, phone, fax, email, website |
+| Rechtliche Angaben | Registergericht, Registernummer, Inhaber |
+| Bankverbindung | IBAN, BIC, Kreditinstitut (the account printed on invoices, separate from the bank connection) |
+| Steuerliche Informationen | Zuständiges Finanzamt (one dropdown of 615 tax offices), Steuernummer, Umsatzsteuer-ID |
+
+### What the pages show
+
+- **Tax details in two places:** the VAT status and profit method are under Einstellungen › Steuerliche Einstellungen, while the tax office, tax number and VAT ID are under Unternehmensdaten › Steuerliche Informationen. Nothing links the two.
+- **No VAT return period:** there is no setting for monthly or quarterly VAT returns, or for a permanent extension (Dauerfristverlängerung). Bilancor leaves the VAT return (UStVA) to the tax advisor, so it never asks.
+- **Outdated help and labels:** the help text still gives €600,000 as the limit for cash-basis VAT, which was raised to €800,000 from 2024 (likely). The rate choices still read "19/16%" and "7/5%", left over from the temporary 2020 VAT cut.
+- **A 615-entry tax-office list:** one alphabetical dropdown that also contains offices no client deals with (tax investigation, large-company audits). The office could instead follow from the tax number or the postcode.
+- **The whole chart of accounts is on show:** 1,199 SKR03 accounts in the settings, ten per page, though a freelancer only ever needs a handful.
+- **The IBAN twice:** the bank connection and the company's "Bankverbindung" for invoices are separate entries with no link between them.
+- **One long page:** twelve unrelated sections, from bank connections to invoice layout and payment reminders, each with its own Speichern.
+- **A technical choice first:** connecting a bank starts with choosing between finAPI and Qwist, a choice a freelancer can't judge; the window itself recommends finAPI.
+- **No connection health:** the connection window shows no status, no last fetch and no consent end date, though a bank consent under PSD2 has to be renewed regularly (likely every 90 or 180 days).
+
+### Still to see (needs a click)
+
+The steps after **Jetzt einrichten** (they lead to the bank's own sign-in, so not to be opened in this account), **Neue Regel hinzufügen**, and user management.
+
 ## Screens still to explore
 
 7 items are still unopened. Explore by reading and hovering only, with no button that changes data.
@@ -297,7 +387,8 @@ The ••• menu with documents selected, Zahlung buchen once a payment is ass
 - [ ] Notifications: types of notifications
 - [ ] Help & Contact: available support channels
 - [x] Tasks filter: keine Auswahl, alle, offen, erledigt (seen in the document filters, Oct 22, 2026)
-- [ ] Settings (gear icon next to the user name): users and bank connections. Settings › Einstellungen is one long page: banks, transfer accounts, chart of accounts, Belegübertragung, API, cost centres, tax settings, automation rules, invoice numbering, invoice approval, layout, payment reminders
+- [x] Settings: bank connections, transfer accounts, account management, tax settings, company data, the first connection screen and Datenimport (Oct 22, 2026); users still to see
+- [ ] Settings: invoice numbering, invoice approval, layout, payment reminders, API (with Invoicing)
 
 ## Technical and legal foundation
 
