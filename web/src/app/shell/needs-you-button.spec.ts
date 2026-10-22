@@ -83,6 +83,14 @@ describe('NeedsYouButton', () => {
     expect(link.classList).toContain('text-warning-foreground');
   });
 
+  it('keeps white text readable on hover: 4.5:1 or better against the page behind it', () => {
+    const link = button(render().nativeElement as HTMLElement)!;
+    // The warning colour (#b45309, white text on it is 5.0:1) mixed with the white page behind it: at 90% the white
+    // text drops to 4.2:1, at 95% it stays at 4.6:1.
+    expect(link.classList).toContain('hover:bg-warning/95');
+    expect(link.classList).not.toContain('hover:bg-warning/90');
+  });
+
   it('is hidden at 0 (cafe-linde)', () => {
     demo.setBusiness('cafe-linde');
     const el = render().nativeElement as HTMLElement;

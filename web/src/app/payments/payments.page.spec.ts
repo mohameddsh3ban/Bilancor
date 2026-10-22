@@ -130,10 +130,11 @@ describe('PaymentsPage', () => {
     ).toEqual(['Please confirm', 'Receipt missing', 'Unclear', 'Receipt missing', 'Unclear']);
   });
 
-  it('Start next to the Needs you quick filter opens the review inbox', async () => {
+  it('"Review them" next to the Needs you quick filter opens the review inbox', async () => {
     await render();
     const start = q('needs-you-start')!;
-    expect(text(start)).toBe('Start');
+    // Named on its own, so it never reads as a bare "Start" on a line by itself on a phone.
+    expect(text(start)).toBe('Review them');
     expect(start.tagName).toBe('A');
     expect(start.getAttribute('href')).toBe('/review');
     // Right after the quick filters, not inside one of their buttons.
@@ -141,14 +142,25 @@ describe('PaymentsPage', () => {
     expect(start.previousElementSibling).toBe(q('quick-needsYou')!.closest('[role="group"]'));
   });
 
-  it('has no Start when nothing needs you', async () => {
+  it('names the review link in German and in Arabic', async () => {
+    await render();
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(text(q('needs-you-start'))).toBe('Jetzt durchgehen');
+
+    TestBed.inject(LanguageService).setLang('ar');
+    await settle();
+    expect(text(q('needs-you-start'))).toBe('راجعها الآن');
+  });
+
+  it('has no review link when nothing needs you', async () => {
     demo.setBusiness('cafe-linde');
     await render();
     expect(text(q('quick-needsYou'))).toContain('0');
     expect(q('needs-you-start')).toBeNull();
   });
 
-  it('has no Start before a bank is connected', async () => {
+  it('has no review link before a bank is connected', async () => {
     demo.setSetup('new');
     await render();
     expect(q('needs-you-start')).toBeNull();

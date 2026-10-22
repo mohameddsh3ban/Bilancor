@@ -1,6 +1,6 @@
 # Bookkeeping app mockup (web)
 
-Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page and the Documents page (en / de / ar). No backend.
+Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page and the review inbox (en / de / ar). No backend.
 All data is sample data in `src/app/data/sample-data.ts`.
 
 ## Install
@@ -31,7 +31,7 @@ The strip at the top of every page is demo-only:
 
 - **Setup state** (New client / Halfway / Active client) shows how the homepage and the Payments page look at each stage of setup (in "New client" no bank is connected yet, so Payments has no list).
 - **Business switcher** (in the top bar) changes which business is open.
-- **Reset demo** brings back every notice you dismissed and the sample payments and documents (dismissals are remembered in the browser until you reset).
+- **Reset demo** brings back every notice you dismissed and the sample payments and documents, and forgets what the review inbox learned (dismissals are remembered in the browser until you reset).
 
 ## Payments
 
@@ -46,9 +46,9 @@ What works on sample data:
 - **Print views:** Download PDF (one payment), and Download month (computer only), which prints the selected month, or the newest month when none is chosen, with its account if one is chosen; search and the quick filter don't apply. Both open the browser's Print dialog; choose Save as PDF to keep a file.
 - In the "New client" setup state, Payments shows "Connect your bank to see your payments" with a button instead of the list.
 
-**Pick from Documents** (in a payment's Receipt section) opens a list of unlinked documents of the matching direction; choosing one links it (see Documents). A payment with a linked document can't be marked Private: the switch says to unlink the document first. **Open document** on a payment with a linked document opens that document.
+**Pick from Documents** (in a payment's Receipt section) opens a list of unlinked documents of the matching direction; choosing one links it (see Documents). A payment with a linked document can't be marked Private: the switch says to unlink the document first. **Open document** on a payment with a linked document opens that document. **Take photo** shows "Reading…" for about two seconds, then links a receipt made from the payment (its name, amount and date); no photo is really read.
 
-Coming soon (the buttons open a placeholder page): Connect your bank, Take photo, Self-issued receipt.
+Coming soon (the buttons open a placeholder page): Connect your bank, Self-issued receipt.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample data. The demo's "today" is 22 Oct 2026, so new history lines are dated 22 Oct.
 
@@ -77,6 +77,20 @@ Every upload is simulated. A new document shows "Reading…" for about two secon
 Coming soon (the buttons open a placeholder page): Paid in cash or privately, and Self-issued receipt. Not built: real reading of documents, a real email inbox (the forwarding address is made up) and Dropbox import.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample documents along with the payments, and drops any upload that is still "Reading…".
+
+## Review inbox
+
+The review inbox (`/review`) is one short queue of every decision that needs the person, one card each, oldest first (by the payment's or document's date). It works in English, German and Arabic.
+
+**Ways in** (each opens the first card straight away): the **Needs you · N** button in the top bar of every screen (hidden when N is 0), **Start** on the homepage decisions card and its tile on a computer, **Review them** next to the "Needs you" quick filter on Payments, and **Start** in the Needs-you box on Documents. N is the homepage's decisions count, and drops with every answer.
+
+- **Cards:** an unclear payment asks "What was this for?" (its three likeliest categories, **Private**, or **Other category…**); a payment to confirm offers **Yes, that's right** or **Change category**; a payment without a receipt offers **Take a photo**, **Pick from Documents** or **No receipt needed**; a document asks **Keep both** or **Remove this one** (possible duplicate), **Received** or **Sent**, or for the amount, date or name to be typed in. An item with two problems keeps one card and asks the next question in place. Every answer changes the sample data, so Payments, Documents and the homepage follow.
+- **Undo** shows for about 5 seconds after each answer and takes it back, with anything it learned or booked. **Skip for now** moves the card to the end of the queue. **✕** (or Escape) closes the inbox and keeps every answer and the skipped order; the next Start carries on with what is left.
+- **Learning:** choosing a category for an unclear payment makes a rule for that name ("Amazon will be booked as Office supplies automatically from now on") and books the other unclear payments from it at once. Changing the category of such a payment later updates the rule. Rules belong to one business; **Reset demo** clears them.
+- **Take a photo** shows "Reading…" for about two seconds, then adds a receipt made from the payment and links it. No photo is really read.
+- When nothing is left, "All done — your books are up to date" shows with a one-line summary (and the next VAT return date, for a business that charges VAT). **Back** returns to the page the person came from.
+
+A phone shows the inbox full screen; a computer shows a centred column over a dimmed page. Everything lives in memory: a page reload or **Reset demo** restores the sample data and starts the inbox over. The slide, tick and check animations stop when the system's reduce-motion setting is on.
 
 ## Translations
 

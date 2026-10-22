@@ -60,7 +60,6 @@
     "settings": "Einstellungen",
     "help": "Hilfe",
     "more": "Mehr",
-    "decisions": "Deine Entscheidungen",
     "terms": "Bedingungen der Bankanbindung",
     "bankExpiry": "Bankanbindung",
     "unreadable": "Nicht lesbare Belege",
@@ -186,6 +185,7 @@
       "remove": "Filter entfernen: {{name}}"
     },
     "clearAll": "Alle zurücksetzen",
+    "reviewThem": "Jetzt durchgehen",
     "download": "Monat herunterladen",
     "monthIn": "Eingang",
     "monthOut": "Ausgang",

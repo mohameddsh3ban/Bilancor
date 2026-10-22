@@ -210,7 +210,7 @@ const QUICK_FILTERS: readonly QuickFilter[] = ['all', 'needsYou', 'in', 'out'];
       </div>
       @if (needsYou() > 0) {
         <a hlmBtn size="sm" data-testid="needs-you-start" routerLink="/review">
-          {{ 'home.decisions.start' | transloco }}
+          {{ 'payments.reviewThem' | transloco }}
         </a>
       }
     </div>

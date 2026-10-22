@@ -20,7 +20,7 @@ const COUNT = '\uE000';
   template: `
     @if (count() > 0) {
       <a
-        class="bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:ring-ring/50 inline-block h-10 shrink-0 rounded-full px-4 text-sm leading-10 font-medium whitespace-nowrap outline-none focus-visible:ring-3"
+        class="bg-warning text-warning-foreground hover:bg-warning/95 focus-visible:ring-ring/50 inline-block h-10 shrink-0 rounded-full px-4 text-sm leading-10 font-medium whitespace-nowrap outline-none focus-visible:ring-3"
         data-testid="needs-you-button"
         routerLink="/review"
       >

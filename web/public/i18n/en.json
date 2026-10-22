@@ -60,7 +60,6 @@
     "settings": "Settings",
     "help": "Help",
     "more": "More",
-    "decisions": "Your decisions",
     "terms": "Bank connection terms",
     "bankExpiry": "Bank connection",
     "unreadable": "Unreadable receipts",
@@ -186,6 +185,7 @@
       "remove": "Remove filter: {{name}}"
     },
     "clearAll": "Clear all",
+    "reviewThem": "Review them",
     "download": "Download month",
     "monthIn": "In",
     "monthOut": "Out",
