@@ -1,6 +1,6 @@
 # Bookkeeping app mockup (web)
 
-Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page and the review inbox (en / de / ar). No backend.
+Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page, the review inbox, and the setup steps with Settings (en / de / ar). No backend.
 All data is sample data in `src/app/data/sample-data.ts`.
 
 ## Install
@@ -29,9 +29,9 @@ Windows may ask to allow Node.js on private networks; allow it so your phone can
 
 The strip at the top of every page is demo-only:
 
-- **Setup state** (New client / Halfway / Active client) shows how the homepage and the Payments page look at each stage of setup (in "New client" no bank is connected yet, so Payments has no list).
+- **Setup state** (New client / Halfway / Active client) is a shortcut for the **open business only**: it sets that business's three setup steps (none / bank only / all three) and nothing else. Connected accounts, tax answers and documents stay as they are. The choice that matches the business's steps is highlighted, and none is when the steps are mixed. In "New client" no bank is connected yet, so Payments has no list.
 - **Business switcher** (in the top bar) changes which business is open.
-- **Reset demo** brings back every notice you dismissed and the sample payments and documents, and forgets what the review inbox learned (dismissals are remembered in the browser until you reset).
+- **Reset demo** brings back every notice you dismissed and the sample payments, documents, bank accounts and tax answers, puts every business back to Active client, and forgets what the review inbox learned (dismissals are remembered in the browser until you reset).
 
 ## Payments
 
@@ -44,11 +44,11 @@ What works on sample data:
 - **One payment:** full screen on a phone, a side panel beside the list from 1024 px wide. On a computer between 1024 and 1535 px the table has no room next to the panel, so while a payment is open the list layout is shown instead; from 1536 px the table stays.
 - **Actions**, where they apply: Confirm, No receipt needed, **Change** (the category), Business / Private. Each adds a line to the history.
 - **Print views:** Download PDF (one payment), and Download month (computer only), which prints the selected month, or the newest month when none is chosen, with its account if one is chosen; search and the quick filter don't apply. Both open the browser's Print dialog; choose Save as PDF to keep a file.
-- In the "New client" setup state, Payments shows "Connect your bank to see your payments" with a button instead of the list.
+- Until the business's bank step is done, Payments shows "Connect your bank to see your payments" with a button (it opens Connect your bank, see Setup and Settings) instead of the list.
 
 **Pick from Documents** (in a payment's Receipt section) opens a list of unlinked documents of the matching direction; choosing one links it (see Documents). A payment with a linked document can't be marked Private: the switch says to unlink the document first. **Open document** on a payment with a linked document opens that document. **Take photo** shows "Reading…" for about two seconds, then links a receipt made from the payment (its name, amount and date); no photo is really read.
 
-Coming soon (the buttons open a placeholder page): Connect your bank, Self-issued receipt.
+Coming soon (the button opens a placeholder page): Self-issued receipt.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample data. The demo's "today" is 22 Oct 2026, so new history lines are dated 22 Oct.
 
@@ -91,6 +91,35 @@ The review inbox (`/review`) is one short queue of every decision that needs the
 - When nothing is left, "All done — your books are up to date" shows with a one-line summary (and the next VAT return date, for a business that charges VAT). **Back** returns to the page the person came from.
 
 A phone shows the inbox full screen; a computer shows a column in the middle of a dimmed page, at a fixed distance from the top so it does not move from card to card, with Undo floating at the bottom of the screen. Everything lives in memory: a page reload or **Reset demo** restores the sample data and starts the inbox over. The slide, tick and check animations stop when the system's reduce-motion setting is on.
+
+## Setup and Settings
+
+A new client sets up three steps, shown as the homepage checklist: connect the bank, save the tax details, add the first document. The steps are kept **per business** (switching business shows that business's progress) and can be done in any order. Connecting the bank, saving the tax details and adding the first document (any way) each tick their own step, and the checklist disappears when all three are done. The demo toolbar's New client / Halfway / Active client are shortcuts for the open business only, and **Reset demo** returns every business to Active client. All of it works in English, German and Arabic.
+
+**Your tax details** (`/settings/tax`, opened from the setup step and from Settings) asks five plain questions, each German term next to its translation and explained on hover or tap: kind of business, whether you charge VAT, the VAT return period and Ist/Soll, the tax number and VAT ID, and the financial year. No answer is pre-selected.
+
+- The VAT questions (return period, permanent extension, Ist/Soll) show only after "Yes, I charge VAT". Answering No (Kleinunternehmer) and saving clears them.
+- The tax office appears under the tax number once the number is valid for the chosen state. In the demo only Bayern, Berlin, Bremen, Hamburg and Nordrhein-Westfalen have sample tax offices (invented, not the official list); any other state says so.
+- **Save** checks every visible question, ticks the tax step and returns to where the page was opened from.
+- The answers change the rest of the app: the VAT shown on payments and documents (a Kleinunternehmer shows "no VAT"), the category list (revenue without VAT), and the homepage VAT return card, whose due date follows the return period and the extension (yearly shows a line with no date).
+
+**Connect your bank** (`/settings/bank/connect`, opened from the setup step, from Payments and from Settings) is four screens: pick a bank by its name (about twelve German banks, shown as initials tiles), what we can see (and can't), a simulated sign-in, and choose which accounts are the business's.
+
+- The sign-in always reads "DEMO · no real bank, no password" and has no input fields: nothing is connected to a real bank.
+- A sample business banks with its own sample bank (Weber Design: Qonto). Picking any other bank shows that sample bank's accounts, with a note on the sign-in screen saying so.
+- The business account is ticked; savings and credit cards are not (private accounts stay out). **Connect N accounts** shows "Fetching payments…" for about two seconds, then the payments appear and the bank step ticks. An account that is already connected shows greyed out, and connecting twice adds the accounts once.
+- **I also take cash** adds a cash box without the bank flow. It shows in Settings and does not tick the bank step.
+- Switching business in the middle of the flow starts it again for the business now open.
+
+**Settings** (`/settings`, from the menu) has three sections: **Business and tax** (the saved answers in plain words, with **Edit**), **Bank accounts**, and **Documents inbox** (the forwarding address, with Copy).
+
+- Bank accounts: **+ Connect a bank**, then one row per account with its masked IBAN and a status word: **Connected**, **Renew in N days** (the consent ends within 14 days), **Sign in again** (it ended or broke), **Statement import** (no bank connection) or **Cash**. **Renew** and **Sign in again** open the simulated sign-in for that bank only, then the status becomes Connected.
+- The homepage bank notices are calculated from the connections, so they go as soon as the connection is renewed: Weber Design shows "Qonto expires in 5 days" and Sara Weber Yoga shows "sign in again". Café Linde's Sparkasse shows Statement import in Settings and has no notice.
+- Every saved change to tax details or bank accounts (connecting, renewing, adding a cash box) adds a line to the business's history. It is stored but not shown yet.
+
+Coming soon (the buttons open a placeholder page): importing a bank statement (for a bank that isn't listed, or an account with no connection), PayPal, Stripe and Amazon connections, users, the list of rules the review inbox learned, and invoice settings. Not built: a real bank connection (the sign-in is a demo screen with no bank behind it) and a real tax-office lookup.
+
+Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample accounts, tax answers and setup steps.
 
 ## Translations
 
