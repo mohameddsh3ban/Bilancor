@@ -158,6 +158,16 @@ describe('AppShell', () => {
     expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
   });
 
+  it('Reset demo restores a changed payment', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const find = () => demo.business().transactions.find((t) => t.id === 'wd-t3')!;
+    demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    expect(find().receipt).toBe('notNeeded');
+    q('[data-testid="demo-reset"]').click();
+    harness.detectChanges();
+    expect(find().receipt).toBe('missing');
+  });
+
   it('has Upload receipt in the sidebar and the full menu', () => {
     const sidebar = q('aside');
     expect(sidebar.querySelector('a[href="/soon/upload"]')?.textContent).toContain('Upload receipt');

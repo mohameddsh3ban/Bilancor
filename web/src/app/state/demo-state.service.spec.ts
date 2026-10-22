@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { PERSON } from '../data/sample-data';
+import { BUSINESSES, PERSON } from '../data/sample-data';
+import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
 
 describe('DemoStateService', () => {
@@ -27,5 +28,46 @@ describe('DemoStateService', () => {
     const state = TestBed.inject(DemoStateService);
     state.setSetup('new');
     expect(state.setup()).toBe('new');
+  });
+
+  it('updateTransaction changes what business() returns and needsYouCount drops', () => {
+    const state = TestBed.inject(DemoStateService);
+    const before = needsYouCount(state.business().transactions);
+    state.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    const tx = state.business().transactions.find((t) => t.id === 'wd-t3')!;
+    expect(paymentStatus(tx)).toBe('booked');
+    expect(needsYouCount(state.business().transactions)).toBe(before - 1);
+    expect(state.businesses.find((b) => b.id === 'weber-design')).toBe(state.business());
+  });
+
+  it('updateTransaction ignores an unknown payment id', () => {
+    const state = TestBed.inject(DemoStateService);
+    const business = state.business();
+    state.updateTransaction('nope', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    expect(state.business()).toBe(business);
+  });
+
+  it('updateTransaction only changes the open business', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    state.setBusiness('sara-yoga');
+    const sara = state.businesses.find((b) => b.id === 'sara-yoga')!;
+    expect(state.business()).toBe(sara);
+    expect(state.businesses.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t3')!.receipt).toBe('notNeeded');
+  });
+
+  it('editing never changes the shared sample data', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    expect(BUSINESSES.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t3')!.receipt).toBe('missing');
+  });
+
+  it('resetData restores the original sample data', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    state.resetData();
+    const tx = state.business().transactions.find((t) => t.id === 'wd-t3')!;
+    expect(tx.receipt).toBe('missing');
+    expect(state.business().id).toBe('weber-design');
   });
 });

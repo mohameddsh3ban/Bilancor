@@ -36,7 +36,7 @@ import { NoticeService } from '../state/notice.service';
         type="button"
         class="rounded-sm border border-current px-2 py-0.5"
         data-testid="demo-reset"
-        (click)="notices.resetDismissals()"
+        (click)="reset()"
       >
         {{ 'demo.reset' | transloco }}
       </button>
@@ -47,4 +47,9 @@ export class DemoToolbar {
   protected readonly demo = inject(DemoStateService);
   protected readonly notices = inject(NoticeService);
   protected readonly states: readonly SetupState[] = ['new', 'halfway', 'active'];
+
+  protected reset(): void {
+    this.notices.resetDismissals();
+    this.demo.resetData();
+  }
 }
