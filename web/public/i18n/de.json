@@ -485,5 +485,41 @@
     "tiles": {
       "decisions": "Entscheidungen"
     }
+  },
+  "review": {
+    "title": "Entscheidungen prüfen",
+    "close": "Schließen",
+    "progressLabel": "Fortschritt",
+    "progress": "{{position}} von {{total}} · noch etwa {{minutes}} Min.",
+    "skip": "Vorerst überspringen",
+    "saving": "Wird gespeichert…",
+    "undo": "Rückgängig",
+    "kind": {
+      "unclear": "Zahlung · wofür war das?",
+      "confirm": "Zahlung · bitte bestätigen",
+      "noReceipt": "Zahlung · Beleg fehlt",
+      "duplicate": "Dokument · mögliches Duplikat",
+      "direction": "Dokument · erhalten oder gesendet?",
+      "checkAmount": "Dokument · Betrag prüfen",
+      "checkDate": "Dokument · Datum prüfen",
+      "checkName": "Dokument · Name prüfen"
+    },
+    "finish": {
+      "title": "Alles erledigt — deine Buchhaltung ist auf dem neuesten Stand",
+      "decisions": {
+        "one": "1 Entscheidung",
+        "many": "{{count}} Entscheidungen"
+      },
+      "receipts": {
+        "one": "1 Beleg hinzugefügt",
+        "many": "{{count}} Belege hinzugefügt"
+      },
+      "duplicates": {
+        "one": "1 Duplikat entfernt",
+        "many": "{{count}} Duplikate entfernt"
+      },
+      "vat": "Nächste Umsatzsteuer-Voranmeldung fällig am {{date}}",
+      "back": "Zurück"
+    }
   }
 }

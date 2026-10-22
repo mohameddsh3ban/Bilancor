@@ -34,6 +34,10 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: 'review',
+        loadComponent: () => import('./review/review.page').then((m) => m.ReviewPage),
+      },
       { path: 'soon/:feature', component: ComingSoonPage },
     ],
   },

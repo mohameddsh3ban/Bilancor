@@ -1,0 +1,179 @@
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { formatDate } from '../core/format/format';
+import { LanguageService } from '../core/i18n/language.service';
+import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import type { ReviewItem } from '../domain/review-queue';
+import { DemoStateService } from '../state/demo-state.service';
+import { ReviewService, type ReviewAnswerResult } from '../state/review.service';
+import { ReviewFinish } from './finish';
+import { settleItem } from './review-testing';
+
+@Component({
+  imports: [ReviewFinish],
+  template: `<app-review-finish (back)="backs = backs + 1" />`,
+})
+class Host {
+  backs = 0;
+}
+
+const DONE: ReviewAnswerResult = { labelKey: 'home.status.booked' };
+
+describe('ReviewFinish', () => {
+  let fixture: ComponentFixture<Host>;
+  let demo: DemoStateService;
+  let review: ReviewService;
+  let el: HTMLElement;
+
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [provideTranslocoTesting(), provideRouter([])],
+    });
+    demo = TestBed.inject(DemoStateService);
+    review = TestBed.inject(ReviewService);
+  });
+
+  afterEach(() => {
+    TestBed.inject(LanguageService).setLang('en');
+    document.documentElement.lang = '';
+    document.documentElement.dir = '';
+  });
+
+  const settle = (item: ReviewItem): void => settleItem(demo, item);
+  /** Answers every card of the open business; `counts` says which answers add to the summary, by place in the queue. */
+  const answerAll = (counts: Record<number, ReviewAnswerResult['counts']> = {}): void => {
+    for (let i = 0; review.current() !== null && i < 20; i++) {
+      const item = review.current()!;
+      void review.answer(() => settle(item), { ...DONE, counts: counts[i] });
+    }
+  };
+
+  function render(): void {
+    fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    el = fixture.nativeElement as HTMLElement;
+  }
+  const q = (testId: string) => el.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+  const text = (node: Element | null) => node?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+  it('says everything is done, with a check and a Back button', () => {
+    answerAll();
+    render();
+
+    expect(text(q('finish-title'))).toBe('All done — your books are up to date');
+    expect(q('finish-check')).not.toBeNull();
+    expect(text(q('finish-back'))).toBe('Back');
+  });
+
+  it('sums up the decisions, and the receipts and duplicates when there are any', () => {
+    answerAll({ 1: 'receipt', 5: 'duplicateRemoved' });
+    render();
+
+    expect(text(q('finish-summary'))).toBe('6 decisions · 1 receipt added · 1 duplicate removed');
+  });
+
+  it('counts in the plural', () => {
+    answerAll({ 0: 'receipt', 1: 'receipt', 4: 'duplicateRemoved', 5: 'duplicateRemoved' });
+    render();
+
+    expect(text(q('finish-summary'))).toBe('6 decisions · 2 receipts added · 2 duplicates removed');
+  });
+
+  it('leaves out the receipts when there are none', () => {
+    answerAll({ 2: 'duplicateRemoved' });
+    render();
+    expect(text(q('finish-summary'))).toBe('6 decisions · 1 duplicate removed');
+  });
+
+  it('leaves out the duplicates when there are none', () => {
+    answerAll({ 3: 'receipt' });
+    render();
+    expect(text(q('finish-summary'))).toBe('6 decisions · 1 receipt added');
+  });
+
+  it('says one decision in the singular', () => {
+    // Everything but the last card is settled elsewhere, so only one answer is given here.
+    while (review.total() - review.answered() > 1) settle(review.current()!);
+    answerAll();
+    render();
+
+    expect(review.summary().decisions).toBe(1);
+    expect(text(q('finish-summary'))).toBe('1 decision');
+  });
+
+  it('adds nothing about the decisions when none were made', () => {
+    demo.setBusiness('cafe-linde');
+    expect(review.current()).toBeNull();
+    render();
+
+    expect(q('finish-title')).not.toBeNull();
+    expect(q('finish-summary')).toBeNull();
+  });
+
+  describe('the next VAT return', () => {
+    it('is named for a business that charges VAT', () => {
+      answerAll();
+      render();
+
+      expect(demo.business().vatDue!.dueDate).toBe('2026-11-10');
+      expect(text(q('finish-vat'))).toBe(`Next VAT return due ${formatDate('2026-11-10', 'en')}`);
+      expect(text(q('finish-vat'))).toBe('Next VAT return due 10 Nov');
+    });
+
+    it('is left out for a business that does not', () => {
+      demo.setBusiness('sara-yoga');
+      expect(demo.business().vatDue).toBeNull();
+      answerAll();
+      render();
+
+      expect(q('finish-summary')).not.toBeNull();
+      expect(q('finish-vat')).toBeNull();
+    });
+
+    it('follows the business that is open', () => {
+      demo.setBusiness('cafe-linde');
+      render();
+      expect(text(q('finish-vat'))).toBe(`Next VAT return due ${formatDate('2027-01-10', 'en')}`);
+
+      demo.setBusiness('sara-yoga');
+      fixture.detectChanges();
+      expect(q('finish-vat')).toBeNull();
+    });
+  });
+
+  it('Back says so', () => {
+    render();
+    q('finish-back')!.click();
+    expect(fixture.componentInstance.backs).toBe(1);
+  });
+
+  it('reads in German and Arabic', () => {
+    answerAll({ 1: 'receipt' });
+    render();
+
+    TestBed.inject(LanguageService).setLang('de');
+    fixture.detectChanges();
+    expect(text(q('finish-title'))).toBe(
+      'Alles erledigt — deine Buchhaltung ist auf dem neuesten Stand',
+    );
+    expect(text(q('finish-summary'))).toBe('6 Entscheidungen · 1 Beleg hinzugefügt');
+    expect(text(q('finish-vat'))).toBe(
+      `Nächste Umsatzsteuer-Voranmeldung fällig am ${formatDate('2026-11-10', 'de')}`,
+    );
+    expect(text(q('finish-back'))).toBe('Zurück');
+
+    TestBed.inject(LanguageService).setLang('ar');
+    fixture.detectChanges();
+    expect(text(q('finish-back'))).toBe('رجوع');
+    expect(text(q('finish-summary'))).toContain('6 قرارات');
+  });
+
+  it('draws the check without a bounce when the person asked for less motion', () => {
+    render();
+    const check = q('finish-check')!;
+    expect(check.classList).toContain('motion-reduce:transition-none');
+    expect(check.classList).toContain('starting:scale-20');
+  });
+});

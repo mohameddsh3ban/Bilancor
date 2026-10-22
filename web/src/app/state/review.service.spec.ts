@@ -391,6 +391,82 @@ describe('ReviewService', () => {
       expect(review.canUndo()).toBe(false);
       expect(currentId()).toBe('wd-t17');
     });
+
+    describe('is the only thing going on', () => {
+      it('pending is true from the start of the answer until it is recorded', async () => {
+        expect(review.pending()).toBe(false);
+        const done = takePhoto();
+        expect(review.pending()).toBe(true);
+
+        vi.advanceTimersByTime(READING_MS - 1);
+        expect(review.pending()).toBe(true);
+        vi.advanceTimersByTime(1);
+        await done;
+
+        expect(review.pending()).toBe(false);
+      });
+
+      it('another answer, skip and undo do nothing meanwhile', async () => {
+        fix('wd-t17', markNoReceiptNeeded); // answered 2 and undoable; wd-t4 is current
+        let finish!: () => void;
+        const slow = review.answer(() => new Promise<void>((resolve) => (finish = resolve)), {
+          labelKey: 'review.answered.slow',
+        });
+        const applySecond = vi.fn();
+
+        await review.answer(applySecond, ANSWER);
+        review.skip();
+        review.undo();
+
+        expect(applySecond).not.toHaveBeenCalled();
+        expect(currentId()).toBe('wd-t4'); // not skipped
+        expect(review.answered()).toBe(2); // not undone either
+        expect(payment('wd-t17').receipt).toBe('notNeeded');
+        expect(review.canUndo()).toBe(true);
+        expect(review.lastAnswer()).toEqual(ANSWER);
+
+        finish();
+        await slow;
+        expect(review.pending()).toBe(false);
+        expect(review.lastAnswer()).toEqual({ labelKey: 'review.answered.slow' });
+      });
+
+      it('skip works again once it is recorded', async () => {
+        const done = takePhoto();
+        vi.advanceTimersByTime(READING_MS);
+        await done;
+
+        review.skip();
+        expect(currentId()).toBe('wd-t3');
+      });
+
+      it('an answer that fails sets it free again', async () => {
+        const failing = review.answer(() => Promise.reject(new Error('no photo')), ANSWER);
+        expect(review.pending()).toBe(true);
+        await expect(failing).rejects.toThrow('no photo');
+
+        expect(review.pending()).toBe(false);
+        fix('wd-t17', markNoReceiptNeeded);
+        expect(review.answered()).toBe(2);
+      });
+
+      it('Reset demo while it waits does not leave it stuck', async () => {
+        const done = takePhoto();
+        demo.resetData();
+        vi.advanceTimersByTime(READING_MS);
+        await done;
+
+        expect(review.pending()).toBe(false);
+        categorise('wd-t18');
+        expect(review.answered()).toBe(1);
+      });
+    });
+
+    it('an answer that needs no time is never pending', () => {
+      fix('wd-t17', markNoReceiptNeeded);
+      expect(review.pending()).toBe(false);
+      expect(review.answered()).toBe(2);
+    });
   });
 
   describe('the undo window', () => {

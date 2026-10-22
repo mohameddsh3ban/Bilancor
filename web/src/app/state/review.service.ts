@@ -100,6 +100,8 @@ export class ReviewService {
     computation: emptySession,
   });
 
+  private readonly pendingSignal = signal(false);
+
   /** The decisions waiting right now, oldest first. */
   private readonly live = computed(() => reviewItems(this.demo.business(), this.demo.setup()));
   /** The session queue: the live items, except the skipped ones, which follow in the order they were skipped. */
@@ -122,6 +124,8 @@ export class ReviewService {
   readonly minutesLeft = computed(() => decisionMinutes(this.queue().length));
   readonly lastAnswer = computed(() => this.session().lastAnswer);
   readonly canUndo = computed(() => this.session().undo !== null);
+  /** An answer is waiting for its `apply` to finish (a photo being read): until it is recorded, answer, skip and undo are ignored. */
+  readonly pending = this.pendingSignal.asReadonly();
   readonly summary = computed(() => {
     const { answered, receiptsAdded, duplicatesRemoved } = this.session();
     return { decisions: answered, receiptsAdded, duplicatesRemoved };
@@ -169,10 +173,13 @@ export class ReviewService {
    * A synchronous `apply` is recorded at once. When Reset demo or another business came in meanwhile, the result is
    * ignored. The returned promise settles when the answer is recorded or ignored, and rejects (recording nothing)
    * when `apply` does.
+   *
+   * While such an answer waits (`pending`), `answer`, `skip` and `undo` do nothing: a second answer would apply to
+   * whatever card is current by then, and an undo or a skip would pull the data or the queue from under the first.
    */
   answer(apply: () => void | Promise<unknown>, result: ReviewAnswerResult): Promise<void> {
     const item = this.current();
-    if (item === null) return Promise.resolve();
+    if (item === null || this.pending()) return Promise.resolve();
     const answering = {
       sessionId: this.session().id,
       key: itemKey(item),
@@ -183,13 +190,16 @@ export class ReviewService {
       this.record(answering, result);
       return Promise.resolve();
     }
-    return outcome.then(() => this.record(answering, result));
+    this.pendingSignal.set(true);
+    return outcome
+      .then(() => this.record(answering, result))
+      .finally(() => this.pendingSignal.set(false));
   }
 
   /** Moves the current decision behind the others; skipping again sends it to the end once more. */
   skip(): void {
     const item = this.current();
-    if (item === null) return;
+    if (item === null || this.pending()) return;
     const key = itemKey(item);
     this.session.update((session) => ({
       ...session,
@@ -200,7 +210,7 @@ export class ReviewService {
   /** Takes back the last answer, its learned rule and everything it booked, and brings its card back. Does nothing once the undo time is over. */
   undo(): void {
     const step = this.session().undo;
-    if (step === null) return;
+    if (step === null || this.pending()) return;
     clearTimeout(this.undoTimer);
     this.demo.restore(step.snapshot);
     this.session.update((session) => ({

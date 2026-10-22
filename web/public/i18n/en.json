@@ -485,5 +485,41 @@
     "tiles": {
       "decisions": "Decisions"
     }
+  },
+  "review": {
+    "title": "Review your decisions",
+    "close": "Close",
+    "progressLabel": "Progress",
+    "progress": "{{position}} of {{total}} · about {{minutes}} min left",
+    "skip": "Skip for now",
+    "saving": "Saving…",
+    "undo": "Undo",
+    "kind": {
+      "unclear": "Payment · what was this for?",
+      "confirm": "Payment · please confirm",
+      "noReceipt": "Payment · receipt missing",
+      "duplicate": "Document · possible duplicate",
+      "direction": "Document · received or sent?",
+      "checkAmount": "Document · check the amount",
+      "checkDate": "Document · check the date",
+      "checkName": "Document · check the name"
+    },
+    "finish": {
+      "title": "All done — your books are up to date",
+      "decisions": {
+        "one": "1 decision",
+        "many": "{{count}} decisions"
+      },
+      "receipts": {
+        "one": "1 receipt added",
+        "many": "{{count}} receipts added"
+      },
+      "duplicates": {
+        "one": "1 duplicate removed",
+        "many": "{{count}} duplicates removed"
+      },
+      "vat": "Next VAT return due {{date}}",
+      "back": "Back"
+    }
   }
 }
