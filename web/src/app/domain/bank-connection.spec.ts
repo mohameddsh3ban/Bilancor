@@ -1,7 +1,18 @@
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, AccountConnection } from '../data/models';
+import { BANKS } from '../data/banks';
 import { BUSINESSES } from '../data/sample-data';
-import { bankNotices, connectionStatus, maskIban } from './bank-connection';
+import {
+  CONSENT_DAYS,
+  addDays,
+  bankInitials,
+  bankNotices,
+  connectionStatus,
+  isAlreadyConnected,
+  maskIban,
+  newConnection,
+  noConnection,
+} from './bank-connection';
 
 const accountsOf = (businessId: string): Account[] => BUSINESSES.find((b) => b.id === businessId)!.accounts;
 const qonto = accountsOf('weber-design').find((a) => a.id === 'wd-qonto')!;
@@ -144,5 +155,109 @@ describe('maskIban', () => {
         expect(masked.length).toBe(11);
       }
     }
+  });
+});
+
+describe('addDays', () => {
+  it('adds days to an ISO date, across a month and a year end', () => {
+    expect(addDays('2026-10-22', 5)).toBe('2026-10-27');
+    expect(addDays('2026-12-30', 3)).toBe('2027-01-02');
+    expect(addDays('2026-10-22', 0)).toBe(DEMO_TODAY);
+  });
+
+  it('goes through a leap day without a zone or the clock getting in the way', () => {
+    expect(addDays('2028-02-28', 2)).toBe('2028-03-01');
+    expect(addDays('2026-03-28', 2)).toBe('2026-03-30');
+    expect(addDays('2026-10-24', 2)).toBe('2026-10-26');
+  });
+
+  it('counts back with a negative number', () => {
+    expect(addDays('2026-10-22', -22)).toBe('2026-09-30');
+  });
+});
+
+describe('newConnection', () => {
+  it('is a bank connection with a consent of 180 days from the demo day, fetched at noon that day', () => {
+    expect(CONSENT_DAYS).toBe(180);
+    expect(newConnection('2026-01-01')).toEqual({
+      kind: 'connected',
+      consentUntil: '2027-04-20',
+      lastFetched: '2026-10-22T12:00',
+      fetchFrom: '2026-01-01',
+      broken: false,
+    });
+  });
+
+  it('counts from the day it is given', () => {
+    expect(newConnection('2025-01-01', '2026-12-31')).toMatchObject({
+      consentUntil: '2027-06-29',
+      lastFetched: '2026-12-31T12:00',
+      fetchFrom: '2025-01-01',
+    });
+  });
+
+  it('is a healthy connection for the whole 180 days', () => {
+    const account = { ...qonto, connection: newConnection('2026-01-01') };
+    expect(connectionStatus(account)).toEqual({ kind: 'connected' });
+    expect(connectionStatus(account, addDays(DEMO_TODAY, CONSENT_DAYS - 15))).toEqual({ kind: 'connected' });
+    expect(connectionStatus(account, addDays(DEMO_TODAY, CONSENT_DAYS - 14))).toEqual({ kind: 'renewSoon', daysLeft: 14 });
+  });
+
+  it('gives a new object every time', () => {
+    expect(newConnection('2026-01-01')).not.toBe(newConnection('2026-01-01'));
+  });
+});
+
+describe('noConnection', () => {
+  it('is a statement or cash connection with nothing that ends and nothing fetched', () => {
+    expect(noConnection('statement')).toEqual({ kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false });
+    expect(noConnection('cash')).toEqual({ kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false });
+  });
+});
+
+describe('isAlreadyConnected', () => {
+  it('is true for a bank connection once the bank step is done', () => {
+    expect(isAlreadyConnected(qonto, true)).toBe(true);
+  });
+
+  it('is false while the bank step is not done: the demo account is there, the person has not connected it yet', () => {
+    expect(isAlreadyConnected(qonto, false)).toBe(false);
+  });
+
+  it('is false for a statement account, a cash box and an account that is not there', () => {
+    expect(isAlreadyConnected({ ...qonto, connection: noConnection('statement') }, true)).toBe(false);
+    expect(isAlreadyConnected({ ...qonto, connection: noConnection('cash') }, true)).toBe(false);
+    expect(isAlreadyConnected(undefined, true)).toBe(false);
+  });
+
+  it('is true for a connection that ended or broke: Renew does that, not connecting again', () => {
+    expect(isAlreadyConnected(connection({ consentUntil: '2026-10-01' }), true)).toBe(true);
+    expect(isAlreadyConnected(connection({ broken: true }), true)).toBe(true);
+  });
+});
+
+describe('bankInitials', () => {
+  it('takes the first letter of two words, or of the two parts of a joined name', () => {
+    expect(bankInitials('Deutsche Bank')).toBe('DB');
+    expect(bankInitials('HypoVereinsbank')).toBe('HV');
+  });
+
+  it('takes the first two letters of a single name, in capitals', () => {
+    expect(bankInitials('Sparkasse')).toBe('SP');
+    expect(bankInitials('ING')).toBe('IN');
+    expect(bankInitials('N26')).toBe('N2');
+    expect(bankInitials('Qonto')).toBe('QO');
+  });
+
+  it('is two characters for every bank of the picker, and different for most', () => {
+    const initials = BANKS.map((bank) => bankInitials(bank.name));
+    for (const value of initials) expect(value).toMatch(/^[A-Z0-9]{2}$/);
+    expect(new Set(initials).size).toBe(BANKS.length);
+  });
+
+  it('copes with a short or empty name', () => {
+    expect(bankInitials('X')).toBe('X');
+    expect(bankInitials('')).toBe('');
+    expect(bankInitials('  Volks   Bank ')).toBe('VB');
   });
 });

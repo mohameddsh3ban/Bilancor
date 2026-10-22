@@ -1,7 +1,19 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { BANKS, FOUND_ACCOUNTS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
-import { Business, Doc, Person, SetupState, SetupSteps, TaxProfile, Transaction } from '../data/models';
+import {
+  Account,
+  Business,
+  Doc,
+  HistoryEntry,
+  Person,
+  SetupState,
+  SetupSteps,
+  TaxProfile,
+  Transaction,
+} from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
+import { isAlreadyConnected, newConnection, noConnection } from '../domain/bank-connection';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
@@ -11,6 +23,20 @@ const DEFAULT_BUSINESS_ID = 'weber-design';
 /** A fresh copy of the sample businesses, so edits never touch the shared sample data. */
 function freshBusinesses(): Business[] {
   return structuredClone(BUSINESSES).filter((b) => PERSON.businessIds.includes(b.id));
+}
+
+/** The cash box of a business that has none: no payments, no balance, and no bank behind it. */
+function newCashBox(businessId: string): Account {
+  return {
+    id: `${businessId}-cash`,
+    kind: 'cash',
+    name: 'Cash box',
+    balanceCents: 0,
+    lastUpdate: DEMO_TODAY,
+    connection: noConnection('cash'),
+    product: 'cash',
+    iban: null,
+  };
 }
 
 /** Whether two sets of tax answers are the same, field by field. */
@@ -87,6 +113,69 @@ export class DemoStateService {
           },
     );
     this.completeStep('tax');
+  }
+
+  /**
+   * Ends the bank flow for the open business: the chosen accounts (of `bankId`, signed in at on the demo day) get a
+   * connection with a consent of 180 days, payments asked for from `fetchFrom`, fetched at noon that day, and the bank
+   * step is ticked. An account the business does not have yet is added (a copy, before its cash box); one it has gets
+   * the connection. One `bankConnected` line for each account newly connected.
+   *
+   * An account that is connected already (bank step done) stays as it is, with no line, so a second call with the same
+   * accounts changes nothing. The sample business accounts of that bank that are left out are not connected: they
+   * become statement accounts and keep their payments. The accounts it is given are never changed (they are shared sample data).
+   */
+  connectAccounts(bankId: string, accounts: readonly Account[], fetchFrom: string): void {
+    const bankDone = this.setup().bank;
+    const bank = BANKS.find((b) => b.id === bankId)?.name ?? bankId;
+    this.updateBusiness(this.businessIdSignal(), (business) => {
+      const chosen = new Set(accounts.map((account) => account.id));
+      const sample = new Set(
+        (FOUND_ACCOUNTS[business.id]?.[bankId] ?? [])
+          .filter((account) => account.product === 'business')
+          .map((account) => account.id),
+      );
+      const lines: HistoryEntry[] = [];
+      const connect = (account: Account): Account => {
+        lines.push({ date: DEMO_TODAY, key: 'bankConnected', params: { bank, account: account.name } });
+        return { ...account, connection: newConnection(fetchFrom) };
+      };
+
+      const had = new Set(business.accounts.map((account) => account.id));
+      const kept = business.accounts.map((account) => {
+        if (isAlreadyConnected(account, bankDone)) return account;
+        if (chosen.has(account.id)) return connect(account);
+        if (sample.has(account.id) && account.connection.kind !== 'statement') {
+          return { ...account, connection: noConnection('statement') };
+        }
+        return account;
+      });
+      const added = [...new Map(accounts.map((account) => [account.id, account])).values()]
+        .filter((account) => !had.has(account.id))
+        .map(connect);
+      if (added.length === 0 && kept.every((account, i) => account === business.accounts[i])) return business;
+
+      const cashAt = kept.findIndex((account) => account.kind === 'cash');
+      return {
+        ...business,
+        accounts: cashAt === -1 ? [...kept, ...added] : [...kept.slice(0, cashAt), ...added, ...kept.slice(cashAt)],
+        history: [...lines.reverse(), ...business.history],
+      };
+    });
+    this.completeStep('bank');
+  }
+
+  /** Gives the open business a cash box when it has none, with a `cashAdded` line. It does not count as the bank step. */
+  addCashBox(): void {
+    this.updateBusiness(this.businessIdSignal(), (business) =>
+      business.accounts.some((account) => account.kind === 'cash')
+        ? business
+        : {
+            ...business,
+            accounts: [...business.accounts, newCashBox(business.id)],
+            history: [{ date: DEMO_TODAY, key: 'cashAdded', params: {} }, ...business.history],
+          },
+    );
   }
 
   /**

@@ -110,6 +110,7 @@
     "photo": "Take a photo",
     "selfReceipt": "Self-issued receipt",
     "cashPayment": "Paid in cash or privately",
+    "statementImport": "Import a bank statement",
     "default": "This page"
   },
   "comingSoon": {
@@ -669,5 +670,76 @@
       "error": "Enter a real day and month, for example day 1 and month 7 for 1 July."
     },
     "save": "Save"
+  },
+  "bankConnect": {
+    "back": {
+      "home": "Back to home",
+      "payments": "Back to payments",
+      "settings": "Back to Settings"
+    },
+    "pick": {
+      "title": "Connect your bank",
+      "intro": "Your payments then come in by themselves.",
+      "search": "Search for your bank",
+      "banks": "Banks",
+      "noMatch": "We couldn't find a bank called “{{search}}”.",
+      "notListed": {
+        "title": "My bank isn't listed",
+        "body": "Import a statement from your bank instead. Coming soon."
+      },
+      "cash": {
+        "title": "I also take cash",
+        "body": "Add a cash box for the money you take in cash."
+      }
+    },
+    "see": {
+      "title": "Connect {{bank}}",
+      "can": "We can",
+      "canPayments": "See your payments and balance",
+      "canFetch": "Fetch new payments every day",
+      "cannot": "We can't",
+      "cannotMove": "Move money or make transfers",
+      "cannotPassword": "See your bank password",
+      "signIn": "You sign in on {{bank}}'s own page. Your bank asks you to renew this every 180 days; we remind you in time.",
+      "continue": "Continue to {{bank}}",
+      "other": "Choose another bank"
+    },
+    "approval": {
+      "title": "Sign in at {{bank}}",
+      "demo": "DEMO · no real bank, no password",
+      "sentence": "Bookkeeping app wants to read your payments and balance.",
+      "approve": "Approve",
+      "cancel": "Cancel",
+      "note": "Demo: this business banks with {{sample}}, so {{sample}}'s accounts are shown."
+    },
+    "choose": {
+      "title": "Which accounts are for the business?",
+      "hint": "Private accounts stay out: leave them unticked.",
+      "accounts": "Accounts at {{bank}}",
+      "already": "Already connected",
+      "fetchFrom": "Fetch payments from",
+      "thisYear": "1 January this year",
+      "lastYear": "1 January last year",
+      "today": "Today",
+      "connectOne": "Connect 1 account",
+      "connectMany": "Connect {{count}} accounts",
+      "connectNone": "Connect accounts",
+      "tickOne": "Tick at least one account to connect.",
+      "other": "Choose another bank"
+    },
+    "fetching": {
+      "title": "Fetching payments…",
+      "body": "This takes a moment."
+    }
+  },
+  "settings": {
+    "bank": {
+      "product": {
+        "business": "Business account",
+        "savings": "Savings",
+        "card": "Credit card",
+        "cash": "Cash box"
+      }
+    }
   }
 }

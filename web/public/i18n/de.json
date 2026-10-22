@@ -110,6 +110,7 @@
     "photo": "Foto aufnehmen",
     "selfReceipt": "Eigenbeleg",
     "cashPayment": "Bar oder privat bezahlt",
+    "statementImport": "Kontoauszug importieren",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -669,5 +670,76 @@
       "error": "Gib einen echten Tag und Monat ein, zum Beispiel Tag 1 und Monat 7 für den 1. Juli."
     },
     "save": "Speichern"
+  },
+  "bankConnect": {
+    "back": {
+      "home": "Zurück zur Startseite",
+      "payments": "Zurück zu den Zahlungen",
+      "settings": "Zurück zu den Einstellungen"
+    },
+    "pick": {
+      "title": "Verbinde deine Bank",
+      "intro": "Danach kommen deine Zahlungen von selbst.",
+      "search": "Suche nach deiner Bank",
+      "banks": "Banken",
+      "noMatch": "Wir haben keine Bank namens „{{search}}“ gefunden.",
+      "notListed": {
+        "title": "Meine Bank steht nicht in der Liste",
+        "body": "Importiere stattdessen einen Kontoauszug deiner Bank. Kommt bald."
+      },
+      "cash": {
+        "title": "Ich nehme auch Bargeld ein",
+        "body": "Füge eine Kasse für das Geld hinzu, das du bar einnimmst."
+      }
+    },
+    "see": {
+      "title": "{{bank}} verbinden",
+      "can": "Das können wir",
+      "canPayments": "Deine Zahlungen und deinen Kontostand sehen",
+      "canFetch": "Jeden Tag neue Zahlungen abrufen",
+      "cannot": "Das können wir nicht",
+      "cannotMove": "Geld bewegen oder Überweisungen machen",
+      "cannotPassword": "Dein Bankpasswort sehen",
+      "signIn": "Du meldest dich auf der eigenen Seite von {{bank}} an. Deine Bank verlangt, dass du das alle 180 Tage erneuerst; wir erinnern dich rechtzeitig.",
+      "continue": "Weiter zu {{bank}}",
+      "other": "Andere Bank wählen"
+    },
+    "approval": {
+      "title": "Bei {{bank}} anmelden",
+      "demo": "DEMO · keine echte Bank, kein Passwort",
+      "sentence": "Die Buchhaltungs-App möchte deine Zahlungen und deinen Kontostand lesen.",
+      "approve": "Zustimmen",
+      "cancel": "Abbrechen",
+      "note": "Demo: Dieses Unternehmen hat sein Konto bei {{sample}}, deshalb zeigen wir die Konten von {{sample}}."
+    },
+    "choose": {
+      "title": "Welche Konten gehören zum Unternehmen?",
+      "hint": "Private Konten bleiben draußen: lass sie unmarkiert.",
+      "accounts": "Konten bei {{bank}}",
+      "already": "Schon verbunden",
+      "fetchFrom": "Zahlungen abrufen ab",
+      "thisYear": "1. Januar dieses Jahres",
+      "lastYear": "1. Januar letzten Jahres",
+      "today": "Heute",
+      "connectOne": "1 Konto verbinden",
+      "connectMany": "{{count}} Konten verbinden",
+      "connectNone": "Konten verbinden",
+      "tickOne": "Markiere mindestens ein Konto zum Verbinden.",
+      "other": "Andere Bank wählen"
+    },
+    "fetching": {
+      "title": "Zahlungen werden abgerufen…",
+      "body": "Das dauert einen Moment."
+    }
+  },
+  "settings": {
+    "bank": {
+      "product": {
+        "business": "Geschäftskonto",
+        "savings": "Sparkonto",
+        "card": "Kreditkarte",
+        "cash": "Kasse"
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Account, Notice } from '../data/models';
+import type { Account, AccountConnection, Notice } from '../data/models';
 
 /**
  * How healthy an account's connection is: a bank connection that is fine, one whose consent ends soon (with the days
@@ -16,6 +16,9 @@ export type ConnectionStatus =
 const RENEW_WITHIN_DAYS = 14;
 
 const MS_PER_DAY = 86_400_000;
+
+/** How long a bank's consent lasts after the person signs in, as the bank asks them to renew it. */
+export const CONSENT_DAYS = 180;
 
 /** The whole days from one ISO date to another; negative when `to` is earlier. Dates are read as UTC, so no clock or zone matters. */
 function daysBetween(from: string, to: string): number {
@@ -79,4 +82,52 @@ export function bankNotices(accounts: readonly Account[], today: string = DEMO_T
 export function maskIban(iban: string): string {
   const compact = iban.replace(/\s+/g, '');
   return `${compact.slice(0, 4)} … ${compact.slice(-4)}`;
+}
+
+/** An ISO date `days` after another (before it when negative), counted in UTC so no clock or zone matters. */
+export function addDays(date: string, days: number): string {
+  return new Date(Date.parse(date) + days * MS_PER_DAY).toISOString().slice(0, 10);
+}
+
+/**
+ * The connection an account gets when the person signs in at its bank on `today` (an ISO date; never the real clock):
+ * a consent of `CONSENT_DAYS` days, fetched at noon that day, with payments asked for from `fetchFrom`. A new object each time.
+ */
+export function newConnection(fetchFrom: string, today: string = DEMO_TODAY): AccountConnection {
+  return {
+    kind: 'connected',
+    consentUntil: addDays(today, CONSENT_DAYS),
+    lastFetched: `${today}T12:00`,
+    fetchFrom,
+    broken: false,
+  };
+}
+
+/** The connection of an account that has no bank to look after: payments from imported statements, or the cash box. */
+export function noConnection(kind: 'statement' | 'cash'): AccountConnection {
+  return { kind, consentUntil: null, lastFetched: null, fetchFrom: null, broken: false };
+}
+
+/**
+ * Whether connecting this account again would add nothing: it is there and has a bank connection, and the bank step is
+ * done. While the step is not done (the demo's New client shortcut keeps the accounts), a sample account counts as not
+ * connected yet, so the person can connect or leave it. A connection that ended or broke counts as connected: Renew
+ * and Sign in again look after it, not connecting a second time.
+ */
+export function isAlreadyConnected(account: Account | undefined, bankStepDone: boolean): boolean {
+  return bankStepDone && account?.connection.kind === 'connected';
+}
+
+/**
+ * Two letters for a bank's tile: the first letters of its first two words, or of the two parts of a joined name
+ * (HypoVereinsbank gives HV), else its first two letters. In capitals.
+ */
+export function bankInitials(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .flatMap((word) => word.split(/(?<=[a-z])(?=[A-Z])/))
+    .filter((part) => part !== '');
+  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : (parts[0] ?? '').slice(0, 2);
+  return letters.toUpperCase();
 }

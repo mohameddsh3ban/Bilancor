@@ -43,6 +43,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./settings/tax-details.page').then((m) => m.TaxDetailsPage),
       },
+      {
+        path: 'settings/bank/connect',
+        loadComponent: () =>
+          import('./settings/connect-bank.page').then((m) => m.ConnectBankPage),
+      },
       { path: 'soon/:feature', component: ComingSoonPage },
     ],
   },
