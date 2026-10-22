@@ -5,8 +5,10 @@ import type { Transaction } from '../data/models';
 import type { ReviewItem } from '../domain/review-queue';
 import { changeCategory, confirmBooking, markNoReceiptNeeded } from '../domain/payment-actions';
 import { paymentStatus } from '../domain/payment-status';
+import { READING_MS } from '../domain/document-upload';
 import { DemoStateService } from './demo-state.service';
 import { ReviewService, UNDO_MS } from './review.service';
+import { UploadService } from './upload.service';
 
 const ANSWER = { labelKey: 'review.answered.booked' };
 const WEBER_ORDER = ['wd-t18', 'wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1'];
@@ -20,8 +22,9 @@ describe('ReviewService', () => {
   const currentId = (): string | undefined => review.current()?.id;
 
   /** Answers the current card the way the page does: the change to the data happens inside `apply`. */
-  const fix = (id: string, change: (tx: Transaction) => Transaction, result = ANSWER): void =>
-    review.answer(() => demo.updateTransaction(id, change), result);
+  const fix = (id: string, change: (tx: Transaction) => Transaction, result = ANSWER): void => {
+    void review.answer(() => demo.updateTransaction(id, change), result); // a sync apply is recorded at once
+  };
   const categorise = (id: string): void => fix(id, (tx) => changeCategory(tx, OFFICE));
   /** Answers the first three cards of Weber Design (wd-t18, wd-t17, wd-t4), so the fourth is current. */
   const answerFirstThree = (): void => {
@@ -290,6 +293,106 @@ describe('ReviewService', () => {
     expect(currentId()).toBe('wd-t18');
   });
 
+  it('an answer that changes no business or data does not start a new session', () => {
+    categorise('wd-t18');
+
+    TestBed.tick();
+
+    expect(review.answered()).toBe(1);
+    expect(review.canUndo()).toBe(true);
+    expect(review.lastAnswer()).toEqual(ANSWER);
+  });
+
+  describe('an answer that takes time', () => {
+    let upload: UploadService;
+    const uploads = () => demo.documents().filter((d) => d.fromUpload);
+    const takePhoto = (): Promise<void> =>
+      review.answer(() => upload.addPhotoFor('wd-t17'), ANSWER);
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      upload = TestBed.inject(UploadService);
+      categorise('wd-t18'); // wd-t17 (receipt missing) is current now
+      vi.advanceTimersByTime(UNDO_MS); // so that only the photo answer can be undone
+    });
+
+    it('is counted once, when it is done, and undo restores the data from before it', async () => {
+      const done = takePhoto();
+
+      // While the photo is read the card stays and nothing is counted yet.
+      expect(currentId()).toBe('wd-t17');
+      expect(review.answered()).toBe(1);
+      expect(review.canUndo()).toBe(false);
+      vi.advanceTimersByTime(READING_MS - 1);
+      expect(review.answered()).toBe(1);
+
+      vi.advanceTimersByTime(1);
+      await done;
+
+      expect(payment('wd-t17').receipt).toBe('attached');
+      expect(uploads()).toHaveLength(1);
+      expect(currentId()).toBe('wd-t4');
+      expect(review.answered()).toBe(2);
+      expect(review.summary().decisions).toBe(2);
+      expect(review.canUndo()).toBe(true);
+      expect(review.lastAnswer()).toEqual(ANSWER);
+
+      review.undo();
+
+      expect(payment('wd-t17').receipt).toBe('missing');
+      expect(uploads()).toEqual([]);
+      expect(currentId()).toBe('wd-t17');
+      expect(review.answered()).toBe(1);
+      expect(review.canUndo()).toBe(false);
+    });
+
+    it('starts its undo window when it is done, not when it was asked', async () => {
+      const done = takePhoto();
+      vi.advanceTimersByTime(READING_MS);
+      await done;
+
+      vi.advanceTimersByTime(UNDO_MS - 1);
+      expect(review.canUndo()).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(review.canUndo()).toBe(false);
+    });
+
+    it('is ignored when Reset demo came in between', async () => {
+      const done = takePhoto();
+      vi.advanceTimersByTime(1000);
+      demo.resetData();
+      vi.advanceTimersByTime(READING_MS);
+      await done;
+
+      expect(review.answered()).toBe(0);
+      expect(review.canUndo()).toBe(false);
+      expect(review.lastAnswer()).toBeNull();
+      expect(review.total()).toBe(6);
+      expect(currentId()).toBe('wd-t18');
+    });
+
+    it('is ignored when another business was opened in between', async () => {
+      const done = takePhoto();
+      demo.setBusiness('sara-yoga');
+      vi.advanceTimersByTime(READING_MS);
+      await done;
+
+      expect(review.answered()).toBe(0);
+      expect(review.canUndo()).toBe(false);
+      expect(review.lastAnswer()).toBeNull();
+      expect(currentId()).toBe('sy-t8');
+    });
+
+    it('that fails is not recorded', async () => {
+      const failing = review.answer(() => Promise.reject(new Error('no photo')), ANSWER);
+      await expect(failing).rejects.toThrow('no photo');
+
+      expect(review.answered()).toBe(1);
+      expect(review.canUndo()).toBe(false);
+      expect(currentId()).toBe('wd-t17');
+    });
+  });
+
   describe('the undo window', () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -337,6 +440,29 @@ describe('ReviewService', () => {
       vi.advanceTimersByTime(UNDO_MS);
       expect(review.canUndo()).toBe(false);
       expect(review.lastAnswer()).toEqual(ANSWER);
+    });
+
+    it('a timer from before a reset cannot end the undo window of the next session', () => {
+      categorise('wd-t18'); // t = 0, its window would end at 5000
+      vi.advanceTimersByTime(1000);
+      demo.resetData();
+      vi.advanceTimersByTime(1000);
+      categorise('wd-t18'); // t = 2000, its window ends at 7000
+
+      vi.advanceTimersByTime(3000); // t = 5000
+      expect(review.canUndo()).toBe(true);
+      vi.advanceTimersByTime(2000); // t = 7000
+      expect(review.canUndo()).toBe(false);
+    });
+
+    it('the undo timer is cleared when the session starts over', () => {
+      categorise('wd-t18');
+      expect(vi.getTimerCount()).toBe(1);
+
+      demo.resetData();
+      TestBed.tick();
+
+      expect(vi.getTimerCount()).toBe(0);
     });
   });
 

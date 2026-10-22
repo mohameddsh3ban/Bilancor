@@ -41,6 +41,8 @@ interface UndoStep {
 
 /** Everything one review session remembers. It belongs to one business and one data generation (see `ReviewService.session`). */
 interface Session {
+  /** Different for every session, so work that started in an earlier one can tell it is over. */
+  id: number;
   answered: number;
   receiptsAdded: number;
   duplicatesRemoved: number;
@@ -50,7 +52,9 @@ interface Session {
   undo: UndoStep | null;
 }
 
+let sessionCount = 0;
 const emptySession = (): Session => ({
+  id: ++sessionCount,
   answered: 0,
   receiptsAdded: 0,
   duplicatesRemoved: 0,
@@ -128,6 +132,8 @@ export class ReviewService {
   readonly returnUrl = this.returnUrlSignal.asReadonly();
 
   private undoTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The session the undo timer was started for. */
+  private undoTimerSession = 0;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.undoTimer));
@@ -143,37 +149,41 @@ export class ReviewService {
       });
 
     // A linkedSignal starts over only when it is read after its scope changed. Read it at every change, so a session
-    // cannot come back when the person goes to another business and back before anything has looked at it.
+    // cannot come back when the person goes to another business and back before anything has looked at it, and
+    // drop the undo timer of the session that is over.
     effect(() => {
       this.scope();
-      untracked(() => this.session());
+      untracked(() => {
+        if (this.session().id !== this.undoTimerSession) clearTimeout(this.undoTimer);
+      });
     });
   }
 
   /**
-   * Answers the current decision: takes a snapshot, runs `apply` (which changes the data), and counts the decision as
-   * answered when it left the queue. A decision with a next problem stays current and is counted with its last answer.
-   * Ignored when nothing is waiting.
+   * Answers the current decision: takes a snapshot and notes the decision, runs `apply` (which changes the data), and
+   * once `apply` is done counts the decision as answered when it left the queue and offers Undo. A decision with a next
+   * problem stays current and is counted with its last answer. Ignored when nothing is waiting.
+   *
+   * `apply` may return a promise (a photo that is being read): the answer counts when it settles, for the decision
+   * that was current when it started, and the snapshot is from before it started so Undo takes the photo back too.
+   * A synchronous `apply` is recorded at once. When Reset demo or another business came in meanwhile, the result is
+   * ignored. The returned promise settles when the answer is recorded or ignored, and rejects (recording nothing)
+   * when `apply` does.
    */
-  answer(apply: () => void, result: ReviewAnswerResult): void {
+  answer(apply: () => void | Promise<unknown>, result: ReviewAnswerResult): Promise<void> {
     const item = this.current();
-    if (item === null) return;
-    const snapshot = this.demo.snapshot();
-    apply();
-    const key = itemKey(item);
-    const { counts, ...lastAnswer } = result;
-    const step: UndoStep = {
-      snapshot,
-      counted: !this.live().some((other) => itemKey(other) === key),
-      counts,
+    if (item === null) return Promise.resolve();
+    const answering = {
+      sessionId: this.session().id,
+      key: itemKey(item),
+      snapshot: this.demo.snapshot(),
     };
-    this.session.update((session) => ({
-      ...session,
-      ...moveCounters(session, step, 1),
-      lastAnswer,
-      undo: step,
-    }));
-    this.restartUndoTimer();
+    const outcome = apply();
+    if (!(outcome instanceof Promise)) {
+      this.record(answering, result);
+      return Promise.resolve();
+    }
+    return outcome.then(() => this.record(answering, result));
   }
 
   /** Moves the current decision behind the others; skipping again sends it to the end once more. */
@@ -201,12 +211,34 @@ export class ReviewService {
     }));
   }
 
-  private restartUndoTimer(): void {
+  /** Counts an answer whose `apply` is done, unless its session is over, and starts the undo window. */
+  private record(
+    answering: { sessionId: number; key: string; snapshot: Business },
+    result: ReviewAnswerResult,
+  ): void {
+    if (this.session().id !== answering.sessionId) return;
+    const { counts, ...lastAnswer } = result;
+    const step: UndoStep = {
+      snapshot: answering.snapshot,
+      counted: !this.live().some((other) => itemKey(other) === answering.key),
+      counts,
+    };
+    this.session.update((session) => ({
+      ...session,
+      ...moveCounters(session, step, 1),
+      lastAnswer,
+      undo: step,
+    }));
+    this.restartUndoTimer(answering.sessionId);
+  }
+
+  private restartUndoTimer(sessionId: number): void {
     clearTimeout(this.undoTimer);
+    this.undoTimerSession = sessionId;
     this.undoTimer = setTimeout(
       () =>
         this.session.update((session) =>
-          session.undo === null ? session : { ...session, undo: null },
+          session.id === sessionId && session.undo !== null ? { ...session, undo: null } : session,
         ),
       UNDO_MS,
     );
