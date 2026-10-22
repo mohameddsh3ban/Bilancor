@@ -63,7 +63,8 @@ const emptySession = (): Session => ({
   undo: null,
 });
 
-const itemKey = (item: ReviewItem): string => `${item.kind}:${item.id}`;
+/** What names a decision: its kind and id, such as `payment:wd-t18`. The same decision keeps its key through every problem it has. */
+export const reviewItemKey = (item: ReviewItem): string => `${item.kind}:${item.id}`;
 const outsideReview = (url: string): boolean => !url.startsWith('/review');
 
 /** The counters of a session moved by one answer, forwards (`1`) or back (`-1`). */
@@ -109,8 +110,8 @@ export class ReviewService {
     const skipped = this.session().skipped;
     const live = this.live();
     if (skipped.length === 0) return live;
-    const byKey = new Map(live.map((item) => [itemKey(item), item]));
-    const rest = live.filter((item) => !skipped.includes(itemKey(item)));
+    const byKey = new Map(live.map((item) => [reviewItemKey(item), item]));
+    const rest = live.filter((item) => !skipped.includes(reviewItemKey(item)));
     const back = skipped.flatMap((key) => byKey.get(key) ?? []);
     return [...rest, ...back];
   });
@@ -135,6 +136,15 @@ export class ReviewService {
   /** The last page the person was on outside `/review`, for ✕ and Back; `/` when there is none. */
   readonly returnUrl = this.returnUrlSignal.asReadonly();
 
+  /** The address the router was last on (any page) before the navigation in progress; null when it has finished none, as on a direct load. */
+  private previousUrl: string | null = this.lastUrl();
+  private readonly cameFromReturnUrlSignal = signal(false);
+  /**
+   * `/review` was opened by navigating to it from `returnUrl` inside the app, so that page is the entry just below it
+   * in the browser history and going back lands on it. False for a direct load of `/review`, where there is no such entry.
+   */
+  readonly cameFromReturnUrl = this.cameFromReturnUrlSignal.asReadonly();
+
   private undoTimer: ReturnType<typeof setTimeout> | undefined;
   /** The session the undo timer was started for. */
   private undoTimerSession = 0;
@@ -148,8 +158,15 @@ export class ReviewService {
         takeUntilDestroyed(),
       )
       .subscribe((event) => {
-        if (outsideReview(event.urlAfterRedirects))
-          this.returnUrlSignal.set(event.urlAfterRedirects);
+        const url = event.urlAfterRedirects;
+        if (outsideReview(url)) {
+          this.returnUrlSignal.set(url);
+          this.cameFromReturnUrlSignal.set(false);
+        } else if (this.previousUrl !== null && outsideReview(this.previousUrl)) {
+          // The navigation into /review came from the page before it. Moving around inside /review changes nothing.
+          this.cameFromReturnUrlSignal.set(true);
+        }
+        this.previousUrl = url;
       });
 
     // A linkedSignal starts over only when it is read after its scope changed. Read it at every change, so a session
@@ -176,13 +193,22 @@ export class ReviewService {
    *
    * While such an answer waits (`pending`), `answer`, `skip` and `undo` do nothing: a second answer would apply to
    * whatever card is current by then, and an undo or a skip would pull the data or the queue from under the first.
+   *
+   * A card passes its own `forKey` (`reviewItemKey` of its item): an answer for a card that is no longer the current
+   * one (a tap on a card that is already on its way out) is ignored, and does not land on the card that took its place.
+   * Without a key the answer goes to whatever is current.
    */
-  answer(apply: () => void | Promise<unknown>, result: ReviewAnswerResult): Promise<void> {
+  answer(
+    apply: () => void | Promise<unknown>,
+    result: ReviewAnswerResult,
+    forKey?: string,
+  ): Promise<void> {
     const item = this.current();
     if (item === null || this.pending()) return Promise.resolve();
+    if (forKey !== undefined && forKey !== reviewItemKey(item)) return Promise.resolve();
     const answering = {
       sessionId: this.session().id,
-      key: itemKey(item),
+      key: reviewItemKey(item),
       snapshot: this.demo.snapshot(),
     };
     const outcome = apply();
@@ -200,7 +226,7 @@ export class ReviewService {
   skip(): void {
     const item = this.current();
     if (item === null || this.pending()) return;
-    const key = itemKey(item);
+    const key = reviewItemKey(item);
     this.session.update((session) => ({
       ...session,
       skipped: [...session.skipped.filter((k) => k !== key), key],
@@ -230,7 +256,7 @@ export class ReviewService {
     const { counts, ...lastAnswer } = result;
     const step: UndoStep = {
       snapshot: answering.snapshot,
-      counted: !this.live().some((other) => itemKey(other) === answering.key),
+      counted: !this.live().some((other) => reviewItemKey(other) === answering.key),
       counts,
     };
     this.session.update((session) => ({
@@ -240,6 +266,12 @@ export class ReviewService {
       undo: step,
     }));
     this.restartUndoTimer(answering.sessionId);
+  }
+
+  /** The page the router finished with last, or null when it has not finished any (a direct load, still opening). */
+  private lastUrl(): string | null {
+    const last = this.router.lastSuccessfulNavigation()?.finalUrl;
+    return last ? this.router.serializeUrl(last) : null;
   }
 
   private restartUndoTimer(sessionId: number): void {

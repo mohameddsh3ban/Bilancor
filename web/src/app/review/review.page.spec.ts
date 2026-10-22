@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
@@ -69,6 +70,30 @@ describe('ReviewPage', () => {
     harness.detectChanges();
   }
 
+  /**
+   * Opens `/review` the way a link does, from a page of the app (one more entry in the browser history), and has the router
+   * follow the browser's Back as it does in the running app.
+   */
+  async function openFrom(from: string): Promise<void> {
+    harness = await RouterTestingHarness.create(from);
+    await harness.navigateByUrl('/review');
+    TestBed.inject(Router).initialNavigation();
+    el = harness.routeNativeElement as HTMLElement;
+    harness.detectChanges();
+  }
+
+  /** Lets a step in the browser history finish: the router follows it a moment later. */
+  async function settleHistory(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve));
+    await settle();
+  }
+
+  /** The phone's back gesture: one step back in the browser history. */
+  async function historyBack(): Promise<void> {
+    TestBed.inject(Location).back();
+    await settleHistory();
+  }
+
   /** Lets time pass, then draws what the page made of it. */
   function play(ms: number): void {
     vi.advanceTimersByTime(ms);
@@ -110,7 +135,7 @@ describe('ReviewPage', () => {
       expect(el.querySelector('main app-review-page')).not.toBeNull();
       const layer = q('review-layer')!;
       expect(classes(layer)).toEqual(expect.arrayContaining(['fixed', 'inset-0', 'z-50']));
-      expect(text(q('card-kind'))).toBe('Payment · what was this for?');
+      expect(text(q('card-kind'))).toBe('Payment · not sorted yet');
       expect(name()).toBe('Amazon');
       expect(text(q('card-amount'))).toBe(formatMoney(-2390, 'en', { signed: true }));
       expect(text(q('card-date'))).toBe(formatDate('2026-10-02', 'en'));
@@ -126,6 +151,17 @@ describe('ReviewPage', () => {
       const layer = q('review-layer')!;
       expect(classes(layer)).toEqual(expect.arrayContaining(['bg-surface', 'lg:bg-foreground/40']));
       expect(classes(q('review-column'))).toEqual(expect.arrayContaining(['lg:max-w-md']));
+    });
+
+    it('on a computer the column sits at a fixed top, so it does not move from one card to the next', async () => {
+      await render();
+      const column = classes(q('review-column'));
+
+      // Not centred by its content (that moved ✕ and the bar whenever the card got taller or shorter).
+      expect(column).not.toContain('lg:my-auto');
+      expect(column).toEqual(expect.arrayContaining(['lg:mt-[6vh]', 'lg:mb-auto']));
+      // The phone keeps filling the screen.
+      expect(column).toEqual(expect.arrayContaining(['w-full', 'flex-1']));
     });
 
     it('is a dialog with a name, and the focus goes into it', async () => {
@@ -194,16 +230,13 @@ describe('ReviewPage', () => {
 
   describe('closing', () => {
     it('close returns to the page you came from', async () => {
-      harness = await RouterTestingHarness.create('/payments');
-      await harness.navigateByUrl('/review');
-      el = harness.routeNativeElement as HTMLElement;
-      harness.detectChanges();
+      await openFrom('/payments');
       expect(TestBed.inject(Router).url).toBe('/review');
 
       const close = q('review-close')!;
       expect(close.getAttribute('aria-label')).toBe('Close');
       close.click();
-      await settle();
+      await settleHistory();
 
       expect(TestBed.inject(Router).url).toBe('/payments');
       expect(q('review-layer')).toBeNull();
@@ -250,37 +283,108 @@ describe('ReviewPage', () => {
       });
       TestBed.inject(ReviewService);
       await render();
+      TestBed.inject(Router).initialNavigation();
 
       q('review-close')!.click();
-      await settle();
+      await settleHistory();
       expect(TestBed.inject(Router).url).toBe('/');
     });
 
+    describe('the phone’s back gesture afterwards', () => {
+      const path = () => TestBed.inject(Location).path();
+
+      it('does not open the inbox again after ✕ from a page of the app', async () => {
+        await openFrom('/payments');
+
+        q('review-close')!.click();
+        await settle();
+        expect(path()).toBe('/payments');
+
+        await historyBack();
+        expect(path()).not.toBe('/review');
+        expect(TestBed.inject(Router).url).not.toBe('/review');
+        expect(q('review-layer')).toBeNull();
+      });
+
+      it('does not open the inbox again after Escape either', async () => {
+        await openFrom('/documents');
+
+        q('review-layer')!.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+        );
+        await settle();
+        expect(path()).toBe('/documents');
+
+        await historyBack();
+        expect(path()).not.toBe('/review');
+      });
+
+      it('does not open the inbox again after the finish screen’s Back', async () => {
+        reducedMotion(true);
+        await openFrom('/documents');
+        for (let item = review.current(); item !== null; item = review.current()) {
+          settleItem(demo, item);
+        }
+        harness.detectChanges();
+
+        q('finish-back')!.click();
+        await settle();
+        expect(path()).toBe('/documents');
+
+        await historyBack();
+        expect(path()).not.toBe('/review');
+      });
+
+      it('does not open the inbox again after ✕ on a direct load, which goes home in place', async () => {
+        await render('/review'); // nothing before it in the app
+        TestBed.inject(Router).initialNavigation();
+
+        q('review-close')!.click();
+        await settle();
+        expect(TestBed.inject(Router).url).toBe('/');
+        expect(q('review-layer')).toBeNull();
+
+        await historyBack();
+        expect(path()).not.toBe('/review');
+        expect(TestBed.inject(Router).url).not.toBe('/review');
+      });
+
+      it('a second tap on ✕ while the page is still leaving does not go back twice', async () => {
+        harness = await RouterTestingHarness.create('/documents');
+        await harness.navigateByUrl('/payments');
+        await harness.navigateByUrl('/review');
+        TestBed.inject(Router).initialNavigation();
+        el = harness.routeNativeElement as HTMLElement;
+        harness.detectChanges();
+
+        const close = q('review-close')!;
+        close.click();
+        close.click();
+        await settleHistory();
+
+        expect(path()).toBe('/payments');
+      });
+    });
+
     it('Escape closes it too', async () => {
-      harness = await RouterTestingHarness.create('/documents');
-      await harness.navigateByUrl('/review');
-      el = harness.routeNativeElement as HTMLElement;
-      harness.detectChanges();
+      await openFrom('/documents');
 
       q('review-layer')!.dispatchEvent(
         new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
       );
-      await settle();
+      await settleHistory();
 
       expect(TestBed.inject(Router).url).toBe('/documents');
     });
 
     it('keeps what was answered for the next time it opens', async () => {
-      harness = await RouterTestingHarness.create('/payments');
-      await harness.navigateByUrl('/review');
-      el = harness.routeNativeElement as HTMLElement;
-      harness.detectChanges();
+      await openFrom('/payments');
       vi.useFakeTimers();
       answerAndWait();
       vi.useRealTimers();
 
       q('review-close')!.click();
-      await settle();
+      await settleHistory();
       await harness.navigateByUrl('/review');
       el = harness.routeNativeElement as HTMLElement;
       harness.detectChanges();
@@ -429,6 +533,18 @@ describe('ReviewPage', () => {
       expect(text(q('review-meta'))).toBe('1 of 6 · about 6 min left');
     });
 
+    it('on a computer the toast area floats at the bottom of the screen, so a toast never changes the height of the column', () => {
+      // Empty or not, the area is out of the column's flow on a computer; on a phone it is the sticky bottom row.
+      const area = q('review-toast-area')!;
+      expect(area.getAttribute('role')).toBe('status');
+      expect(classes(area)).toEqual(
+        expect.arrayContaining(['sticky', 'lg:fixed', 'lg:bottom-6', 'lg:max-w-md']),
+      );
+
+      answerAndWait();
+      expect(q('undo-toast')!.closest('[data-testid="review-toast-area"]')).toBe(area);
+    });
+
     it('goes away after 5 seconds', () => {
       answerAndWait();
       expect(q('undo-toast')).not.toBeNull();
@@ -506,10 +622,7 @@ describe('ReviewPage', () => {
 
     it('Back goes to the page the person came from', async () => {
       reducedMotion(true);
-      harness = await RouterTestingHarness.create('/documents');
-      await harness.navigateByUrl('/review');
-      el = harness.routeNativeElement as HTMLElement;
-      harness.detectChanges();
+      await openFrom('/documents');
       for (let item = review.current(); item !== null; item = review.current()) {
         settleItem(demo, item);
       }
@@ -517,7 +630,7 @@ describe('ReviewPage', () => {
 
       expect(q('review-finish')).not.toBeNull();
       q('finish-back')!.click();
-      await settle();
+      await settleHistory();
       expect(TestBed.inject(Router).url).toBe('/documents');
     });
 
@@ -645,7 +758,7 @@ describe('ReviewPage', () => {
       vi.useFakeTimers();
 
       expect(q('review-layer')!.getAttribute('dir')).toBe('rtl');
-      expect(text(q('card-kind'))).toBe('دفعة · لماذا كانت؟');
+      expect(text(q('card-kind'))).toBe('دفعة · لم تُصنَّف بعد');
 
       answer();
       play(TICKED);

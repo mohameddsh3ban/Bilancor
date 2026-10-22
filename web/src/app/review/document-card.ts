@@ -17,7 +17,7 @@ import type { ReviewItem } from '../domain/review-queue';
 import { DocumentPaper } from '../documents/document-paper';
 import { type DocChanges, parseDocAmount } from '../documents/document-edit-form';
 import { DemoStateService } from '../state/demo-state.service';
-import { ReviewService, type ReviewAnswerResult } from '../state/review.service';
+import { ReviewService, reviewItemKey, type ReviewAnswerResult } from '../state/review.service';
 import { ANSWERS_CLASS, ReviewCard } from './review-card';
 
 /** A document waiting for the person's decision. */
@@ -306,7 +306,7 @@ export class DocumentCard {
 
   /** Answers the current decision with `apply`, and ticks in the same breath, as the card frame asks. */
   private answer(apply: () => void, result: ReviewAnswerResult): void {
-    void this.review.answer(apply, result);
+    void this.review.answer(apply, result, reviewItemKey(this.item()));
     this.frame()?.showTick(result.labelKey);
   }
 }

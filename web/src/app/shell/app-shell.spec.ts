@@ -229,6 +229,7 @@ describe('AppShell and the review inbox', () => {
       harness.detectChanges();
     };
     const router = TestBed.inject(Router);
+    router.initialNavigation(); // the router follows the browser's history, as in the app
     expect(router.url).toBe('/payments');
 
     shell.querySelector<HTMLElement>('[data-testid="needs-you-button"]')!.click();
@@ -237,6 +238,8 @@ describe('AppShell and the review inbox', () => {
     expect(shell.querySelector('[data-testid="review-layer"]')).not.toBeNull();
 
     shell.querySelector<HTMLElement>('[data-testid="review-close"]')!.click();
+    // Closing steps back in the browser history, which the router follows a moment later.
+    await new Promise((resolve) => setTimeout(resolve));
     await settle();
     expect(router.url).toBe('/payments');
     expect(shell.querySelector('[data-testid="review-layer"]')).toBeNull();

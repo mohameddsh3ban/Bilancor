@@ -288,6 +288,23 @@ describe('DocumentCard', () => {
     });
   });
 
+  describe('a card that is not the current decision any more', () => {
+    it('answers nothing, and its tap does not land on the card that took its place', () => {
+      vi.useFakeTimers();
+      demo.updateDocument('wd-d2', (d) => ({ ...d, direction: null }));
+      show('wd-d2');
+      const before = doc('wd-d2');
+      review.skip(); // wd-d2 goes to the end; another card is current, but this one is still on screen
+
+      click(q('answer-received'));
+      play(SAVING_MS + TICK_MS);
+
+      expect(doc('wd-d2')).toEqual(before);
+      expect(review.answered()).toBe(0);
+      expect(review.canUndo()).toBe(false);
+    });
+  });
+
   describe('Received or sent?', () => {
     beforeEach(() => {
       demo.updateDocument('wd-d2', (d) => ({ ...d, direction: null }));
@@ -295,7 +312,7 @@ describe('DocumentCard', () => {
 
     it('asks which it is, Received first', () => {
       show('wd-d2');
-      expect(text(q('card-kind'))).toBe('Document · received or sent?');
+      expect(text(q('card-kind'))).toBe('Document · type unknown');
       expect(text(q('card-question'))).toBe('Is this a bill you received or an invoice you sent?');
       expect(text(q('answer-received'))).toBe('Received');
       expect(isMain(q('answer-received'))).toBe(true);

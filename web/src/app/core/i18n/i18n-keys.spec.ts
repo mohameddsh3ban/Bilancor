@@ -18,6 +18,15 @@ describe('translation files', () => {
     expect(flatten(ar).sort()).toEqual(enKeys);
   });
 
+  it('the kind label above a review card is a short state, never a question (the card asks its own)', () => {
+    const files = { en, de, ar };
+    for (const [lang, file] of Object.entries(files)) {
+      for (const [problem, label] of Object.entries(file.review.kind)) {
+        expect(label, `${lang} review.kind.${problem}`).not.toMatch(/[?؟]/);
+      }
+    }
+  });
+
   it('has the German tax terms with label, de and explain', () => {
     for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03', 'eigenbeleg', 'eingangsbeleg', 'ausgangsbeleg']) {
       for (const part of ['label', 'de', 'explain']) {

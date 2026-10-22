@@ -106,7 +106,7 @@ type Tick =
 
       @if (tick(); as state) {
         <div
-          class="bg-card/95 absolute inset-0 flex flex-col items-center justify-center gap-2 p-5 text-center"
+          class="bg-card absolute inset-0 flex flex-col items-center justify-center gap-2 p-5 text-center"
           role="status"
           data-testid="card-tick"
         >

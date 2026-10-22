@@ -206,6 +206,21 @@ describe('ReviewCard', () => {
       expect(text(q('tick-text'))).toBe('Document · possible duplicate');
     });
 
+    it('covers the card completely, so the answers behind it never show through the result', () => {
+      const covers = () => {
+        const classes = Array.from(tick()!.classList);
+        expect(classes).toEqual(expect.arrayContaining(['absolute', 'inset-0', 'bg-card']));
+        expect(classes.filter((c) => c.startsWith('bg-card/'))).toEqual([]); // opaque, not bg-card/95
+      };
+      host.frame().showTick('review.kind.confirm');
+      fixture.detectChanges();
+      covers(); // while it says Saving…
+
+      advance(SAVING_MS);
+      expect(q('tick-check')).not.toBeNull();
+      covers(); // and with the tick
+    });
+
     it('translates the result with its values', () => {
       host.frame().showTick('review.finish.decisions.many', { count: '4' });
       advance(SAVING_MS);

@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,9 +22,11 @@ import { ReviewStage } from './review-stage';
 
 /**
  * The review inbox (`/review`): the person's decisions one card at a time. A full-screen layer over the app on a phone;
- * on a computer the same cards in a centred column over a dimmed page. Top: ✕, a progress bar and how far along and how
- * long it takes. Then the current card (or the finish screen when nothing is left), and at the bottom Undo for a few
- * seconds after each answer. ✕ and Back return to the page the person came from; what was answered is already saved.
+ * on a computer the same cards in a column over a dimmed page, at a fixed distance from the top so that ✕ and the progress
+ * bar stay where they are from one card to the next. Top: ✕, a progress bar and how far along and how long it takes. Then
+ * the current card (or the finish screen when nothing is left), and Undo for a few seconds after each answer: the bottom
+ * row of the column on a phone, floating at the bottom of the screen on a computer so that it never moves the card.
+ * ✕ and Back return to the page the person came from; what was answered is already saved.
  */
 @Component({
   selector: 'app-review-page',
@@ -47,7 +49,7 @@ import { ReviewStage } from './review-stage';
       [attr.aria-label]="'review.title' | transloco"
     >
       <div
-        class="lg:bg-surface flex w-full flex-1 flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:my-auto lg:max-w-md lg:flex-none lg:rounded-2xl lg:p-5 lg:shadow-xl"
+        class="lg:bg-surface flex w-full flex-1 flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:mt-[6vh] lg:mb-auto lg:max-w-md lg:flex-none lg:rounded-2xl lg:p-5 lg:shadow-xl"
         data-testid="review-column"
       >
         <div class="flex items-center gap-3">
@@ -105,7 +107,11 @@ import { ReviewStage } from './review-stage';
           }
         </div>
 
-        <div class="sticky bottom-0 mt-auto" role="status">
+        <div
+          class="sticky bottom-0 mt-auto lg:fixed lg:inset-x-0 lg:bottom-6 lg:mx-auto lg:max-w-md lg:px-5"
+          role="status"
+          data-testid="review-toast-area"
+        >
           @if (review.canUndo()) {
             @let answer = review.lastAnswer();
             @if (answer) {
@@ -138,6 +144,7 @@ export class ReviewPage {
   protected readonly stage = inject(ReviewStage);
   protected readonly language = inject(LanguageService);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly doc = inject(DOCUMENT);
 
   private readonly layer = viewChild.required<ElementRef<HTMLElement>>('layer');
@@ -183,9 +190,24 @@ export class ReviewPage {
     if (!event.defaultPrevented) this.close();
   }
 
-  /** Leaves for the page the person came from. Not while an answer is being made: it would be lost half way. */
+  /** Going back has been asked for and the browser has not answered yet. */
+  private leaving = false;
+
+  /**
+   * Leaves for the page the person came from. Not while an answer is being made: it would be lost half way.
+   *
+   * The page was opened on top of the one it returns to, so leaving steps back in the browser history: then the phone's
+   * back gesture goes on to the page before it, and does not open the inbox again. A direct load has nothing under it:
+   * there the page is swapped for the return page in place, with the same result.
+   */
   protected close(): void {
-    if (this.review.pending()) return;
-    void this.router.navigateByUrl(this.review.returnUrl());
+    if (this.review.pending() || this.leaving) return;
+    if (this.review.cameFromReturnUrl()) {
+      // A second tap before the browser has moved would step back past the page we want.
+      this.leaving = true;
+      this.location.back();
+    } else {
+      void this.router.navigateByUrl(this.review.returnUrl(), { replaceUrl: true });
+    }
   }
 }

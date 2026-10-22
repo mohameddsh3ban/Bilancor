@@ -496,11 +496,11 @@
     "saving": "Saving…",
     "undo": "Undo",
     "kind": {
-      "unclear": "Payment · what was this for?",
+      "unclear": "Payment · not sorted yet",
       "confirm": "Payment · please confirm",
       "noReceipt": "Payment · receipt missing",
       "duplicate": "Document · possible duplicate",
-      "direction": "Document · received or sent?",
+      "direction": "Document · type unknown",
       "checkAmount": "Document · check the amount",
       "checkDate": "Document · check the date",
       "checkName": "Document · check the name"

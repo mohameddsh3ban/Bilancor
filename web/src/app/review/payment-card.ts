@@ -25,7 +25,7 @@ import { CategoryPicker } from '../payments/category-picker';
 import { DocumentPicker } from '../payments/document-picker';
 import { isolateText } from '../payments/payment-history';
 import { DemoStateService } from '../state/demo-state.service';
-import { ReviewService, type ReviewAnswerResult } from '../state/review.service';
+import { ReviewService, reviewItemKey, type ReviewAnswerResult } from '../state/review.service';
 import { UploadService } from '../state/upload.service';
 import { ANSWERS_CLASS, ReviewCard, type TickNote } from './review-card';
 
@@ -197,6 +197,9 @@ export class PaymentCard {
     () => !this.demo.business().documents.some((doc) => doc.paymentId === this.item().id),
   );
 
+  /** What names this card to the review service, so an answer given here never lands on another card. */
+  private readonly key = computed(() => reviewItemKey(this.item()));
+
   /** A photo is being read for this payment (taken here, or on the payment's own page). */
   protected readonly reading = computed(() => this.upload.readingFor() === this.item().id);
 
@@ -211,15 +214,19 @@ export class PaymentCard {
     const rule = counterpartyKey(tx.counterparty);
     // `learnedBookedCount` is filled in while the answer is applied; the service reads it when it records the answer.
     const result: ReviewAnswerResult = { labelKey: 'review.result.booked' };
-    void this.review.answer(() => {
-      this.demo.updateTransaction(tx.id, (current) => changeCategory(current, booking));
-      if (rule !== '') {
-        result.learnedBookedCount = this.demo.addRule(
-          { counterpartyKey: rule, booking },
-          tx.id,
-        ).length;
-      }
-    }, result);
+    void this.review.answer(
+      () => {
+        this.demo.updateTransaction(tx.id, (current) => changeCategory(current, booking));
+        if (rule !== '') {
+          result.learnedBookedCount = this.demo.addRule(
+            { counterpartyKey: rule, booking },
+            tx.id,
+          ).length;
+        }
+      },
+      result,
+      this.key(),
+    );
     const notes = rule === '' ? [] : this.learnedNotes(tx.counterparty, booking, result);
     this.frame()?.showTick(result.labelKey, {}, notes);
   }
@@ -284,10 +291,14 @@ export class PaymentCard {
       counts: 'receipt',
     };
     this.review
-      .answer(async () => {
-        const outcome = await this.upload.addPhotoFor(tx.id);
-        if (outcome !== 'linked') throw new Error('photo dropped');
-      }, result)
+      .answer(
+        async () => {
+          const outcome = await this.upload.addPhotoFor(tx.id);
+          if (outcome !== 'linked') throw new Error('photo dropped');
+        },
+        result,
+        this.key(),
+      )
       .then(
         () => this.frame()?.showTick(result.labelKey),
         () => undefined,
@@ -296,7 +307,7 @@ export class PaymentCard {
 
   /** Answers the current decision with `apply`, and ticks in the same breath, as the card frame asks. */
   private answer(apply: () => void, labelKey: string, counts?: ReviewAnswerResult['counts']): void {
-    void this.review.answer(apply, { labelKey, counts });
+    void this.review.answer(apply, { labelKey, counts }, this.key());
     this.frame()?.showTick(labelKey);
   }
 

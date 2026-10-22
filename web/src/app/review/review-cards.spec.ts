@@ -184,7 +184,7 @@ describe('the review cards on the page', () => {
     await render();
     vi.useFakeTimers();
     const card = q('review-card-host')!;
-    expect(text(q('card-kind'))).toBe('Document · received or sent?');
+    expect(text(q('card-kind'))).toBe('Document · type unknown');
     expect(text(q('review-meta'))).toBe('1 of 1 · about 1 min left');
 
     click('answer-received');
@@ -246,9 +246,11 @@ describe('the review cards on the page', () => {
 
   it('Escape closes the page once no list is open', async () => {
     await render();
+    TestBed.inject(Router).initialNavigation(); // the router follows the browser's history, as in the app
     q('review-layer')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
     );
+    await new Promise((resolve) => setTimeout(resolve)); // the step back in history arrives a moment later
     await settle();
     expect(url()).toBe('/payments');
   });

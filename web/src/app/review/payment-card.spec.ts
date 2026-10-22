@@ -81,7 +81,7 @@ describe('PaymentCard', () => {
     it('asks what the payment was for and offers its three categories, the likeliest as the main button', () => {
       show('wd-t4');
 
-      expect(text(q('card-kind'))).toBe('Payment · what was this for?');
+      expect(text(q('card-kind'))).toBe('Payment · not sorted yet');
       expect(text(q('card-question'))).toBe('What was this for?');
       const suggestions = all('answer-suggestion');
       expect(suggestions.map(text)).toEqual([
@@ -254,6 +254,23 @@ describe('PaymentCard', () => {
       demo.setBusiness('sara-yoga');
       show('sy-t7');
       expect(all('answer-suggestion').map(text)).toEqual(['Supplies', 'Other business costs']);
+    });
+  });
+
+  describe('a card that is not the current decision any more', () => {
+    it('answers nothing, and its tap does not land on the card that took its place', () => {
+      vi.useFakeTimers();
+      show('wd-t4');
+      const before = tx('wd-t4');
+      review.skip(); // wd-t4 goes to the end; another card is current, but this one is still on screen
+
+      click(all('answer-suggestion')[0]);
+      play(SAVING_MS + TICK_MS);
+
+      expect(tx('wd-t4')).toEqual(before);
+      expect(review.answered()).toBe(0);
+      expect(review.canUndo()).toBe(false);
+      expect(queueLength()).toBe(6);
     });
   });
 

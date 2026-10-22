@@ -496,11 +496,11 @@
     "saving": "Wird gespeichert…",
     "undo": "Rückgängig",
     "kind": {
-      "unclear": "Zahlung · wofür war das?",
+      "unclear": "Zahlung · noch nicht sortiert",
       "confirm": "Zahlung · bitte bestätigen",
       "noReceipt": "Zahlung · Beleg fehlt",
       "duplicate": "Dokument · mögliches Duplikat",
-      "direction": "Dokument · erhalten oder gesendet?",
+      "direction": "Dokument · Art unbekannt",
       "checkAmount": "Dokument · Betrag prüfen",
       "checkDate": "Dokument · Datum prüfen",
       "checkName": "Dokument · Name prüfen"

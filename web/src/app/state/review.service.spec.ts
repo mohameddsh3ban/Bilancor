@@ -7,7 +7,7 @@ import { changeCategory, confirmBooking, markNoReceiptNeeded } from '../domain/p
 import { paymentStatus } from '../domain/payment-status';
 import { READING_MS } from '../domain/document-upload';
 import { DemoStateService } from './demo-state.service';
-import { ReviewService, UNDO_MS } from './review.service';
+import { ReviewService, UNDO_MS, reviewItemKey } from './review.service';
 import { UploadService } from './upload.service';
 
 const ANSWER = { labelKey: 'review.answered.booked' };
@@ -214,6 +214,85 @@ describe('ReviewService', () => {
     expect(review.position()).toBe(0);
     expect(review.total()).toBe(0);
     expect(review.minutesLeft()).toBe(1);
+  });
+
+  describe('an answer that names its card', () => {
+    it('is applied while that card is the current one', () => {
+      const item = review.current()!;
+      const apply = vi.fn(() => settle(item));
+
+      review.answer(apply, ANSWER, reviewItemKey(item));
+
+      expect(apply).toHaveBeenCalledOnce();
+      expect(review.answered()).toBe(1);
+    });
+
+    it('does nothing once another card is current', () => {
+      const staleKey = reviewItemKey(review.current()!);
+      categorise('wd-t18'); // wd-t17 is current now
+      const apply = vi.fn();
+
+      review.answer(apply, { labelKey: 'review.answered.stale' }, staleKey);
+
+      expect(apply).not.toHaveBeenCalled();
+      expect(currentId()).toBe('wd-t17');
+      expect(review.answered()).toBe(1);
+      expect(review.lastAnswer()).toEqual(ANSWER); // still the answer before
+      expect(review.pending()).toBe(false);
+    });
+
+    it('does nothing for a card that was skipped and is not current any more', () => {
+      const first = reviewItemKey(review.current()!);
+      review.skip(); // wd-t17 is current, wd-t18 is at the end
+      const apply = vi.fn();
+
+      review.answer(apply, ANSWER, first);
+
+      expect(apply).not.toHaveBeenCalled();
+      expect(review.answered()).toBe(0);
+      expect(review.canUndo()).toBe(false);
+    });
+
+    it('does nothing, and does not start waiting, when the answer would take time', async () => {
+      const staleKey = reviewItemKey(review.current()!);
+      categorise('wd-t18');
+      const apply = vi.fn(() => new Promise<void>(() => undefined));
+
+      await review.answer(apply, ANSWER, staleKey);
+
+      expect(apply).not.toHaveBeenCalled();
+      expect(review.pending()).toBe(false);
+    });
+
+    it('is still the same card after its first problem is answered', () => {
+      demo.updateTransaction('wd-t3', (tx) => ({ ...tx, confirmed: false }));
+      answerFirstThree();
+      const key = reviewItemKey(review.current()!); // wd-t3, which has two problems
+
+      review.answer(() => demo.updateTransaction('wd-t3', confirmBooking), ANSWER, key);
+      expect(review.current()).toMatchObject({ id: 'wd-t3', problem: 'noReceipt' });
+
+      review.answer(() => demo.updateTransaction('wd-t3', markNoReceiptNeeded), ANSWER, key);
+      expect(currentId()).toBe('wd-t1');
+      expect(review.answered()).toBe(4);
+    });
+
+    it('an answer without a key still goes to whatever is current', () => {
+      categorise('wd-t18');
+      const apply = vi.fn(() => settle(review.current()!));
+
+      review.answer(apply, ANSWER);
+
+      expect(apply).toHaveBeenCalledOnce();
+      expect(review.answered()).toBe(2);
+    });
+
+    it('names a card by its kind and id', () => {
+      expect(reviewItemKey(review.current()!)).toBe('payment:wd-t18');
+      expect(
+        reviewItemKey({ kind: 'document', id: 'wd-d1', date: '2026-10-01', problem: 'duplicate' }),
+      ).toBe('document:wd-d1');
+    });
   });
 
   it('undo restores the change and the counters', () => {
@@ -677,5 +756,67 @@ describe('ReviewService returnUrl', () => {
   it('is / when the service starts on a review page', async () => {
     await router.navigateByUrl('/review');
     expect(TestBed.inject(ReviewService).returnUrl()).toBe('/');
+  });
+
+  describe('cameFromReturnUrl (the page just before /review in the browser history)', () => {
+    it('is false until /review has been opened', async () => {
+      const review = TestBed.inject(ReviewService);
+      expect(review.cameFromReturnUrl()).toBe(false);
+      await router.navigateByUrl('/payments');
+      expect(review.cameFromReturnUrl()).toBe(false);
+    });
+
+    it('is true when /review is opened from a page in the app', async () => {
+      const review = TestBed.inject(ReviewService);
+      await router.navigateByUrl('/payments');
+      await router.navigateByUrl('/review');
+
+      expect(review.cameFromReturnUrl()).toBe(true);
+      expect(review.returnUrl()).toBe('/payments');
+    });
+
+    it('is false when /review is the first page, a direct load', async () => {
+      const review = TestBed.inject(ReviewService);
+      await router.navigateByUrl('/review');
+
+      expect(review.cameFromReturnUrl()).toBe(false);
+      expect(review.returnUrl()).toBe('/');
+    });
+
+    it('stays true while the person moves inside /review', async () => {
+      const review = TestBed.inject(ReviewService);
+      await router.navigateByUrl('/documents');
+      await router.navigateByUrl('/review');
+      await router.navigateByUrl('/review/anything');
+
+      expect(review.cameFromReturnUrl()).toBe(true);
+    });
+
+    it('is false again once the person has left, and true for the next visit from another page', async () => {
+      const review = TestBed.inject(ReviewService);
+      await router.navigateByUrl('/payments');
+      await router.navigateByUrl('/review');
+      await router.navigateByUrl('/documents');
+      expect(review.cameFromReturnUrl()).toBe(false);
+
+      await router.navigateByUrl('/review');
+      expect(review.cameFromReturnUrl()).toBe(true);
+      expect(review.returnUrl()).toBe('/documents');
+    });
+
+    it('knows the page before it when the service starts late', async () => {
+      await router.navigateByUrl('/documents');
+      const review = TestBed.inject(ReviewService);
+
+      await router.navigateByUrl('/review');
+      expect(review.cameFromReturnUrl()).toBe(true);
+    });
+
+    it('is false when the service starts late, on /review itself', async () => {
+      await router.navigateByUrl('/documents');
+      await router.navigateByUrl('/review');
+
+      expect(TestBed.inject(ReviewService).cameFromReturnUrl()).toBe(false);
+    });
   });
 });
