@@ -5,12 +5,14 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { Term } from '../core/i18n/term';
+import { vatReturnDue } from '../domain/tax-details';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService } from '../state/review.service';
 
 /**
  * What the review inbox says when nothing is left: a check, "All done", one line about what was done (decisions, and
- * receipts added and duplicates removed when there were any), the next VAT return for a business that has one, and Back.
+ * receipts added and duplicates removed when there were any), the date of the next VAT return when the business has
+ * one, and Back.
  */
 @Component({
   selector: 'app-review-finish',
@@ -42,10 +44,10 @@ import { ReviewService } from '../state/review.service';
         }
       </p>
     }
-    @if (vatDue(); as vat) {
+    @if (vatDue(); as date) {
       <p class="text-sm font-medium" data-testid="finish-vat">
         <app-term key="ustva" /> ·
-        {{ 'review.finish.vatDue' | transloco: { date: (vat.dueDate | appDate) } }}
+        {{ 'review.finish.vatDue' | transloco: { date: (date | appDate) } }}
       </p>
     }
     <button hlmBtn size="lg" class="mt-2 min-w-32" data-testid="finish-back" (click)="back.emit()">
@@ -60,7 +62,11 @@ export class ReviewFinish {
   /** The person is done and wants to leave. */
   readonly back = output<void>();
 
-  protected readonly vatDue = computed(() => this.demo.business().vatDue);
+  /** The next VAT return's date, from the tax answers like the homepage card; null for a yearly return or a Kleinunternehmer. */
+  protected readonly vatDue = computed(() => {
+    const due = vatReturnDue(this.demo.business().taxProfile);
+    return due?.kind === 'date' ? due.date : null;
+  });
 
   /**
    * The line "6 decisions · 1 receipt added · 1 duplicate removed" as its parts (a translation key and a count). A part
