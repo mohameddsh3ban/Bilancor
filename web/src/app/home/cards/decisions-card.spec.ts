@@ -26,10 +26,18 @@ describe('DecisionsCard', () => {
   });
 
   it('uses the singular for one decision', () => {
-    const el = render('sara-yoga');
-    expect(el.textContent).toContain('1 thing needs your decision');
-    expect(el.textContent).toContain('about 1 minute');
-    expect(el.textContent).not.toContain('1 minutes');
+    // The sample data is shared between tests, so put the payments back afterwards.
+    const business = TestBed.inject(DemoStateService).businesses.find((b) => b.id === 'sara-yoga')!;
+    const all = business.transactions;
+    business.transactions = all.filter((t) => t.id !== 'sy-t7' && t.id !== 'sy-t8');
+    try {
+      const el = render('sara-yoga');
+      expect(el.textContent).toContain('1 thing needs your decision');
+      expect(el.textContent).toContain('about 1 minute');
+      expect(el.textContent).not.toContain('1 minutes');
+    } finally {
+      business.transactions = all;
+    }
   });
 
   it('shows the all-clear text and no Start link when nothing is open', () => {

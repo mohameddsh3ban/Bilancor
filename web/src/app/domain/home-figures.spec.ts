@@ -15,8 +15,15 @@ const tx = (id: string, date: string): Transaction => ({
   counterparty: id,
   accountId: 'a',
   amountCents: 100,
-  status: 'booked',
   booking: null,
+  confirmed: true,
+  isPrivate: false,
+  receipt: 'notNeeded',
+  receiptFile: null,
+  counterpartyIban: 'DE02100100100123456789',
+  reference: id,
+  history: [],
+  beforePrivate: null,
 });
 
 describe('home figures', () => {

@@ -100,9 +100,15 @@
     }
   },
   "booking": {
+    "advertising": "Werbekosten",
+    "consulting": "Rechts- und Beratungskosten",
     "goods7": "Wareneinkauf (7 % USt)",
+    "insurance": "Versicherungen",
+    "office": "Bürobedarf",
     "otherCosts": "Sonstige Betriebskosten",
     "phone": "Telefon & Internet",
+    "privateIn": "Privateinlagen",
+    "privateOut": "Privatentnahmen",
     "rent": "Miete",
     "revenue19": "Einnahmen (19 % USt)",
     "revenue7": "Einnahmen (7 % USt)",
@@ -110,8 +116,18 @@
     "salaries": "Gehälter",
     "software": "Software & Wartung",
     "supplies": "Betriebsbedarf",
+    "training": "Fortbildungskosten",
     "travel": "Reisen",
     "utilities": "Nebenkosten"
+  },
+  "history": {
+    "imported": "Importiert von {{account}}",
+    "autoBooked": "Automatisch als {{category}} gebucht",
+    "confirmed": "Du hast {{category}} bestätigt",
+    "receiptNotNeeded": "Du hast markiert: kein Beleg nötig",
+    "categoryChanged": "Du hast die Kategorie auf {{category}} geändert",
+    "markedPrivate": "Du hast es als privat markiert",
+    "markedBusiness": "Du hast es als geschäftlich markiert"
   },
   "home": {
     "notices": {

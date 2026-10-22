@@ -10,6 +10,7 @@ import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
 import { homeCards } from '../../domain/home-cards';
 import { decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
+import { needsYouCount } from '../../domain/payment-status';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
@@ -40,8 +41,8 @@ import { RevenueTracker } from './revenue-tracker';
           <h2 hlmCardTitle>{{ 'home.tiles.decisions' | transloco }}</h2>
         </header>
         <div hlmCardContent class="flex flex-col gap-3">
-          @if (business().decisionsOpen > 0) {
-            <p class="text-3xl font-semibold">{{ business().decisionsOpen }}</p>
+          @if (decisions() > 0) {
+            <p class="text-3xl font-semibold">{{ decisions() }}</p>
             <p class="text-muted-foreground text-xs">
               {{
                 (minutes() === 1 ? 'home.decisions.minutesOne' : 'home.decisions.minutes')
@@ -130,6 +131,7 @@ export class KeyNumbers {
 
   protected readonly business = this.demo.business;
   protected readonly cards = computed(() => homeCards(this.demo.setup()));
-  protected readonly minutes = computed(() => decisionMinutes(this.business().decisionsOpen));
+  protected readonly decisions = computed(() => needsYouCount(this.business().transactions));
+  protected readonly minutes = computed(() => decisionMinutes(this.decisions()));
   protected readonly total = computed(() => totalAvailableCents(this.business().accounts));
 }

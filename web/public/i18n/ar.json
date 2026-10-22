@@ -100,9 +100,15 @@
     }
   },
   "booking": {
+    "advertising": "الإعلان",
+    "consulting": "استشارات قانونية ومهنية",
     "goods7": "شراء بضائع (ضريبة 7%)",
+    "insurance": "التأمين",
+    "office": "مستلزمات مكتبية",
     "otherCosts": "مصاريف تشغيلية أخرى",
     "phone": "الهاتف والإنترنت",
+    "privateIn": "إيداع خاص",
+    "privateOut": "سحب خاص",
     "rent": "الإيجار",
     "revenue19": "إيرادات (ضريبة 19%)",
     "revenue7": "إيرادات (ضريبة 7%)",
@@ -110,8 +116,18 @@
     "salaries": "الرواتب",
     "software": "البرمجيات والصيانة",
     "supplies": "مستلزمات",
+    "training": "التدريب",
     "travel": "السفر",
     "utilities": "المرافق (غاز وكهرباء وماء)"
+  },
+  "history": {
+    "imported": "تم الاستيراد من {{account}}",
+    "autoBooked": "تم الترحيل تلقائيًا كـ {{category}}",
+    "confirmed": "أكدت {{category}}",
+    "receiptNotNeeded": "حددت: لا حاجة إلى إيصال",
+    "categoryChanged": "غيّرت الفئة إلى {{category}}",
+    "markedPrivate": "حددتها كدفعة خاصة",
+    "markedBusiness": "حددتها كدفعة تجارية"
   },
   "home": {
     "notices": {

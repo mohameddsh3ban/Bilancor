@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { formatMoney } from '../../core/format/format';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
+import { needsYouCount } from '../../domain/payment-status';
 import { DemoStateService } from '../../state/demo-state.service';
 import { KeyNumbers } from './key-numbers';
 
@@ -34,7 +35,7 @@ describe('KeyNumbers', () => {
   it('decisions tile shows the count and a Start button', () => {
     const el = render();
     const t = tile(el, 'decisions')!;
-    expect(t.textContent).toContain(String(demo.business().decisionsOpen));
+    expect(t.textContent).toContain(String(needsYouCount(demo.business().transactions)));
     const start = t.querySelector('a')!;
     expect(start.textContent).toContain('Start');
     expect(start.getAttribute('href')).toBe('/soon/decisions');

@@ -1,31 +1,69 @@
-import { Booking, Business, Person } from './models';
+import {
+  ADVERTISING,
+  GOODS_7,
+  OTHER_COSTS,
+  PHONE,
+  PRIVATE_OUT,
+  RENT,
+  REVENUE_19,
+  REVENUE_7,
+  REVENUE_KU,
+  SALARIES,
+  SOFTWARE,
+  SUPPLIES,
+  TRAVEL,
+  UTILITIES,
+} from './categories';
+import { Account, Booking, Business, HistoryEntry, Person, ReceiptState, Transaction } from './models';
 
-// All people, businesses and amounts below are invented. Amounts are integer cents.
+// All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
 
-const REVENUE_19: Booking = { skr03: '8400', nameDe: 'Erlöse 19 % USt', labelKey: 'revenue19' };
-const REVENUE_7: Booking = { skr03: '8300', nameDe: 'Erlöse 7 % USt', labelKey: 'revenue7' };
-const REVENUE_KU: Booking = {
-  skr03: '8195',
-  nameDe: 'Erlöse als Kleinunternehmer i.S.d. § 19 Abs. 1 UStG',
-  labelKey: 'revenueKU',
-};
-const PHONE: Booking = { skr03: '4920', nameDe: 'Telefon', labelKey: 'phone' };
-const TRAVEL: Booking = { skr03: '4670', nameDe: 'Reisekosten Unternehmer', labelKey: 'travel' };
-const SOFTWARE: Booking = {
-  skr03: '4806',
-  nameDe: 'Wartungskosten für Hard- und Software',
-  labelKey: 'software',
-};
-const OTHER_COSTS: Booking = {
-  skr03: '4900',
-  nameDe: 'Sonstige betriebliche Aufwendungen',
-  labelKey: 'otherCosts',
-};
-const RENT: Booking = { skr03: '4210', nameDe: 'Miete (unbewegliche Wirtschaftsgüter)', labelKey: 'rent' };
-const SUPPLIES: Booking = { skr03: '4980', nameDe: 'Sonstiger Betriebsbedarf', labelKey: 'supplies' };
-const GOODS_7: Booking = { skr03: '3300', nameDe: 'Wareneingang 7 % Vorsteuer', labelKey: 'goods7' };
-const UTILITIES: Booking = { skr03: '4240', nameDe: 'Gas, Strom, Wasser', labelKey: 'utilities' };
-const SALARIES: Booking = { skr03: '4120', nameDe: 'Gehälter', labelKey: 'salaries' };
+/** What one sample payment needs to say; `pay()` fills in the rest. */
+interface PaySpec {
+  id: string;
+  date: string;
+  who: string;
+  acct: Account;
+  cents: number;
+  booking: Booking | null;
+  iban: string;
+  ref: string;
+  confirmed?: boolean; // default true
+  receipt?: ReceiptState; // default 'attached'
+  file?: string; // default beleg-<id>.pdf
+  priv?: boolean;
+}
+
+/** A payment as the bank import would have created it, with its history so far. */
+function pay(p: PaySpec): Transaction {
+  const receipt = p.receipt ?? 'attached';
+  const history: HistoryEntry[] = [{ date: p.date, key: 'imported', params: { account: p.acct.name } }];
+  if (p.booking) history.push({ date: p.date, key: 'autoBooked', params: { category: p.booking.labelKey } });
+  if (p.priv) history.push({ date: p.date, key: 'markedPrivate', params: {} });
+  return {
+    id: p.id,
+    date: p.date,
+    counterparty: p.who,
+    accountId: p.acct.id,
+    amountCents: p.cents,
+    booking: p.booking,
+    confirmed: p.confirmed ?? true,
+    isPrivate: p.priv ?? false,
+    receipt,
+    receiptFile: receipt === 'attached' ? (p.file ?? `beleg-${p.id}.pdf`) : null,
+    counterpartyIban: p.iban,
+    reference: p.ref,
+    history,
+    beforePrivate: null,
+  };
+}
+
+const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21' };
+const WD_CASH: Account = { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14' };
+const SY_QONTO: Account = { id: 'sy-qonto', kind: 'bank', name: 'Qonto', balanceCents: 642075, lastUpdate: '2026-10-21' };
+const CL_QONTO: Account = { id: 'cl-qonto', kind: 'bank', name: 'Qonto', balanceCents: 2315040, lastUpdate: '2026-10-21' };
+const CL_SPARKASSE: Account = { id: 'cl-sparkasse', kind: 'bank', name: 'Sparkasse', balanceCents: 874512, lastUpdate: '2026-10-20' };
+const CL_CASH: Account = { id: 'cl-cash', kind: 'cash', name: 'Cash box', balanceCents: 41230, lastUpdate: '2026-10-21' };
 
 export const PERSON: Person = {
   id: 'p1',
@@ -39,19 +77,25 @@ export const BUSINESSES: Business[] = [
     id: 'weber-design',
     name: 'Weber Design',
     taxProfile: { kleinunternehmer: false, vatPeriod: 'monthly' },
-    accounts: [
-      { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21' },
-      { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14' },
-    ],
+    accounts: [WD_QONTO, WD_CASH],
     transactions: [
-      { id: 'wd-t1', date: '2026-10-20', counterparty: 'Müller GmbH', accountId: 'wd-qonto', amountCents: 150000, status: 'confirm', booking: REVENUE_19 },
-      { id: 'wd-t2', date: '2026-10-19', counterparty: 'Telekom', accountId: 'wd-qonto', amountCents: -3995, status: 'booked', booking: PHONE },
-      { id: 'wd-t3', date: '2026-10-17', counterparty: 'Deutsche Bahn', accountId: 'wd-qonto', amountCents: -12000, status: 'noReceipt', booking: TRAVEL },
-      { id: 'wd-t4', date: '2026-10-15', counterparty: 'Amazon', accountId: 'wd-qonto', amountCents: -4900, status: 'unclear', booking: null },
-      { id: 'wd-t5', date: '2026-10-12', counterparty: 'Adobe', accountId: 'wd-qonto', amountCents: -5949, status: 'booked', booking: SOFTWARE },
-      { id: 'wd-t6', date: '2026-10-13', counterparty: 'Rundfunk ARD, ZDF und Deutschlandradio Beitragsservice', accountId: 'wd-qonto', amountCents: -5508, status: 'booked', booking: OTHER_COSTS },
+      pay({ id: 'wd-t1', date: '2026-10-20', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, confirmed: false, iban: 'DE68210501700012345678', ref: 'RE-2026-041' }),
+      pay({ id: 'wd-t2', date: '2026-10-19', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0712, Mobilfunk Oktober', file: 'telekom-rechnung-oktober.pdf' }),
+      pay({ id: 'wd-t3', date: '2026-10-17', who: 'Deutsche Bahn', acct: WD_QONTO, cents: -12000, booking: TRAVEL, receipt: 'missing', iban: 'DE35100100100098765432', ref: 'Fahrkarte Berlin-Hamburg, Buchung 8841' }),
+      pay({ id: 'wd-t4', date: '2026-10-15', who: 'Amazon', acct: WD_QONTO, cents: -4900, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-1182733-5561', file: 'amazon-bestellung-5561.pdf' }),
+      pay({ id: 'wd-t5', date: '2026-10-12', who: 'Adobe', acct: WD_QONTO, cents: -5949, booking: SOFTWARE, iban: 'DE47200400600150222900', ref: 'Creative Cloud, Rechnung IEE2026-77410' }),
+      pay({ id: 'wd-t6', date: '2026-10-13', who: 'Rundfunk ARD, ZDF und Deutschlandradio Beitragsservice', acct: WD_QONTO, cents: -5508, booking: OTHER_COSTS, iban: 'DE44370501980000020101', ref: 'Beitragsnummer 123 456 789, Quartal 4' }),
+      pay({ id: 'wd-t7', date: '2026-10-09', who: 'Atelier Sommer GmbH', acct: WD_QONTO, cents: 297500, booking: REVENUE_19, iban: 'DE72120300000011223344', ref: 'RE-2026-043' }),
+      pay({ id: 'wd-t8', date: '2026-10-05', who: 'Coworking Mitte', acct: WD_QONTO, cents: -35700, booking: RENT, iban: 'DE29100500000190876543', ref: 'Miete Arbeitsplatz Oktober' }),
+      pay({ id: 'wd-t9', date: '2026-09-26', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, iban: 'DE68210501700012345678', ref: 'RE-2026-038' }),
+      pay({ id: 'wd-t10', date: '2026-09-22', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0689, Mobilfunk September' }),
+      pay({ id: 'wd-t11', date: '2026-09-15', who: 'Atelier Sommer GmbH', acct: WD_QONTO, cents: 178500, booking: REVENUE_19, iban: 'DE72120300000011223344', ref: 'RE-2026-036' }),
+      pay({ id: 'wd-t12', date: '2026-09-05', who: 'Coworking Mitte', acct: WD_QONTO, cents: -35700, booking: RENT, iban: 'DE29100500000190876543', ref: 'Miete Arbeitsplatz September' }),
+      pay({ id: 'wd-t13', date: '2026-08-28', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, iban: 'DE68210501700012345678', ref: 'RE-2026-031' }),
+      pay({ id: 'wd-t14', date: '2026-08-21', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0655, Mobilfunk August' }),
+      pay({ id: 'wd-t15', date: '2026-08-14', who: 'Edeka Markt Prenzlauer Berg', acct: WD_CASH, cents: -6430, booking: PRIVATE_OUT, receipt: 'notNeeded', priv: true, iban: 'DE63100900001234567890', ref: 'Einkauf bar' }),
+      pay({ id: 'wd-t16', date: '2026-08-05', who: 'Coworking Mitte', acct: WD_QONTO, cents: -35700, booking: RENT, iban: 'DE29100500000190876543', ref: 'Miete Arbeitsplatz August' }),
     ],
-    decisionsOpen: 3,
     vatDue: { dueDate: '2026-11-10', amountCents: 184200 },
     incomeTaxReserveCents: 320000,
     revenueThisYearCents: 4860000,
@@ -69,18 +113,23 @@ export const BUSINESSES: Business[] = [
     id: 'sara-yoga',
     name: 'Sara Weber Yoga',
     taxProfile: { kleinunternehmer: true, vatPeriod: null },
-    accounts: [
-      { id: 'sy-qonto', kind: 'bank', name: 'Qonto', balanceCents: 642075, lastUpdate: '2026-10-21' },
-    ],
+    accounts: [SY_QONTO],
     transactions: [
-      { id: 'sy-t1', date: '2026-10-19', counterparty: 'Studio Mitte, Kursgebühren Oktober', accountId: 'sy-qonto', amountCents: 96000, status: 'booked', booking: REVENUE_KU },
-      { id: 'sy-t2', date: '2026-10-16', counterparty: 'Anna Keller, Workshop Wochenende', accountId: 'sy-qonto', amountCents: 18500, status: 'confirm', booking: REVENUE_KU },
-      { id: 'sy-t3', date: '2026-10-10', counterparty: 'Raumhaus Berlin', accountId: 'sy-qonto', amountCents: -35000, status: 'booked', booking: RENT },
-      { id: 'sy-t4', date: '2026-10-07', counterparty: 'Yogashop Berlin', accountId: 'sy-qonto', amountCents: -4890, status: 'booked', booking: SUPPLIES },
-      { id: 'sy-t5', date: '2026-10-02', counterparty: 'Zoom Communications', accountId: 'sy-qonto', amountCents: -1590, status: 'booked', booking: SOFTWARE },
-      { id: 'sy-t6', date: '2026-09-29', counterparty: 'Studio Mitte, Kursgebühren September', accountId: 'sy-qonto', amountCents: 96000, status: 'booked', booking: REVENUE_KU },
+      pay({ id: 'sy-t1', date: '2026-10-19', who: 'Studio Mitte, Kursgebühren Oktober', acct: SY_QONTO, cents: 96000, booking: REVENUE_KU, iban: 'DE55100700240123456780', ref: 'RE-2026-019' }),
+      pay({ id: 'sy-t2', date: '2026-10-16', who: 'Anna Keller, Workshop Wochenende', acct: SY_QONTO, cents: 18500, booking: REVENUE_KU, confirmed: false, iban: 'DE18500105175407324931', ref: 'RE-2026-020' }),
+      pay({ id: 'sy-t3', date: '2026-10-10', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete Oktober' }),
+      pay({ id: 'sy-t4', date: '2026-10-07', who: 'Yogashop Berlin', acct: SY_QONTO, cents: -4890, booking: SUPPLIES, iban: 'DE31100100106655443322', ref: 'Rechnung 22-9071, Yogamatten' }),
+      pay({ id: 'sy-t5', date: '2026-10-02', who: 'Zoom Communications', acct: SY_QONTO, cents: -1590, booking: SOFTWARE, iban: 'DE77500700100112233445', ref: 'Zoom Pro, Rechnung INV-4471182' }),
+      pay({ id: 'sy-t6', date: '2026-09-29', who: 'Studio Mitte, Kursgebühren September', acct: SY_QONTO, cents: 96000, booking: REVENUE_KU, iban: 'DE55100700240123456780', ref: 'RE-2026-016' }),
+      pay({ id: 'sy-t7', date: '2026-10-13', who: 'Decathlon Berlin', acct: SY_QONTO, cents: -7490, booking: null, iban: 'DE24100100100445566778', ref: 'Kartenzahlung 13.10., Filiale Berlin' }),
+      pay({ id: 'sy-t8', date: '2026-10-05', who: 'Druckerei Kiezdruck', acct: SY_QONTO, cents: -4500, booking: ADVERTISING, receipt: 'missing', iban: 'DE62100500000098765401', ref: 'Flyer Herbstkurse' }),
+      pay({ id: 'sy-t9', date: '2026-09-17', who: 'Jonas Peters, Privatstunden', acct: SY_QONTO, cents: 12000, booking: REVENUE_KU, iban: 'DE09100100100887766554', ref: 'RE-2026-017' }),
+      pay({ id: 'sy-t10', date: '2026-09-10', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete September' }),
+      pay({ id: 'sy-t11', date: '2026-09-02', who: 'Zoom Communications', acct: SY_QONTO, cents: -1590, booking: SOFTWARE, iban: 'DE77500700100112233445', ref: 'Zoom Pro, Rechnung INV-4398821' }),
+      pay({ id: 'sy-t12', date: '2026-08-29', who: 'Studio Mitte, Kursgebühren August', acct: SY_QONTO, cents: 96000, booking: REVENUE_KU, iban: 'DE55100700240123456780', ref: 'RE-2026-013' }),
+      pay({ id: 'sy-t13', date: '2026-08-11', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete August' }),
+      pay({ id: 'sy-t14', date: '2026-08-04', who: 'Yogashop Berlin', acct: SY_QONTO, cents: -4120, booking: SUPPLIES, iban: 'DE31100100106655443322', ref: 'Rechnung 22-8814, Gurte und Blöcke' }),
     ],
-    decisionsOpen: 1,
     vatDue: null,
     incomeTaxReserveCents: 210000,
     revenueThisYearCents: 2130000,
@@ -95,20 +144,24 @@ export const BUSINESSES: Business[] = [
     id: 'cafe-linde',
     name: 'Café Linde GbR',
     taxProfile: { kleinunternehmer: false, vatPeriod: 'quarterly' },
-    accounts: [
-      { id: 'cl-qonto', kind: 'bank', name: 'Qonto', balanceCents: 2315040, lastUpdate: '2026-10-21' },
-      { id: 'cl-sparkasse', kind: 'bank', name: 'Sparkasse', balanceCents: 874512, lastUpdate: '2026-10-20' },
-      { id: 'cl-cash', kind: 'cash', name: 'Cash box', balanceCents: 41230, lastUpdate: '2026-10-21' },
-    ],
+    accounts: [CL_QONTO, CL_SPARKASSE, CL_CASH],
     transactions: [
-      { id: 'cl-t1', date: '2026-10-20', counterparty: 'Tagesumsatz Kasse', accountId: 'cl-cash', amountCents: 68450, status: 'booked', booking: REVENUE_7 },
-      { id: 'cl-t2', date: '2026-10-18', counterparty: 'Metro Großmarkt', accountId: 'cl-qonto', amountCents: -142380, status: 'booked', booking: GOODS_7 },
-      { id: 'cl-t3', date: '2026-10-15', counterparty: 'Stadtwerke Hamburg', accountId: 'cl-sparkasse', amountCents: -28740, status: 'booked', booking: UTILITIES },
-      { id: 'cl-t4', date: '2026-10-10', counterparty: 'Hausverwaltung Lindenallee', accountId: 'cl-sparkasse', amountCents: -185000, status: 'booked', booking: RENT },
-      { id: 'cl-t5', date: '2026-10-07', counterparty: 'Lohnabrechnung Oktober', accountId: 'cl-qonto', amountCents: -310000, status: 'booked', booking: SALARIES },
-      { id: 'cl-t6', date: '2026-10-03', counterparty: 'Catering Firma Dittmar', accountId: 'cl-qonto', amountCents: 54000, status: 'booked', booking: REVENUE_19 },
+      pay({ id: 'cl-t1', date: '2026-10-20', who: 'Tagesumsatz Kasse', acct: CL_CASH, cents: 68450, booking: REVENUE_7, iban: 'DE41200300001000200030', ref: 'Kassenabschluss 20.10.' }),
+      pay({ id: 'cl-t2', date: '2026-10-18', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -142380, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0412-88213' }),
+      pay({ id: 'cl-t3', date: '2026-10-15', who: 'Stadtwerke Hamburg', acct: CL_SPARKASSE, cents: -28740, booking: UTILITIES, iban: 'DE83200505501234567801', ref: 'Abschlag Strom und Wasser Oktober' }),
+      pay({ id: 'cl-t4', date: '2026-10-10', who: 'Hausverwaltung Lindenallee', acct: CL_SPARKASSE, cents: -185000, booking: RENT, iban: 'DE19200800000556677889', ref: 'Miete Oktober, Lindenallee 4' }),
+      pay({ id: 'cl-t5', date: '2026-10-07', who: 'Lohnabrechnung Oktober', acct: CL_QONTO, cents: -310000, booking: SALARIES, iban: 'DE70100110012233445566', ref: 'Löhne und Gehälter Oktober' }),
+      pay({ id: 'cl-t6', date: '2026-10-03', who: 'Catering Firma Dittmar', acct: CL_QONTO, cents: 54000, booking: REVENUE_19, iban: 'DE38210800500012349876', ref: 'RE-2026-052' }),
+      pay({ id: 'cl-t7', date: '2026-09-30', who: 'Tagesumsatz Kasse', acct: CL_CASH, cents: 71200, booking: REVENUE_7, iban: 'DE41200300001000200030', ref: 'Kassenabschluss 30.09.' }),
+      pay({ id: 'cl-t8', date: '2026-09-25', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -138900, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0409-77102' }),
+      pay({ id: 'cl-t9', date: '2026-09-19', who: 'Catering Firma Dittmar', acct: CL_QONTO, cents: 48000, booking: REVENUE_19, iban: 'DE38210800500012349876', ref: 'RE-2026-049' }),
+      pay({ id: 'cl-t10', date: '2026-09-10', who: 'Hausverwaltung Lindenallee', acct: CL_SPARKASSE, cents: -185000, booking: RENT, iban: 'DE19200800000556677889', ref: 'Miete September, Lindenallee 4' }),
+      pay({ id: 'cl-t11', date: '2026-09-07', who: 'Lohnabrechnung September', acct: CL_QONTO, cents: -310000, booking: SALARIES, iban: 'DE70100110012233445566', ref: 'Löhne und Gehälter September' }),
+      pay({ id: 'cl-t12', date: '2026-08-31', who: 'Lohnabrechnung August', acct: CL_QONTO, cents: -305000, booking: SALARIES, iban: 'DE70100110012233445566', ref: 'Löhne und Gehälter August' }),
+      pay({ id: 'cl-t13', date: '2026-08-27', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -131450, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0405-66390' }),
+      pay({ id: 'cl-t14', date: '2026-08-15', who: 'Stadtwerke Hamburg', acct: CL_SPARKASSE, cents: -26980, booking: UTILITIES, iban: 'DE83200505501234567801', ref: 'Abschlag Strom und Wasser August' }),
+      pay({ id: 'cl-t15', date: '2026-08-10', who: 'Hausverwaltung Lindenallee', acct: CL_SPARKASSE, cents: -185000, booking: RENT, iban: 'DE19200800000556677889', ref: 'Miete August, Lindenallee 4' }),
     ],
-    decisionsOpen: 0,
     vatDue: { dueDate: '2027-01-10', amountCents: 412000 },
     incomeTaxReserveCents: 580000,
     revenueThisYearCents: 11240000,

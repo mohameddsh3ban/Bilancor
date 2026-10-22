@@ -100,9 +100,15 @@
     }
   },
   "booking": {
+    "advertising": "Advertising",
+    "consulting": "Legal & consulting",
     "goods7": "Goods purchased (7% VAT)",
+    "insurance": "Insurance",
+    "office": "Office supplies",
     "otherCosts": "Other business costs",
     "phone": "Phone & internet",
+    "privateIn": "Private deposit",
+    "privateOut": "Private withdrawal",
     "rent": "Rent",
     "revenue19": "Revenue (19% VAT)",
     "revenue7": "Revenue (7% VAT)",
@@ -110,8 +116,18 @@
     "salaries": "Salaries",
     "software": "Software & maintenance",
     "supplies": "Supplies",
+    "training": "Training",
     "travel": "Travel",
     "utilities": "Utilities"
+  },
+  "history": {
+    "imported": "Imported from {{account}}",
+    "autoBooked": "Booked as {{category}} automatically",
+    "confirmed": "You confirmed {{category}}",
+    "receiptNotNeeded": "You marked: no receipt needed",
+    "categoryChanged": "You changed the category to {{category}}",
+    "markedPrivate": "You marked it as private",
+    "markedBusiness": "You marked it as business"
   },
   "home": {
     "notices": {

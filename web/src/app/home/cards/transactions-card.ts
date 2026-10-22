@@ -10,6 +10,7 @@ import { MoneyPipe } from '../../core/format/money.pipe';
 import { LanguageService } from '../../core/i18n/language.service';
 import { Account, Booking, TxStatus } from '../../data/models';
 import { newestTransactions } from '../../domain/home-figures';
+import { paymentStatus } from '../../domain/payment-status';
 import { DemoStateService } from '../../state/demo-state.service';
 
 const CHIP_CLASSES: Record<TxStatus, string> = {
@@ -185,9 +186,9 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
       <span
         class="rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
         data-testid="tx-status"
-        [class]="chip(tx.status)"
+        [class]="chip(status(tx))"
       >
-        {{ 'home.status.' + tx.status | transloco }}
+        {{ 'home.status.' + status(tx) | transloco }}
       </span>
     </ng-template>
   `,
@@ -208,6 +209,8 @@ export class TransactionsCard {
   protected skr03(booking: Booking): string {
     return `${booking.skr03} ${booking.nameDe}`;
   }
+
+  protected readonly status = paymentStatus;
 
   protected chip(status: TxStatus): string {
     return CHIP_CLASSES[status];
