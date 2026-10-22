@@ -1,11 +1,16 @@
-import type { BusinessKind, TaxProfile, VatPeriod } from '../data/models';
+import { GERMAN_STATES } from '../data/banks';
+import type { BusinessKind, Lang, TaxProfile, VatPeriod } from '../data/models';
 import { findTaxOffice, isVatId } from '../domain/tax-details';
+import { isolateText } from '../payments/payment-history';
 
 /** The financial year that starts on 1 January. */
 const CALENDAR_YEAR = '01-01';
 
 /** How many days each month has. February stops at 28: a year cannot start on a day most years do not have. */
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/** The locales the list of states is written in. */
+const LIST_LOCALES: Record<Lang, string> = { en: 'en-IE', de: 'de-DE', ar: 'ar-u-nu-latn' };
 
 /** What "Your tax details" holds while it is filled in: every question as answered or typed so far. */
 export interface TaxDraft {
@@ -78,6 +83,19 @@ export function fiscalYearStartOf(day: string, month: string): string | null {
   return `${String(monthNumber).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
 }
 
+/** Whether the demo has tax offices for a state: only the states with a tax-number format have any. */
+export function demoKnowsState(stateId: string): boolean {
+  return GERMAN_STATES.some((state) => state.id === stateId && state.taxNumberPattern !== null);
+}
+
+/** The states the demo has tax offices for, written as a list in the language (each name keeps its own direction). */
+export function demoStateNames(lang: Lang): string {
+  const names = GERMAN_STATES.filter((state) => state.taxNumberPattern !== null).map((state) =>
+    isolateText(state.name),
+  );
+  return new Intl.ListFormat(LIST_LOCALES[lang], { style: 'long', type: 'conjunction' }).format(names);
+}
+
 /** The tax office of the number typed, as soon as it is a number the chosen state writes and the table knows; else null. */
 export function taxOfficeOf(draft: TaxDraft): string | null {
   return draft.taxState === '' ? null : findTaxOffice(draft.taxState, draft.taxNumber);
@@ -85,8 +103,9 @@ export function taxOfficeOf(draft: TaxDraft): string | null {
 
 /**
  * What can be saved from the form: the tax profile, or the questions that are not answered properly. Every visible
- * question must be answered, the tax number must be one the state writes and the table knows, and a VAT ID, when filled
- * in, must be DE and nine digits (it is stored upper-cased without spaces). A business that answered No keeps no VAT
+ * question must be answered, the tax number must be one the state writes and the table knows (for a state the demo has
+ * no tax offices for, the message says so instead, whatever the number is), and a VAT ID, when filled in, must be DE
+ * and nine digits (it is stored upper-cased without spaces). A business that answered No keeps no VAT
  * answers, whatever the hidden fields still hold.
  */
 export function validateDraft(draft: TaxDraft): { profile: TaxProfile } | { errors: TaxErrors } {
@@ -101,7 +120,9 @@ export function validateDraft(draft: TaxDraft): { profile: TaxProfile } | { erro
 
   const taxNumber = draft.taxNumber.trim();
   if (draft.taxState === '') errors.state = 'taxDetails.number.errorState';
-  if (taxNumber === '') errors.number = 'taxDetails.number.errorEmpty';
+  if (draft.taxState !== '' && !demoKnowsState(draft.taxState)) {
+    errors.number = 'taxDetails.number.demoNote';
+  } else if (taxNumber === '') errors.number = 'taxDetails.number.errorEmpty';
   else if (draft.taxState !== '' && findTaxOffice(draft.taxState, taxNumber) === null) {
     errors.number = 'taxDetails.number.errorUnknown';
   }

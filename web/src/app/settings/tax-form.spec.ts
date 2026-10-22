@@ -1,6 +1,19 @@
+import { GERMAN_STATES } from '../data/banks';
 import type { TaxProfile } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
-import { draftOf, emptyDraft, fiscalYearStartOf, taxOfficeOf, validateDraft, type TaxDraft } from './tax-form';
+import {
+  demoKnowsState,
+  demoStateNames,
+  draftOf,
+  emptyDraft,
+  fiscalYearStartOf,
+  taxOfficeOf,
+  validateDraft,
+  type TaxDraft,
+} from './tax-form';
+
+/** Text without the isolates that keep a name's direction. */
+const plain = (text: string) => text.replace(/[\u2066-\u2069]/g, '');
 
 const profileOf = (id: string): TaxProfile => BUSINESSES.find((b) => b.id === id)!.taxProfile;
 const weber = profileOf('weber-design');
@@ -119,7 +132,15 @@ describe('validateDraft', () => {
   it('does not find a tax office for a number that is not in the table or not written as the state writes it', () => {
     expect(errorsOf({ ...filled(), taxNumber: '99/999/99999' })).toEqual({ number: 'taxDetails.number.errorUnknown' });
     expect(errorsOf({ ...filled(), taxNumber: '27123456780' })).toEqual({ number: 'taxDetails.number.errorUnknown' });
-    expect(errorsOf({ ...filled(), taxState: 'hessen' })).toEqual({ number: 'taxDetails.number.errorUnknown' });
+  });
+
+  it('says it is the demo, not the number, for a state the demo knows no tax offices for', () => {
+    const demoMessage = { number: 'taxDetails.number.demoNote' };
+    expect(errorsOf({ ...filled(), taxState: 'hessen' })).toEqual(demoMessage);
+    expect(errorsOf({ ...filled(), taxState: 'hessen', taxNumber: '' })).toEqual(demoMessage);
+    // A state the demo knows keeps asking to check the number.
+    expect(errorsOf({ ...filled(), taxState: 'bayern' })).toEqual({ number: 'taxDetails.number.errorUnknown' });
+    expect(errorsOf({ ...filled(), taxNumber: '' })).toEqual({ number: 'taxDetails.number.errorEmpty' });
   });
 
   it('keeps the number without the spaces around it', () => {
@@ -173,6 +194,31 @@ describe('fiscalYearStartOf', () => {
     expect(fiscalYearStartOf('31', '4')).toBeNull();
     // A start on 29 February would not exist in most years.
     expect(fiscalYearStartOf('29', '2')).toBeNull();
+  });
+});
+
+describe('demoKnowsState', () => {
+  it('is true for the states that have a tax-number format, false for the others and for none', () => {
+    for (const state of GERMAN_STATES) {
+      expect(demoKnowsState(state.id), state.id).toBe(state.taxNumberPattern !== null);
+    }
+    expect(demoKnowsState('berlin')).toBe(true);
+    expect(demoKnowsState('hessen')).toBe(false);
+    expect(demoKnowsState('')).toBe(false);
+    expect(demoKnowsState('atlantis')).toBe(false);
+  });
+});
+
+describe('demoStateNames', () => {
+  it('lists the states with a tax-number format, in the language of the page', () => {
+    expect(plain(demoStateNames('en'))).toBe('Bayern, Berlin, Bremen, Hamburg and Nordrhein-Westfalen');
+    expect(plain(demoStateNames('de'))).toBe('Bayern, Berlin, Bremen, Hamburg und Nordrhein-Westfalen');
+    expect(plain(demoStateNames('ar'))).toContain('Nordrhein-Westfalen');
+  });
+
+  it('follows GERMAN_STATES, and keeps each name in its own direction', () => {
+    const names = GERMAN_STATES.filter((state) => state.taxNumberPattern !== null).map((state) => state.name);
+    for (const name of names) expect(demoStateNames('ar')).toContain('\u2068' + name + '\u2069');
   });
 });
 

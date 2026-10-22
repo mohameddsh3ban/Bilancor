@@ -646,7 +646,8 @@
       "hint": "Schreibe sie so, wie sie im Brief steht, mit Schrägstrichen oder Leerzeichen.",
       "errorState": "Wähle dein Bundesland.",
       "errorEmpty": "Gib deine Steuernummer ein.",
-      "errorUnknown": "Wir haben für diese Nummer kein Finanzamt gefunden. Bitte prüfe sie."
+      "errorUnknown": "Wir haben für diese Nummer kein Finanzamt gefunden. Bitte prüfe sie.",
+        "demoNote": "In dieser Demo sind Finanzämter nur für {{states}} bekannt."
     },
     "vatId": {
       "optional": "Optional",

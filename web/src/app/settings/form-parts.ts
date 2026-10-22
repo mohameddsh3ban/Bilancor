@@ -69,16 +69,17 @@ export class ChoiceCard {
   protected readonly uid = `choice-${nextChoiceId++}`;
 }
 
-/** The message under a field that cannot be saved as it stands; `appFieldError` is the translation key of the message. */
+/** The message under a field that cannot be saved as it stands; `appFieldError` is the translation key of the message, with its parameters. */
 @Component({
   selector: 'p[appFieldError]',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoPipe],
   host: { role: 'alert', class: 'text-negative text-sm' },
-  template: `{{ appFieldError() | transloco }}`,
+  template: `{{ appFieldError() | transloco: appFieldErrorParams() }}`,
 })
 export class FieldError {
   readonly appFieldError = input.required<string>();
+  readonly appFieldErrorParams = input<Record<string, string>>({});
 }
 
 /** "Not sure? It's in your letter from the tax office (Fragebogen zur steuerlichen Erfassung)." */

@@ -12,6 +12,7 @@ import { DemoStateService } from '../state/demo-state.service';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
 import { TaxDetailsPage } from './tax-details.page';
+import { demoStateNames } from './tax-form';
 import ar from '../../../public/i18n/ar.json';
 import de from '../../../public/i18n/de.json';
 import en from '../../../public/i18n/en.json';
@@ -115,6 +116,13 @@ describe('TaxDetailsPage', () => {
     await type('number', '27/123/45678');
   }
 
+  /** Text without the isolates that keep a name's direction. */
+  const plain = (value: string) => value.replace(/[\u2066-\u2069]/g, '');
+  const demoNote = (lang: 'en' | 'de' | 'ar' = 'en') => ({
+    en: en.taxDetails.number.demoNote,
+    de: de.taxDetails.number.demoNote,
+    ar: ar.taxDetails.number.demoNote,
+  })[lang].replace('{{states}}', plain(demoStateNames(lang)));
   const savedProfile = (): TaxProfile => demo.business().taxProfile;
   const historyKeys = () => demo.business().history.map((entry) => entry.key);
 
@@ -337,6 +345,50 @@ describe('TaxDetailsPage', () => {
       expect(q('office')).toBeNull();
     });
 
+    it('picking a state the demo knows no tax offices for shows a demo note before Save', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax');
+      expect(q('state-note')).toBeNull();
+      await pickState('hessen');
+      expect(plain(text(q('state-note')))).toBe(demoNote());
+      expect(plain(text(q('state-note')))).toBe(
+        'In this demo, tax offices are only known for Bayern, Berlin, Bremen, Hamburg and Nordrhein-Westfalen.',
+      );
+      // The note sits right under the state select, and the select points to it.
+      expect(
+        field('state').closest('label')!.compareDocumentPosition(q('state-note')!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        q('state-note')!.compareDocumentPosition(q('number')!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(field('state').getAttribute('aria-describedby')).toBe(q('state-note')!.id);
+      // It is a note, not an error: nothing was saved or refused yet.
+      expect(q('state-note')!.getAttribute('role')).toBeNull();
+      expect(q('error-number')).toBeNull();
+
+      await pickState('bayern');
+      expect(q('state-note')).toBeNull();
+      expect(field('state').getAttribute('aria-describedby')).toBeNull();
+      await pickState('hessen');
+      expect(q('state-note')).not.toBeNull();
+      await pickState('');
+      expect(q('state-note')).toBeNull();
+    });
+
+    it('the demo note names the states in the language of the page', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax');
+      await pickState('hessen');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(plain(text(q('state-note')))).toBe(demoNote('de'));
+      expect(plain(text(q('state-note')))).toContain('Hamburg und Nordrhein-Westfalen');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(plain(text(q('state-note')))).toBe(demoNote('ar'));
+    });
+
     it('a number written for another state shows no tax office', async () => {
       demo.setSetup('new');
       await render('/settings/tax');
@@ -453,6 +505,60 @@ describe('TaxDetailsPage', () => {
       expect(field('number').getAttribute('aria-invalid')).toBeNull();
       await click('save');
       expect(router.url).toBe('/');
+    });
+
+    it('Save with Hessen shows the demo message, not "Please check it"', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax?from=home');
+      await fillAll();
+      await pickState('hessen');
+      expect(q('state-note')).not.toBeNull();
+      await click('save');
+
+      expect(plain(text(q('error-number')))).toBe(demoNote());
+      expect(text(q('error-number'))).not.toContain('Please check it');
+      expect(q('error-number')!.getAttribute('role')).toBe('alert');
+      expect(q('q-number')!.contains(q('error-number'))).toBe(true);
+      expect(field('number').getAttribute('aria-invalid')).toBe('true');
+      expect(field('number').getAttribute('aria-describedby')).toContain(q('error-number')!.id);
+      // The sentence is on the page once: the error stands in for the note.
+      expect(q('state-note')).toBeNull();
+      expect(plain(text(q('q-number'))).split('In this demo').length).toBe(2);
+      // The answers stay, and nothing was saved.
+      expect(field('state').value).toBe('hessen');
+      expect(field('number').value).toBe('27/123/45678');
+      expect(demo.setup().tax).toBe(false);
+      expect(router.url).toBe('/settings/tax?from=home');
+
+      // Choosing a state the demo knows takes the error away; the next Save goes through.
+      await pickState('berlin');
+      expect(q('error-number')).toBeNull();
+      expect(q('state-note')).toBeNull();
+      await click('save');
+      expect(router.url).toBe('/');
+    });
+
+    it('Save with Hessen and no number says it is the demo too', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax?from=home');
+      await fillAll();
+      await pickState('hessen');
+      await type('number', '');
+      await click('save');
+      expect(plain(text(q('error-number')))).toBe(demoNote());
+    });
+
+    it('a wrong Berlin number still shows "Please check it", with no demo note', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax?from=home');
+      await fillAll();
+      await type('number', '99/999/99999');
+      await click('save');
+      expect(text(q('error-number'))).toBe(
+        "We couldn't find a tax office for this number. Please check it.",
+      );
+      expect(text(q('error-number'))).not.toContain('In this demo');
+      expect(q('state-note')).toBeNull();
     });
 
     it('Save with nothing answered names every question that is missing, next to it', async () => {

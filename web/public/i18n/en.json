@@ -646,7 +646,8 @@
       "hint": "Type it as written in the letter, with its slashes or spaces.",
       "errorState": "Choose your federal state.",
       "errorEmpty": "Enter your tax number.",
-      "errorUnknown": "We couldn't find a tax office for this number. Please check it."
+      "errorUnknown": "We couldn't find a tax office for this number. Please check it.",
+        "demoNote": "In this demo, tax offices are only known for {{states}}."
     },
     "vatId": {
       "optional": "Optional",

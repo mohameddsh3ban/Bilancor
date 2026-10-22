@@ -24,6 +24,8 @@ import { GERMAN_STATES } from '../data/banks';
 import { DemoStateService } from '../state/demo-state.service';
 import { ChoiceCard, FieldError, NotSureHint } from './form-parts';
 import {
+  demoKnowsState,
+  demoStateNames,
   draftOf,
   emptyDraft,
   taxOfficeOf,
@@ -271,7 +273,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
               data-testid="state"
               [class]="inputClass"
               [attr.aria-invalid]="errors().state ? 'true' : null"
-              [attr.aria-describedby]="errors().state ? 'error-state' : null"
+              [attr.aria-describedby]="stateDescribedBy()"
               (change)="setState($event)"
             >
               <option value="" [selected]="draft().taxState === ''">
@@ -287,6 +289,17 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
           @if (errors().state; as key) {
             <p [appFieldError]="key" id="error-state" data-testid="error-state"></p>
           }
+          <div aria-live="polite">
+            @if (showStateNote()) {
+              <p
+                class="text-muted-foreground -mt-2 text-xs"
+                id="state-note"
+                data-testid="state-note"
+              >
+                {{ 'taxDetails.number.demoNote' | transloco: { states: demoStates() } }}
+              </p>
+            }
+          </div>
 
           <label class="flex flex-col gap-1 text-sm">
             <span class="text-muted-foreground">{{ 'taxDetails.number.number' | transloco }}</span>
@@ -307,7 +320,12 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
             {{ 'taxDetails.number.hint' | transloco }}
           </p>
           @if (errors().number; as key) {
-            <p [appFieldError]="key" id="error-number" data-testid="error-number"></p>
+            <p
+              [appFieldError]="key"
+              [appFieldErrorParams]="{ states: demoStates() }"
+              id="error-number"
+              data-testid="error-number"
+            ></p>
           }
           <div role="status">
             @if (office(); as name) {
@@ -484,6 +502,23 @@ export class TaxDetailsPage {
 
   /** The tax office for the number typed, once it is valid. */
   protected readonly office = computed(() => taxOfficeOf(this.draft()));
+
+  /** The states the demo has tax offices for, in the language of the page. */
+  protected readonly demoStates = computed(() => demoStateNames(this.language.lang()));
+  /** A state is chosen that the demo has no tax offices for. */
+  private readonly unknownToDemo = computed(() => {
+    const state = this.draft().taxState;
+    return state !== '' && !demoKnowsState(state);
+  });
+  /** The note under the state says so; once Save refuses the number for the same reason, the error says it instead. */
+  protected readonly showStateNote = computed(
+    () => this.unknownToDemo() && this.errors().number !== 'taxDetails.number.demoNote',
+  );
+  protected readonly stateDescribedBy = computed(() => {
+    if (this.errors().state) return 'error-state';
+    if (!this.unknownToDemo()) return null;
+    return this.showStateNote() ? 'state-note' : 'error-number';
+  });
 
   /** Set from a successful Save until the page has gone, so a second tap saves nothing more. */
   private saving = false;
