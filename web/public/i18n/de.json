@@ -479,6 +479,8 @@
       "title": "Steuern",
       "vatDue": "Fällig am {{date}}",
       "vatAmount": "Voraussichtlich zu zahlen",
+      "amountUnknown": "Betrag noch nicht bekannt",
+      "yearlyOnly": "Nur Umsatzsteuer-Jahreserklärung",
       "of": "von",
       "thisYear": "in diesem Jahr",
       "percentUsed": "{{percent}} % deiner Grenze erreicht",

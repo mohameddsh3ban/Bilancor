@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { BUSINESSES } from '../data/sample-data';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { editDocument } from '../domain/document-actions';
+import { ALL_DONE } from '../domain/home-cards';
 import { DemoStateService } from './demo-state.service';
 import { NoticeService } from './notice.service';
 
@@ -112,6 +113,28 @@ describe('NoticeService and the setup state', () => {
     const service = TestBed.inject(NoticeService);
     demo.setSetup('active');
     expect(service.unreadCount()).toBe(2);
+  });
+
+  it('hides the revenue limit notice, open and earlier, once the business charges VAT', () => {
+    const open = TestBed.inject(NoticeService);
+    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
+    expect(open.shown().map((n) => n.kind)).toEqual(['revenueLimit']);
+    expect(open.history().map((n) => n.kind)).toEqual(['revenueLimit']);
+
+    TestBed.resetTestingModule();
+    const business = { ...sara, taxProfile: { ...sara.taxProfile, kleinunternehmer: false } };
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: DemoStateService,
+          useValue: { business: () => business, setup: () => ALL_DONE, documents: () => [], businesses: [business], person: { id: 'p1' } },
+        },
+      ],
+    });
+    const service = TestBed.inject(NoticeService);
+    expect(service.shown()).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+    expect(service.history()).toEqual([]);
   });
 });
 

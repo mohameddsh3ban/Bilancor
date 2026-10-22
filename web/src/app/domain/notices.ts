@@ -1,4 +1,4 @@
-import { Notice, NoticeKind, SetupSteps } from '../data/models';
+import { Notice, NoticeKind, SetupSteps, TaxProfile } from '../data/models';
 
 /** The setup step a notice kind needs: until it is done, the notice has nothing to talk about. */
 const STEP_FOR_KIND: Record<NoticeKind, keyof SetupSteps> = {
@@ -8,9 +8,14 @@ const STEP_FOR_KIND: Record<NoticeKind, keyof SetupSteps> = {
   revenueLimit: 'tax',
 };
 
-/** Keeps only the notices whose setup step is done. Applies to open notices and history alike. */
-export function noticesForSetup(notices: Notice[], steps: SetupSteps): Notice[] {
-  return notices.filter((n) => steps[STEP_FOR_KIND[n.kind]]);
+/**
+ * Keeps only the notices whose setup step is done. The revenue-limit notice also needs a Kleinunternehmer: once the
+ * business charges VAT there is no limit to warn about. Applies to open notices and history alike.
+ */
+export function noticesForSetup(notices: Notice[], steps: SetupSteps, profile: TaxProfile): Notice[] {
+  return notices.filter(
+    (n) => steps[STEP_FOR_KIND[n.kind]] && (n.kind !== 'revenueLimit' || profile.kleinunternehmer),
+  );
 }
 
 /**

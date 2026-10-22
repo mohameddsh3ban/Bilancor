@@ -37,23 +37,38 @@ describe('splitNotices', () => {
 describe('noticesForSetup', () => {
   const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
   const done = { bank: true, tax: true, receipt: true };
+  const vatBusiness = weber.taxProfile;
+  const kleinunternehmer = sara.taxProfile;
 
   it('keeps everything once setup is complete', () => {
-    expect(noticesForSetup(three, done)).toEqual(three);
+    expect(noticesForSetup(three, done, vatBusiness)).toEqual(three);
   });
 
   it('hides bank notices until the bank step is done', () => {
-    const kinds = noticesForSetup(three, { ...done, bank: false }).map((n) => n.kind);
+    const kinds = noticesForSetup(three, { ...done, bank: false }, vatBusiness).map((n) => n.kind);
     expect(kinds).toEqual(['unreadable']);
   });
 
   it('hides unreadable notices until the receipt step is done', () => {
-    const kinds = noticesForSetup(three, { ...done, receipt: false }).map((n) => n.kind);
+    const kinds = noticesForSetup(three, { ...done, receipt: false }, vatBusiness).map((n) => n.kind);
     expect(kinds).toEqual(['terms', 'bankExpiry']);
   });
 
   it('hides the revenue limit notice until the tax step is done', () => {
-    expect(noticesForSetup(sara.notices, { ...done, tax: false })).toEqual([]);
+    expect(noticesForSetup(sara.notices, { ...done, tax: false }, kleinunternehmer)).toEqual([]);
+  });
+
+  it('the revenue-limit notice shows only for a Kleinunternehmer', () => {
+    expect(sara.notices.map((n) => n.kind)).toEqual(['revenueLimit']);
+    expect(noticesForSetup(sara.notices, done, kleinunternehmer)).toEqual(sara.notices);
+    expect(noticesForSetup(sara.notices, done, { ...kleinunternehmer, kleinunternehmer: false })).toEqual([]);
+    expect(noticesForSetup(sara.notices, done, vatBusiness)).toEqual([]);
+  });
+
+  it('leaves the other notices alone when the business charges VAT', () => {
+    const withLimit = [...three, ...sara.notices];
+    const kinds = noticesForSetup(withLimit, done, vatBusiness).map((n) => n.kind);
+    expect(kinds).toEqual(['terms', 'bankExpiry', 'unreadable']);
   });
 });
 

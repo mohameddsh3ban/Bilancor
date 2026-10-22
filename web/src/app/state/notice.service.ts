@@ -25,12 +25,13 @@ export class NoticeService {
   );
 
   /** The business's open notices whose setup step is done, with the live count of unreadable receipts. */
-  private readonly applicable = computed(() =>
-    withUnreadableCount(
-      noticesForSetup(this.demo.business().notices, this.demo.setup()),
+  private readonly applicable = computed(() => {
+    const business = this.demo.business();
+    return withUnreadableCount(
+      noticesForSetup(business.notices, this.demo.setup(), business.taxProfile),
       this.unreadable(),
-    ),
-  );
+    );
+  });
 
   private readonly split = computed(() => splitNotices(this.applicable(), this.dismissedIds()));
 
@@ -44,7 +45,8 @@ export class NoticeService {
   readonly history = computed<Notice[]>(() => {
     const ids = this.dismissedIds();
     const dismissed = this.applicable().filter((n) => !n.blocking && ids.has(n.id));
-    const earlier = noticesForSetup(this.demo.business().noticeHistory, this.demo.setup());
+    const business = this.demo.business();
+    const earlier = noticesForSetup(business.noticeHistory, this.demo.setup(), business.taxProfile);
     return [...dismissed, ...earlier].sort((a, b) => b.date.localeCompare(a.date));
   });
 

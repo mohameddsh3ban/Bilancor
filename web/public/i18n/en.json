@@ -479,6 +479,8 @@
       "title": "Taxes",
       "vatDue": "Due {{date}}",
       "vatAmount": "Estimated to pay",
+      "amountUnknown": "Amount not known yet",
+      "yearlyOnly": "Yearly VAT return only",
       "of": "of",
       "thisYear": "this year",
       "percentUsed": "{{percent}}% of your limit used",
