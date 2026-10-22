@@ -13,7 +13,7 @@ import {
   Transaction,
 } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
-import { isAlreadyConnected, newConnection, noConnection } from '../domain/bank-connection';
+import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection } from '../domain/bank-connection';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
@@ -176,6 +176,29 @@ export class DemoStateService {
             history: [{ date: DEMO_TODAY, key: 'cashAdded', params: {} }, ...business.history],
           },
     );
+  }
+
+  /**
+   * Renews the bank connection of one account of the open business (Renew, or Sign in again once it has ended or
+   * broken): a new consent of 180 days from the demo day, working again, fetched just now, with one `bankRenewed` line.
+   * The date its payments were asked for from stays. Ignored for an account that has no bank connection (a statement
+   * account, the cash box) and for an id that is not an account of the business. A connection that was renewed already
+   * (its consent runs the full 180 days, and it works) stays as it is with no line, so a second call changes nothing.
+   */
+  renewConnection(accountId: string): void {
+    this.updateBusiness(this.businessIdSignal(), (business) => {
+      const account = business.accounts.find((a) => a.id === accountId);
+      if (!account || account.connection.kind !== 'connected' || isRenewed(account.connection)) return business;
+      const renewed = { ...account, connection: newConnection(account.connection.fetchFrom ?? DEMO_TODAY) };
+      return {
+        ...business,
+        accounts: business.accounts.map((a) => (a.id === accountId ? renewed : a)),
+        history: [
+          { date: DEMO_TODAY, key: 'bankRenewed', params: { bank: bankNameOf(account) ?? account.name } },
+          ...business.history,
+        ],
+      };
+    });
   }
 
   /**

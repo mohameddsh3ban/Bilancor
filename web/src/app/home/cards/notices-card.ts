@@ -6,6 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { NoticeKind } from '../../data/models';
+import { noticeTextKey } from '../../domain/notices';
 import { NoticeService } from '../../state/notice.service';
 
 /** The notices that need action: the two most urgent, a dismiss for the non-blocking ones, and "+N more". */
@@ -27,7 +28,7 @@ import { NoticeService } from '../../state/notice.service';
               [class]="notice.blocking ? 'text-negative shrink-0' : 'text-warning shrink-0'"
             />
             <p class="min-w-0 flex-1 text-sm">
-              {{ 'notice.' + notice.kind + '.text' | transloco: notice.params }}
+              {{ textKey(notice) | transloco: notice.params }}
             </p>
             <a
               hlmBtn
@@ -74,6 +75,7 @@ import { NoticeService } from '../../state/notice.service';
 })
 export class NoticesCard {
   protected readonly notices = inject(NoticeService);
+  protected readonly textKey = noticeTextKey;
 
   /** Fixing unreadable receipts happens in Documents and renewing a bank connection in Settings; the other actions are not built yet. */
   protected link(kind: NoticeKind): string[] {

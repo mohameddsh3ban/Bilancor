@@ -771,6 +771,132 @@ describe('DemoStateService', () => {
     });
   });
 
+  describe('renewConnection', () => {
+    const accountOf = (state: DemoStateService, id: string): Account =>
+      state.business().accounts.find((a) => a.id === id)!;
+    const lines = (state: DemoStateService) => state.business().history;
+    /** Puts the open business's account back with another connection, as the bank would report it. */
+    const withConnection = (state: DemoStateService, id: string, change: Partial<Account['connection']>): void => {
+      const snapshot = state.snapshot();
+      snapshot.accounts = snapshot.accounts.map((a) =>
+        a.id === id ? { ...a, connection: { ...a.connection, ...change } } : a,
+      );
+      state.restore(snapshot);
+    };
+
+    it('gives a connection that ends soon a consent of 180 days from the demo day, fetched just now', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection).toEqual({
+        kind: 'connected',
+        consentUntil: '2027-04-20',
+        lastFetched: `${DEMO_TODAY}T12:00`,
+        fetchFrom: '2026-01-01',
+        broken: false,
+      });
+    });
+
+    it('writes one bankRenewed line with the bank, dated the demo day', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.renewConnection('wd-qonto');
+      expect(lines(state)).toEqual([{ date: DEMO_TODAY, key: 'bankRenewed', params: { bank: 'Qonto' } }]);
+    });
+
+    it('renewing twice writes one history line and changes nothing the second time', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.renewConnection('wd-qonto');
+      const business = state.business();
+      state.renewConnection('wd-qonto');
+      expect(state.business()).toBe(business);
+      expect(lines(state).map((line) => line.key)).toEqual(['bankRenewed']);
+    });
+
+    it('a connection that ended is renewed too, and the bank step stays as it is', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      expect(accountOf(state, 'sy-qonto').connection.consentUntil).toBe('2026-10-20');
+      state.renewConnection('sy-qonto');
+      expect(accountOf(state, 'sy-qonto').connection.consentUntil).toBe('2027-04-20');
+      expect(state.setup()).toEqual(ALL_DONE);
+    });
+
+    it('a connection the bank reports as broken is repaired, however long its consent still runs', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-04-20', broken: true });
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection.broken).toBe(false);
+      expect(lines(state).map((line) => line.key)).toEqual(['bankRenewed']);
+    });
+
+    it('a consent that already ends 180 days ahead or later, and works, is not renewed: no change, no line', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-04-20' });
+      const business = state.business();
+      state.renewConnection('wd-qonto');
+      expect(state.business()).toBe(business);
+
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-06-01' });
+      const later = state.business();
+      state.renewConnection('wd-qonto');
+      expect(state.business()).toBe(later);
+      expect(lines(state)).toEqual([]);
+    });
+
+    it('a consent one day short of 180 days is renewed', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-04-19' });
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection.consentUntil).toBe('2027-04-20');
+      expect(lines(state)).toHaveLength(1);
+    });
+
+    it('names the bank, not the stored English name of a savings account', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'].filter((a) => a.id === 'wd-savings'), '2026-01-01');
+      withConnection(state, 'wd-savings', { consentUntil: '2026-10-25' });
+      state.renewConnection('wd-savings');
+      expect(lines(state)[0]).toEqual({ date: DEMO_TODAY, key: 'bankRenewed', params: { bank: 'Qonto' } });
+    });
+
+    it('is ignored for an account that is not connected: a statement account, the cash box, an unknown id', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      const business = state.business();
+      state.renewConnection('cl-sparkasse');
+      state.renewConnection('cl-cash');
+      state.renewConnection('nope');
+      expect(state.business()).toBe(business);
+    });
+
+    it('changes only the open business, and an account of another business is ignored', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sara = state.businesses.find((b) => b.id === 'sara-yoga')!;
+      const weber = state.businesses.find((b) => b.id === 'weber-design')!;
+      state.renewConnection('sy-qonto');
+      expect(state.businesses.find((b) => b.id === 'sara-yoga')).toBe(sara);
+      expect(state.businesses.find((b) => b.id === 'weber-design')).toBe(weber);
+    });
+
+    it('never changes the shared sample data, and resetData brings the old connection back', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sample = BUSINESSES.find((b) => b.id === 'weber-design')!.accounts[0];
+      state.renewConnection('wd-qonto');
+      expect(sample.connection.consentUntil).toBe('2026-10-27');
+      state.resetData();
+      expect(accountOf(state, 'wd-qonto').connection.consentUntil).toBe('2026-10-27');
+      expect(lines(state)).toEqual([]);
+    });
+
+    it('keeps the date the payments were asked for from, and the other accounts', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { fetchFrom: '2025-01-01' });
+      const cash = accountOf(state, 'wd-cash');
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection.fetchFrom).toBe('2025-01-01');
+      expect(accountOf(state, 'wd-cash')).toBe(cash);
+    });
+  });
+
   describe('addCashBox', () => {
     it('adds a cash box named Cash box to a business that has none, with one cashAdded line', () => {
       const state = TestBed.inject(DemoStateService);

@@ -143,6 +143,8 @@
     },
     "bankExpiry": {
       "text": "Your {{bank}} connection expires in {{days}} days",
+      "textOne": "Your {{bank}} connection expires in 1 day",
+      "textToday": "Your {{bank}} connection expires today",
       "action": "Renew"
     },
     "bankEnded": {
@@ -733,13 +735,55 @@
     }
   },
   "settings": {
+    "title": "Settings",
+    "tax": {
+      "title": "Business and tax",
+      "edit": "Edit",
+      "editLabel": "Edit your tax details",
+      "empty": "You haven't added your tax details yet. They help us book and file the right way.",
+      "add": "Add your tax details",
+      "kind": "Kind of business",
+      "vat": "VAT",
+      "vatYes": "Yes, I charge VAT",
+      "vatNo": "No",
+      "basis": "VAT is due",
+      "notGiven": "Not given",
+      "yearFrom": "Starts on {{date}}"
+    },
     "bank": {
+      "title": "Bank accounts",
+      "connect": "Connect a bank",
+      "connectFirst": "Connect your bank",
+      "before": "Connect your bank and your accounts show up here, with their payments.",
+      "cashLine": "Payments come from your receipts",
+      "statementLine": "Payments come from imported statements",
+      "lastFetchedToday": "last fetched today, {{time}}",
+      "lastFetched": "last fetched {{date}}, {{time}}",
+      "status": {
+        "connected": "Connected",
+        "renewIn": "Renew in {{days}} days",
+        "renewInOne": "Renew in 1 day",
+        "renewToday": "Renew today",
+        "signInAgain": "Sign in again",
+        "statement": "Statement import",
+        "cash": "Cash"
+      },
+      "action": {
+        "renew": "Renew",
+        "signIn": "Sign in again",
+        "import": "Import statement"
+      },
       "product": {
         "business": "Business account",
         "savings": "Savings",
         "card": "Credit card",
         "cash": "Cash box"
       }
+    },
+    "inbox": {
+      "title": "Documents inbox",
+      "text": "Forward receipts and invoices to",
+      "sorted": "We work out whether each one is received or sent."
     }
   }
 }

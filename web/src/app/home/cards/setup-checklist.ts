@@ -11,8 +11,9 @@ type StepId = 'bank' | 'tax' | 'receipt';
 const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
 
 /**
- * The three setup steps with a tick on the finished ones. Uploading the first receipt opens Documents with the
- * Add choices open; the other steps link to their (coming soon) pages.
+ * The three setup steps with a tick on the finished ones. A step to do opens its flow, which comes back here: the bank
+ * flow, the tax details page, or Documents with the Add choices open for the first receipt. A finished bank or tax
+ * step opens its place in Settings, a finished receipt step Documents.
  */
 @Component({
   selector: 'app-setup-checklist',
@@ -67,9 +68,19 @@ export class SetupChecklist {
     return STEP_IDS.map((id) => ({ id, done: done[id], ...this.target(id, done[id]) }));
   });
 
-  /** Where a step leads: the Add menu for a receipt that is still to do, Documents once it is done, else its coming-soon page. */
+  /** Where a step leads, as a link and its query: its flow while it is to do, its place once it is done. */
   private target(id: StepId, done: boolean): { link: string[]; queryParams: Params | undefined } {
-    if (id !== 'receipt') return { link: ['/soon', id], queryParams: undefined };
-    return { link: ['/documents'], queryParams: done ? undefined : { add: '1' } };
+    switch (id) {
+      case 'bank':
+        return done
+          ? { link: ['/settings'], queryParams: undefined }
+          : { link: ['/settings/bank/connect'], queryParams: { from: 'home' } };
+      case 'tax':
+        return done
+          ? { link: ['/settings'], queryParams: undefined }
+          : { link: ['/settings/tax'], queryParams: { from: 'home' } };
+      case 'receipt':
+        return { link: ['/documents'], queryParams: done ? undefined : { add: '1' } };
+    }
   }
 }

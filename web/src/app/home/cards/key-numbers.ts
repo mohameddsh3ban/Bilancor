@@ -8,6 +8,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
+import { accountName } from '../../domain/bank-connection';
 import { homeCards } from '../../domain/home-cards';
 import { decisionCount, decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
 import { vatReturnDue } from '../../domain/tax-details';
@@ -79,7 +80,7 @@ import { RevenueTracker } from './revenue-tracker';
             @for (account of business().accounts; track account.id) {
               <li class="flex items-baseline justify-between gap-3 py-1.5 text-sm">
                 <span class="min-w-0 truncate">{{
-                  account.kind === 'cash' ? ('account.cash' | transloco) : account.name
+                  nameOf(account, 'settings.bank.product.' + account.product | transloco)
                 }}</span>
                 <bdi dir="ltr" class="shrink-0 font-medium">{{ account.balanceCents | money }}</bdi>
               </li>
@@ -142,6 +143,7 @@ export class KeyNumbers {
   private readonly demo = inject(DemoStateService);
 
   protected readonly business = this.demo.business;
+  protected readonly nameOf = accountName;
   protected readonly cards = computed(() => homeCards(this.demo.setup()));
   protected readonly decisions = computed(() => decisionCount(this.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.decisions()));

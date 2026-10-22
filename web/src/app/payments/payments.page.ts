@@ -76,7 +76,12 @@ type EmptyKind = 'new' | 'allClear' | 'noMatch' | null;
               <p class="text-muted-foreground max-w-sm">
                 {{ 'payments.empty.new.body' | transloco }}
               </p>
-              <a hlmBtn data-testid="empty-new-action" [routerLink]="['/soon', 'bank']">
+              <a
+                hlmBtn
+                data-testid="empty-new-action"
+                [routerLink]="['/settings/bank/connect']"
+                [queryParams]="{ from: 'payments' }"
+              >
                 {{ 'payments.empty.new.action' | transloco }}
               </a>
             </div>

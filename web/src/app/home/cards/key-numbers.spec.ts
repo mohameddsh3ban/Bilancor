@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { formatMoney } from '../../core/format/format';
 import { LanguageService } from '../../core/i18n/language.service';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../../data/banks';
 import type { Business, TaxProfile } from '../../data/models';
 import { BUSINESSES } from '../../data/sample-data';
 import { ALL_DONE } from '../../domain/home-cards';
@@ -65,6 +66,19 @@ describe('KeyNumbers', () => {
     expect(t.textContent).toContain(formatMoney(1248020, 'en'));
     expect(t.textContent).toContain('Cash box');
     expect(t.textContent).toContain(formatMoney(15000, 'en'));
+  });
+
+  it('names a connected savings account by the bank and the product in the language of the page', () => {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    const t = tile(render(), 'balances')!;
+    expect(t.textContent).toContain('Qonto · Savings');
+    expect(t.textContent).toContain('Qonto · Credit card');
+    expect(t.textContent).not.toContain('Qonto Savings');
+    TestBed.inject(LanguageService).setLang('de');
+    const german = tile(render(), 'balances')!;
+    expect(german.textContent).toContain('Qonto · Sparkonto');
+    expect(german.textContent).toContain('Qonto · Kreditkarte');
+    expect(german.textContent).toContain('Kasse');
   });
 
   it('third tile is VAT for a VAT business', () => {

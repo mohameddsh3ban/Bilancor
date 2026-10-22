@@ -1,6 +1,7 @@
+import { Notice } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { bankNotices } from './bank-connection';
-import { noticesForSetup, splitNotices, withUnreadableCount } from './notices';
+import { noticeTextKey, noticesForSetup, splitNotices, withUnreadableCount } from './notices';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
 const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
@@ -96,5 +97,22 @@ describe('withUnreadableCount', () => {
   it('does not change the notices it is given', () => {
     withUnreadableCount(three, 7);
     expect(three[2].params).toEqual({ count: 2 });
+  });
+});
+
+describe('noticeTextKey', () => {
+  const expiry = (days: number): Notice => ({ ...bankExpiry, params: { bank: 'Qonto', days } });
+
+  it('says today for a connection that ends today, a day for one that ends tomorrow, days for the rest', () => {
+    expect(noticeTextKey(expiry(0))).toBe('notice.bankExpiry.textToday');
+    expect(noticeTextKey(expiry(1))).toBe('notice.bankExpiry.textOne');
+    expect(noticeTextKey(expiry(2))).toBe('notice.bankExpiry.text');
+    expect(noticeTextKey(expiry(14))).toBe('notice.bankExpiry.text');
+  });
+
+  it('is the plain text key for every other notice', () => {
+    expect(noticeTextKey(terms)).toBe('notice.terms.text');
+    expect(noticeTextKey(unreadable)).toBe('notice.unreadable.text');
+    expect(noticeTextKey(bankEnded)).toBe('notice.bankEnded.text');
   });
 });

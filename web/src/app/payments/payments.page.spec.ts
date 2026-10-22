@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../data/banks';
 import { groupByMonth } from '../domain/payment-filters';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentDetailPage } from './payment-detail.page';
@@ -202,6 +203,20 @@ describe('PaymentsPage', () => {
     expect(qa('payment-row')).toHaveLength(demo.business().transactions.length);
   });
 
+  it('names a connected savings account by the bank and the product, in the filter and in its chip', async () => {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    await render();
+    const labels = () =>
+      Array.from((q('filter-account') as HTMLSelectElement).options).map((o) => o.textContent?.trim());
+    expect(labels()).toEqual(['All accounts', 'Qonto', 'Qonto · Savings', 'Qonto · Credit card', 'Cash box']);
+    await pick('filter-account', 'wd-savings');
+    expect(text(q('chip-account'))).toContain('Qonto · Savings');
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(labels()).toEqual(['Alle Konten', 'Qonto', 'Qonto · Sparkonto', 'Qonto · Kreditkarte', 'Kasse']);
+    expect(text(q('chip-account'))).toContain('Qonto · Sparkonto');
+  });
+
   it('only offers the open business accounts and its months', async () => {
     await render();
     const accounts = Array.from((q('filter-account') as HTMLSelectElement).options).map(
@@ -266,7 +281,7 @@ describe('PaymentsPage', () => {
     demo.setSetup('new');
     await render();
     expect(text(q('empty-new'))).toContain('Connect your bank to see your payments');
-    expect(q('empty-new-action')!.getAttribute('href')).toBe('/soon/bank');
+    expect(q('empty-new-action')!.getAttribute('href')).toBe('/settings/bank/connect?from=payments');
     expect(qa('payment-row')).toHaveLength(0);
     expect(qa('payment-table-row')).toHaveLength(0);
     expect(text(q('quick-needsYou'))).toContain('0');

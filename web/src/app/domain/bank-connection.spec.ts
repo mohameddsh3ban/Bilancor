@@ -1,14 +1,17 @@
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, AccountConnection } from '../data/models';
-import { BANKS } from '../data/banks';
+import { BANKS, FOUND_ACCOUNTS } from '../data/banks';
 import { BUSINESSES } from '../data/sample-data';
 import {
   CONSENT_DAYS,
   addDays,
+  accountName,
   bankInitials,
+  bankNameOf,
   bankNotices,
   connectionStatus,
   isAlreadyConnected,
+  isRenewed,
   maskIban,
   newConnection,
   noConnection,
@@ -108,6 +111,12 @@ describe('bankNotices', () => {
 
   it('Café Linde gets none: one connection with months left, a statement account and a cash box', () => {
     expect(bankNotices(accountsOf('cafe-linde'))).toEqual([]);
+  });
+
+  it('names the bank, not the stored English name of a savings account', () => {
+    const savings = FOUND_ACCOUNTS['weber-design']['qonto'].find((a) => a.id === 'wd-savings')!;
+    const soon: Account = { ...savings, connection: { ...savings.connection, kind: 'connected', consentUntil: '2026-10-25' } };
+    expect(bankNotices([soon])[0].params).toEqual({ bank: 'Qonto', days: 3 });
   });
 
   it('a broken connection with a long consent gets the "ended" notice', () => {
@@ -259,5 +268,75 @@ describe('bankInitials', () => {
     expect(bankInitials('X')).toBe('X');
     expect(bankInitials('')).toBe('');
     expect(bankInitials('  Volks   Bank ')).toBe('VB');
+  });
+});
+
+describe('bankNameOf', () => {
+  const found = (id: string): Account => FOUND_ACCOUNTS['weber-design']['qonto'].find((a) => a.id === id)!;
+  const sparkasse = accountsOf('cafe-linde').find((a) => a.id === 'cl-sparkasse')!;
+  const cash = accountsOf('weber-design').find((a) => a.id === 'wd-cash')!;
+
+  it('is the account name for a business account', () => {
+    expect(bankNameOf(qonto)).toBe('Qonto');
+    expect(bankNameOf(sparkasse)).toBe('Sparkasse');
+  });
+
+  it('takes the bank out of a savings or credit-card account name', () => {
+    expect(bankNameOf(found('wd-savings'))).toBe('Qonto');
+    expect(bankNameOf(found('wd-card'))).toBe('Qonto');
+  });
+
+  it('knows no bank for the cash box', () => {
+    expect(bankNameOf(cash)).toBeNull();
+  });
+
+  it('keeps the whole name when no bank of the picker starts it', () => {
+    expect(bankNameOf({ ...qonto, name: 'Raiffeisenbank Mitte' })).toBe('Raiffeisenbank Mitte');
+  });
+
+  it('does not take a bank for a longer word that starts with its name', () => {
+    expect(bankNameOf({ ...qonto, name: 'INGenious Savings' })).toBe('INGenious Savings');
+  });
+});
+
+describe('accountName', () => {
+  const found = (id: string): Account => FOUND_ACCOUNTS['weber-design']['qonto'].find((a) => a.id === id)!;
+  const cash = accountsOf('weber-design').find((a) => a.id === 'wd-cash')!;
+
+  it('is the bank for a business account, whatever label it is given', () => {
+    expect(accountName(qonto, 'Business account')).toBe('Qonto');
+  });
+
+  it('is the bank and the product label for savings and credit-card accounts, never the stored English name', () => {
+    expect(accountName(found('wd-savings'), 'Sparkonto')).toBe('Qonto · Sparkonto');
+    expect(accountName(found('wd-card'), 'Kreditkarte')).toBe('Qonto · Kreditkarte');
+  });
+
+  it('is the product label alone for the cash box', () => {
+    expect(accountName(cash, 'Kasse')).toBe('Kasse');
+  });
+});
+
+describe('isRenewed', () => {
+  it('is true for a working connection whose consent runs the full 180 days from today or longer', () => {
+    expect(isRenewed({ ...qonto.connection, consentUntil: '2027-04-20' })).toBe(true);
+    expect(isRenewed({ ...qonto.connection, consentUntil: '2028-01-01' })).toBe(true);
+  });
+
+  it('is false one day short, for a broken connection, and for one that is not a bank connection', () => {
+    expect(isRenewed({ ...qonto.connection, consentUntil: '2027-04-19' })).toBe(false);
+    expect(isRenewed({ ...qonto.connection, consentUntil: '2027-04-20', broken: true })).toBe(false);
+    expect(isRenewed({ ...qonto.connection, consentUntil: null })).toBe(false);
+    expect(isRenewed(noConnection('statement'))).toBe(false);
+    expect(isRenewed(noConnection('cash'))).toBe(false);
+  });
+
+  it('counts from the day it is given, not the demo day', () => {
+    expect(isRenewed({ ...qonto.connection, consentUntil: '2027-04-20' }, '2026-10-23')).toBe(false);
+    expect(isRenewed({ ...qonto.connection, consentUntil: '2027-04-21' }, '2026-10-23')).toBe(true);
+  });
+
+  it('is true for what newConnection gives', () => {
+    expect(isRenewed(newConnection('2026-01-01'))).toBe(true);
   });
 });

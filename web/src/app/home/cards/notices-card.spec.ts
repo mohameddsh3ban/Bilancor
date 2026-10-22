@@ -35,6 +35,44 @@ describe('NoticesCard', () => {
     expect(q(el, 'notice-action-wd-n1')?.getAttribute('href')).toBe('/soon/terms');
   });
 
+  /** Weber Design's Qonto consent ends on the given day, as the bank would report it. */
+  function consentEnds(date: string): void {
+    const demo = TestBed.inject(DemoStateService);
+    const snapshot = demo.snapshot();
+    snapshot.accounts = snapshot.accounts.map((a) =>
+      a.id === 'wd-qonto' ? { ...a, connection: { ...a.connection, consentUntil: date } } : a,
+    );
+    demo.restore(snapshot);
+  }
+  const bankText = (el: HTMLElement) => q(el, `notice-${BANK_EXPIRY}`)?.querySelector('p')?.textContent?.trim();
+
+  it('counts the days with the right word: 14 days, 2 days, 1 day, today', () => {
+    const words: Record<string, string> = {
+      '2026-11-05': 'Your Qonto connection expires in 14 days',
+      '2026-10-24': 'Your Qonto connection expires in 2 days',
+      '2026-10-23': 'Your Qonto connection expires in 1 day',
+      '2026-10-22': 'Your Qonto connection expires today',
+    };
+    for (const [date, sentence] of Object.entries(words)) {
+      consentEnds(date);
+      expect(bankText(render().el), date).toBe(sentence);
+    }
+  });
+
+  it('counts the days with the right word in German and Arabic too', () => {
+    const language = TestBed.inject(LanguageService);
+    consentEnds('2026-10-23');
+    language.setLang('de');
+    expect(bankText(render().el)).toBe('Deine Verbindung zu Qonto läuft in 1 Tag ab');
+    consentEnds('2026-10-22');
+    expect(bankText(render().el)).toBe('Deine Verbindung zu Qonto läuft heute ab');
+    consentEnds('2026-10-23');
+    language.setLang('ar');
+    expect(bankText(render().el)).toBe('ينتهي ربط Qonto خلال يوم واحد');
+    consentEnds('2026-10-22');
+    expect(bankText(render().el)).toBe('ينتهي ربط Qonto اليوم');
+  });
+
   it('the bank notice opens Settings', () => {
     const { el } = render();
     expect(q(el, `notice-action-${BANK_EXPIRY}`)?.textContent?.trim()).toBe('Renew');

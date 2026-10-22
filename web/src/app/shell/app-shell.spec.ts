@@ -112,6 +112,27 @@ describe('AppShell', () => {
     expect(history).not.toContain('in 5 days');
   });
 
+  it('bell panel says "in 1 day" and "today", never "in 1 days" or "in 0 days"', async () => {
+    const demo = TestBed.inject(DemoStateService);
+    const consentEnds = (date: string): void => {
+      const snapshot = demo.snapshot();
+      snapshot.accounts = snapshot.accounts.map((a) =>
+        a.id === 'wd-qonto' ? { ...a, connection: { ...a.connection, consentUntil: date } } : a,
+      );
+      demo.restore(snapshot);
+    };
+    TestBed.inject(NoticeService).bellOpen.set(true);
+    consentEnds('2026-10-23');
+    await settle();
+    const open = () => document.body.querySelector('[data-testid="bell-open"]')?.textContent ?? '';
+    expect(open()).toContain('Your Qonto connection expires in 1 day');
+    expect(open()).not.toContain('1 days');
+    consentEnds('2026-10-22');
+    await settle();
+    expect(open()).toContain('Your Qonto connection expires today');
+    expect(open()).not.toContain('0 days');
+  });
+
   it('a dismissed bank notice moves from "Needs action" to "Earlier"', async () => {
     const notices = TestBed.inject(NoticeService);
     notices.dismiss('bank-expiry-wd-qonto');

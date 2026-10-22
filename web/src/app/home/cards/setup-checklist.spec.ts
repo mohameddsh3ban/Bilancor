@@ -28,11 +28,35 @@ describe('SetupChecklist', () => {
     expect(link(el, 'receipt').getAttribute('href')).toBe('/documents?add=1');
   });
 
-  it('the other steps still open their coming-soon pages', () => {
+  it("the setup checklist's bank and tax steps open the flows", () => {
     TestBed.inject(DemoStateService).setSetup('new');
     const el = render();
-    expect(link(el, 'bank').getAttribute('href')).toBe('/soon/bank');
-    expect(link(el, 'tax').getAttribute('href')).toBe('/soon/tax');
+    expect(link(el, 'bank').getAttribute('href')).toBe('/settings/bank/connect?from=home');
+    expect(link(el, 'tax').getAttribute('href')).toBe('/settings/tax?from=home');
+    expect(link(el, 'receipt').getAttribute('href')).toBe('/documents?add=1');
+  });
+
+  it('a bank step or a tax step that is done links to its place in Settings', () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setSetup('halfway'); // bank done, tax and receipt to do
+    let el = render();
+    expect(link(el, 'bank').getAttribute('href')).toBe('/settings');
+    expect(link(el, 'bank').textContent?.trim()).toBe('View');
+    expect(link(el, 'tax').getAttribute('href')).toBe('/settings/tax?from=home');
+
+    demo.completeStep('tax');
+    el = render();
+    expect(link(el, 'tax').getAttribute('href')).toBe('/settings');
+    expect(link(el, 'receipt').getAttribute('href')).toBe('/documents?add=1');
+  });
+
+  it('the steps are separate: a done tax step with no bank still starts the bank flow', () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setSetup('new');
+    demo.completeStep('tax');
+    const el = render();
+    expect(link(el, 'bank').getAttribute('href')).toBe('/settings/bank/connect?from=home');
+    expect(link(el, 'tax').getAttribute('href')).toBe('/settings');
   });
 
   it('a receipt step that is done only shows the documents', () => {
@@ -40,5 +64,7 @@ describe('SetupChecklist', () => {
     const el = render();
     expect(link(el, 'receipt').textContent?.trim()).toBe('View');
     expect(link(el, 'receipt').getAttribute('href')).toBe('/documents');
+    expect(link(el, 'bank').getAttribute('href')).toBe('/settings');
+    expect(link(el, 'tax').getAttribute('href')).toBe('/settings');
   });
 });

@@ -143,6 +143,8 @@
     },
     "bankExpiry": {
       "text": "Deine Verbindung zu {{bank}} läuft in {{days}} Tagen ab",
+      "textOne": "Deine Verbindung zu {{bank}} läuft in 1 Tag ab",
+      "textToday": "Deine Verbindung zu {{bank}} läuft heute ab",
       "action": "Erneuern"
     },
     "bankEnded": {
@@ -733,13 +735,55 @@
     }
   },
   "settings": {
+    "title": "Einstellungen",
+    "tax": {
+      "title": "Unternehmen und Steuern",
+      "edit": "Bearbeiten",
+      "editLabel": "Deine Steuerangaben bearbeiten",
+      "empty": "Du hast deine Steuerangaben noch nicht eingetragen. Sie helfen uns, richtig zu buchen und zu melden.",
+      "add": "Steuerangaben ergänzen",
+      "kind": "Art des Unternehmens",
+      "vat": "Umsatzsteuer",
+      "vatYes": "Ja, ich berechne Umsatzsteuer",
+      "vatNo": "Nein",
+      "basis": "Umsatzsteuer ist fällig",
+      "notGiven": "Nicht angegeben",
+      "yearFrom": "Beginnt am {{date}}"
+    },
     "bank": {
+      "title": "Bankkonten",
+      "connect": "Bank verbinden",
+      "connectFirst": "Verbinde deine Bank",
+      "before": "Verbinde deine Bank, dann erscheinen hier deine Konten mit ihren Zahlungen.",
+      "cashLine": "Die Zahlungen kommen aus deinen Belegen",
+      "statementLine": "Die Zahlungen kommen aus importierten Kontoauszügen",
+      "lastFetchedToday": "zuletzt abgerufen heute, {{time}}",
+      "lastFetched": "zuletzt abgerufen am {{date}}, {{time}}",
+      "status": {
+        "connected": "Verbunden",
+        "renewIn": "Erneuern in {{days}} Tagen",
+        "renewInOne": "Erneuern in 1 Tag",
+        "renewToday": "Heute erneuern",
+        "signInAgain": "Erneut anmelden",
+        "statement": "Kontoauszug-Import",
+        "cash": "Kasse"
+      },
+      "action": {
+        "renew": "Erneuern",
+        "signIn": "Erneut anmelden",
+        "import": "Kontoauszug importieren"
+      },
       "product": {
         "business": "Geschäftskonto",
         "savings": "Sparkonto",
         "card": "Kreditkarte",
         "cash": "Kasse"
       }
+    },
+    "inbox": {
+      "title": "Beleg-Postfach",
+      "text": "Schicke Belege und Rechnungen an",
+      "sorted": "Wir finden selbst heraus, ob sie erhalten oder gesendet wurden."
     }
   }
 }

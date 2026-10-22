@@ -6,6 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
+import { accountName } from '../../domain/bank-connection';
 import { totalAvailableCents } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 
@@ -38,7 +39,7 @@ import { DemoStateService } from '../../state/demo-state.service';
                 />
                 <span class="flex min-w-0 flex-1 flex-col">
                   <span class="truncate">{{
-                    account.kind === 'cash' ? ('account.cash' | transloco) : account.name
+                    nameOf(account, 'settings.bank.product.' + account.product | transloco)
                   }}</span>
                   <span class="text-muted-foreground text-xs" data-testid="account-updated">
                     {{
@@ -70,6 +71,7 @@ import { DemoStateService } from '../../state/demo-state.service';
 export class BalancesCard {
   private readonly demo = inject(DemoStateService);
 
+  protected readonly nameOf = accountName;
   protected readonly accounts = computed(() => this.demo.business().accounts);
   protected readonly total = computed(() => totalAvailableCents(this.accounts()));
 }

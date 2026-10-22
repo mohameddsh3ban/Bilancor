@@ -1,3 +1,4 @@
+import { BANKS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, AccountConnection, Notice } from '../data/models';
 
@@ -57,7 +58,7 @@ export function bankNotices(accounts: readonly Account[], today: string = DEMO_T
           kind: 'bankExpiry',
           urgency: 2,
           blocking: false,
-          params: { bank: account.name, days: status.daysLeft },
+          params: { bank: bankNameOf(account) ?? account.name, days: status.daysLeft },
           date: today,
         },
       ];
@@ -69,13 +70,37 @@ export function bankNotices(accounts: readonly Account[], today: string = DEMO_T
           kind: 'bankEnded',
           urgency: 1,
           blocking: false,
-          params: { bank: account.name },
+          params: { bank: bankNameOf(account) ?? account.name },
           date: today,
         },
       ];
     }
     return [];
   });
+}
+
+/**
+ * The bank an account is at: the name of a business account is its bank ("Qonto"), and a savings account or credit
+ * card keeps it at the front of its stored English name ("Qonto Savings"). Null for the cash box, which has no bank.
+ * A name that no bank of the picker starts is its own bank.
+ */
+export function bankNameOf(account: Account): string | null {
+  if (account.kind === 'cash') return null;
+  const names = BANKS.map((bank) => bank.name).filter(
+    (name) => account.name === name || account.name.startsWith(`${name} `),
+  );
+  return names.sort((one, other) => other.length - one.length)[0] ?? account.name;
+}
+
+/**
+ * What an account is called on screen, whatever the language: a business account is its bank, a savings account or
+ * credit card is "bank · product" with `productLabel` (the product's name in the language of the page) instead of the
+ * stored English name, and the cash box is just its `productLabel`.
+ */
+export function accountName(account: Account, productLabel: string): string {
+  if (account.kind === 'cash') return productLabel;
+  const bank = bankNameOf(account) ?? account.name;
+  return account.product === 'business' ? bank : `${bank} · ${productLabel}`;
 }
 
 /** An IBAN with only its first 4 and last 4 characters shown, e.g. `DE89 … 4321`. Spaces in the IBAN are ignored. */
@@ -101,6 +126,19 @@ export function newConnection(fetchFrom: string, today: string = DEMO_TODAY): Ac
     fetchFrom,
     broken: false,
   };
+}
+
+/**
+ * Whether a bank connection has just been signed in: it works, and its consent already runs the full `CONSENT_DAYS`
+ * days from `today` (an ISO date; never the real clock) or longer. Renewing it again would change nothing.
+ */
+export function isRenewed(connection: AccountConnection, today: string = DEMO_TODAY): boolean {
+  return (
+    connection.kind === 'connected' &&
+    !connection.broken &&
+    connection.consentUntil !== null &&
+    connection.consentUntil >= addDays(today, CONSENT_DAYS)
+  );
 }
 
 /** The connection of an account that has no bank to look after: payments from imported statements, or the cash box. */
