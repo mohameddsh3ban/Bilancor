@@ -157,7 +157,11 @@
     "receiptLinked": "Du hast den Beleg {{name}} verknüpft",
     "receiptLinkedAuto": "Der Beleg {{name}} wurde automatisch verknüpft",
     "receiptUnlinked": "Du hast die Verknüpfung mit dem Beleg {{name}} gelöst",
-    "bookedByRule": "Nach deiner Regel als {{category}} gebucht"
+    "bookedByRule": "Nach deiner Regel als {{category}} gebucht",
+    "taxChanged": "Du hast deine Steuerangaben geändert",
+    "bankConnected": "Du hast {{account}} bei {{bank}} verbunden",
+    "bankRenewed": "Du hast die Verbindung zu {{bank}} erneuert",
+    "cashAdded": "Du hast eine Kasse hinzugefügt"
   },
   "payments": {
     "title": "Zahlungen",

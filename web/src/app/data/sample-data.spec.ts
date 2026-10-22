@@ -1,5 +1,6 @@
 import { paymentStatus } from '../domain/payment-status';
 import { revenueLimitStatus } from '../domain/revenue-limit';
+import { GERMAN_STATES, TAX_OFFICES } from './banks';
 import { CATEGORIES, PRIVATE_IN, PRIVATE_OUT } from './categories';
 import { BUSINESSES, PERSON } from './sample-data';
 import { UPLOAD_POOLS, linkedDocFor } from './sample-documents';
@@ -365,5 +366,155 @@ describe('sample data revenue notice', () => {
     const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
     const notice = sara.notices.find((n) => n.kind === 'revenueLimit')!;
     expect(notice.params['percent']).toBe(revenueLimitStatus(sara.revenueThisYearCents).percent);
+  });
+});
+
+describe('sample bank connections', () => {
+  const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
+  const account = (businessId: string, accountId: string) => business(businessId).accounts.find((a) => a.id === accountId)!;
+
+  it('every account has a connection and a product', () => {
+    for (const b of BUSINESSES) {
+      for (const a of b.accounts) {
+        expect(['connected', 'statement', 'cash'], a.id).toContain(a.connection.kind);
+        expect(['business', 'savings', 'card', 'cash'], a.id).toContain(a.product);
+        expect(a.connection.kind === 'cash', a.id).toBe(a.kind === 'cash');
+        expect(a.product === 'cash', a.id).toBe(a.kind === 'cash');
+        expect(a.iban === null, a.id).toBe(a.kind === 'cash');
+        if (a.iban !== null) expect(a.iban, a.id).toMatch(/^DE\d{20}$/);
+      }
+    }
+  });
+
+  it('only a connected account has a consent end and a last fetch', () => {
+    for (const b of BUSINESSES) {
+      for (const a of b.accounts) {
+        const c = a.connection;
+        if (c.kind === 'connected') {
+          expect(c.consentUntil, a.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(c.lastFetched, a.id).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+          expect(c.fetchFrom, a.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        } else {
+          expect([c.consentUntil, c.lastFetched, c.fetchFrom], a.id).toEqual([null, null, null]);
+        }
+        expect(c.broken, a.id).toBe(false);
+      }
+    }
+  });
+
+  it("weber-design's Qonto consent ends 2026-10-27", () => {
+    expect(account('weber-design', 'wd-qonto').connection).toMatchObject({
+      kind: 'connected',
+      consentUntil: '2026-10-27',
+      lastFetched: '2026-10-22T06:12',
+      broken: false,
+    });
+    expect(account('weber-design', 'wd-cash')).toMatchObject({ product: 'cash', iban: null, connection: { kind: 'cash' } });
+  });
+
+  it("sara-yoga's Qonto consent ended 2026-10-20", () => {
+    expect(account('sara-yoga', 'sy-qonto').connection).toMatchObject({ kind: 'connected', consentUntil: '2026-10-20' });
+  });
+
+  it("cafe-linde's Qonto has about four months left", () => {
+    const { kind, consentUntil } = account('cafe-linde', 'cl-qonto').connection;
+    expect(kind).toBe('connected');
+    const days = (Date.parse(consentUntil!) - Date.parse('2026-10-22')) / 86_400_000;
+    expect(days).toBeGreaterThanOrEqual(110);
+    expect(days).toBeLessThanOrEqual(130);
+  });
+
+  it("cafe-linde's Sparkasse is a statement account", () => {
+    expect(account('cafe-linde', 'cl-sparkasse').connection.kind).toBe('statement');
+    expect(account('cafe-linde', 'cl-cash').connection.kind).toBe('cash');
+  });
+
+  it('the sample accounts are business accounts or cash boxes, each with an IBAN of its own', () => {
+    const ibans = BUSINESSES.flatMap((b) => b.accounts.map((a) => a.iban).filter((i) => i !== null));
+    expect(new Set(ibans).size).toBe(ibans.length);
+    for (const b of BUSINESSES) {
+      for (const a of b.accounts) expect(['business', 'cash'], a.id).toContain(a.product);
+    }
+  });
+
+  it('no stored bankExpiry notice is left open', () => {
+    for (const b of BUSINESSES) {
+      expect(b.notices.filter((n) => n.kind === 'bankExpiry'), b.id).toEqual([]);
+    }
+    const ids = BUSINESSES.flatMap((b) => b.notices.map((n) => n.id));
+    expect(ids).not.toContain('wd-n2');
+    expect(ids).not.toContain('cl-n1');
+  });
+
+  it('the notices that are not about the bank stay, and so do the old ones in the history', () => {
+    expect(business('weber-design').notices.map((n) => n.id)).toEqual(['wd-n1', 'wd-n3']);
+    expect(business('sara-yoga').notices.map((n) => n.id)).toEqual(['sy-n1']);
+    expect(business('cafe-linde').notices).toEqual([]);
+    expect(business('weber-design').noticeHistory.map((n) => n.id)).toEqual(['wd-h1', 'wd-h2']);
+    expect(business('cafe-linde').noticeHistory.map((n) => n.id)).toEqual(['cl-h1']);
+  });
+
+  it('every business starts with an empty history', () => {
+    for (const b of BUSINESSES) expect(b.history, b.id).toEqual([]);
+  });
+});
+
+describe('sample tax answers', () => {
+  const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
+
+  it('every tax profile with kleinunternehmer has no VAT answers', () => {
+    const small = BUSINESSES.filter((b) => b.taxProfile.kleinunternehmer);
+    expect(small.length).toBeGreaterThan(0);
+    for (const b of small) {
+      expect(b.taxProfile, b.id).toMatchObject({ vatPeriod: null, permanentExtension: false, vatBasis: null });
+    }
+  });
+
+  it('every tax profile that charges VAT has a return period and a basis', () => {
+    for (const b of BUSINESSES.filter((x) => !x.taxProfile.kleinunternehmer)) {
+      expect(['monthly', 'quarterly', 'yearly'], b.id).toContain(b.taxProfile.vatPeriod);
+      expect(['ist', 'soll'], b.id).toContain(b.taxProfile.vatBasis);
+    }
+  });
+
+  it("weber-design's answers are the ones in the design", () => {
+    expect(business('weber-design').taxProfile).toEqual({
+      businessKind: 'freelance',
+      kleinunternehmer: false,
+      vatPeriod: 'monthly',
+      permanentExtension: false,
+      vatBasis: 'ist',
+      taxState: 'berlin',
+      taxNumber: '27/123/45678',
+      vatId: null,
+      fiscalYearStart: '01-01',
+    });
+  });
+
+  it('sara-yoga is a freelance Kleinunternehmer in Berlin, and cafe-linde a trade with quarterly returns paid when invoiced', () => {
+    expect(business('sara-yoga').taxProfile).toMatchObject({ businessKind: 'freelance', kleinunternehmer: true, taxState: 'berlin' });
+    expect(business('cafe-linde').taxProfile).toMatchObject({
+      businessKind: 'trade',
+      kleinunternehmer: false,
+      vatPeriod: 'quarterly',
+      permanentExtension: false,
+      vatBasis: 'soll',
+    });
+    expect(business('cafe-linde').taxProfile.taxState).not.toBe('berlin');
+  });
+
+  it("every tax number matches its state's format and a tax office prefix of that state", () => {
+    for (const b of BUSINESSES) {
+      const { taxState, taxNumber } = b.taxProfile;
+      const state = GERMAN_STATES.find((s) => s.id === taxState);
+      expect(state, b.id).toBeDefined();
+      expect(state!.taxNumberPattern!.test(taxNumber!), b.id).toBe(true);
+      const digits = taxNumber!.replace(/\D/g, '');
+      expect(TAX_OFFICES.some((o) => o.state === taxState && digits.startsWith(o.prefix)), b.id).toBe(true);
+    }
+  });
+
+  it('the financial year of every sample business is the calendar year', () => {
+    for (const b of BUSINESSES) expect(b.taxProfile.fiscalYearStart, b.id).toBe('01-01');
   });
 });

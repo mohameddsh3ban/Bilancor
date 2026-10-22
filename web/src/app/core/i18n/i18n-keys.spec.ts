@@ -27,6 +27,15 @@ describe('translation files', () => {
     }
   });
 
+  it('has a history text for tax changes, connecting and renewing a bank, and adding a cash box', () => {
+    for (const key of ['taxChanged', 'bankConnected', 'bankRenewed', 'cashAdded']) {
+      expect(enKeys).toContain(`history.${key}`);
+    }
+    expect(en.history.bankConnected).toContain('{{account}}');
+    expect(en.history.bankConnected).toContain('{{bank}}');
+    expect(en.history.bankRenewed).toContain('{{bank}}');
+  });
+
   it('has the German tax terms with label, de and explain', () => {
     for (const term of ['ustva', 'euer', 'kleinunternehmer', 'skr03', 'eigenbeleg', 'eingangsbeleg', 'ausgangsbeleg']) {
       for (const part of ['label', 'de', 'explain']) {

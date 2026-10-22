@@ -6,32 +6,32 @@ import { DemoStateService } from './demo-state.service';
 import { NoticeService } from './notice.service';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
-const cafe = BUSINESSES.find((b) => b.id === 'cafe-linde')!;
-const [terms, bankExpiry, unreadable] = weber.notices;
+const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
+const [terms, unreadable] = weber.notices;
 
 describe('NoticeService', () => {
   beforeEach(() => localStorage.clear());
 
-  it('shows the two most urgent notices of the current business', () => {
+  it('shows the open notices of the current business, most urgent first', () => {
     const service = TestBed.inject(NoticeService);
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
-    expect(service.overflow().map((n) => n.id)).toEqual([unreadable.id]);
-    expect(service.unreadCount()).toBe(3);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, unreadable.id]);
+    expect(service.overflow()).toEqual([]);
+    expect(service.unreadCount()).toBe(2);
   });
 
   it('dismiss moves a notice to history', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    expect(service.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
-    expect(service.history()[0].id).toBe(bankExpiry.id);
-    expect(service.unreadCount()).toBe(2);
+    service.dismiss(unreadable.id);
+    expect(service.shown().map((n) => n.id)).not.toContain(unreadable.id);
+    expect(service.history()[0].id).toBe(unreadable.id);
+    expect(service.unreadCount()).toBe(1);
   });
 
   it('history is newest first and keeps the earlier history entries', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
+    service.dismiss(unreadable.id);
     const ids = service.history().map((n) => n.id);
-    expect(ids).toEqual([bankExpiry.id, ...weber.noticeHistory.map((n) => n.id)]);
+    expect(ids).toEqual([unreadable.id, ...weber.noticeHistory.map((n) => n.id)]);
   });
 
   it('ignores dismissing a blocking notice', () => {
@@ -43,35 +43,35 @@ describe('NoticeService', () => {
   });
 
   it('stores dismissed ids as a JSON array under the person and business key', () => {
-    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).dismiss(unreadable.id);
     const raw = TestBed.inject(SafeStorage).get('mockup.dismissed.p1.weber-design');
-    expect(JSON.parse(raw!)).toEqual([bankExpiry.id]);
+    expect(JSON.parse(raw!)).toEqual([unreadable.id]);
   });
 
   it('dismissal is remembered by a new NoticeService', () => {
-    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).dismiss(unreadable.id);
     const second = TestBed.runInInjectionContext(() => new NoticeService());
-    expect(second.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
-    expect(second.history()[0].id).toBe(bankExpiry.id);
+    expect(second.shown().map((n) => n.id)).not.toContain(unreadable.id);
+    expect(second.history()[0].id).toBe(unreadable.id);
   });
 
   it('treats a corrupt stored value as nothing dismissed', () => {
     TestBed.inject(SafeStorage).set('mockup.dismissed.p1.weber-design', '{not json');
     const service = TestBed.inject(NoticeService);
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, unreadable.id]);
   });
 
   it('treats a stored non-array as nothing dismissed', () => {
     TestBed.inject(SafeStorage).set('mockup.dismissed.p1.weber-design', '{"a":1}');
-    expect(TestBed.inject(NoticeService).unreadCount()).toBe(3);
+    expect(TestBed.inject(NoticeService).unreadCount()).toBe(2);
   });
 
   it('dismissal does not leak to another business', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    TestBed.inject(DemoStateService).setBusiness('cafe-linde');
-    expect(service.shown().map((n) => n.id)).toEqual([cafe.notices[0].id]);
-    expect(service.history().map((n) => n.id)).toEqual(cafe.noticeHistory.map((n) => n.id));
+    service.dismiss(unreadable.id);
+    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
+    expect(service.shown().map((n) => n.id)).toEqual([sara.notices[0].id]);
+    expect(service.history().map((n) => n.id)).toEqual(sara.noticeHistory.map((n) => n.id));
   });
 });
 
@@ -92,9 +92,9 @@ describe('NoticeService and the setup state', () => {
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
     demo.setSetup('halfway');
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id]);
     expect(service.overflow()).toEqual([]);
-    expect(service.unreadCount()).toBe(2);
+    expect(service.unreadCount()).toBe(1);
     expect(service.history().map((n) => n.kind)).toEqual(['bankExpiry']);
   });
 
@@ -111,7 +111,7 @@ describe('NoticeService and the setup state', () => {
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
     demo.setSetup('active');
-    expect(service.unreadCount()).toBe(3);
+    expect(service.unreadCount()).toBe(2);
   });
 });
 
@@ -120,11 +120,11 @@ describe('NoticeService.resetDismissals', () => {
 
   it('brings a dismissed notice back and empties the history entry', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    expect(service.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
+    service.dismiss(unreadable.id);
+    expect(service.shown().map((n) => n.id)).not.toContain(unreadable.id);
     service.resetDismissals();
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
-    expect(service.unreadCount()).toBe(3);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, unreadable.id]);
+    expect(service.unreadCount()).toBe(2);
     expect(service.history().map((n) => n.id)).toEqual(weber.noticeHistory.map((n) => n.id));
   });
 
@@ -132,20 +132,20 @@ describe('NoticeService.resetDismissals', () => {
     const storage = TestBed.inject(SafeStorage);
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    demo.setBusiness('cafe-linde');
-    service.dismiss(cafe.notices[0].id);
+    service.dismiss(unreadable.id);
+    demo.setBusiness('sara-yoga');
+    service.dismiss(sara.notices[0].id);
     service.resetDismissals();
     expect(JSON.parse(storage.get('mockup.dismissed.p1.weber-design')!)).toEqual([]);
-    expect(JSON.parse(storage.get('mockup.dismissed.p1.cafe-linde')!)).toEqual([]);
-    expect(service.shown().map((n) => n.id)).toEqual([cafe.notices[0].id]);
+    expect(JSON.parse(storage.get('mockup.dismissed.p1.sara-yoga')!)).toEqual([]);
+    expect(service.shown().map((n) => n.id)).toEqual([sara.notices[0].id]);
   });
 
   it('a new NoticeService sees nothing dismissed after a reset', () => {
-    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).dismiss(unreadable.id);
     TestBed.inject(NoticeService).resetDismissals();
     const second = TestBed.runInInjectionContext(() => new NoticeService());
-    expect(second.unreadCount()).toBe(3);
+    expect(second.unreadCount()).toBe(2);
   });
 });
 
@@ -160,11 +160,11 @@ describe('NoticeService and the unreadable receipts', () => {
     const service = TestBed.inject(NoticeService);
     // The stored count (2) is only a sample; the notice counts the documents that need a check now.
     expect(countOf(service)).toBe(1);
-    expect(service.unreadCount()).toBe(3);
+    expect(service.unreadCount()).toBe(2);
 
     demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
-    expect([...service.shown(), ...service.overflow()].map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
-    expect(service.unreadCount()).toBe(2);
+    expect([...service.shown(), ...service.overflow()].map((n) => n.id)).toEqual([terms.id]);
+    expect(service.unreadCount()).toBe(1);
   });
 
   it('counts a missing date or name as well, and the notice comes back with the next one', () => {

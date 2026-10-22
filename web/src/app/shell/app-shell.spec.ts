@@ -84,7 +84,7 @@ describe('AppShell', () => {
   });
 
   it('bell shows unread count', () => {
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
   });
 
   it('bell opens the history panel when bellOpen is set', async () => {
@@ -95,14 +95,13 @@ describe('AppShell', () => {
     expect(document.body.textContent).toContain('Your Qonto connection expires in 30 days');
   });
 
-  it('bell panel lists all three open notices, then the earlier history', async () => {
+  it('bell panel lists the open notices, then the earlier history', async () => {
     TestBed.inject(NoticeService).bellOpen.set(true);
     await settle();
     const text = (id: string) => document.body.querySelector(`[data-testid="${id}"]`)?.textContent ?? '';
     const open = text('bell-open');
     expect(open).toContain('Needs action');
     expect(open).toContain('New terms from our bank-connection provider need your review');
-    expect(open).toContain('Your Qonto connection expires in 5 days');
     expect(open).toContain('Receipts that could not be read: 1');
     const history = text('bell-history');
     expect(history).toContain('Earlier');
@@ -115,7 +114,6 @@ describe('AppShell', () => {
     const demo = TestBed.inject(DemoStateService);
     const notices = TestBed.inject(NoticeService);
     demo.setBusiness('cafe-linde');
-    notices.dismiss('cl-n1');
     notices.bellOpen.set(true);
     await settle();
     expect(document.body.querySelector('[data-testid="bell-open"]')).toBeNull();
@@ -188,13 +186,13 @@ describe('AppShell', () => {
 
   it('reset demo brings dismissed notices back', () => {
     const notices = TestBed.inject(NoticeService);
-    notices.dismiss('wd-n2');
+    notices.dismiss('wd-n3');
     harness.detectChanges();
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('1');
     q('[data-testid="demo-reset"]').click();
     harness.detectChanges();
     expect(q('[data-testid="demo-reset"]').textContent).toContain('Reset demo');
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
   });
 
   it('Reset demo restores a changed payment', () => {

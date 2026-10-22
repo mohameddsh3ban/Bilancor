@@ -9,6 +9,9 @@ const account = (balanceCents: number): Account => ({
   name: 'Bank',
   balanceCents,
   lastUpdate: '2026-10-21',
+  connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+  product: 'business',
+  iban: null,
 });
 
 const tx = (id: string, date: string): Transaction => ({

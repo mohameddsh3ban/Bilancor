@@ -1,8 +1,12 @@
+import type { Notice } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { noticesForSetup, splitNotices, withUnreadableCount } from './notices';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
-const [terms, bankExpiry, unreadable] = weber.notices;
+const [terms, unreadable] = weber.notices;
+// The sample data no longer stores a bank notice (it is calculated from the connections), so these tests bring their own.
+const bankExpiry: Notice = { id: 'wd-n2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 5 }, date: '2026-10-19' };
+const three = [terms, bankExpiry, unreadable];
 
 describe('splitNotices', () => {
   it('shows the two most urgent notices and overflows the rest', () => {
@@ -12,19 +16,19 @@ describe('splitNotices', () => {
   });
 
   it('never drops a blocking notice, even when its id is dismissed', () => {
-    const { shown, overflow } = splitNotices(weber.notices, new Set([terms.id]));
+    const { shown, overflow } = splitNotices(three, new Set([terms.id]));
     expect(shown.map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
     expect(overflow).toHaveLength(1);
   });
 
   it('drops dismissed non-blocking notices', () => {
-    const { shown, overflow } = splitNotices(weber.notices, new Set([bankExpiry.id]));
+    const { shown, overflow } = splitNotices(three, new Set([bankExpiry.id]));
     expect(shown.map((n) => n.id)).toEqual([terms.id, unreadable.id]);
     expect(overflow).toEqual([]);
   });
 
   it('respects a custom max', () => {
-    const { shown, overflow } = splitNotices(weber.notices, new Set(), 1);
+    const { shown, overflow } = splitNotices(three, new Set(), 1);
     expect(shown.map((n) => n.id)).toEqual([terms.id]);
     expect(overflow).toHaveLength(2);
   });
@@ -35,16 +39,16 @@ describe('noticesForSetup', () => {
   const done = { bank: true, tax: true, receipt: true };
 
   it('keeps everything once setup is complete', () => {
-    expect(noticesForSetup(weber.notices, done)).toEqual(weber.notices);
+    expect(noticesForSetup(three, done)).toEqual(three);
   });
 
   it('hides bank notices until the bank step is done', () => {
-    const kinds = noticesForSetup(weber.notices, { ...done, bank: false }).map((n) => n.kind);
+    const kinds = noticesForSetup(three, { ...done, bank: false }).map((n) => n.kind);
     expect(kinds).toEqual(['unreadable']);
   });
 
   it('hides unreadable notices until the receipt step is done', () => {
-    const kinds = noticesForSetup(weber.notices, { ...done, receipt: false }).map((n) => n.kind);
+    const kinds = noticesForSetup(three, { ...done, receipt: false }).map((n) => n.kind);
     expect(kinds).toEqual(['terms', 'bankExpiry']);
   });
 
@@ -55,19 +59,19 @@ describe('noticesForSetup', () => {
 
 describe('withUnreadableCount', () => {
   it('puts the live count on the unreadable notice and leaves the others as they are', () => {
-    const result = withUnreadableCount(weber.notices, 4);
-    expect(result.map((n) => n.id)).toEqual(weber.notices.map((n) => n.id));
+    const result = withUnreadableCount(three, 4);
+    expect(result.map((n) => n.id)).toEqual(three.map((n) => n.id));
     expect(result[2].params).toEqual({ count: 4 });
     expect(result[0]).toBe(terms);
     expect(result[1]).toBe(bankExpiry);
   });
 
   it('leaves the unreadable notice out at 0', () => {
-    expect(withUnreadableCount(weber.notices, 0).map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(withUnreadableCount(three, 0).map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
   });
 
   it('does not change the notices it is given', () => {
-    withUnreadableCount(weber.notices, 7);
-    expect(weber.notices[2].params).toEqual({ count: 2 });
+    withUnreadableCount(three, 7);
+    expect(three[2].params).toEqual({ count: 2 });
   });
 });

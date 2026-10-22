@@ -6,8 +6,26 @@ import { PaymentHistory } from './payment-history';
 import ar from '../../../public/i18n/ar.json';
 
 const ACCOUNTS: Account[] = [
-  { id: 'bank', kind: 'bank', name: 'Qonto', balanceCents: 0, lastUpdate: '2026-10-21' },
-  { id: 'cash', kind: 'cash', name: 'Cash box', balanceCents: 0, lastUpdate: '2026-10-21' },
+  {
+    id: 'bank',
+    kind: 'bank',
+    name: 'Qonto',
+    balanceCents: 0,
+    lastUpdate: '2026-10-21',
+    connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+    product: 'business',
+    iban: null,
+  },
+  {
+    id: 'cash',
+    kind: 'cash',
+    name: 'Cash box',
+    balanceCents: 0,
+    lastUpdate: '2026-10-21',
+    connection: { kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+    product: 'cash',
+    iban: null,
+  },
 ];
 
 const FIRST_STRONG_ISOLATE = String.fromCodePoint(0x2068);

@@ -157,7 +157,11 @@
     "receiptLinked": "ربطت المستند {{name}}",
     "receiptLinkedAuto": "تم ربط المستند {{name}} تلقائيًا",
     "receiptUnlinked": "ألغيت ربط المستند {{name}}",
-    "bookedByRule": "تم الترحيل كـ {{category}} حسب قاعدتك"
+    "bookedByRule": "تم الترحيل كـ {{category}} حسب قاعدتك",
+    "taxChanged": "غيّرت بياناتك الضريبية",
+    "bankConnected": "ربطت {{account}} لدى {{bank}}",
+    "bankRenewed": "جدّدت الربط مع {{bank}}",
+    "cashAdded": "أضفت صندوقًا نقديًا"
   },
   "payments": {
     "title": "المدفوعات",

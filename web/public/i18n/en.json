@@ -157,7 +157,11 @@
     "receiptLinked": "You linked the document {{name}}",
     "receiptLinkedAuto": "The document {{name}} was linked automatically",
     "receiptUnlinked": "You unlinked the document {{name}}",
-    "bookedByRule": "Booked as {{category}} by your rule"
+    "bookedByRule": "Booked as {{category}} by your rule",
+    "taxChanged": "You changed your tax details",
+    "bankConnected": "You connected {{account}} at {{bank}}",
+    "bankRenewed": "You renewed the connection to {{bank}}",
+    "cashAdded": "You added a cash box"
   },
   "payments": {
     "title": "Payments",
