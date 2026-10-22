@@ -7,6 +7,11 @@ import { Account, HistoryEntry } from '../data/models';
 const FIRST_STRONG_ISOLATE = String.fromCodePoint(0x2068);
 const POP_ISOLATE = String.fromCodePoint(0x2069);
 
+/** A name set apart from the sentence around it, so it keeps its own direction and does not reorder the sentence. */
+export function isolateText(text: string): string {
+  return `${FIRST_STRONG_ISOLATE}${text}${POP_ISOLATE}`;
+}
+
 /**
  * What happened to a payment, newest line first. Lines are stored as keys with parameters, so they read in
  * the language of the page: a category parameter is a label key, and the cash box is named in that language.
@@ -60,7 +65,7 @@ export class PaymentHistory {
   readonly withYear = input(false);
 
   protected isolate(text: string | undefined): string | undefined {
-    return text === undefined ? undefined : `${FIRST_STRONG_ISOLATE}${text}${POP_ISOLATE}`;
+    return text === undefined ? undefined : isolateText(text);
   }
 
   protected isCashBox(name: string | undefined): boolean {

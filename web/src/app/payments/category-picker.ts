@@ -49,7 +49,8 @@ export function matchCategories(
     <hlm-popover align="start" (stateChanged)="onState($event)">
       <button hlmPopoverTrigger hlmBtn variant="outline" size="lg" data-testid="change-category">
         {{
-          (current() ? 'payments.detail.booking.change' : 'payments.detail.booking.choose')
+          labelKey() ??
+            (current() ? 'payments.detail.booking.change' : 'payments.detail.booking.choose')
             | transloco
         }}
       </button>
@@ -115,6 +116,8 @@ export class CategoryPicker {
 
   /** The category the payment is booked to now, if any. */
   readonly current = input<Booking | null>(null);
+  /** The translation key of the button's text, when it should not say Change (or Choose while there is no category). */
+  readonly labelKey = input<string | null>(null);
   readonly picked = output<Booking>();
 
   protected readonly query = signal('');

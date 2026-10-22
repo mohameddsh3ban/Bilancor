@@ -133,17 +133,19 @@ export function matchDocuments(docs: readonly Doc[], query: string): Doc[] {
                   data-testid="document-picker-empty"
                 >
                   <span>{{ 'payments.detail.docPicker.empty' | transloco }}</span>
-                  <a
-                    hlmBtn
-                    variant="outline"
-                    size="sm"
-                    data-testid="document-picker-add"
-                    routerLink="/documents"
-                    [queryParams]="{ add: '1' }"
-                    (click)="popover.close()"
-                  >
-                    {{ 'payments.detail.docPicker.add' | transloco }}
-                  </a>
+                  @if (canAdd()) {
+                    <a
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      data-testid="document-picker-add"
+                      routerLink="/documents"
+                      [queryParams]="{ add: '1' }"
+                      (click)="popover.close()"
+                    >
+                      {{ 'payments.detail.docPicker.add' | transloco }}
+                    </a>
+                  }
                 </li>
               } @else {
                 <li
@@ -165,6 +167,8 @@ export class DocumentPicker {
 
   /** The payment that needs a receipt. */
   readonly payment = input.required<Transaction>();
+  /** Offer a link to Documents to add one when none fits. Off where the person must not leave the page (the review inbox). */
+  readonly canAdd = input(true);
   /** The id of the document the person chose. */
   readonly picked = output<string>();
 

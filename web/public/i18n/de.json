@@ -504,6 +504,39 @@
       "checkDate": "Dokument · Datum prüfen",
       "checkName": "Dokument · Name prüfen"
     },
+    "q": {
+      "unclear": "Wofür war das?",
+      "confirm": "Wir haben das als {{category}} gebucht. Stimmt das?",
+      "noReceipt": "Für diese Zahlung gibt es noch keinen Beleg."
+    },
+    "a": {
+      "private": "Privat, nicht fürs Geschäft",
+      "otherCategory": "Andere Kategorie…",
+      "confirm": "Ja, stimmt",
+      "changeCategory": "Kategorie ändern",
+      "takePhoto": "Foto aufnehmen",
+      "removeThis": "Diesen entfernen"
+    },
+    "result": {
+      "booked": "Gebucht",
+      "confirmed": "Bestätigt",
+      "categoryChanged": "Kategorie geändert",
+      "private": "Als privat markiert",
+      "receiptAdded": "Beleg hinzugefügt",
+      "noReceipt": "Markiert: kein Beleg nötig",
+      "keptBoth": "Beide behalten",
+      "removed": "Entfernt",
+      "received": "Als empfangen markiert",
+      "sent": "Als gesendet markiert",
+      "amountSaved": "Betrag gespeichert",
+      "dateSaved": "Datum gespeichert",
+      "nameSaved": "Name gespeichert"
+    },
+    "learned": "Alles klar — {{name}} wird ab jetzt automatisch als {{category}} gebucht.",
+    "learnedMore": {
+      "one": "…und 1 weitere {{name}}-Zahlung gebucht.",
+      "many": "…und {{count}} weitere {{name}}-Zahlungen gebucht."
+    },
     "finish": {
       "title": "Alles erledigt — deine Buchhaltung ist auf dem neuesten Stand",
       "decisions": {

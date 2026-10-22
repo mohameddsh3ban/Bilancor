@@ -71,10 +71,11 @@ describe('DocumentPicker', () => {
     node.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
   const names = () => options().map((o) => text(inside(o, 'picker-name')));
 
-  async function render(paymentId: string): Promise<void> {
+  async function render(paymentId: string, inputs: { canAdd?: boolean } = {}): Promise<void> {
     const payment = demo.business().transactions.find((t) => t.id === paymentId)!;
     fixture = TestBed.createComponent(DocumentPicker);
     fixture.componentRef.setInput('payment', payment);
+    if (inputs.canAdd !== undefined) fixture.componentRef.setInput('canAdd', inputs.canAdd);
     picked = [];
     fixture.componentInstance.picked.subscribe((id) => picked.push(id));
     await settle();
@@ -205,6 +206,17 @@ describe('DocumentPicker', () => {
     const add = inBody('document-picker-add')!;
     expect(add.getAttribute('href')).toBe('/documents?add=1');
     expect(text(add)).toBe('Add a document');
+  });
+
+  it('with no document that fits, offers no way to add one when the page says it must not leave', async () => {
+    demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
+    demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));
+    await render('wd-t17', { canAdd: false });
+    await open();
+    expect(
+      text(inBody('document-picker-empty')).startsWith('No unlinked documents fit this payment'),
+    ).toBe(true);
+    expect(inBody('document-picker-add')).toBeNull();
   });
 
   it('offers nothing for a document that nobody has added while no bank is connected', async () => {

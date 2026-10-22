@@ -9,10 +9,15 @@ import { CategoryPicker } from './category-picker';
 
 @Component({
   imports: [CategoryPicker],
-  template: `<app-category-picker [current]="current()" (picked)="picked.push($event)" />`,
+  template: `<app-category-picker
+    [current]="current()"
+    [labelKey]="label()"
+    (picked)="picked.push($event)"
+  />`,
 })
 class Host {
   readonly current = signal<Booking | null>(TRAVEL);
+  readonly label = signal<string | null>(null);
   readonly picked: Booking[] = [];
 }
 
@@ -65,6 +70,15 @@ describe('CategoryPicker', () => {
     fixture.componentInstance.current.set(null);
     fixture.detectChanges();
     expect(trigger().textContent?.trim()).toBe('Choose');
+  });
+
+  it('says what it is told to say instead of Change or Choose', () => {
+    fixture.componentInstance.label.set('review.a.otherCategory');
+    fixture.detectChanges();
+    expect(trigger().textContent?.trim()).toBe('Other category…');
+    fixture.componentInstance.current.set(null);
+    fixture.detectChanges();
+    expect(trigger().textContent?.trim()).toBe('Other category…');
   });
 
   it('lists the categories of a business that charges VAT with their label and SKR03 account', async () => {

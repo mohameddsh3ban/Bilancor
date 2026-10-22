@@ -32,7 +32,9 @@ import { ReviewStage } from './review-stage';
   imports: [DocumentCard, HlmProgressImports, NgIcon, PaymentCard, ReviewFinish, TranslocoPipe],
   providers: [ReviewStage],
   viewProviders: [provideIcons({ lucideX })],
-  host: { class: 'contents' },
+  // Escape is heard on the document, after the layer and the overlays: a list that is open (the category picker, the
+  // document picker) takes the key and marks it handled, so it closes the list and not the page.
+  host: { class: 'contents', '(document:keydown.escape)': 'onEscape($event)' },
   template: `
     <div
       #layer
@@ -43,7 +45,6 @@ import { ReviewStage } from './review-stage';
       data-testid="review-layer"
       [attr.dir]="language.dir()"
       [attr.aria-label]="'review.title' | transloco"
-      (keydown.escape)="close()"
     >
       <div
         class="lg:bg-surface flex w-full flex-1 flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:my-auto lg:max-w-md lg:flex-none lg:rounded-2xl lg:p-5 lg:shadow-xl"
@@ -175,6 +176,11 @@ export class ReviewPage {
       const layer = this.layer().nativeElement;
       if (!layer.contains(this.doc.activeElement)) layer.focus();
     });
+  }
+
+  /** Escape closes the page, unless a list or tooltip that is open took the key first. */
+  protected onEscape(event: Event): void {
+    if (!event.defaultPrevented) this.close();
   }
 
   /** Leaves for the page the person came from. Not while an answer is being made: it would be lost half way. */

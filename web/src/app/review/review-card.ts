@@ -22,6 +22,13 @@ export const TICK_MS = 300;
 /** How long it shows when there are notes under it (such as what the app learned): long enough to read them. */
 export const TICK_NOTE_MS = 1500;
 
+/**
+ * The classes of the group of answers of a card: one under the other, every button (the pickers' too) as wide as the
+ * card and tall enough to tap, wrapping when a label is long.
+ */
+export const ANSWERS_CLASS =
+  'flex flex-col gap-2 [&_button]:h-auto [&_button]:min-h-10 [&_button]:w-full [&_button]:whitespace-normal [&_button]:py-2';
+
 /** One more line under the result of a tick: a translation key and its values. */
 export interface TickNote {
   key: string;

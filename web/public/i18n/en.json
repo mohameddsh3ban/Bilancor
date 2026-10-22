@@ -504,6 +504,39 @@
       "checkDate": "Document · check the date",
       "checkName": "Document · check the name"
     },
+    "q": {
+      "unclear": "What was this for?",
+      "confirm": "We booked this as {{category}}. Is that right?",
+      "noReceipt": "There's no receipt for this payment yet."
+    },
+    "a": {
+      "private": "Private, not for the business",
+      "otherCategory": "Other category…",
+      "confirm": "Yes, that's right",
+      "changeCategory": "Change category",
+      "takePhoto": "Take a photo",
+      "removeThis": "Remove this one"
+    },
+    "result": {
+      "booked": "Booked",
+      "confirmed": "Confirmed",
+      "categoryChanged": "Category changed",
+      "private": "Marked as private",
+      "receiptAdded": "Receipt added",
+      "noReceipt": "Marked: no receipt needed",
+      "keptBoth": "Kept both",
+      "removed": "Removed",
+      "received": "Marked as received",
+      "sent": "Marked as sent",
+      "amountSaved": "Amount saved",
+      "dateSaved": "Date saved",
+      "nameSaved": "Name saved"
+    },
+    "learned": "Got it — {{name}} will be booked as {{category}} automatically from now on.",
+    "learnedMore": {
+      "one": "…and 1 more {{name}} payment booked.",
+      "many": "…and {{count}} more {{name}} payments booked."
+    },
     "finish": {
       "title": "All done — your books are up to date",
       "decisions": {
