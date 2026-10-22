@@ -37,9 +37,9 @@ describe('ComingSoonPage', () => {
     expect(el.querySelector('h1')?.textContent).toContain('This page');
   });
 
-  it('documents, upload, decisions and the bank notices are built or open Settings, so they are no longer coming-soon features', async () => {
+  it('documents, upload, decisions, the bank notices, the bank flow, the tax details and Settings are built, so they are no longer coming-soon features', async () => {
     const harness = await RouterTestingHarness.create('/soon/home');
-    for (const feature of ['documents', 'upload', 'decisions', 'bankExpiry', 'bankEnded']) {
+    for (const feature of ['documents', 'upload', 'decisions', 'bankExpiry', 'bankEnded', 'bank', 'tax', 'settings']) {
       await harness.navigateByUrl(`/soon/${feature}`);
       harness.detectChanges();
       const title = (harness.routeNativeElement as HTMLElement).querySelector('h1')?.textContent;
@@ -54,14 +54,11 @@ describe('ComingSoonPage', () => {
       'invoices',
       'taxes',
       'reports',
-      'settings',
       'help',
       'more',
       'terms',
       'unreadable',
       'revenueLimit',
-      'bank',
-      'tax',
       'receipt',
       'account',
       'photo',

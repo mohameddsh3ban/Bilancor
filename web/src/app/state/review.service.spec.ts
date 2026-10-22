@@ -342,6 +342,20 @@ describe('ReviewService', () => {
     expect(currentId()).toBe('wd-d2');
   });
 
+  it('undo does not take back tax answers, accounts or history saved after the answer', () => {
+    categorise('wd-t18');
+    const answers = { ...demo.business().taxProfile, vatPeriod: 'quarterly' as const };
+    demo.saveTaxProfile(answers);
+    const history = demo.business().history;
+    expect(history.map((line) => line.key)).toEqual(['taxChanged']);
+
+    review.undo();
+
+    expect(paymentStatus(payment('wd-t18'))).toBe('unclear'); // the answer is taken back
+    expect(demo.business().taxProfile).toEqual(answers);
+    expect(demo.business().history).toBe(history);
+  });
+
   it('undo after a learned rule restores both payments and the rules', () => {
     const before = structuredClone(demo.business());
     expect(before.categoryRules).toEqual([]);

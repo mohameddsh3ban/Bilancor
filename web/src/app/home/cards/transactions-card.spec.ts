@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { LanguageService } from '../../core/i18n/language.service';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../../data/banks';
+import { DemoStateService } from '../../state/demo-state.service';
 import { TransactionsCard } from './transactions-card';
 
 describe('TransactionsCard', () => {
@@ -70,11 +72,15 @@ describe('TransactionsCard', () => {
   });
 
   describe('table (computer layout)', () => {
-    function renderTable(lang: 'en' | 'de' | 'ar' = 'en'): HTMLElement {
+    function renderTable(
+      lang: 'en' | 'de' | 'ar' = 'en',
+      prepare: (demo: DemoStateService) => void = () => undefined,
+    ): HTMLElement {
       TestBed.resetTestingModule();
       localStorage.clear();
       TestBed.configureTestingModule({ providers: [provideTranslocoTesting(), provideRouter([])] });
       TestBed.inject(LanguageService).setLang(lang);
+      prepare(TestBed.inject(DemoStateService));
       const fixture = TestBed.createComponent(TransactionsCard);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
@@ -104,6 +110,19 @@ describe('TransactionsCard', () => {
 
     it('shows the account name', () => {
       expect(rowFor(renderTable(), 'Telekom').textContent).toContain('Qonto');
+    });
+
+    it('names a savings account by its bank and product, in every language', () => {
+      const onSavings = (demo: DemoStateService) => {
+        demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+        demo.updateTransaction('wd-t1', (t) => ({ ...t, accountId: 'wd-savings' }));
+      };
+      const accountCell = (root: HTMLElement, name: string) =>
+        rowFor(root, name).querySelectorAll('td')[2].textContent!.replace(/\s+/g, ' ').trim();
+      const en = renderTable('en', onSavings);
+      expect(accountCell(en, 'Müller GmbH')).toBe('Qonto · Savings');
+      expect(accountCell(en, 'Telekom')).toBe('Qonto');
+      expect(accountCell(renderTable('de', onSavings), 'Müller GmbH')).toBe('Qonto · Sparkonto');
     });
 
     it('booking cell is label, SKR03 number and German name in English', () => {

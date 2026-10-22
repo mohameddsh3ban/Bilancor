@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../data/banks';
 import { ADVERTISING, OFFICE } from '../data/categories';
 import type { Doc } from '../data/models';
 import { READING_MS, newReadingDoc } from '../domain/document-upload';
@@ -55,6 +56,12 @@ describe('DocumentDetailPage', () => {
     document.documentElement.lang = '';
     document.documentElement.dir = '';
   });
+
+  /** Connects the savings account of Weber Design and puts a payment on it, as the bank flow and a bank fetch would. */
+  function onSavings(paymentId: string): void {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    demo.updateTransaction(paymentId, (t) => ({ ...t, accountId: 'wd-savings' }));
+  }
 
   /** Opens the page; a second call in one test goes to that address in the same app. */
   async function render(url: string): Promise<void> {
@@ -1074,6 +1081,21 @@ describe('DocumentDetailPage', () => {
       await settle();
       expect(text(inside(d('linked-payment'), 'linked-meta'))).toBe(
         `${formatDate('2026-08-14', 'de')} · Kasse`,
+      );
+    });
+
+    it('names the account of a suggested, a linked and a searched payment by its bank and product, in every language', async () => {
+      onSavings('wd-t17');
+      await render('/documents/wd-d4');
+      expect(text(inside(da('payment-suggestion')[0], 'suggestion-meta'))).toBe('8 Oct · Qonto · Savings');
+      await click(d('search-payments'));
+      expect(text(inside(options('payment-picker-option')[0], 'picker-meta'))).toBe('8 Oct · Qonto · Savings');
+      await click(options('payment-picker-option')[0]);
+      expect(text(inside(d('linked-payment'), 'linked-meta'))).toBe('8 Oct · Qonto · Savings');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(inside(d('linked-payment'), 'linked-meta'))).toBe(
+        `${formatDate('2026-10-08', 'de')} · Qonto · Sparkonto`,
       );
     });
 

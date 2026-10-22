@@ -181,7 +181,7 @@ describe('ConnectBankPage', () => {
       expect(q('add-cash')).toBeNull();
     });
 
-    it('I also take cash adds one cash box and goes back, without the bank flow and without the bank step', async () => {
+    it('I also take cash adds one cash box and shows it in Settings, without the bank flow and without the bank step', async () => {
       demo.setBusiness('sara-yoga');
       demo.setSetup('new');
       await render('/settings/bank/connect?from=payments');
@@ -189,8 +189,21 @@ describe('ConnectBankPage', () => {
       expect(accountIds().filter((id) => id.endsWith('-cash'))).toEqual(['sara-yoga-cash']);
       expect(historyKeys()).toEqual(['cashAdded']);
       expect(demo.setup().bank).toBe(false);
-      expect(router.url).toBe('/payments');
+      expect(router.url).toBe('/settings');
+      expect(q('settings-stub')).not.toBeNull();
     });
+
+    it.each(['home', 'payments', 'settings'])(
+      'I also take cash goes to Settings, replacing the flow in the history, whatever page it was opened from (%s)',
+      async (from) => {
+        demo.setBusiness('sara-yoga');
+        await render(`/settings/bank/connect?from=${from}`);
+        const navigate = vi.spyOn(router, 'navigateByUrl');
+        await click('add-cash');
+        expect(navigate).toHaveBeenCalledWith('/settings', { replaceUrl: true });
+        expect(router.url).toBe('/settings');
+      },
+    );
 
     it('goes back to the page it was opened from, and to Settings when nothing is said', async () => {
       const links: Record<string, string> = {
@@ -208,7 +221,7 @@ describe('ConnectBankPage', () => {
 
     it('the back link says where it goes and turns round in Arabic', async () => {
       await render('/settings/bank/connect?from=payments');
-      expect(text(q('back-link'))).toBe('Back to payments');
+      expect(text(q('back-link'))).toBe('Back to Payments');
       expect(q('back-link')!.querySelector('ng-icon')!.classList.contains('rtl:rotate-180')).toBe(true);
       await render('/settings/bank/connect?from=home');
       expect(text(q('back-link'))).toBe('Back to home');
@@ -368,6 +381,84 @@ describe('ConnectBankPage', () => {
       expect(input('account-wd-savings').disabled).toBe(false);
     });
 
+    it('Connect N accounts counts only the accounts that are not connected yet', async () => {
+      await render(); // Weber Design is all done: its Qonto account is connected
+      await toAccounts();
+      expect(text(q('connect'))).toBe('Connect accounts');
+      input('account-wd-savings').click();
+      await settle();
+      expect(text(q('connect'))).toBe('Connect 1 account');
+      input('account-wd-card').click();
+      await settle();
+      expect(text(q('connect'))).toBe('Connect 2 accounts');
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('cannot connect when every ticked account is connected already, and says which to tick', async () => {
+      await render();
+      await toAccounts();
+      expect(ticked('wd-qonto')).toBe(true);
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(true);
+      expect(text(q('tick-one'))).toBe('Tick at least one account to connect.');
+      expect(q('all-connected')).toBeNull();
+      q('connect')!.click();
+      await settle();
+      expect(step()).toBe('choose');
+    });
+
+    it('says the accounts are connected already when there is nothing left to connect', async () => {
+      vi.useFakeTimers();
+      await render('/settings/bank/connect?from=home');
+      await toAccounts();
+      input('account-wd-savings').click();
+      input('account-wd-card').click();
+      await settle();
+      await click('connect');
+      await advance(FETCH_MS);
+      await render('/settings/bank/connect?from=home');
+      await toAccounts();
+      expect(rowIds().map((id) => text(q(`account-${id}`)).includes('Already connected'))).toEqual([true, true, true]);
+      expect(text(q('connect'))).toBe('Connect accounts');
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(true);
+      expect(text(q('all-connected'))).toBe('These accounts are connected already.');
+      expect(q('tick-one')).toBeNull();
+    });
+
+    it('an account whose connection ended says so with a link to Settings, is greyed, and is not counted', async () => {
+      demo.setBusiness('sara-yoga'); // its Qonto consent has ended
+      await render();
+      await toAccounts();
+      const row = q('account-sy-qonto')!;
+      expect(text(row)).toContain('Connection ended — sign in again in Settings');
+      expect(text(row)).not.toContain('Already connected');
+      const link = row.querySelector('a')!;
+      expect(link.getAttribute('href')).toBe('/settings#bank-accounts');
+      expect(row.querySelector('label')!.classList).toContain('opacity-70');
+      expect(input('account-sy-qonto').disabled).toBe(true);
+      expect(ticked('sy-qonto')).toBe(false);
+      expect(text(q('connect'))).toBe('Connect accounts');
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(true);
+      expect(text(q('tick-one'))).toBe('Tick at least one account to connect.');
+      input('account-sy-savings').click();
+      await settle();
+      expect(text(q('connect'))).toBe('Connect 1 account');
+      expect(text(q('account-sy-savings'))).not.toContain('Connection ended');
+    });
+
+    it('a connection that ended stays as it is when other accounts are connected', async () => {
+      vi.useFakeTimers();
+      demo.setBusiness('sara-yoga');
+      await render('/settings/bank/connect?from=home');
+      await toAccounts();
+      input('account-sy-savings').click();
+      await settle();
+      const before = demo.business().accounts.find((a) => a.id === 'sy-qonto')!.connection;
+      await click('connect');
+      await advance(FETCH_MS);
+      expect(demo.business().accounts.find((a) => a.id === 'sy-qonto')!.connection).toEqual(before);
+      expect(demo.business().accounts.find((a) => a.id === 'sy-savings')!.connection.kind).toBe('connected');
+    });
+
     it('Connect N accounts follows what is ticked, and cannot be tapped with nothing ticked', async () => {
       demo.setSetup('new');
       await render();
@@ -426,7 +517,8 @@ describe('ConnectBankPage', () => {
       await settle();
       expect(ticked('wd-qonto')).toBe(true);
       expect(input('account-wd-qonto').disabled).toBe(true);
-      expect(text(q('connect'))).toBe('Connect 1 account');
+      expect(text(q('connect'))).toBe('Connect accounts');
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(true);
     });
 
     it('Choose another bank goes back to the list and forgets the ticks', async () => {
@@ -566,9 +658,11 @@ describe('ConnectBankPage', () => {
       await render('/settings/bank/connect?from=home');
       await toAccounts();
       expect(text(q('account-wd-savings'))).toContain('Already connected');
-      expect(text(q('connect'))).toBe('Connect 2 accounts');
-      await click('connect');
+      expect(text(q('connect'))).toBe('Connect accounts');
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(true);
+      q('connect')!.click();
       await advance(FETCH_MS);
+      expect(step()).toBe('choose');
       expect(accountIds()).toEqual(['wd-qonto', 'wd-savings', 'wd-cash']);
       expect(historyKeys()).toEqual(['bankConnected']);
     });

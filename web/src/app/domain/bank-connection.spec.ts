@@ -303,8 +303,13 @@ describe('accountName', () => {
   const found = (id: string): Account => FOUND_ACCOUNTS['weber-design']['qonto'].find((a) => a.id === id)!;
   const cash = accountsOf('weber-design').find((a) => a.id === 'wd-cash')!;
 
-  it('is the bank for a business account, whatever label it is given', () => {
+  it('is the stored name for a business account, whatever label it is given', () => {
     expect(accountName(qonto, 'Business account')).toBe('Qonto');
+  });
+
+  it('keeps the whole stored name of a business account, also when a bank of the picker starts it', () => {
+    expect(accountName({ ...qonto, name: 'Sparkasse Berlin' }, 'Business account')).toBe('Sparkasse Berlin');
+    expect(accountName({ ...qonto, name: 'Raiffeisenbank Mitte' }, 'Geschäftskonto')).toBe('Raiffeisenbank Mitte');
   });
 
   it('is the bank and the product label for savings and credit-card accounts, never the stored English name', () => {

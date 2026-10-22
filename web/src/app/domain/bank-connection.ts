@@ -93,14 +93,14 @@ export function bankNameOf(account: Account): string | null {
 }
 
 /**
- * What an account is called on screen, whatever the language: a business account is its bank, a savings account or
- * credit card is "bank · product" with `productLabel` (the product's name in the language of the page) instead of the
- * stored English name, and the cash box is just its `productLabel`.
+ * What an account is called on screen, whatever the language: a business account is its stored name (the bank,
+ * "Qonto"), a savings account or credit card is "bank · product" with `productLabel` (the product's name in the
+ * language of the page) instead of the stored English name, and the cash box is just its `productLabel`.
  */
 export function accountName(account: Account, productLabel: string): string {
   if (account.kind === 'cash') return productLabel;
-  const bank = bankNameOf(account) ?? account.name;
-  return account.product === 'business' ? bank : `${bank} · ${productLabel}`;
+  if (account.product === 'business') return account.name;
+  return `${bankNameOf(account) ?? account.name} · ${productLabel}`;
 }
 
 /** An IBAN with only its first 4 and last 4 characters shown, e.g. `DE89 … 4321`. Spaces in the IBAN are ignored. */

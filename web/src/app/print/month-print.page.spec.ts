@@ -5,6 +5,7 @@ import { MockInstance } from 'vitest';
 import { formatMonth, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../data/banks';
 import { DemoStateService } from '../state/demo-state.service';
 import { MonthPrintPage } from './month-print.page';
 
@@ -97,6 +98,18 @@ describe('MonthPrintPage', () => {
     expect(first.querySelector('[data-testid="print-counterparty"]')!.getAttribute('dir')).toBe(
       'auto',
     );
+  });
+
+  it('names the account of a payment and of the account filter by its bank and product, in every language', async () => {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    demo.updateTransaction('wd-t1', (t) => ({ ...t, accountId: 'wd-savings' }));
+    await render('/print/month?month=2026-10&account=wd-savings');
+    expect(rows().map((row) => cell(row, 'print-account'))).toEqual(['Qonto · Savings']);
+    expect(text(q('print-account-filter'))).toBe('Account: Qonto · Savings');
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(rows().map((row) => cell(row, 'print-account'))).toEqual(['Qonto · Sparkonto']);
+    expect(text(q('print-account-filter'))).toContain('Qonto · Sparkonto');
   });
 
   it('month print respects the account param', async () => {

@@ -7,6 +7,7 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { Account, Doc, Transaction } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import { paymentCandidates } from '../domain/document-matching';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentPicker } from './payment-picker';
@@ -48,7 +49,7 @@ const SUGGESTIONS = 3;
             >
             <span class="text-muted-foreground text-xs" data-testid="linked-meta">
               {{ linked.date | appDate }} ·
-              {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+              {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
             </span>
           </span>
           <bdi dir="ltr" class="shrink-0 font-medium">
@@ -110,7 +111,7 @@ const SUGGESTIONS = 3;
                 <div class="text-muted-foreground flex min-w-0 flex-col gap-0.5 text-xs">
                   <span data-testid="suggestion-meta">
                     {{ suggested.date | appDate }} ·
-                    {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+                    {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
                   </span>
                   <span class="truncate">
                     <bdi dir="ltr"
@@ -159,6 +160,8 @@ const SUGGESTIONS = 3;
   `,
 })
 export class DocumentPayment {
+  protected readonly nameOf = accountName;
+
   private readonly demo = inject(DemoStateService);
 
   readonly doc = input.required<Doc>();

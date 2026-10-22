@@ -36,11 +36,11 @@ describe('SetupChecklist', () => {
     expect(link(el, 'receipt').getAttribute('href')).toBe('/documents?add=1');
   });
 
-  it('a bank step or a tax step that is done links to its place in Settings', () => {
+  it('a bank step that is done links to the Bank accounts card of Settings, a tax step that is done to Settings', () => {
     const demo = TestBed.inject(DemoStateService);
     demo.setSetup('halfway'); // bank done, tax and receipt to do
     let el = render();
-    expect(link(el, 'bank').getAttribute('href')).toBe('/settings');
+    expect(link(el, 'bank').getAttribute('href')).toBe('/settings#bank-accounts');
     expect(link(el, 'bank').textContent?.trim()).toBe('View');
     expect(link(el, 'tax').getAttribute('href')).toBe('/settings/tax?from=home');
 
@@ -64,7 +64,7 @@ describe('SetupChecklist', () => {
     const el = render();
     expect(link(el, 'receipt').textContent?.trim()).toBe('View');
     expect(link(el, 'receipt').getAttribute('href')).toBe('/documents');
-    expect(link(el, 'bank').getAttribute('href')).toBe('/settings');
+    expect(link(el, 'bank').getAttribute('href')).toBe('/settings#bank-accounts');
     expect(link(el, 'tax').getAttribute('href')).toBe('/settings');
   });
 });

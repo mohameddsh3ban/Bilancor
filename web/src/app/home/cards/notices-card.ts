@@ -36,6 +36,7 @@ import { NoticeService } from '../../state/notice.service';
               variant="outline"
               class="shrink-0"
               [routerLink]="link(notice.kind)"
+              [fragment]="fragment(notice.kind)"
               [attr.data-testid]="'notice-action-' + notice.id"
             >
               {{ 'notice.' + notice.kind + '.action' | transloco }}
@@ -77,7 +78,7 @@ export class NoticesCard {
   protected readonly notices = inject(NoticeService);
   protected readonly textKey = noticeTextKey;
 
-  /** Fixing unreadable receipts happens in Documents and renewing a bank connection in Settings; the other actions are not built yet. */
+  /** Fixing unreadable receipts happens in Documents and renewing a bank connection in Settings (at its Bank accounts card); the other actions are not built yet. */
   protected link(kind: NoticeKind): string[] {
     switch (kind) {
       case 'unreadable':
@@ -88,5 +89,10 @@ export class NoticesCard {
       default:
         return ['/soon', kind];
     }
+  }
+
+  /** The place on the page a notice's action opens: the Bank accounts card of Settings for the two bank notices. */
+  protected fragment(kind: NoticeKind): string | undefined {
+    return kind === 'bankExpiry' || kind === 'bankEnded' ? 'bank-accounts' : undefined;
   }
 }

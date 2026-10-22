@@ -9,20 +9,19 @@ import {
   linkedSignal,
   untracked,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideCheck } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { map } from 'rxjs';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
-import { Term } from '../core/i18n/term';
+import { Term, TermText } from '../core/i18n/term';
 import { GERMAN_STATES } from '../data/banks';
 import { DemoStateService } from '../state/demo-state.service';
 import { ChoiceCard, FieldError, NotSureHint } from './form-parts';
+import { BACK_URLS, openedFrom } from './opened-from';
 import {
   demoKnowsState,
   demoStateNames,
@@ -34,11 +33,6 @@ import {
   type TaxErrors,
   type TaxQuestion,
 } from './tax-form';
-
-/** Where the page was opened from, and so where Save and the back link lead. */
-type From = 'home' | 'settings';
-
-const fromOf = (param: string | null): From => (param === 'home' ? 'home' : 'settings');
 
 const INPUT_CLASS =
   'border-input bg-background placeholder:text-muted-foreground h-10 w-full rounded-md border px-3 text-sm aria-invalid:border-negative';
@@ -67,6 +61,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
     NotSureHint,
     RouterLink,
     Term,
+    TermText,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideArrowLeft, lucideCheck })],
@@ -107,7 +102,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
               [checked]="draft().businessKind === 'freelance'"
               (changed)="set({ businessKind: 'freelance' }, 'kind')"
             >
-              <app-term key="freiberufler" />
+              <app-term-text key="freiberufler" />
             </app-choice-card>
             <app-choice-card
               name="kind"
@@ -115,7 +110,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
               [checked]="draft().businessKind === 'trade'"
               (changed)="set({ businessKind: 'trade' }, 'kind')"
             >
-              <app-term key="gewerbe" />
+              <app-term-text key="gewerbe" />
             </app-choice-card>
           </div>
           @if (errors().kind; as key) {
@@ -155,7 +150,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
               (changed)="answerNo()"
             >
               {{ 'taxDetails.vat.no' | transloco }}
-              <span class="block font-normal"><app-term key="kleinunternehmer" /></span>
+              <span class="block font-normal"><app-term-text key="kleinunternehmer" /></span>
             </app-choice-card>
           </div>
           @if (errors().vat; as key) {
@@ -209,7 +204,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
               [hint]="'taxDetails.extension.hint' | transloco"
               (changed)="set({ permanentExtension: $event })"
             >
-              <app-term key="dauerfristverlaengerung" />
+              <app-term-text key="dauerfristverlaengerung" />
             </app-choice-card>
             <p appNotSure></p>
           </div>
@@ -238,7 +233,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
                 [checked]="draft().vatBasis === 'ist'"
                 (changed)="set({ vatBasis: 'ist' }, 'basis')"
               >
-                <app-term key="istVersteuerung" />
+                <app-term-text key="istVersteuerung" />
               </app-choice-card>
               <app-choice-card
                 name="basis"
@@ -246,7 +241,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
                 [checked]="draft().vatBasis === 'soll'"
                 (changed)="set({ vatBasis: 'soll' }, 'basis')"
               >
-                <app-term key="sollVersteuerung" />
+                <app-term-text key="sollVersteuerung" />
               </app-choice-card>
             </div>
             @if (errors().basis; as key) {
@@ -264,7 +259,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
         [attr.data-invalid]="errors().state || errors().number ? '' : null"
       >
         <header hlmCardHeader>
-          <h2 hlmCardTitle><app-term key="steuernummer" /></h2>
+          <h2 hlmCardTitle id="number-title"><app-term key="steuernummer" /></h2>
         </header>
         <div hlmCardContent class="flex flex-col gap-3">
           <label class="flex flex-col gap-1 text-sm">
@@ -289,7 +284,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
           @if (errors().state; as key) {
             <p [appFieldError]="key" id="error-state" data-testid="error-state"></p>
           }
-          <div aria-live="polite">
+          <div aria-live="polite" class="empty:-mt-3">
             @if (showStateNote()) {
               <p
                 class="text-muted-foreground -mt-2 text-xs"
@@ -302,13 +297,16 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
           </div>
 
           <label class="flex flex-col gap-1 text-sm">
-            <span class="text-muted-foreground">{{ 'taxDetails.number.number' | transloco }}</span>
+            <span class="text-muted-foreground" id="number-label">{{
+              'taxDetails.number.number' | transloco
+            }}</span>
             <input
               type="text"
               dir="ltr"
               autocomplete="off"
               spellcheck="false"
               data-testid="number"
+              aria-labelledby="number-title number-label"
               [class]="inputClass"
               [value]="draft().taxNumber"
               [attr.aria-invalid]="errors().number ? 'true' : null"
@@ -327,7 +325,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
               data-testid="error-number"
             ></p>
           }
-          <div role="status">
+          <div role="status" class="empty:-mt-3">
             @if (office(); as name) {
               <p class="text-positive flex items-center gap-2 text-sm" data-testid="office">
                 <ng-icon name="lucideCheck" size="16" aria-hidden="true" />
@@ -347,17 +345,20 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
         [attr.data-invalid]="errors().vatId ? '' : null"
       >
         <header hlmCardHeader>
-          <h2 hlmCardTitle><app-term key="ustIdNr" /></h2>
+          <h2 hlmCardTitle id="vat-id-title"><app-term key="ustIdNr" /></h2>
         </header>
         <div hlmCardContent class="flex flex-col gap-3">
           <label class="flex flex-col gap-1 text-sm">
-            <span class="text-muted-foreground">{{ 'taxDetails.vatId.optional' | transloco }}</span>
+            <span class="text-muted-foreground" id="vat-id-label">{{
+              'taxDetails.vatId.optional' | transloco
+            }}</span>
             <input
               type="text"
               dir="ltr"
               autocomplete="off"
               spellcheck="false"
               data-testid="vat-id"
+              aria-labelledby="vat-id-title vat-id-label"
               [class]="inputClass + ' uppercase'"
               [value]="draft().vatId"
               [attr.aria-invalid]="errors().vatId ? 'true' : null"
@@ -462,7 +463,6 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
 export class TaxDetailsPage {
   private readonly demo = inject(DemoStateService);
   private readonly language = inject(LanguageService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -474,11 +474,8 @@ export class TaxDetailsPage {
   protected readonly limitThisYear = LIMIT_THIS_YEAR_CENTS;
 
   /** Where the page was opened from: the homepage's setup step, or Settings (also when nothing is said). */
-  protected readonly from = toSignal(
-    this.route.queryParamMap.pipe(map((params) => fromOf(params.get('from')))),
-    { initialValue: fromOf(this.route.snapshot.queryParamMap.get('from')) },
-  );
-  protected readonly backUrl = computed(() => (this.from() === 'home' ? '/' : '/settings'));
+  protected readonly from = openedFrom(['home', 'settings']);
+  protected readonly backUrl = computed(() => BACK_URLS[this.from()]);
 
   /**
    * What is typed and chosen, and which questions were refused. Both belong to the open business and its setup: empty

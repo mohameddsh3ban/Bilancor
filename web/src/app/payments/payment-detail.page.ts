@@ -20,6 +20,7 @@ import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
 import { Account, Booking, Doc, Transaction } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import {
   changeCategory,
   confirmBooking,
@@ -112,7 +113,7 @@ import { PaymentStatusChip } from './payment-status-chip';
           </h1>
           <p class="text-muted-foreground text-sm" data-testid="detail-meta">
             {{ tx.date | appDate }} ·
-            {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+            {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
           </p>
         </header>
 
@@ -352,6 +353,8 @@ import { PaymentStatusChip } from './payment-status-chip';
   `,
 })
 export class PaymentDetailPage {
+  protected readonly nameOf = accountName;
+
   private readonly demo = inject(DemoStateService);
   private readonly upload = inject(UploadService);
   private readonly route = inject(ActivatedRoute);

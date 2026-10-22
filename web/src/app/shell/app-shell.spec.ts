@@ -5,6 +5,7 @@ import { routes } from '../app.routes';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { presetOf } from '../domain/home-cards';
 import { DemoStateService } from '../state/demo-state.service';
+import { withConnection } from '../state/demo-state.testing';
 import { NoticeService } from '../state/notice.service';
 import { AppShell } from './app-shell';
 import { ComingSoonPage } from './coming-soon.page';
@@ -115,11 +116,7 @@ describe('AppShell', () => {
   it('bell panel says "in 1 day" and "today", never "in 1 days" or "in 0 days"', async () => {
     const demo = TestBed.inject(DemoStateService);
     const consentEnds = (date: string): void => {
-      const snapshot = demo.snapshot();
-      snapshot.accounts = snapshot.accounts.map((a) =>
-        a.id === 'wd-qonto' ? { ...a, connection: { ...a.connection, consentUntil: date } } : a,
-      );
-      demo.restore(snapshot);
+      withConnection(demo, 'wd-qonto', { consentUntil: date });
     };
     TestBed.inject(NoticeService).bellOpen.set(true);
     consentEnds('2026-10-23');

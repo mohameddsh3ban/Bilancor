@@ -13,6 +13,7 @@ import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
+import { withConnection as setConnection } from '../state/demo-state.testing';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
 import { SettingsPage } from './settings.page';
 import { TaxDetailsPage } from './tax-details.page';
@@ -97,13 +98,7 @@ describe('SettingsPage', () => {
 
   /** Puts the open business's account back with another connection, as the bank would report it. */
   function withConnection(accountId: string, change: Partial<AccountConnection>): void {
-    const snapshot = demo.snapshot();
-    snapshot.accounts = snapshot.accounts.map((account) =>
-      account.id === accountId
-        ? { ...account, connection: { ...account.connection, ...change } }
-        : account,
-    );
-    demo.restore(snapshot);
+    setConnection(demo, accountId, change);
   }
 
   describe('the page', () => {
@@ -121,6 +116,14 @@ describe('SettingsPage', () => {
         'Bank accounts',
         'Documents inbox',
       ]);
+    });
+
+    it('gives the Bank accounts card the anchor bank-accounts, so links can open Settings at it', async () => {
+      await render();
+      const card = el.querySelector('#bank-accounts')!;
+      expect(card).not.toBeNull();
+      expect(card.getAttribute('data-testid')).toBe('settings-banks');
+      expect(el.querySelectorAll('#bank-accounts')).toHaveLength(1);
     });
 
     it('stacks the cards in one column and uses the width of the main area', async () => {

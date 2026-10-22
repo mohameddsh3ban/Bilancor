@@ -1,20 +1,23 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, contentChild, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { TermInfo, TermText } from '../core/i18n/term';
 
 let nextChoiceId = 0;
 
 /**
  * One answer as a card that can be tapped anywhere: a radio button (one answer of a group `name`) or a checkbox. The
- * text is projected and may hold `<app-term>`; its button sits above the invisible input, so tapping a term opens its
- * explanation and does not choose the answer. `hint` is a smaller line under the text.
+ * text is projected as the label of the invisible input, so tapping its words chooses the answer. A German term in it
+ * is shown as plain `<app-term-text>`: the card finds it and puts the explanation behind a small info button of its
+ * own at the card's end (`<app-term-info>`, above the input), so tapping the term never opens an explanation by
+ * accident. `hint` is a smaller line under the text.
  * What is chosen belongs to the parent: it passes `checked` and listens to `changed`.
  */
 @Component({
   selector: 'app-choice-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
+  imports: [NgIcon, TermInfo],
   viewProviders: [provideIcons({ lucideCheck })],
   host: { class: 'block' },
   template: `
@@ -24,6 +27,7 @@ let nextChoiceId = 0;
     >
       <input
         class="absolute inset-0 size-full cursor-pointer opacity-0"
+        [id]="uid + '-input'"
         [type]="type()"
         [name]="name()"
         [checked]="checked()"
@@ -48,13 +52,16 @@ let nextChoiceId = 0;
         }
       </span>
       <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span [id]="uid + '-label'" class="font-medium [&_button]:relative [&_button]:z-10 [&_button]:text-start">
+        <label [id]="uid + '-label'" [attr.for]="uid + '-input'" class="font-medium">
           <ng-content />
-        </span>
+        </label>
         @if (hint(); as text) {
           <span [id]="uid + '-hint'" class="text-muted-foreground text-xs">{{ text }}</span>
         }
       </span>
+      @if (termText(); as term) {
+        <app-term-info class="relative z-10 -my-1.5 -me-1.5 shrink-0" [key]="term.key()" />
+      }
     </div>
   `,
 })
@@ -63,6 +70,8 @@ export class ChoiceCard {
   readonly name = input.required<string>();
   readonly checked = input.required<boolean>();
   readonly hint = input<string>();
+  /** The German term shown in the text, if any: its explanation gets the info button. */
+  protected readonly termText = contentChild(TermText);
   /** The person chose the answer (radio) or ticked / unticked it (checkbox, with its new state). */
   readonly changed = output<boolean>();
 

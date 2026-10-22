@@ -6,14 +6,31 @@ import type { TaxProfile } from '../data/models';
 export type VatReturnDue = { kind: 'date'; date: string } | { kind: 'yearly' } | null;
 
 /** The day of the month on which a VAT return is due. */
-const DUE_DAY = '10';
+const DUE_DAY = 10;
 
 /**
- * The next date a VAT return is due, from the tax answers and `today` (an ISO date; never the real clock).
+ * The deadline of the return for the period that ends in `periodEnd` (a month number counted from January of `year`:
+ * 0 is the December before, 13 the January after): the 10th of the following month, one month later with a permanent
+ * extension (Dauerfristverlängerung), and the Monday after when that day is a Saturday or a Sunday. Public holidays
+ * are not modelled. An ISO date; read as UTC, so no clock or zone matters.
+ */
+function deadlineOf(year: number, periodEnd: number, extension: boolean): string {
+  // The month after the period, as the month index Date.UTC counts from (0 = January), so periodEnd is the index itself.
+  const due = new Date(Date.UTC(year, periodEnd + (extension ? 1 : 0), DUE_DAY));
+  const weekday = due.getUTCDay();
+  if (weekday === 6) due.setUTCDate(due.getUTCDate() + 2);
+  if (weekday === 0) due.setUTCDate(due.getUTCDate() + 1);
+  return due.toISOString().slice(0, 10);
+}
+
+/**
+ * The date of the VAT return still to file, from the tax answers and `today` (an ISO date; never the real clock).
  *
- * A monthly return is due on the 10th of the month after the current month, a quarterly one on the 10th of the month
- * after the current quarter; a permanent extension (Dauerfristverlängerung) moves either one month later. A yearly
- * return has no such date. Null for a Kleinunternehmer, who files no VAT return, and while the period is not answered.
+ * The deadline of a period is the 10th of the month after it ends (a month later with a permanent extension), moved to
+ * the Monday after when that day is a Saturday or a Sunday. A return can be filed after its period has ended, so the
+ * date shown is the previous period's deadline while it is today or later, and the current period's deadline once it
+ * has passed. A yearly return has no such date. Null for a Kleinunternehmer, who files no VAT return, and while the
+ * period is not answered.
  */
 export function vatReturnDue(profile: TaxProfile, today: string = DEMO_TODAY): VatReturnDue {
   if (profile.kleinunternehmer || profile.vatPeriod === null) return null;
@@ -21,13 +38,12 @@ export function vatReturnDue(profile: TaxProfile, today: string = DEMO_TODAY): V
 
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
-  const periodEnd = profile.vatPeriod === 'quarterly' ? Math.ceil(month / 3) * 3 : month;
-  // The due month counted from January of `year` (0 = January). That is the month after the period ends, so a due
-  // date past December carries into the next year.
-  const dueIndex = periodEnd + (profile.permanentExtension ? 1 : 0);
-  const dueYear = year + Math.floor(dueIndex / 12);
-  const dueMonth = (dueIndex % 12) + 1;
-  return { kind: 'date', date: `${dueYear}-${String(dueMonth).padStart(2, '0')}-${DUE_DAY}` };
+  const length = profile.vatPeriod === 'quarterly' ? 3 : 1;
+  const periodEnd = Math.ceil(month / length) * length;
+
+  const previous = deadlineOf(year, periodEnd - length, profile.permanentExtension);
+  if (previous >= today) return { kind: 'date', date: previous };
+  return { kind: 'date', date: deadlineOf(year, periodEnd, profile.permanentExtension) };
 }
 
 /**

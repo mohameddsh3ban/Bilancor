@@ -221,7 +221,101 @@ describe('TaxDetailsPage', () => {
       ]) {
         expect(terms, label).toContain(label);
       }
-      expect(el.querySelectorAll('app-term').length).toBeGreaterThanOrEqual(10);
+      expect(el.querySelectorAll('app-term, app-term-text').length).toBeGreaterThanOrEqual(10);
+    });
+  });
+
+  describe('German terms inside the answers', () => {
+    /** The answers whose text is a German term: the card, the term it shows, and the words it shows. */
+    const TERM_ANSWERS = [
+      { id: 'kind-freelance', term: 'freiberufler', words: 'Freelance work (Freiberufler)' },
+      { id: 'kind-trade', term: 'gewerbe', words: 'A trade (Gewerbe)' },
+      { id: 'vat-no', term: 'kleinunternehmer', words: 'Small business, no VAT (Kleinunternehmer)' },
+      { id: 'extension', term: 'dauerfristverlaengerung', words: 'Permanent extension (Dauerfristverlängerung)' },
+      { id: 'basis-ist', term: 'istVersteuerung', words: 'When my customer pays (Ist-Versteuerung)' },
+      { id: 'basis-soll', term: 'sollVersteuerung', words: 'When I send the invoice (Soll-Versteuerung)' },
+    ] as const;
+
+    /** A new business with the VAT questions open, so that every answer is on the page. */
+    async function renderAll(): Promise<void> {
+      demo.setSetup('new');
+      await render('/settings/tax');
+      await choose('vat-yes');
+    }
+
+    /** What the person taps to explain the term of an answer: the button inside the card. */
+    const infoButton = (id: string) => q(id)!.querySelector<HTMLButtonElement>('button');
+    /** The words of an answer: the element the answer is named by. */
+    const words = (id: string) => el.querySelector<HTMLElement>(`#${box(id).getAttribute('aria-labelledby')}`)!;
+
+    for (const { id, words: expected } of TERM_ANSWERS) {
+      it(`tapping the words of ${id} chooses the answer`, async () => {
+        await renderAll();
+        expect(isChecked(id)).toBe(false);
+        const term = q(id)!.querySelector<HTMLElement>('app-term-text');
+        expect(term, 'the term is plain text in the answer').not.toBeNull();
+        expect(plain(text(term))).toBe(expected);
+        term!.click();
+        await settle();
+        expect(isChecked(id)).toBe(true);
+      });
+
+      it(`the text of ${id} holds no button, so nothing in it opens an explanation`, async () => {
+        await renderAll();
+        expect(words(id).querySelector('button')).toBeNull();
+        expect(words(id).querySelector('app-term')).toBeNull();
+        expect(words(id).tagName).toBe('LABEL');
+      });
+    }
+
+    for (const { id, term } of TERM_ANSWERS) {
+      it(`the info button of ${id} opens the explanation and does not choose the answer`, async () => {
+        await renderAll();
+        const info = infoButton(id);
+        expect(info, 'an info button at the end of the card').not.toBeNull();
+        expect(words(id).contains(info)).toBe(false);
+        info!.click();
+        await settle();
+        expect(document.body.textContent).toContain(en.terms[term].explain);
+        expect(isChecked(id)).toBe(false);
+      });
+    }
+
+    it('the info button is a button of its own at the end of the card, above the card, and big enough to tap', async () => {
+      await renderAll();
+      const info = infoButton('kind-freelance')!;
+      expect(words('kind-freelance').contains(info)).toBe(false);
+      // The host of the button is above the invisible input that covers the card, and the button is at least 24 px.
+      expect(info.closest('app-term-info')!.classList).toContain('relative');
+      expect(info.closest('app-term-info')!.classList).toContain('z-10');
+      expect(info.classList).toContain('size-8');
+      expect(words('kind-freelance').compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('names the info button "What is <term>?" in every language', async () => {
+      await renderAll();
+      expect(infoButton('kind-freelance')!.getAttribute('aria-label')).toBe('What is Freelance work?');
+      expect(infoButton('basis-ist')!.getAttribute('aria-label')).toBe('What is When my customer pays?');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(infoButton('kind-freelance')!.getAttribute('aria-label')).toBe('Was ist Freiberufler?');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(infoButton('kind-freelance')!.getAttribute('aria-label')).toBe(
+        ar.terms.whatIs.replace('{{term}}', ar.terms.freiberufler.label),
+      );
+    });
+
+    it('an answer that is not a German term has no info button', async () => {
+      await renderAll();
+      expect(infoButton('vat-yes')).toBeNull();
+      expect(infoButton('period-monthly')).toBeNull();
+    });
+
+    it('the answers keep their names for a screen reader', async () => {
+      await renderAll();
+      expect(box('kind-freelance').getAttribute('aria-labelledby')).toBeTruthy();
+      expect(plain(text(words('kind-freelance')))).toBe('Freelance work (Freiberufler)');
     });
   });
 
@@ -404,6 +498,68 @@ describe('TaxDetailsPage', () => {
       expect(field('number').getAttribute('dir')).toBe('ltr');
       expect(field('vat-id').getAttribute('dir')).toBe('ltr');
       expect(q('office')!.querySelector('bdi')).not.toBeNull();
+    });
+  });
+
+  describe('the names of the fields', () => {
+    /** The accessible name of a field: the text of the elements its `aria-labelledby` points to, in order. */
+    const nameOf = (testId: string) =>
+      plain(
+        field(testId)
+          .getAttribute('aria-labelledby')!
+          .split(' ')
+          .map((id) => text(el.querySelector(`#${id}`)))
+          .join(' '),
+      );
+
+    it('names the tax number by its card title and its visible label', async () => {
+      await render('/settings/tax');
+      expect(nameOf('number')).toBe('Tax number (Steuernummer) Number');
+    });
+
+    it('names the VAT ID by its card title and its visible label', async () => {
+      await render('/settings/tax');
+      expect(nameOf('vat-id')).toBe('VAT ID (USt-IdNr.) Optional');
+    });
+
+    it('names them in German too, once', async () => {
+      TestBed.inject(LanguageService).setLang('de');
+      await render('/settings/tax');
+      expect(nameOf('number')).toBe(`Steuernummer ${de.taxDetails.number.number}`);
+      expect(nameOf('vat-id')).toBe(`USt-IdNr. ${de.taxDetails.vatId.optional}`);
+    });
+
+    it('every name points to elements that exist, with ids that are unique', async () => {
+      await render('/settings/tax');
+      for (const testId of ['number', 'vat-id']) {
+        for (const id of field(testId).getAttribute('aria-labelledby')!.split(' ')) {
+          expect(el.querySelectorAll(`#${id}`), id).toHaveLength(1);
+        }
+      }
+    });
+  });
+
+  describe('the notes under the tax number', () => {
+    it('keep their live regions in the page when empty, pulled up so they add no gap of their own', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax');
+      const regions = [el.querySelector('[aria-live="polite"]')!, el.querySelector('[role="status"]')!];
+      for (const region of regions) {
+        expect(region).not.toBeNull();
+        expect(region.matches(':empty')).toBe(true);
+        expect(region.classList).toContain('empty:-mt-3');
+        expect(region.classList).not.toContain('empty:hidden');
+      }
+    });
+
+    it('are no longer empty once they have something to say', async () => {
+      demo.setSetup('new');
+      await render('/settings/tax');
+      await pickState('berlin');
+      await type('number', '27/123/45678');
+      expect(q('office')!.closest('[role="status"]')!.matches(':empty')).toBe(false);
+      await pickState('hessen');
+      expect(q('state-note')!.closest('[aria-live="polite"]')!.matches(':empty')).toBe(false);
     });
   });
 

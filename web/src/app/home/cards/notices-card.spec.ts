@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
 import { LanguageService } from '../../core/i18n/language.service';
 import { DemoStateService } from '../../state/demo-state.service';
+import { withConnection } from '../../state/demo-state.testing';
 import { NoticeService } from '../../state/notice.service';
 import { NoticesCard } from './notices-card';
 
@@ -37,12 +38,7 @@ describe('NoticesCard', () => {
 
   /** Weber Design's Qonto consent ends on the given day, as the bank would report it. */
   function consentEnds(date: string): void {
-    const demo = TestBed.inject(DemoStateService);
-    const snapshot = demo.snapshot();
-    snapshot.accounts = snapshot.accounts.map((a) =>
-      a.id === 'wd-qonto' ? { ...a, connection: { ...a.connection, consentUntil: date } } : a,
-    );
-    demo.restore(snapshot);
+    withConnection(TestBed.inject(DemoStateService), 'wd-qonto', { consentUntil: date });
   }
   const bankText = (el: HTMLElement) => q(el, `notice-${BANK_EXPIRY}`)?.querySelector('p')?.textContent?.trim();
 
@@ -73,18 +69,18 @@ describe('NoticesCard', () => {
     expect(bankText(render().el)).toBe('ينتهي ربط Qonto اليوم');
   });
 
-  it('the bank notice opens Settings', () => {
+  it('the bank notice opens the Bank accounts card of Settings', () => {
     const { el } = render();
     expect(q(el, `notice-action-${BANK_EXPIRY}`)?.textContent?.trim()).toBe('Renew');
-    expect(q(el, `notice-action-${BANK_EXPIRY}`)?.getAttribute('href')).toBe('/settings');
+    expect(q(el, `notice-action-${BANK_EXPIRY}`)?.getAttribute('href')).toBe('/settings#bank-accounts');
   });
 
-  it('the "connection has ended" notice asks to sign in again and opens Settings', () => {
+  it('the "connection has ended" notice asks to sign in again and opens the Bank accounts card of Settings', () => {
     TestBed.inject(DemoStateService).setBusiness('sara-yoga');
     const { el } = render();
     expect(q(el, `notice-${BANK_ENDED}`)?.textContent).toContain('Your Qonto connection has ended');
     expect(q(el, `notice-action-${BANK_ENDED}`)?.textContent?.trim()).toBe('Sign in again');
-    expect(q(el, `notice-action-${BANK_ENDED}`)?.getAttribute('href')).toBe('/settings');
+    expect(q(el, `notice-action-${BANK_ENDED}`)?.getAttribute('href')).toBe('/settings#bank-accounts');
   });
 
   it('Fix opens Documents', () => {

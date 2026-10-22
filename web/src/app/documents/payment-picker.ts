@@ -15,6 +15,7 @@ import { HlmPopoverImports } from '@spartan-ng/helm/popover';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { Account, Transaction } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import { parseAmountQuery } from '../domain/payment-filters';
 import { DemoStateService } from '../state/demo-state.service';
 
@@ -87,7 +88,7 @@ export function matchPayments(payments: readonly Transaction[], query: string): 
                     <span class="text-muted-foreground text-xs" data-testid="picker-meta">
                       @let account = accountOf(payment);
                       {{ payment.date | appDate }} ·
-                      {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+                      {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
                     </span>
                   </span>
                   <bdi dir="ltr" class="shrink-0 font-medium">
@@ -112,6 +113,8 @@ export function matchPayments(payments: readonly Transaction[], query: string): 
   `,
 })
 export class PaymentPicker {
+  protected readonly nameOf = accountName;
+
   private readonly demo = inject(DemoStateService);
 
   /** The payments to choose from, best first. */

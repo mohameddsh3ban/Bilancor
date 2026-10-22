@@ -3,8 +3,8 @@ import type { BusinessKind, Lang, TaxProfile, VatPeriod } from '../data/models';
 import { findTaxOffice, isVatId } from '../domain/tax-details';
 import { isolateText } from '../payments/payment-history';
 
-/** The financial year that starts on 1 January. */
-const CALENDAR_YEAR = '01-01';
+/** The financial year that starts on 1 January, as the day a year starts ('MM-DD'). */
+export const CALENDAR_YEAR = '01-01';
 
 /** How many days each month has. February stops at 28: a year cannot start on a day most years do not have. */
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];

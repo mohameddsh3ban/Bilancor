@@ -96,7 +96,7 @@ A phone shows the inbox full screen; a computer shows a column in the middle of 
 
 A new client sets up three steps, shown as the homepage checklist: connect the bank, save the tax details, add the first document. The steps are kept **per business** (switching business shows that business's progress) and can be done in any order. Connecting the bank, saving the tax details and adding the first document (any way) each tick their own step, and the checklist disappears when all three are done. The demo toolbar's New client / Halfway / Active client are shortcuts for the open business only, and **Reset demo** returns every business to Active client. All of it works in English, German and Arabic.
 
-**Your tax details** (`/settings/tax`, opened from the setup step and from Settings) asks five plain questions, each German term next to its translation and explained on hover or tap: kind of business, whether you charge VAT, the VAT return period and Ist/Soll, the tax number and VAT ID, and the financial year. No answer is pre-selected.
+**Your tax details** (`/settings/tax`, opened from the setup step and from Settings) asks five plain questions, each German term next to its translation and explained on hover or tap (inside an answer card the words choose the answer, and a small info button at the card's end explains the term): kind of business, whether you charge VAT, the VAT return period and Ist/Soll, the tax number and VAT ID, and the financial year. No answer is pre-selected.
 
 - The VAT questions (return period, permanent extension, Ist/Soll) show only after "Yes, I charge VAT". Answering No (Kleinunternehmer) and saving clears them.
 - The tax office appears under the tax number once the number is valid for the chosen state. In the demo only Bayern, Berlin, Bremen, Hamburg and Nordrhein-Westfalen have sample tax offices (invented, not the official list); any other state says so.
@@ -107,7 +107,7 @@ A new client sets up three steps, shown as the homepage checklist: connect the b
 
 - The sign-in always reads "DEMO · no real bank, no password" and has no input fields: nothing is connected to a real bank.
 - A sample business banks with its own sample bank (Weber Design: Qonto). Picking any other bank shows that sample bank's accounts, with a note on the sign-in screen saying so.
-- The business account is ticked; savings and credit cards are not (private accounts stay out). **Connect N accounts** shows "Fetching payments…" for about two seconds, then the payments appear and the bank step ticks. An account that is already connected shows greyed out, and connecting twice adds the accounts once.
+- The business account is ticked; savings and credit cards are not (private accounts stay out). **Connect N accounts** shows "Fetching payments…" for about two seconds, then the payments appear and the bank step ticks. An account that is already connected shows greyed out and is not counted in the button, one whose connection has ended says so and points to Settings, and connecting twice adds the accounts once.
 - **I also take cash** adds a cash box without the bank flow. It shows in Settings and does not tick the bank step.
 - Switching business in the middle of the flow starts it again for the business now open.
 
@@ -117,7 +117,7 @@ A new client sets up three steps, shown as the homepage checklist: connect the b
 - The homepage bank notices are calculated from the connections, so they go as soon as the connection is renewed: Weber Design shows "Qonto expires in 5 days" and Sara Weber Yoga shows "sign in again". Café Linde's Sparkasse shows Statement import in Settings and has no notice.
 - Every saved change to tax details or bank accounts (connecting, renewing, adding a cash box) adds a line to the business's history. It is stored but not shown yet.
 
-Coming soon (the buttons open a placeholder page): importing a bank statement (for a bank that isn't listed, or an account with no connection), PayPal, Stripe and Amazon connections, users, the list of rules the review inbox learned, and invoice settings. Not built: a real bank connection (the sign-in is a demo screen with no bank behind it) and a real tax-office lookup.
+Coming soon (the button opens a placeholder page): importing a bank statement, for a bank that isn't listed or an account with no connection. Not built yet, and with no button anywhere: PayPal, Stripe and Amazon connections, users, the list of rules the review inbox learned, and invoice settings. Not built either: a real bank connection (the sign-in is a demo screen with no bank behind it) and a real tax-office lookup.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample accounts, tax answers and setup steps.
 

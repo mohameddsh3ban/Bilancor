@@ -8,9 +8,7 @@ import { Term } from '../core/i18n/term';
 import { DEMO_TODAY } from '../data/demo-date';
 import { findTaxOffice } from '../domain/tax-details';
 import { DemoStateService } from '../state/demo-state.service';
-
-/** The calendar year starts on 1 January. */
-const CALENDAR_YEAR = '01-01';
+import { CALENDAR_YEAR } from './tax-form';
 
 /** Where Edit and Add your tax details lead: the tax page, which comes back here when it is saved. */
 const TAX_PAGE = '/settings/tax';

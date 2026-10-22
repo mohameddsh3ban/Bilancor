@@ -10,6 +10,7 @@ import { formatIban } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Account, Booking, Transaction } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
 import { BookingLabel } from '../payments/booking-label';
@@ -76,7 +77,7 @@ import { printOnceRendered } from './print-once';
           </h1>
           <p class="text-muted-foreground text-sm" data-testid="print-meta">
             {{ tx.date | appDate: { year: true } }} ·
-            {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+            {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
           </p>
         </header>
 
@@ -186,6 +187,8 @@ import { printOnceRendered } from './print-once';
   `,
 })
 export class PaymentPrintPage {
+  protected readonly nameOf = accountName;
+
   private readonly demo = inject(DemoStateService);
   private readonly route = inject(ActivatedRoute);
   private readonly language = inject(LanguageService);

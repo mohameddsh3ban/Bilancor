@@ -8,6 +8,7 @@ import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { LanguageService } from '../../core/i18n/language.service';
 import { Account } from '../../data/models';
+import { accountName } from '../../domain/bank-connection';
 import { newestTransactions } from '../../domain/home-figures';
 import { paymentStatus } from '../../domain/payment-status';
 import { BookingLabel, showsBookingLabel, skr03Text } from '../../payments/booking-label';
@@ -138,7 +139,7 @@ import { DemoStateService } from '../../state/demo-state.service';
                 </td>
                 @let account = accountOf(tx.accountId);
                 <td class="py-2.5 pe-3">
-                  {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+                  {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
                 </td>
                 <td class="py-2.5 pe-3">
                   <span class="block truncate" data-testid="tx-table-booking">
@@ -171,6 +172,8 @@ import { DemoStateService } from '../../state/demo-state.service';
   `,
 })
 export class TransactionsCard {
+  protected readonly nameOf = accountName;
+
   private readonly demo = inject(DemoStateService);
   private readonly language = inject(LanguageService);
 

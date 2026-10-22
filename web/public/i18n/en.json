@@ -74,10 +74,8 @@
       "label": "Tax office",
       "de": "Finanzamt",
       "explain": "The local office that handles your taxes. Its name is on its letters."
-    }
-  },
-  "account": {
-    "cash": "Cash box"
+    },
+    "whatIs": "What is {{term}}?"
   },
   "menu": {
     "home": "Home",
@@ -97,14 +95,11 @@
     "invoices": "Invoices",
     "taxes": "Taxes",
     "reports": "Reports",
-    "settings": "Settings",
     "help": "Help",
     "more": "More",
     "terms": "Bank connection terms",
     "unreadable": "Unreadable receipts",
     "revenueLimit": "Revenue limit",
-    "bank": "Connect your bank",
-    "tax": "Your tax details",
     "receipt": "Upload your first receipt",
     "account": "Account",
     "photo": "Take a photo",
@@ -676,7 +671,7 @@
   "bankConnect": {
     "back": {
       "home": "Back to home",
-      "payments": "Back to payments",
+      "payments": "Back to Payments",
       "settings": "Back to Settings"
     },
     "pick": {
@@ -719,6 +714,7 @@
       "hint": "Private accounts stay out: leave them unticked.",
       "accounts": "Accounts at {{bank}}",
       "already": "Already connected",
+      "ended": "Connection ended — sign in again in Settings",
       "fetchFrom": "Fetch payments from",
       "thisYear": "1 January this year",
       "lastYear": "1 January last year",
@@ -727,6 +723,7 @@
       "connectMany": "Connect {{count}} accounts",
       "connectNone": "Connect accounts",
       "tickOne": "Tick at least one account to connect.",
+      "allConnected": "These accounts are connected already.",
       "other": "Choose another bank"
     },
     "fetching": {

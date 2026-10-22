@@ -12,8 +12,8 @@ const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
 
 /**
  * The three setup steps with a tick on the finished ones. A step to do opens its flow, which comes back here: the bank
- * flow, the tax details page, or Documents with the Add choices open for the first receipt. A finished bank or tax
- * step opens its place in Settings, a finished receipt step Documents.
+ * flow, the tax details page, or Documents with the Add choices open for the first receipt. A finished bank step
+ * opens the Bank accounts card of Settings, a finished tax step Settings, a finished receipt step Documents.
  */
 @Component({
   selector: 'app-setup-checklist',
@@ -50,6 +50,7 @@ const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
               [variant]="step.done ? 'ghost' : 'outline'"
               [routerLink]="step.link"
               [queryParams]="step.queryParams"
+              [fragment]="step.fragment"
               [attr.data-testid]="'step-action-' + step.id"
             >
               {{ (step.done ? 'home.checklist.view' : 'home.checklist.start') | transloco }}
@@ -68,19 +69,22 @@ export class SetupChecklist {
     return STEP_IDS.map((id) => ({ id, done: done[id], ...this.target(id, done[id]) }));
   });
 
-  /** Where a step leads, as a link and its query: its flow while it is to do, its place once it is done. */
-  private target(id: StepId, done: boolean): { link: string[]; queryParams: Params | undefined } {
+  /** Where a step leads, as a link, its query and the place on the page: its flow while it is to do, its place once it is done. */
+  private target(
+    id: StepId,
+    done: boolean,
+  ): { link: string[]; queryParams: Params | undefined; fragment: string | undefined } {
     switch (id) {
       case 'bank':
         return done
-          ? { link: ['/settings'], queryParams: undefined }
-          : { link: ['/settings/bank/connect'], queryParams: { from: 'home' } };
+          ? { link: ['/settings'], queryParams: undefined, fragment: 'bank-accounts' }
+          : { link: ['/settings/bank/connect'], queryParams: { from: 'home' }, fragment: undefined };
       case 'tax':
         return done
-          ? { link: ['/settings'], queryParams: undefined }
-          : { link: ['/settings/tax'], queryParams: { from: 'home' } };
+          ? { link: ['/settings'], queryParams: undefined, fragment: undefined }
+          : { link: ['/settings/tax'], queryParams: { from: 'home' }, fragment: undefined };
       case 'receipt':
-        return { link: ['/documents'], queryParams: done ? undefined : { add: '1' } };
+        return { link: ['/documents'], queryParams: done ? undefined : { add: '1' }, fragment: undefined };
     }
   }
 }

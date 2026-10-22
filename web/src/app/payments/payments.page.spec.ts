@@ -217,6 +217,25 @@ describe('PaymentsPage', () => {
     expect(text(q('chip-account'))).toContain('Qonto · Sparkonto');
   });
 
+  it('names the account of a payment in the table by its bank and product, like the filter does', async () => {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    demo.updateTransaction('wd-t1', (t) => ({ ...t, accountId: 'wd-savings' }));
+    await render();
+    const accountCell = (name: string) =>
+      text(
+        qa('payment-table-row')
+          .find((row) => row.textContent?.includes(name))!
+          .querySelectorAll('td')[2],
+      );
+    expect(accountCell('Müller GmbH')).toBe('Qonto · Savings');
+    expect(accountCell('Telekom')).toBe('Qonto');
+    expect(accountCell('Edeka')).toBe('Cash box');
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(accountCell('Müller GmbH')).toBe('Qonto · Sparkonto');
+    expect(accountCell('Edeka')).toBe('Kasse');
+  });
+
   it('only offers the open business accounts and its months', async () => {
     await render();
     const accounts = Array.from((q('filter-account') as HTMLSelectElement).options).map(

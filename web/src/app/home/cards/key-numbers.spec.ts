@@ -137,9 +137,10 @@ describe('KeyNumbers', () => {
 
   it('third tile follows the answers for the due date and keeps the stored amount', () => {
     const t = tile(renderChanged('weber-design', { permanentExtension: true }), 'tax')!;
-    expect(t.textContent).toContain('Due 10 Dec');
+    expect(t.textContent).toContain('Due 10 Nov');
     expect(t.textContent).toContain(formatMoney(184200, 'en'));
-    expect(tile(renderChanged('cafe-linde', {}), 'tax')!.textContent).toContain('Due 10 Jan');
+    expect(tile(renderChanged('cafe-linde', {}), 'tax')!.textContent).toContain('Due 11 Jan');
+    expect(tile(renderChanged('weber-design', { vatPeriod: 'quarterly' }), 'tax')!.textContent).toContain('Due 11 Jan');
   });
 
   it('third tile shows Yearly VAT return only, with no date and no amount, for a yearly profile', () => {

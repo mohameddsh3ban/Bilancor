@@ -10,6 +10,7 @@ import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
 import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
+import { withConnection as setConnection } from './demo-state.testing';
 
 describe('DemoStateService', () => {
   it('starts with weber-design and every setup step done', () => {
@@ -454,6 +455,37 @@ describe('DemoStateService', () => {
       expect(state.dataGeneration()).toBe(generation);
     });
 
+    it('restore puts back payments, documents and rules only: tax answers, accounts and history stay as they are now', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+
+      answerAmazon(state, OFFICE);
+      const answers: TaxProfile = { ...state.business().taxProfile, vatPeriod: 'quarterly', taxNumber: '27/123/45679' };
+      state.saveTaxProfile(answers);
+      state.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+      const accounts = state.business().accounts;
+      const history = state.business().history;
+      expect(accounts.map((a) => a.id)).toContain('wd-savings');
+      expect(history.map((line) => line.key)).toEqual(['bankConnected', 'bankConnected', 'taxChanged']);
+
+      state.restore(snapshot);
+
+      expect(state.business().taxProfile).toEqual(answers);
+      expect(state.business().accounts).toBe(accounts);
+      expect(state.business().history).toBe(history);
+      // What the snapshot holds does come back.
+      expect(state.business().categoryRules).toEqual([]);
+      expect(paymentStatus(payment(state, 'wd-t18'))).toBe('unclear');
+    });
+
+    it('restore keeps the businesses other fields as the snapshot found them too', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+      state.restore({ ...snapshot, name: 'Not my name', vatDue: null });
+      expect(state.business().name).toBe(snapshot.name);
+      expect(state.business().vatDue).toEqual(snapshot.vatDue);
+    });
+
     it('a snapshot is a deep copy: later edits do not change it, and restoring brings back a new object', () => {
       const state = TestBed.inject(DemoStateService);
       const open = state.business();
@@ -776,13 +808,8 @@ describe('DemoStateService', () => {
       state.business().accounts.find((a) => a.id === id)!;
     const lines = (state: DemoStateService) => state.business().history;
     /** Puts the open business's account back with another connection, as the bank would report it. */
-    const withConnection = (state: DemoStateService, id: string, change: Partial<Account['connection']>): void => {
-      const snapshot = state.snapshot();
-      snapshot.accounts = snapshot.accounts.map((a) =>
-        a.id === id ? { ...a, connection: { ...a.connection, ...change } } : a,
-      );
-      state.restore(snapshot);
-    };
+    const withConnection = (state: DemoStateService, id: string, change: Partial<Account['connection']>): void =>
+      setConnection(state, id, change);
 
     it('gives a connection that ends soon a consent of 180 days from the demo day, fetched just now', () => {
       const state = TestBed.inject(DemoStateService);

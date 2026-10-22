@@ -101,7 +101,7 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
   viewProviders: [provideIcons({ lucideBanknote, lucidePlus })],
   host: { class: 'block' },
   template: `
-    <section hlmCard size="sm" data-testid="settings-banks">
+    <section hlmCard size="sm" id="bank-accounts" data-testid="settings-banks">
       <header hlmCardHeader class="grid-cols-[1fr_auto] items-center">
         <h2 hlmCardTitle>{{ 'settings.bank.title' | transloco }}</h2>
         @if (bankDone()) {

@@ -9,8 +9,7 @@ import {
   inject,
   linkedSignal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -25,29 +24,22 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { map } from 'rxjs';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { BANKS, FOUND_ACCOUNTS, SAMPLE_BANKS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
-import { isAlreadyConnected, maskIban } from '../domain/bank-connection';
+import { connectionStatus, isAlreadyConnected, maskIban } from '../domain/bank-connection';
 import { DemoStateService } from '../state/demo-state.service';
 import { BankApproval } from './bank-approval';
 import { BankTile } from './bank-tile';
 import { ChoiceCard } from './form-parts';
+import { BACK_URLS, openedFrom } from './opened-from';
 
 /** How long "Fetching payments…" shows before the accounts are connected. */
 export const FETCH_MS = 2000;
 
 /** The screens of the flow, in order; the step is page state, not a route. */
 type Step = 'pick' | 'see' | 'approve' | 'choose' | 'fetching';
-
-/** Where the flow was opened from, and so where it leads when it is done. */
-type From = 'home' | 'payments' | 'settings';
-
-const BACK_URLS: Record<From, string> = { home: '/', payments: '/payments', settings: '/settings' };
-
-const fromOf = (param: string | null): From => (param === 'home' || param === 'payments' ? param : 'settings');
 
 /** The dates "Fetch payments from" offers: 1 January this year, 1 January last year, and the demo day. */
 const FETCH_OPTIONS = (() => {
@@ -300,7 +292,15 @@ const ROW_CLASS =
                           · <bdi dir="ltr">{{ mask(iban) }}</bdi>
                         }
                       </span>
-                      @if (row.already) {
+                      @if (row.ended) {
+                        <a
+                          class="text-primary text-xs font-medium underline underline-offset-4"
+                          data-testid="ended-link"
+                          routerLink="/settings"
+                          fragment="bank-accounts"
+                          >{{ 'bankConnect.choose.ended' | transloco }}</a
+                        >
+                      } @else if (row.already) {
                         <span class="text-muted-foreground text-xs font-medium">{{
                           'bankConnect.choose.already' | transloco
                         }}</span>
@@ -341,10 +341,17 @@ const ROW_CLASS =
             >
               {{ connectLabel() | transloco: { count: count() } }}
             </button>
-            @if (count() === 0) {
-              <p class="text-muted-foreground text-sm" data-testid="tick-one">
-                {{ 'bankConnect.choose.tickOne' | transloco }}
-              </p>
+            @switch (noneReason()) {
+              @case ('tickOne') {
+                <p class="text-muted-foreground text-sm" data-testid="tick-one">
+                  {{ 'bankConnect.choose.tickOne' | transloco }}
+                </p>
+              }
+              @case ('allConnected') {
+                <p class="text-muted-foreground text-sm" data-testid="all-connected">
+                  {{ 'bankConnect.choose.allConnected' | transloco }}
+                </p>
+              }
             }
             <button hlmBtn variant="ghost" size="lg" type="button" data-testid="other-bank" (click)="go('pick')">
               {{ 'bankConnect.choose.other' | transloco }}
@@ -376,7 +383,6 @@ const ROW_CLASS =
 })
 export class ConnectBankPage {
   private readonly demo = inject(DemoStateService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -388,10 +394,7 @@ export class ConnectBankPage {
   protected readonly mask = maskIban;
 
   /** Where the page was opened from: the homepage's setup step, Payments, or Settings (also when nothing is said). */
-  protected readonly from = toSignal(
-    this.route.queryParamMap.pipe(map((params) => fromOf(params.get('from')))),
-    { initialValue: fromOf(this.route.snapshot.queryParamMap.get('from')) },
-  );
+  protected readonly from = openedFrom(['home', 'payments', 'settings']);
   protected readonly backUrl = computed(() => BACK_URLS[this.from()]);
 
   /** What the flow was started for. Everything below belongs to it and starts over when it changes. */
@@ -430,8 +433,9 @@ export class ConnectBankPage {
   protected readonly isOtherBank = computed(() => this.accountsBank()?.id !== this.bankId());
 
   /**
-   * The accounts the demo finds, as the business has them now, with whether each is connected already (then it is
-   * ticked and cannot be unticked) and whether it is ticked.
+   * The accounts the demo finds, as the business has them now, with whether each is connected already (then it cannot
+   * be ticked or unticked: a working connection shows ticked, one that has ended or broken shows unticked and says so,
+   * as Settings looks after it) and whether it is ticked.
    */
   protected readonly rows = computed(() => {
     const bank = this.accountsBank();
@@ -442,12 +446,29 @@ export class ConnectBankPage {
     return found.map((account) => {
       const current = have.find((a) => a.id === account.id);
       const already = isAlreadyConnected(current, bankDone);
-      return { account: current ?? account, already, ticked: already || chosen.has(account.id) };
+      const ended = already && current !== undefined && connectionStatus(current).kind === 'signInAgain';
+      return {
+        account: current ?? account,
+        already,
+        ended,
+        ticked: already ? !ended : chosen.has(account.id),
+      };
     });
   });
-  protected readonly count = computed(() => this.rows().filter((row) => row.ticked).length);
+  /** The accounts this tap would connect: the ticked ones that are not connected already. */
+  protected readonly count = computed(() => this.rows().filter((row) => row.ticked && !row.already).length);
   /** The date is for accounts that are being connected now, not for ones that are connected already. */
-  protected readonly needsFetchFrom = computed(() => this.rows().some((row) => row.ticked && !row.already));
+  protected readonly needsFetchFrom = computed(() => this.count() > 0);
+  /**
+   * Why Connect cannot be tapped: an account is left to tick, or every account is connected already. Nothing is said
+   * when the only accounts left have ended, as their rows say what to do.
+   */
+  protected readonly noneReason = computed<'tickOne' | 'allConnected' | null>(() => {
+    if (this.count() > 0) return null;
+    const rows = this.rows();
+    if (rows.some((row) => !row.already)) return 'tickOne';
+    return rows.some((row) => row.ended) ? null : 'allConnected';
+  });
   protected readonly connectLabel = computed(() => {
     const count = this.count();
     return count === 0 ? 'bankConnect.choose.connectNone' : `bankConnect.choose.connect${count === 1 ? 'One' : 'Many'}`;
@@ -492,10 +513,10 @@ export class ConnectBankPage {
     });
   }
 
-  /** I also take cash: a cash box, no bank flow, then back to where the page was opened from. */
+  /** I also take cash: a cash box, no bank flow, then Settings, where the new box shows, whatever page this one was opened from. */
   protected addCash(): void {
     this.demo.addCashBox();
-    void this.router.navigateByUrl(this.backUrl(), { replaceUrl: true });
+    void this.router.navigateByUrl(BACK_URLS.settings, { replaceUrl: true });
   }
 
   /**
@@ -505,7 +526,7 @@ export class ConnectBankPage {
    */
   protected connect(): void {
     const accounts = this.rows()
-      .filter((row) => row.ticked)
+      .filter((row) => row.ticked && !row.already)
       .map((row) => row.account);
     const bank = this.accountsBank();
     if (accounts.length === 0 || bank === undefined || this.connecting() !== null) return;

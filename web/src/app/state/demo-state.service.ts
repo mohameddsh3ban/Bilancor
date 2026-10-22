@@ -299,19 +299,24 @@ export class DemoStateService {
     return bookedIds;
   }
 
-  /** A deep copy of the open business as it is now: its payments, documents and rules. Keep it to `restore` it (Undo). */
+  /** A deep copy of the open business as it is now. Keep it to `restore` its payments, documents and rules (Undo). */
   snapshot(): Business {
     return structuredClone(this.business());
   }
 
   /**
-   * Puts a business back as a snapshot had it (ignored when no business has the snapshot's id). It is a different object
-   * from the snapshot, so a later restore of the same snapshot works again. The data is not reset: `dataGeneration` stays.
+   * Puts the payments, documents and learned rules of a business back as a snapshot had them (ignored when no business
+   * has the snapshot's id). Everything else of the business stays as it is now: its tax answers, accounts and history
+   * may have changed since the snapshot, and Undo must not take those back. The restored lists are copies of the
+   * snapshot's, so a later restore of the same snapshot works again. The data is not reset: `dataGeneration` stays.
    */
   restore(snapshot: Business): void {
-    this.data.update((all) =>
-      all.some((b) => b.id === snapshot.id) ? all.map((b) => (b.id === snapshot.id ? structuredClone(snapshot) : b)) : all,
-    );
+    this.updateBusiness(snapshot.id, (business) => ({
+      ...business,
+      transactions: structuredClone(snapshot.transactions),
+      documents: structuredClone(snapshot.documents),
+      categoryRules: structuredClone(snapshot.categoryRules),
+    }));
   }
 
   /** Puts every edited payment and document back to the sample data, and every business back to all steps done (demo only). */

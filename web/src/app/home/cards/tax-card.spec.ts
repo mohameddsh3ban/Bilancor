@@ -168,16 +168,16 @@ describe('TaxCard', () => {
   });
 
   it('the due date follows the answers and not the stored date', () => {
-    expect(renderChanged('weber-design', { permanentExtension: true }).textContent).toContain('Due 10 Dec');
-    expect(renderChanged('weber-design', { vatPeriod: 'quarterly' }).textContent).toContain('Due 10 Jan');
-    expect(renderChanged('cafe-linde', {}).textContent).toContain('Due 10 Jan');
-    expect(renderChanged('cafe-linde', { permanentExtension: true }).textContent).toContain('Due 10 Feb');
+    expect(renderChanged('weber-design', { permanentExtension: true }).textContent).toContain('Due 10 Nov');
+    expect(renderChanged('weber-design', { vatPeriod: 'quarterly' }).textContent).toContain('Due 11 Jan');
+    expect(renderChanged('cafe-linde', {}).textContent).toContain('Due 11 Jan');
+    expect(renderChanged('cafe-linde', { permanentExtension: true }).textContent).toContain('Due 10 Nov');
     expect(renderChanged('cafe-linde', { vatPeriod: 'monthly' }).textContent).toContain('Due 10 Nov');
   });
 
   it('keeps the stored amount whatever the date', () => {
     const el = renderChanged('weber-design', { vatPeriod: 'quarterly', permanentExtension: true });
-    expect(el.textContent).toContain('Due 10 Feb');
+    expect(el.textContent).toContain('Due 10 Nov');
     expect(el.textContent).toContain(formatMoney(184200, 'en'));
   });
 

@@ -74,10 +74,8 @@
       "label": "Finanzamt",
       "de": "Finanzamt",
       "explain": "Das örtliche Amt, das deine Steuern bearbeitet. Sein Name steht auf seinen Briefen."
-    }
-  },
-  "account": {
-    "cash": "Kasse"
+    },
+    "whatIs": "Was ist {{term}}?"
   },
   "menu": {
     "home": "Start",
@@ -97,14 +95,11 @@
     "invoices": "Rechnungen",
     "taxes": "Steuern",
     "reports": "Auswertungen",
-    "settings": "Einstellungen",
     "help": "Hilfe",
     "more": "Mehr",
     "terms": "Bedingungen der Bankanbindung",
     "unreadable": "Nicht lesbare Belege",
     "revenueLimit": "Umsatzgrenze",
-    "bank": "Bank verbinden",
-    "tax": "Deine Steuerangaben",
     "receipt": "Ersten Beleg hochladen",
     "account": "Konto",
     "photo": "Foto aufnehmen",
@@ -719,6 +714,7 @@
       "hint": "Private Konten bleiben draußen: lass sie unmarkiert.",
       "accounts": "Konten bei {{bank}}",
       "already": "Schon verbunden",
+      "ended": "Verbindung beendet — melde dich in den Einstellungen neu an",
       "fetchFrom": "Zahlungen abrufen ab",
       "thisYear": "1. Januar dieses Jahres",
       "lastYear": "1. Januar letzten Jahres",
@@ -727,6 +723,7 @@
       "connectMany": "{{count}} Konten verbinden",
       "connectNone": "Konten verbinden",
       "tickOne": "Markiere mindestens ein Konto zum Verbinden.",
+      "allConnected": "Diese Konten sind schon verbunden.",
       "other": "Andere Bank wählen"
     },
     "fetching": {
