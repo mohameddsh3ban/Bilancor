@@ -20,15 +20,15 @@ The portal is German-only, and we studied it through the browser's auto-translat
 
 ## Navigation structure
 
-The sidebar has 10 items in 4 groups; so far we have studied only the homepage and the payments page. Names are as they appeared in the browser translation, with the German original where we know it.
+The sidebar has 10 items in 4 groups; so far we have studied the homepage, the payments page and the document pages. Names are as they appeared in the browser translation, with the German original where we know it.
 
 | Group | Item | German original | Purpose |
 | --- | --- | --- | --- |
 | — | Homepage | Startseite | Summary of tasks, documents, receivables/payables, BWA figures and balances |
-| Documents | Document management |  | Upload and organize invoices and receipts (likely) |
-| Documents | Invoicing |  | Create and send invoices to customers (likely) |
+| Documents | Document management | Belegverwaltung | Folder overview of incoming and outgoing documents, and upload (studied) |
+| Documents | Invoicing | Rechnungsstellung | Create and send invoices to customers (likely) |
 | Accounting | Payments | Zahlungen | Bank transactions, matched to documents and bookings (studied) |
-| Accounting | Evidence | Belege | Accounting documents after they are booked (likely) |
+| Accounting | Evidence | Belege | Shortcut to the list of all incoming documents, the same list as in Document management (studied) |
 | Fixed assets | Plant management | Anlagenverwaltung | Fixed-asset register with annual depreciation (AfA) |
 | Evaluations | Diploma | Abschluss | Year-end statements: balance sheet and profit & loss |
 | Evaluations | Controlling (beta) | Controlling | Analytics and KPIs, still in beta |
@@ -129,9 +129,9 @@ Linking documents to payments is the core daily work in the portal: every paymen
 | --- | --- |
 | Outgoing documents | Type of documents shown; follows the payment direction (incoming payment → issued invoices) |
 | Period | Time range |
-| Test status | Probably Prüfstatus: the document's review status |
+| Test status | Prüfstatus: the document's review status (ungeprüft, unvollständig, geprüft) |
 | Payment status | On by default; probably shows unpaid only |
-| surgery | Probably OP, short for Offene Posten: open items |
+| surgery | OP-Ausgleich, short for Offene Posten: open items, settled or not |
 | Amount | Amount |
 
 ### ⋮ menu
@@ -145,20 +145,157 @@ Linking documents to payments is the core daily work in the portal: every paymen
 | Comment | Comment on the payment |
 | Create task | Task on the payment; probably counted in the homepage tasks card |
 
+## Document pages
+
+Studied Oct 22, 2026, in the original German (no browser translation), by reading the page and its structure only.
+
+**The portal is BuchhaltungsButler.** The empty-folder text says documents are sent "zu BuchhaltungsButler", so Bilancor's portal is a white-labelled BuchhaltungsButler. What we study here is BuchhaltungsButler's product, which has public help pages and prices we can read without touching the account.
+
+### Folder overview (Belegverwaltung)
+
+The page at /receipts/ is a list of folders, not documents. Each folder opens the document list with a filter already applied.
+
+| Group | Folder | Notes |
+| --- | --- | --- |
+| Eingang (incoming) | Alle Eingangsbelege | All supplier invoices and receipts (1,207 in the studied account) |
+| Eingang | One folder per money account: Kasse (cash), EÜR Verrechnungskonto, each bank account | The URL carries the SKR03 account number (1000, 1200, 1201, 1371). Cash and the EÜR clearing account show "Beleg erzeugt automatisch Zahlung": with no bank feed, uploading a receipt creates the payment itself |
+| Ausgang (outgoing) | Ausgangsbelege | Invoices to customers (53) |
+
+- **Hochladen** (Upload) at the top right opens a "Belege hochladen" window with two drop zones side by side, Eingangsbelege and Ausgangsbelege, each reading "Hier ablegen oder auswählen" (drop here or choose). The client decides the direction for every upload, which may explain the receipts sitting in the wrong folder (see below).
+- **+ Konto hinzufügen** (add account) next to a ? button, "Hinweise zur Ordnerstruktur der Eingangsbelege". Its popover says incoming documents are sorted by accounting logic: each document goes to the account of the payment it is linked to. The setting "Beleg erzeugt Zahlung" makes a document assigned to that account create the matching payment directly, for accounts with no online banking, CSV import or other sync (e.g. cash). So the folders always mirror the payment accounts, and creating your own folders is not possible.
+- **Evidence (Belege) in the sidebar** links to the same list as Alle Eingangsbelege; it is not a separate page for booked documents.
+
+### Document list
+
+**Toolbar:** back arrow, the title as a dropdown (Eingangsbelege / Ausgangsbelege), Volltextsuche (full-text search), Hochladen, and a ••• menu ("Kontextmenü für Belege") that reads "keine Aktionen verfügbar" with nothing selected; probably bulk actions for selected rows (likely). Second row: Konto (incoming only), three quick checkboxes Duplikatsverdacht / Unbezahlt / Ungebucht, Filter auswählen, ✕ and ↻. The toolbar sticks to the top when scrolling.
+
+**Columns:** Datum, Gegenpartei, Re.-Nummer and Betrag can be sorted. The default order is neither date nor amount, probably upload order (likely).
+
+| Element | What it shows |
+| --- | --- |
+| Checkbox | Bulk selection, with a floating Alle auswählen at the bottom left |
+| Thumbnail | First page of the document; opens the document |
+| Counterparty | Name, or a red "Gegenpartei fehlt" when it was not recognised |
+| Number and date | Invoice number and document date |
+| Badge | Payment status in red Überfällig (due date in the hidden label "Fällig: …") or Bezahlt; or a warning "Erkennung unvollständig" (recognition incomplete) |
+| Amount | Gross amount |
+| Middle box | Supplier or customer account: "Dieser Beleg ist keinem Kreditor zugewiesen" (incoming) or "… Debitor …" (outgoing) |
+| Tasks icon | Aufgaben link |
+| ⋮ menu | "Aktionen für den Beleg" (next table) |
+| Status circle | Buchungsstatus, one of: anderweitig verbucht, ohne Buchung, Buchung nicht bestätigt, Buchung bestätigt, festgeschrieben, nicht verfügbar. Icon only, with no tooltip on hover |
+
+**Footer:** "1207 Belege gefunden (1207 insgesamt im Ordner)", Belege je Seite (25), and page numbers.
+
+**Row ⋮ menu:**
+
+| Action | Purpose |
+| --- | --- |
+| Detailansicht öffnen | Open the document detail (below) |
+| PDF anzeigen | Show the original file |
+| Einzug per Lastschrift | Collect the amount by direct debit (shown on an incoming document too) |
+| Bezahlen | Pay the invoice by bank transfer from the portal (transfer accounts via finAPI) |
+| Aufgabe erstellen | Create a task on the document |
+
+### Document detail
+
+Opens as a large window over the list, with arrows at the sides to step to the previous or next document.
+
+- **Left:** the scanned document, with a zoom button, and page thumbnails at the bottom.
+- **Right:** four steps as collapsible sections, in order:
+
+| Step | German original | What it holds |
+| --- | --- | --- |
+| Check the document | Beleg prüfen | The read data as a form, with a green tick once checked (fields below) |
+| Book the document | Beleg buchen | Only "Es liegen keine aktuellen Buchungen zu diesem Beleg vor" (no bookings for this document yet), with no form |
+| Assign a payment | Zahlung zuweisen | A "Zahlung suchen" search box with a list button that opens payment filters, and Weiter (next) |
+| Book the payment | Zahlung buchen | Greyed out until a payment is assigned |
+
+**Beleg prüfen fields:**
+
+| Field | German original | Notes |
+| --- | --- | --- |
+| Document type | Belegtyp | Eingangsbeleg or Ausgangsbeleg, as radio buttons |
+| Issuer | Rechnungssteller | Shown for incoming documents |
+| Recipient | Rechnungsempfänger | Shown for outgoing documents; for incoming it stays hidden, though it is filled in |
+| Invoice number | Rechnungsnummer |  |
+| Invoice date, different service date | Rechnungsdatum, Abw. Leistungsdatum | Help text: for DATEV compatibility, the service date may not be after the invoice date |
+| Amount, currency, VAT | Betrag, currency (about 50 currencies), UST % | VAT choices 19, 16, 7, 5, 0 % or ausländisch/verschiedene (foreign/mixed) |
+| Exchange rate, converted amount | Umrechnungskurs, Umrechn. Betrag | Only for foreign currencies |
+| Due date | Fälligkeitsdatum | Help text: a default payment term per supplier can be set in Kontenverwaltung, and the due date is then calculated |
+| Comment | Kommentar | Free text |
+
+There is no save button in the form, so it most likely saves each change on its own (likely).
+
+**Payment filters inside Zahlung zuweisen:** Konto, Zeitraum, Zugänge/Abgänge (incoming/outgoing), Belegzuweisung (default "fehlender Beleg": only payments without a document) and Betrag. When nothing is found: "Keine Zahlungen vorhanden", a pointer to the Payments page to import payments, and for payments made from a private account a "Beleg erzeugt Zahlung" link that creates the payment from the document.
+
+**Help texts in the payment steps:**
+
+- Booking the payment directly to an expense or income account is fine when document and payment fall in the same period, but then the document never reaches the supplier account.
+- A payment can be linked to several documents; differences such as cash discount (Skonto) or currency are booked with a split booking, and so are overpayments such as tips.
+- For an unpaid document, a booking can be prepared in advance (Buchungsvormerkung). It is applied as the booking suggestion as soon as the payment is linked.
+
+- **Bottom bar:** icons for task or comment, PDF, direct debit and pay (the same actions as the ⋮ menu), and Schließen (close).
+
+### Document filters
+
+Read from the page structure without opening the menu. They also settle three guesses from the payments page: Test status is Prüfstatus, surgery is OP (Offene Posten), and the Tasks values.
+
+| Field | Values |
+| --- | --- |
+| Schnellfilter | Saved filters (none in the studied account) |
+| Zeitraum | Gesamter Zeitraum, Frei definierter Zeitraum (von / bis), then every year, quarter and month that has documents |
+| Prüfstatus | alle, ungeprüft, unvollständig, geprüft |
+| Zahlstatus | alle, unbezahlt (keiner Zahlung zugewiesen), bald fällig, überfällig, bezahlt (Zahlung zugewiesen) |
+| Erinnerung | alle, nicht erinnert, 1., 2. or 3. Zahlungserinnerung |
+| OP-Ausgleich | alle, OP nicht ausgeglichen, OP ausgeglichen |
+| Buchungsstatus | alle, ungebucht, gebucht, nicht festgeschrieben, festgeschrieben |
+| Buchungskonto | Free text, "1234; Buchungskonto" |
+| Betrag | Free text |
+| Kommentare | alle, Ja, Nein |
+| Aufgaben | keine Auswahl, alle, offen, erledigt |
+| Gelöschte Belege | nicht anzeigen, anzeigen: deleted documents are kept and can be shown again |
+
+At the bottom: Auswahl zurücksetzen, a filter name with Schnellfilter anlegen, Auswahl merken, Abbrechen, Anwenden.
+
+### Ways to add documents
+
+Listed in the empty-folder message ("Noch kein Eingangsbeleg hier, der verarbeitet werden kann …") and in Settings › Belegübertragung.
+
+| Channel | How it works |
+| --- | --- |
+| Manual upload | Drag files into the widget that Hochladen opens |
+| Email | One address per company for incoming and one for outgoing documents (eingang.… / ausgang.…@belege.portal.bilancor.de), plus a list of sender addresses linked to the company |
+| Dropbox | A linked Dropbox gets a fixed folder structure; files put there upload in the background |
+| GetMyInvoices | Fetches invoices from over 10,000 supplier portals |
+| Partners and API | billbee, Dropscan (scanning service), invoicefetcher, GetMyInvoices, Agicap, FLOWWER, Spesenfuchs, Tidely, and an API |
+
+### What the account shows
+
+- **Own sales invoices filed as supplier invoices:** the opened "incoming" document is in fact an invoice the client issued to a customer. Recognition read it correctly (issuer: the client's company, recipient: the customer), yet the document type stayed Eingangsbeleg, so the client's own company became the counterparty. The data needed to catch the mistake was already there. This is why 24 of the 25 incoming documents on the first page show the client's own company name and "Überfällig": they wait for an outgoing payment that will never come, while the real customer payments stay unmatched (likely). The upload window leaves the direction to the client, and nothing checks whether the issuer is the client's own company.
+- **Failed recognition, no reason given:** most outgoing documents read "Gegenpartei fehlt" and "Erkennung unvollständig". They are small amounts with shop-style invoice numbers, so they are probably purchase receipts uploaded to the wrong folder (likely). Nothing tells the client what to fix.
+- **Duplicates get in:** the same invoice number appears twice in the outgoing list. Duplicate suspicion is only a filter, not a warning at upload.
+- **No supplier accounts:** no document on the first pages is assigned to a Kreditor or Debitor, so the middle column repeats the same grey sentence on every row.
+- **Old "overdue" invoices:** many invoices from 2024 still read Überfällig, most likely paid but not linked to a payment (as on the homepage).
+- **Icon-only status:** the booking-status circle has no label or tooltip.
+
+### Still to see (needs a click)
+
+The ••• menu with documents selected, Zahlung buchen once a payment is assigned, and Beleg buchen on a document that has a booking. None of these can be seen in this account without changing data.
+
 ## Screens still to explore
 
-10 items are still unopened. Explore by reading and hovering only, with no button that changes data.
+7 items are still unopened. Explore by reading and hovering only, with no button that changes data.
 
-- [ ] Document management: ways to upload documents and document statuses after upload
+- [x] Document management: folders, list, filters, upload window, menus, document detail with its four steps, and ways to upload (Oct 22, 2026)
 - [ ] Invoicing: steps to create an invoice, templates, and e-invoice support
-- [ ] Evidence: how it differs from Document management
+- [x] Evidence: the same list as Alle Eingangsbelege (Oct 22, 2026)
 - [ ] Plant management: adding an asset and how depreciation is shown
 - [ ] Diploma: what the client sees of the year-end statements
 - [ ] Controlling (beta): which KPIs are shown
 - [ ] Notifications: types of notifications
 - [ ] Help & Contact: available support channels
-- [ ] Tasks filter: the values in the dropdown
-- [ ] Settings (gear icon next to the user name): users and bank connections
+- [x] Tasks filter: keine Auswahl, alle, offen, erledigt (seen in the document filters, Oct 22, 2026)
+- [ ] Settings (gear icon next to the user name): users and bank connections. Settings › Einstellungen is one long page: banks, transfer accounts, chart of accounts, Belegübertragung, API, cost centres, tax settings, automation rules, invoice numbering, invoice approval, layout, payment reminders
 
 ## Technical and legal foundation
 
