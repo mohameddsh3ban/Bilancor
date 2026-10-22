@@ -43,7 +43,7 @@ Everything from the earlier mockups applies: Angular 22, Tailwind CSS 4, spartan
 
 - **"Needs you · N" button in the top bar of every screen** (phone and computer), next to the bell. Hidden when N is 0 *(my call)*. N = payments that aren't *Booked* + documents in Needs you — the same number as the homepage decisions count.
 - **Start** on the homepage decisions card and key-number tile (no longer "coming soon").
-- **Start** next to the "Needs you" quick filter on Payments, and on the Needs-you box on Documents.
+- **Review them** next to the "Needs you" quick filter on Payments, and **Start** on the Needs-you box on Documents.
 
 Every way in opens the **first card directly** — no overview screen.
 
