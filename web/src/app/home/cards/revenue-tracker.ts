@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmProgressImports } from '@spartan-ng/helm/progress';
-import { formatMoney } from '../../core/format/format';
-import { LanguageService } from '../../core/i18n/language.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
 import { revenueLimitStatus } from '../../domain/revenue-limit';
 import { DemoStateService } from '../../state/demo-state.service';
@@ -11,7 +10,7 @@ import { DemoStateService } from '../../state/demo-state.service';
 @Component({
   selector: 'app-revenue-tracker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmProgressImports, Term, TranslocoPipe],
+  imports: [HlmProgressImports, MoneyPipe, Term, TranslocoPipe],
   host: { class: 'block' },
   template: `
     <div class="flex flex-col gap-2" data-testid="tax-tracker">
@@ -20,9 +19,9 @@ import { DemoStateService } from '../../state/demo-state.service';
         <hlm-progress-indicator [class]="indicatorClass()" />
       </hlm-progress>
       <p class="text-sm">
-        <bdi dir="ltr" class="font-medium">{{ money(revenue(), true) }}</bdi>
+        <bdi dir="ltr" class="font-medium">{{ revenue() | money: { whole: true } }}</bdi>
         {{ 'home.tax.of' | transloco }}
-        <bdi dir="ltr" class="font-medium">{{ money(limit().limitCents, true) }}</bdi>
+        <bdi dir="ltr" class="font-medium">{{ limit().limitCents | money: { whole: true } }}</bdi>
         {{ 'home.tax.thisYear' | transloco }}
       </p>
       <p data-testid="tax-tracker-percent" [class]="percentClass()">
@@ -33,7 +32,6 @@ import { DemoStateService } from '../../state/demo-state.service';
 })
 export class RevenueTracker {
   private readonly demo = inject(DemoStateService);
-  private readonly language = inject(LanguageService);
 
   protected readonly revenue = computed(() => this.demo.business().revenueThisYearCents);
   protected readonly limit = computed(() => revenueLimitStatus(this.revenue()));
@@ -49,8 +47,4 @@ export class RevenueTracker {
     if (level === 'ok') return 'text-muted-foreground text-xs';
     return (level === 'overNow' ? 'text-negative' : 'text-warning') + ' text-xs font-medium';
   });
-
-  protected money(cents: number, whole = false): string {
-    return formatMoney(cents, this.language.lang(), { whole });
-  }
 }

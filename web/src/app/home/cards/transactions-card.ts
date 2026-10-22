@@ -5,7 +5,8 @@ import { lucideChevronRight } from '@ng-icons/lucide';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { formatDate, formatMoney } from '../../core/format/format';
+import { AppDatePipe } from '../../core/format/date.pipe';
+import { MoneyPipe } from '../../core/format/money.pipe';
 import { LanguageService } from '../../core/i18n/language.service';
 import { Account, Booking, TxStatus } from '../../data/models';
 import { newestTransactions } from '../../domain/home-figures';
@@ -25,7 +26,15 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
 @Component({
   selector: 'app-transactions-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmCardImports, NgIcon, NgTemplateOutlet, RouterLink, TranslocoPipe],
+  imports: [
+    AppDatePipe,
+    HlmCardImports,
+    MoneyPipe,
+    NgIcon,
+    NgTemplateOutlet,
+    RouterLink,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons({ lucideChevronRight })],
   host: { class: 'block' },
   template: `
@@ -49,15 +58,23 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
               [routerLink]="['/soon', 'payments']"
             >
               <span class="flex min-w-0 flex-1 flex-col gap-1">
-                <span class="truncate font-medium" dir="auto" data-testid="tx-counterparty">{{ tx.counterparty }}</span>
+                <span class="truncate font-medium" dir="auto" data-testid="tx-counterparty">{{
+                  tx.counterparty
+                }}</span>
                 <span class="text-muted-foreground flex items-center gap-2 text-xs">
-                  <span>{{ date(tx.date) }}</span>
-                  <ng-container [ngTemplateOutlet]="statusChip" [ngTemplateOutletContext]="{ $implicit: tx }" />
+                  <span>{{ tx.date | appDate }}</span>
+                  <ng-container
+                    [ngTemplateOutlet]="statusChip"
+                    [ngTemplateOutletContext]="{ $implicit: tx }"
+                  />
                 </span>
               </span>
               <bdi dir="ltr" class="shrink-0 font-medium">
-                <span data-testid="tx-amount" [class]="tx.amountCents >= 0 ? 'text-positive' : 'text-negative'">
-                  {{ money(tx.amountCents) }}
+                <span
+                  data-testid="tx-amount"
+                  [class]="tx.amountCents >= 0 ? 'text-positive' : 'text-negative'"
+                >
+                  {{ tx.amountCents | money: { signed: true } }}
                 </span>
               </bdi>
               <ng-icon
@@ -105,7 +122,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
           <tbody>
             @for (tx of rows(); track tx.id) {
               <tr class="border-border hover:bg-muted relative border-t" data-testid="tx-table-row">
-                <td class="py-2.5 pe-3 whitespace-nowrap">{{ date(tx.date) }}</td>
+                <td class="py-2.5 pe-3 whitespace-nowrap">{{ tx.date | appDate }}</td>
                 @let booking = tx.booking;
                 @let bookingText =
                   booking
@@ -118,14 +135,18 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                     class="block truncate font-medium after:absolute after:inset-0 hover:underline"
                     dir="auto"
                     data-testid="tx-table-counterparty"
-                    [attr.title]="bookingText ? tx.counterparty + ' · ' + bookingText : tx.counterparty"
+                    [attr.title]="
+                      bookingText ? tx.counterparty + ' · ' + bookingText : tx.counterparty
+                    "
                     [routerLink]="['/soon', 'payments']"
                   >
                     {{ tx.counterparty }}
                   </a>
                 </td>
                 @let account = accountOf(tx.accountId);
-                <td class="py-2.5 pe-3">{{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}</td>
+                <td class="py-2.5 pe-3">
+                  {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+                </td>
                 <td class="py-2.5 pe-3">
                   <span class="block truncate" data-testid="tx-table-booking">
                     @if (booking) {
@@ -139,7 +160,10 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                   </span>
                 </td>
                 <td class="py-2.5 pe-3">
-                  <ng-container [ngTemplateOutlet]="statusChip" [ngTemplateOutletContext]="{ $implicit: tx }" />
+                  <ng-container
+                    [ngTemplateOutlet]="statusChip"
+                    [ngTemplateOutletContext]="{ $implicit: tx }"
+                  />
                 </td>
                 <td class="py-2.5 text-end">
                   <bdi dir="ltr" class="font-medium">
@@ -147,7 +171,7 @@ const CHIP_CLASSES: Record<TxStatus, string> = {
                       data-testid="tx-table-amount"
                       [class]="tx.amountCents >= 0 ? 'text-positive' : 'text-negative'"
                     >
-                      {{ money(tx.amountCents) }}
+                      {{ tx.amountCents | money: { signed: true } }}
                     </span>
                   </bdi>
                 </td>
@@ -183,14 +207,6 @@ export class TransactionsCard {
   /** The SKR03 number with its German name; the caller keeps it left-to-right. */
   protected skr03(booking: Booking): string {
     return `${booking.skr03} ${booking.nameDe}`;
-  }
-
-  protected money(cents: number): string {
-    return formatMoney(cents, this.language.lang(), { signed: true });
-  }
-
-  protected date(iso: string): string {
-    return formatDate(iso, this.language.lang());
   }
 
   protected chip(status: TxStatus): string {
