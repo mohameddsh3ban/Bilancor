@@ -215,6 +215,11 @@
       "download": "PDF herunterladen"
     }
   },
+  "print": {
+    "back": "Zurück",
+    "nothing": "Hier gibt es nichts zu drucken.",
+    "account": "Konto: {{name}}"
+  },
   "home": {
     "notices": {
       "dismiss": "Schließen",

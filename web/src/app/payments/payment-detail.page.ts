@@ -14,6 +14,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { map } from 'rxjs';
 import { AppDatePipe } from '../core/format/date.pipe';
+import { formatIban } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { Term } from '../core/i18n/term';
 import { Account, Booking, Transaction } from '../data/models';
@@ -30,11 +31,6 @@ import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
 import { PaymentHistory } from './payment-history';
 import { PaymentStatusChip } from './payment-status-chip';
-
-/** An IBAN in groups of four, as banks print it. */
-function formatIban(iban: string): string {
-  return iban.replace(/(.{4})(?=.)/g, '$1 ');
-}
 
 /**
  * One payment of the open business: what it is, its receipt, its booking, the other party's bank details and

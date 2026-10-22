@@ -215,6 +215,11 @@
       "download": "Download PDF"
     }
   },
+  "print": {
+    "back": "Back",
+    "nothing": "Nothing to print here.",
+    "account": "Account: {{name}}"
+  },
   "home": {
     "notices": {
       "dismiss": "Dismiss",

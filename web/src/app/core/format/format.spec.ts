@@ -1,4 +1,4 @@
-import { formatDate, formatMoney } from './format';
+import { formatDate, formatIban, formatMoney } from './format';
 
 describe('formatMoney', () => {
   it('en', () => {
@@ -48,5 +48,13 @@ describe('formatMoney whole', () => {
   it('drops the cents', () => {
     expect(formatMoney(2130000, 'en', { whole: true })).toBe('€21,300');
     expect(formatMoney(2130000, 'de', { whole: true }).replace(/ /g, ' ')).toBe('21.300 €');
+  });
+});
+
+describe('formatIban', () => {
+  it('groups an IBAN in fours', () => {
+    expect(formatIban('DE68210501700012345678')).toBe('DE68 2105 0170 0012 3456 78');
+    expect(formatIban('DE6821')).toBe('DE68 21');
+    expect(formatIban('DE68')).toBe('DE68');
   });
 });

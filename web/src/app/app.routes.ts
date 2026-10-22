@@ -27,6 +27,10 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'print/payment/:id',
+    loadComponent: () => import('./print/payment-print.page').then((m) => m.PaymentPrintPage),
+  },
+  {
     path: 'print/month',
     loadComponent: () => import('./print/month-print.page').then((m) => m.MonthPrintPage),
   },

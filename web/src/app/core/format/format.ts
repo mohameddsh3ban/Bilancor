@@ -28,6 +28,11 @@ export function formatDate(iso: string, lang: Lang): string {
   }).format(new Date(iso));
 }
 
+/** An IBAN in groups of four, as banks print it. */
+export function formatIban(iban: string): string {
+  return iban.replace(/(.{4})(?=.)/g, '$1 ');
+}
+
 /** The name of a 'YYYY-MM' month with its year, e.g. "October 2026". */
 export function formatMonth(month: string, lang: Lang): string {
   return new Intl.DateTimeFormat(LOCALES[lang], {

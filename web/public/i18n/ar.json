@@ -215,6 +215,11 @@
       "download": "تنزيل PDF"
     }
   },
+  "print": {
+    "back": "رجوع",
+    "nothing": "لا يوجد ما يمكن طباعته هنا.",
+    "account": "الحساب: {{name}}"
+  },
   "home": {
     "notices": {
       "dismiss": "إغلاق",
