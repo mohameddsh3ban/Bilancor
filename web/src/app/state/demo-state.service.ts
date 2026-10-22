@@ -31,7 +31,7 @@ export class DemoStateService {
   /** The open business's documents as they are now, unfiltered. */
   readonly documents = computed<Doc[]>(() => this.business().documents);
   /** The open business's setup steps. */
-  readonly setup = computed<SetupSteps>(() => this.stepsByBusiness()[this.businessIdSignal()] ?? ALL_DONE);
+  readonly setup = computed<SetupSteps>(() => this.stepsOf(this.businessIdSignal()));
   /** Goes up on every `resetData()`, so work that started before a reset can tell its data is gone. */
   readonly dataGeneration = this.generationSignal.asReadonly();
   /** Whether the person has connected a bank yet; until then there are no payments to show. */
@@ -52,9 +52,14 @@ export class DemoStateService {
     this.stepsByBusiness.update((all) => ({ ...all, [businessId]: presetSteps(preset) }));
   }
 
+  /** The setup steps of any business, open or not; every step done for one that was never changed. */
+  stepsOf(businessId: string): SetupSteps {
+    return this.stepsByBusiness()[businessId] ?? ALL_DONE;
+  }
+
   /** Marks one setup step of a business (the open one unless named) as done. Ignored when it is done already. */
   completeStep(step: keyof SetupSteps, businessId: string = this.businessIdSignal()): void {
-    const current = this.stepsByBusiness()[businessId] ?? ALL_DONE;
+    const current = this.stepsOf(businessId);
     if (current[step]) return;
     this.stepsByBusiness.update((all) => ({ ...all, [businessId]: { ...current, [step]: true } }));
   }

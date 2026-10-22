@@ -287,6 +287,28 @@ describe('UploadService', () => {
     expect(demo.setup()).toEqual({ bank: false, tax: false, receipt: false });
   });
 
+  it('a document links itself by the steps of its own business, not the one open when it is read', () => {
+    const weberPayment = () => demo.businesses.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t3')!;
+    upload.add([file('ticket.pdf')], 'file'); // weber-design has its bank connected
+    demo.setBusiness('sara-yoga');
+    demo.setSetup('new');
+    vi.advanceTimersByTime(READING_MS);
+
+    expect(docsOf('weber-design').find((d) => d.id === 'up-1')!.paymentId).toBe('wd-t3');
+    expect(weberPayment().receipt).toBe('attached');
+  });
+
+  it('a document of a business with no bank yet stays unlinked when an active business is open when it is read', () => {
+    const weberPayment = () => demo.businesses.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t3')!;
+    demo.setSetup('new');
+    upload.add([file('ticket.pdf')], 'file');
+    demo.setBusiness('sara-yoga'); // all steps done
+    vi.advanceTimersByTime(READING_MS);
+
+    expect(docsOf('weber-design').find((d) => d.id === 'up-1')!.paymentId).toBeNull();
+    expect(weberPayment().receipt).toBe('missing');
+  });
+
   it('a drop with no accepted file ticks nothing', () => {
     demo.setSetup('new');
     upload.add([file('notes.docx')], 'file');

@@ -53,6 +53,16 @@ describe('DemoStateService', () => {
     expect(state.business().taxProfile).toBe(taxProfile);
   });
 
+  it('stepsOf reads the steps of any business: all done when it was never touched', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('new');
+    expect(state.stepsOf('weber-design')).toEqual(presetSteps('new'));
+    expect(state.stepsOf('cafe-linde')).toBe(ALL_DONE);
+    state.setBusiness('cafe-linde');
+    expect(state.stepsOf('weber-design')).toEqual(presetSteps('new'));
+    expect(state.setup()).toBe(state.stepsOf('cafe-linde'));
+  });
+
   it('completeStep ticks one step of one business', () => {
     const state = TestBed.inject(DemoStateService);
     state.setSetup('new');
