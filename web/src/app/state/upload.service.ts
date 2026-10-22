@@ -28,6 +28,12 @@ export interface UploadSummary {
 /** How a photo taken for a payment ended: linked to it, or dropped (see `UploadService.addPhotoFor`). */
 export type PhotoOutcome = 'linked' | 'dropped';
 
+/** A photo that is being read: the data generation it was taken in, and how it will end. */
+interface PhotoRead {
+  generation: number;
+  outcome: Promise<PhotoOutcome>;
+}
+
 /** A document of a drop that is being read, with the result it will get. */
 interface Reading {
   id: string;
@@ -67,10 +73,17 @@ export class UploadService {
       : null;
   });
 
-  /** The payments a photo is being read for, each with how its photo will end, oldest first. */
-  private readonly photos = signal<ReadonlyMap<string, Promise<PhotoOutcome>>>(new Map());
-  /** The payment a photo is being read for (the latest when there are several), or null when none is. */
-  readonly readingFor = computed(() => [...this.photos().keys()].at(-1) ?? null);
+  /** The payments a photo is being read for, oldest first. Photos taken before a reset are still in it until their time is up. */
+  private readonly photos = signal<ReadonlyMap<string, PhotoRead>>(new Map());
+  /**
+   * The payment a photo is being read for (the latest when there are several), or null when none is. A reset clears it
+   * at once: a photo taken before it is not being read any more.
+   */
+  readonly readingFor = computed(() => {
+    const generation = this.demo.dataGeneration();
+    const current = [...this.photos()].filter(([, read]) => read.generation === generation);
+    return current.at(-1)?.[0] ?? null;
+  });
 
   /** Never goes back, so a document id is never used twice in one page load, not even after a reset. */
   private idCounter = 0;
@@ -121,28 +134,37 @@ export class UploadService {
    * for `READING_MS`, then is a receipt made from the payment and is linked to it (by hand, not as a sure match).
    * Resolves `'linked'` when that happened, and `'dropped'` when it did not: nothing is taken when the payment is not there
    * or has its receipt already; a photo whose payment got its receipt meanwhile stays as an unlinked document; a reset
-   * during reading takes it away. It never moves a business's upload pool. A second call for a payment that is being read
-   * gives the photo already on its way.
+   * during reading takes it away (`readingFor` clears at once, and the next photo for that payment starts fresh).
+   * It never moves a business's upload pool. A second call for a payment that is being read gives the photo already on its way.
    */
   addPhotoFor(paymentId: string): Promise<PhotoOutcome> {
+    const generation = this.demo.dataGeneration();
     const running = this.photos().get(paymentId);
-    if (running) return running;
+    if (running?.generation === generation) return running.outcome;
     const businessId = this.demo.business().id;
     const payment = this.demo.business().transactions.find((tx) => tx.id === paymentId);
     if (payment?.receipt !== 'missing') return Promise.resolve('dropped');
 
-    const generation = this.demo.dataGeneration();
     const id = `up-${++this.idCounter}`;
     const fileName = `photo-${DEMO_TODAY}-${++this.photoCounter}.jpg`;
     this.demo.addDocument(businessId, newReadingDoc(id, fileName, 'photo'));
     const result = photoReceiptFor(payment);
     const outcome = new Promise<PhotoOutcome>((resolve) => {
       setTimeout(() => {
-        this.photos.update((all) => new Map([...all].filter(([key]) => key !== paymentId)));
+        this.photos.update((all) => {
+          if (all.get(paymentId)?.outcome !== outcome) return all; // a newer photo for this payment took its place
+          const rest = new Map(all);
+          rest.delete(paymentId);
+          return rest;
+        });
         resolve(this.readPhoto({ businessId, generation, id, paymentId, result }));
       }, READING_MS);
     });
-    this.photos.update((all) => new Map(all).set(paymentId, outcome));
+    this.photos.update((all) => {
+      const next = new Map(all);
+      next.delete(paymentId); // so it is the latest, and a photo from before a reset does not keep its place
+      return next.set(paymentId, { generation, outcome });
+    });
     return outcome;
   }
 

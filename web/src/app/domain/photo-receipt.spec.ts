@@ -34,6 +34,12 @@ describe('photoReceiptFor', () => {
     expect(photoReceiptFor({ ...sample('wd-t3'), amountCents: 12000 }).amountCents).toBe(12000);
   });
 
+  it('the direction follows the money: a received receipt for money out, a sent one for money in', () => {
+    expect(photoReceiptFor({ ...sample('wd-t3'), amountCents: -12000 }).direction).toBe('received');
+    const incoming = photoReceiptFor(sample('wd-t1'));
+    expect(incoming).toMatchObject({ direction: 'sent', name: 'Müller GmbH', amountCents: 150000 });
+  });
+
   it('a payment without a category gives a receipt without one, and no VAT', () => {
     const result = photoReceiptFor({ ...sample('wd-t3'), booking: null });
     expect(result.booking).toBeNull();

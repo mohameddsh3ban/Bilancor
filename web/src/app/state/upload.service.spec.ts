@@ -426,6 +426,44 @@ describe('UploadService', () => {
       expect(upload.readingFor()).toBeNull();
     });
 
+    it('reset during reading clears readingFor at once, and a new photo for the same payment starts fresh', async () => {
+      const stale = upload.addPhotoFor('wd-t3');
+      vi.advanceTimersByTime(1000);
+      demo.resetData();
+      expect(upload.readingFor()).toBeNull();
+
+      const fresh = upload.addPhotoFor('wd-t3');
+      expect(fresh).not.toBe(stale);
+      expect(upload.readingFor()).toBe('wd-t3');
+      expect(uploadsOf('weber-design').map((d) => d.id)).toEqual(['up-2']);
+
+      vi.advanceTimersByTime(1000); // the photo from before the reset is over now
+      await expect(stale).resolves.toBe('dropped');
+      expect(upload.readingFor()).toBe('wd-t3');
+      expect(paymentOf('wd-t3').receipt).toBe('missing');
+
+      vi.advanceTimersByTime(1000);
+      await expect(fresh).resolves.toBe('linked');
+      expect(upload.readingFor()).toBeNull();
+      expect(paymentOf('wd-t3').receipt).toBe('attached');
+    });
+
+    it('a photo for money in is a sent document, and still links', async () => {
+      demo.updateTransaction('wd-t1', (tx) => ({ ...tx, receipt: 'missing', receiptFile: null }));
+      const outcome = upload.addPhotoFor('wd-t1');
+      vi.advanceTimersByTime(READING_MS);
+
+      await expect(outcome).resolves.toBe('linked');
+      expect(upload1()).toMatchObject({
+        direction: 'sent',
+        name: 'Müller GmbH',
+        amountCents: 150000,
+        paymentId: 'wd-t1',
+      });
+      expect(docStatus(upload1())).toBe('done');
+      expect(paymentOf('wd-t1')).toMatchObject({ receipt: 'attached' });
+    });
+
     it('a photo of a payment that was fixed meanwhile stays unlinked', async () => {
       const outcome = upload.addPhotoFor('wd-t3');
       demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
