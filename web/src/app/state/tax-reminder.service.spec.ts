@@ -129,6 +129,38 @@ describe('TaxReminderService', () => {
     expect(ids(TestBed.inject(TaxReminderService))).toEqual(['cafe-linde', 'weber-design']);
   });
 
+  it("no reminder while the tax step isn't done", () => {
+    const service = TestBed.inject(TaxReminderService);
+    // The "new client" setup of Weber Design: no tax details yet, so its return is not known. Café Linde keeps its own steps.
+    demo.setSetup('new');
+    expect(ids(service)).toEqual(['cafe-linde']);
+    // "Halfway" has the bank but not the tax step either.
+    demo.setSetup('halfway');
+    expect(ids(service)).toEqual(['cafe-linde']);
+    // Café Linde too, then back to "active" for Café Linde only.
+    demo.setBusiness('cafe-linde');
+    demo.setSetup('halfway');
+    expect(service.due()).toEqual([]);
+    demo.setSetup('active');
+    expect(ids(service)).toEqual(['cafe-linde']);
+  });
+
+  it('the reminder appears once the tax step is done', () => {
+    demo.setSetup('new');
+    demo.setBusiness('cafe-linde');
+    demo.setSetup('new');
+    const service = TestBed.inject(TaxReminderService);
+    expect(service.due()).toEqual([]);
+    expect(service.open()).toBe(false);
+
+    demo.completeStep('tax', 'weber-design');
+    expect(ids(service)).toEqual(['weber-design']);
+    demo.completeStep('tax', 'cafe-linde');
+    expect(ids(service)).toEqual(['cafe-linde', 'weber-design']);
+    // It only opens when the app starts or after a reset, not at the moment the tax details are saved.
+    expect(service.open()).toBe(false);
+  });
+
   it('a return that is more than 21 days away is not listed yet', () => {
     // Weber's October return is due 10 Nov (19 days); with the one-month extension it is due 10 Dec (49 days).
     demo.saveTaxProfile({ ...demo.business().taxProfile, permanentExtension: true });

@@ -15,8 +15,8 @@ export interface TaxReminderItem {
 }
 
 /**
- * The tax reminder that pops up when the app opens: which businesses of the person have a VAT return due within
- * `DUE_SOON_DAYS` (or overdue), and what "Got it" and "Not now" do. "Got it" is remembered per person, business and due
+ * The tax reminder that pops up when the app opens: which businesses of the person (with their tax details set) have a
+ * VAT return due within `DUE_SOON_DAYS` (or overdue), and what "Got it" and "Not now" do. "Got it" is remembered per person, business and due
  * date, so the next deadline reminds again; "Not now" is remembered only until the app is opened again.
  */
 @Injectable({ providedIn: 'root' })
@@ -33,6 +33,8 @@ export class TaxReminderService {
     this.acknowledgements();
     const items: TaxReminderItem[] = [];
     for (const business of this.demo.businesses) {
+      // Without tax details the app does not know the return (the homepage hides its tax card in the same case).
+      if (!this.demo.stepsOf(business.id).tax) continue;
       const current = currentVatReturn(business);
       if (current?.kind !== 'return' || current.view.daysLeft > DUE_SOON_DAYS) continue;
       if (this.storage.get(this.key(business.id, current.view.dueDate)) !== null) continue;
