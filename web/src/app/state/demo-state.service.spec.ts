@@ -1194,6 +1194,36 @@ describe('DemoStateService', () => {
       expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
     });
 
+    it('a payment that pays an invoice cannot be made private, whether it pays all of it or a part', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      const business = state.business();
+      state.updateTransaction('sy-t15', (tx) => setPrivate(tx, true)); // a part payment of RE-2026-021
+      state.updateTransaction('sy-t1', (tx) => setPrivate(tx, true)); // the whole of RE-2026-019
+      expect(state.business()).toBe(business);
+      expect(payment(state, 'sy-t15')).toMatchObject({ isPrivate: false, receipt: 'attached' });
+      expect(payment(state, 'sy-t1').isPrivate).toBe(false);
+      expect(state.business().invoices.find((i) => i.id === 'inv-sy-021')!.paymentIds).toEqual(['sy-t15']);
+
+      // a payment of the same business that pays no invoice can still be made private
+      state.updateTransaction('sy-t7', (tx) => setPrivate(tx, true));
+      expect(payment(state, 'sy-t7').isPrivate).toBe(true);
+    });
+
+    it('everything else about a payment that pays an invoice can still change', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.updateTransaction('wd-t1', (tx) => changeCategory(tx, SOFTWARE));
+      expect(payment(state, 'wd-t1')).toMatchObject({ booking: SOFTWARE, confirmed: true });
+    });
+
+    it("a payment of the invoice that was sent from the app stays business too: link, then try to make it private", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.link('wd-d2', 'wd-t19');
+      const linked = payment(state, 'wd-t19');
+      state.updateTransaction('wd-t19', (tx) => setPrivate(tx, true));
+      expect(payment(state, 'wd-t19')).toBe(linked);
+    });
+
     it("link of an invoice's document pays the invoice, as linkInvoicePayment does", () => {
       const state = TestBed.inject(DemoStateService);
       state.link('wd-d2', 'wd-t19');

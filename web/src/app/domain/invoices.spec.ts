@@ -27,6 +27,7 @@ import {
   invoiceFileFormat,
   invoiceFormat,
   invoiceMatch,
+  invoiceOfPayment,
   invoiceRowOf,
   invoiceRows,
   invoiceSeller,
@@ -1233,6 +1234,24 @@ describe('invoiceDocNote', () => {
   it('is nothing when the invoice of the document is not there', () => {
     const b = business({ documents: [invoiceDoc(kern())] });
     expect(invoiceDocNote(b.documents[0], b)).toBeNull();
+  });
+});
+
+describe('invoiceOfPayment', () => {
+  it('is the invoice whose payments include the payment, a part payment as well', () => {
+    const part = sent('part', 'RE-2026-021', '2026-10-14', 50000, { paymentIds: ['p1'] });
+    const paid = sent('paid', 'RE-2026-022', '2026-10-15', 50000, { paymentIds: ['p2', 'p3'] });
+    const b = businessOf([part, paid], [payment('p1', 30000), payment('p2', 20000), payment('p3', 39500)]);
+    expect(invoiceOfPayment(b, 'p1')?.id).toBe('part');
+    expect(invoiceOfPayment(b, 'p2')?.id).toBe('paid');
+    expect(invoiceOfPayment(b, 'p3')?.id).toBe('paid');
+  });
+
+  it('is null for a payment that pays no invoice, and for an id the business does not have', () => {
+    const open = sent('open', 'RE-2026-023', '2026-10-16', 50000);
+    const b = businessOf([open], [payment('p1', 59500)]);
+    expect(invoiceOfPayment(b, 'p1')).toBeNull();
+    expect(invoiceOfPayment(b, 'nope')).toBeNull();
   });
 });
 

@@ -20,7 +20,7 @@ import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection 
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
-import { invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
+import { invoiceOfPayment, invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
 
 const DEFAULT_BUSINESS_ID = 'weber-design';
 
@@ -216,6 +216,8 @@ export class DemoStateService {
   /**
    * Replaces one payment of the open business with the result of `change` (ignored for an unknown id).
    * When the payment gets a different category, the rule for its counterparty follows it (see `followCategoryChange`).
+   * A payment that pays an invoice (one of the invoice's payments, a part payment too) stays business: a change that makes it
+   * private is ignored, so the invoice never keeps a payment that is no longer its own.
    */
   updateTransaction(id: string, change: (tx: Transaction) => Transaction): void {
     const openId = this.businessIdSignal();
@@ -224,6 +226,7 @@ export class DemoStateService {
         const before = business.id === openId ? business.transactions.find((t) => t.id === id) : undefined;
         if (!before) return business;
         const after = change(before);
+        if (after.isPrivate && !before.isPrivate && invoiceOfPayment(business, id) !== null) return business;
         return {
           ...business,
           transactions: business.transactions.map((t) => (t.id === id ? after : t)),

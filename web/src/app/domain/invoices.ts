@@ -458,6 +458,11 @@ export function invoiceDocNote(doc: Doc, business: Business): InvoiceDocNote | n
   return invoiceStatus(invoice, business) === 'partlyPaid' ? { kind: 'left', leftCents: leftCents(invoice, business) } : null;
 }
 
+/** The invoice a payment pays (the payment is one of its payments, a part payment included), or null when it pays none. */
+export function invoiceOfPayment(business: Business, txId: string): Invoice | null {
+  return business.invoices.find((invoice) => invoice.paymentIds.includes(txId)) ?? null;
+}
+
 /** The business's invoices, the most recent first (by invoice date, then number). */
 function newestFirst(invoices: readonly Invoice[]): Invoice[] {
   return [...invoices].sort((a, b) => b.issueDate.localeCompare(a.issueDate) || (b.number ?? '').localeCompare(a.number ?? ''));

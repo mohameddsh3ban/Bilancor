@@ -475,7 +475,8 @@
         "kind": "Diese Zahlung ist",
         "business": "Geschäftlich",
         "private": "Privat",
-        "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung."
+        "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung.",
+        "privateBlockedInvoice": "Diese Zahlung bezahlt eine Rechnung, deshalb bleibt sie geschäftlich."
       },
       "picker": {
         "search": "Kategorien durchsuchen",

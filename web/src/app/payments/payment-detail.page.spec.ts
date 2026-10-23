@@ -261,11 +261,10 @@ describe('PaymentDetailPage', () => {
     });
 
     it('a private payment offers no Change, Confirm or receipt actions', async () => {
-      // Its document has to go first: a payment with a document can't be marked private. The document of an invoice written
-      // in Invoices can't be unlinked, so here it stands for a document that was added from a file.
-      demo.updateDocument('doc-wd-t1', (x) => ({ ...x, invoice: null }));
-      demo.unlink('doc-wd-t1');
-      await render('/payments/wd-t1');
+      // A payment with a document, or one that pays an invoice, can't be marked private: Kern's incoming payment has neither,
+      // and is made to wait for its confirmation.
+      demo.updateTransaction('wd-t19', (t) => ({ ...t, confirmed: false }));
+      await render('/payments/wd-t19');
       expect(d('confirm-booking')).not.toBeNull();
       await click('kind-private');
       for (const id of ['change-category', 'confirm-booking', 'no-receipt-needed', 'take-photo']) {
@@ -646,6 +645,40 @@ describe('PaymentDetailPage', () => {
       expect(d('private-blocked')).toBeNull();
       await click('kind-private');
       expect(tx('wd-t3').isPrivate).toBe(true);
+    });
+
+    /** What the payment says in its place when it pays an invoice: no switch, and no word about unlinking a document (the invoice's document cannot be unlinked). */
+    function expectStaysBusiness(): void {
+      expect(text(d('private-blocked'))).toBe('This payment pays an invoice, so it stays business.');
+      expect(d('kind-private')).toBeNull();
+      expect(d('kind-business')).toBeNull();
+    }
+
+    it('a payment that pays all of an invoice stays business, in every language', async () => {
+      await render('/payments/wd-t1');
+      expect(d('open-document')).not.toBeNull(); // the invoice's document is linked to it, and cannot be unlinked
+      expectStaysBusiness();
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlockedInvoice);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlockedInvoice);
+    });
+
+    it('a part payment of an invoice stays business too, though no document is linked to it', async () => {
+      demo.setBusiness('sara-yoga');
+      await render('/payments/sy-t15');
+      expect(d('open-document')).toBeNull();
+      expectStaysBusiness();
+      expect(tx('sy-t15')).toMatchObject({ isPrivate: false, receipt: 'attached' });
+    });
+
+    it('a payment picked for an invoice stays business from then on', async () => {
+      await render('/payments/wd-t19');
+      expect(d('kind-private')).not.toBeNull();
+      await pick('Studio Kern');
+      expectStaysBusiness();
     });
   });
 

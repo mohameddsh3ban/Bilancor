@@ -13,6 +13,7 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { LanguageService } from '../core/i18n/language.service';
 import type { Booking } from '../data/models';
 import { counterpartyKey } from '../domain/category-rules';
+import { invoiceOfPayment } from '../domain/invoices';
 import {
   changeCategory,
   confirmBooking,
@@ -192,10 +193,12 @@ export class PaymentCard {
     );
   });
 
-  /** A payment that a document is linked to cannot be private (the Documents page does not allow it either). */
-  protected readonly canBePrivate = computed(
-    () => !this.demo.business().documents.some((doc) => doc.paymentId === this.item().id),
-  );
+  /** A payment that a document is linked to, or that pays an invoice, cannot be private (the payment's own page does not allow it either). */
+  protected readonly canBePrivate = computed(() => {
+    const business = this.demo.business();
+    const id = this.item().id;
+    return !business.documents.some((doc) => doc.paymentId === id) && invoiceOfPayment(business, id) === null;
+  });
 
   /** What names this card to the review service, so an answer given here never lands on another card. */
   private readonly key = computed(() => reviewItemKey(this.item()));

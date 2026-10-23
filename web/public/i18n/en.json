@@ -475,7 +475,8 @@
         "kind": "This payment is",
         "business": "Business",
         "private": "Private",
-        "privateBlocked": "This payment has a document. Unlink it first."
+        "privateBlocked": "This payment has a document. Unlink it first.",
+        "privateBlockedInvoice": "This payment pays an invoice, so it stays business."
       },
       "picker": {
         "search": "Search categories",

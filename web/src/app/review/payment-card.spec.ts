@@ -222,6 +222,15 @@ describe('PaymentCard', () => {
       expect(text(q('answer-private'))).toBe('Private, not for the business');
     });
 
+    it('private is not offered for a payment that pays an invoice', () => {
+      // wd-t1 pays RE-2026-041; it is made unclear and without a document, so only the invoice is left to say no
+      demo.updateDocument('doc-wd-t1', (d) => ({ ...d, paymentId: null }));
+      demo.updateTransaction('wd-t1', (t) => ({ ...t, booking: null, confirmed: false }));
+      show('wd-t1');
+      expect(text(q('card-kind'))).toBe('Payment · not sorted yet');
+      expect(q('answer-private')).toBeNull();
+    });
+
     it('Private marks the payment private and makes no rule', () => {
       vi.useFakeTimers();
       demo.unlink('doc-wd-t4');
