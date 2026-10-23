@@ -11,7 +11,7 @@ import { Term } from '../../core/i18n/term';
 import { accountName } from '../../domain/bank-connection';
 import { homeCards } from '../../domain/home-cards';
 import { decisionCount, decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
-import { currentVatReturn } from '../../domain/vat-return';
+import { currentVatReturn, resultWording } from '../../domain/vat-return';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
@@ -96,7 +96,7 @@ import { RevenueTracker } from './revenue-tracker';
           <a
             class="text-primary text-sm font-medium underline-offset-4 hover:underline"
             data-testid="tile-tax-open"
-            [routerLink]="['/soon', 'taxes']"
+            routerLink="/taxes"
           >
             {{ 'home.tax.open' | transloco }}
           </a>
@@ -110,11 +110,12 @@ import { RevenueTracker } from './revenue-tracker';
               @if (current.kind === 'return') {
                 @let view = current.view;
                 @if (view.amountKnown) {
+                  @let result = wording(view);
                   <p class="text-muted-foreground text-xs">
-                    {{ (view.resultCents < 0 ? 'home.tax.vatRefund' : 'home.tax.vatAmount') | transloco }}
+                    {{ (result.key === 'refund' ? 'home.tax.vatRefund' : 'home.tax.vatAmount') | transloco }}
                   </p>
                   <p class="text-3xl font-semibold">
-                    <bdi dir="ltr">{{ abs(view.resultCents) | money }}</bdi>
+                    <bdi dir="ltr">{{ result.cents | money }}</bdi>
                   </p>
                 } @else {
                   <p class="text-muted-foreground text-sm">
@@ -158,7 +159,7 @@ export class KeyNumbers {
   protected readonly decisions = computed(() => decisionCount(this.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.decisions()));
   protected readonly total = computed(() => totalAvailableCents(this.business().accounts));
-  protected readonly abs = Math.abs;
+  protected readonly wording = resultWording;
   /** The open business's current VAT return (the same as the phone's tax card): its date and amount, "yearly only", or null. */
   protected readonly vat = computed(() => currentVatReturn(this.business()));
 }

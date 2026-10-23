@@ -5,7 +5,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
-import { currentVatReturn } from '../../domain/vat-return';
+import { currentVatReturn, resultWording } from '../../domain/vat-return';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
@@ -34,7 +34,7 @@ import { RevenueTracker } from './revenue-tracker';
         <a
           class="text-primary text-sm font-medium underline-offset-4 hover:underline"
           data-testid="tax-open"
-          [routerLink]="['/soon', 'taxes']"
+          routerLink="/taxes"
         >
           {{ 'home.tax.open' | transloco }}
         </a>
@@ -58,11 +58,12 @@ import { RevenueTracker } from './revenue-tracker';
                 }}
               </p>
               @if (view.amountKnown) {
+                @let result = wording(view);
                 <p class="flex items-baseline justify-between gap-3 text-sm">
                   <span>{{
-                    (view.resultCents < 0 ? 'home.tax.vatRefund' : 'home.tax.vatAmount') | transloco
+                    (result.key === 'refund' ? 'home.tax.vatRefund' : 'home.tax.vatAmount') | transloco
                   }}</span>
-                  <bdi dir="ltr" class="font-medium">{{ abs(view.resultCents) | money }}</bdi>
+                  <bdi dir="ltr" class="font-medium">{{ result.cents | money }}</bdi>
                 </p>
               } @else {
                 <p class="text-muted-foreground text-sm">
@@ -88,7 +89,7 @@ export class TaxCard {
   private readonly demo = inject(DemoStateService);
 
   protected readonly business = this.demo.business;
-  protected readonly abs = Math.abs;
+  protected readonly wording = resultWording;
   /** The open business's current VAT return: its date and amount, "yearly only", or null. */
   protected readonly vat = computed(() => currentVatReturn(this.business()));
 }

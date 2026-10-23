@@ -46,6 +46,13 @@ export function formatMonth(month: string, lang: Lang): string {
   }).format(new Date(`${month}-01`));
 }
 
+/** The names of the months from `first` to `last` (both 'YYYY-MM'), without the year: "January–July", or one name when they are the same month. */
+export function formatMonthRange(first: string, last: string, lang: Lang): string {
+  const name = (month: string) =>
+    new Intl.DateTimeFormat(LOCALES[lang], { month: 'long', timeZone: 'UTC' }).format(new Date(`${month}-01`));
+  return first === last ? name(first) : `${name(first)}–${name(last)}`;
+}
+
 const QUARTER_WORDS_AR = ['الأول', 'الثاني', 'الثالث', 'الرابع'] as const;
 
 /**

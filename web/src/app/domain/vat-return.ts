@@ -117,6 +117,21 @@ export function vatReturnFor(business: Business, period: TaxPeriod, today: strin
   };
 }
 
+/**
+ * What a return comes to, as the screens word it: to pay, or a refund, with the amount as a positive number (a
+ * negative VAT result is money back). A result of nothing is nothing to pay. The Taxes page and the homepage's tax
+ * card and tile all word the result through this, so they never disagree.
+ */
+export function resultWording(view: Pick<VatReturnView, 'resultCents'>): { key: 'pay' | 'refund'; cents: number } {
+  return { key: view.resultCents < 0 ? 'refund' : 'pay', cents: Math.abs(view.resultCents) };
+}
+
+/** How the days left to a due date are said, as the end of a `taxReminder` translation key: "today", "in 1 day" or "in {n} days". */
+export function daysLeftWording(daysLeft: number): 'today' | 'inOneDay' | 'inDays' {
+  if (daysLeft === 0) return 'today';
+  return daysLeft === 1 ? 'inOneDay' : 'inDays';
+}
+
 /** The VAT return a business is working on: one with a date, a yearly return that has no monthly or quarterly date, or none. */
 export type CurrentVat = { kind: 'return'; view: VatReturnView } | { kind: 'yearly' } | null;
 

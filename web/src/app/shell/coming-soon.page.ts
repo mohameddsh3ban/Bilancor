@@ -10,7 +10,6 @@ const FEATURES: readonly string[] = [
   'home',
   'payments',
   'invoices',
-  'taxes',
   'reports',
   'help',
   'more',

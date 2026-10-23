@@ -75,6 +75,36 @@
       "de": "Finanzamt",
       "explain": "Das örtliche Amt, das deine Steuern bearbeitet. Sein Name steht auf seinen Briefen."
     },
+    "umsatzsteuer": {
+      "label": "Umsatzsteuer, die du berechnet hast",
+      "de": "Umsatzsteuer",
+      "explain": "Die Umsatzsteuer, die du auf deinen Rechnungen an Kunden ausgewiesen hast. Du gibst sie ans Finanzamt weiter, abzüglich der Vorsteuer, die du selbst gezahlt hast."
+    },
+    "vorsteuer": {
+      "label": "Vorsteuer, die du gezahlt hast",
+      "de": "Vorsteuer",
+      "explain": "Die Umsatzsteuer in den Rechnungen, die du für dein Unternehmen bezahlt hast. Du ziehst sie von der Umsatzsteuer ab, die du berechnet hast."
+    },
+    "elster": {
+      "label": "ELSTER",
+      "de": "ELSTER",
+      "explain": "ELSTER ist der offizielle Online-Weg zum Finanzamt. Was du darüber schickst, kommt dort direkt an."
+    },
+    "einkommensteuererklaerung": {
+      "label": "Einkommensteuererklärung",
+      "de": "Einkommensteuererklärung",
+      "explain": "Deine persönliche Steuererklärung für das Jahr. Darin gibst du alle steuerpflichtigen Einkünfte an, auch den Gewinn deines Unternehmens."
+    },
+    "feststellungserklaerung": {
+      "label": "Feststellungserklärung",
+      "de": "Feststellungserklärung",
+      "explain": "Die Erklärung einer Gesellschaft wie einer GbR. Sie zeigt den Gewinn des Unternehmens und wie er auf die Gesellschafter verteilt wird. Jeder Gesellschafter gibt seinen Anteil in der eigenen Einkommensteuererklärung an."
+    },
+    "umsatzsteuererklaerung": {
+      "label": "Umsatzsteuererklärung",
+      "de": "Umsatzsteuererklärung",
+      "explain": "Die Jahresübersicht über deine gesamte Umsatzsteuer, die du nach den monatlichen oder vierteljährlichen Voranmeldungen abgibst."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -93,7 +123,6 @@
     "home": "Start",
     "payments": "Zahlungen",
     "invoices": "Rechnungen",
-    "taxes": "Steuern",
     "reports": "Auswertungen",
     "help": "Hilfe",
     "more": "Mehr",
@@ -122,6 +151,86 @@
     "logo": "Dein Logo",
     "needsAction": "Zu erledigen",
     "earlier": "Früher"
+  },
+  "taxes": {
+    "title": "Steuern",
+    "tabs": {
+      "label": "Steuern",
+      "vat": "UStVA",
+      "year": "Jahr (EÜR)"
+    },
+    "missing": "Ergänze deine Steuerangaben, um deine Steuern zu sehen",
+    "noVat": "Keine Umsatzsteuer-Voranmeldung nötig",
+    "deadline": {
+      "inProgress": "läuft noch",
+      "due": "fällig am",
+      "overdue": "Überfällig seit"
+    },
+    "result": {
+      "pay": "Du zahlst {{amount}}",
+      "refund": "Du bekommst {{amount}} zurück",
+      "paySoFar": "Bisher zahlst du {{amount}}",
+      "refundSoFar": "Bisher bekommst du {{amount}} zurück",
+      "toOffice": "ans Finanzamt",
+      "fromOffice": "vom Finanzamt",
+      "unknown": "Betrag noch nicht bekannt"
+    },
+    "how": {
+      "title": "So setzt es sich zusammen",
+      "sales": {
+        "one": "1 Verkauf",
+        "many": "{{count}} Verkäufe"
+      },
+      "net": "netto",
+      "purchases": {
+        "one": "1 Einkauf",
+        "many": "{{count}} Einkäufe"
+      },
+      "pay": "Zu zahlen",
+      "refund": "Zurück",
+      "basis": "Nach Zahlungsdatum berechnet",
+      "none": "In diesem Zeitraum gibt es noch keine gebuchte Zahlung mit Umsatzsteuer.",
+      "payments": "Zu den Zahlungen"
+    },
+    "needs": {
+      "one": "1 Zahlung braucht dich noch — kläre sie, damit die Meldung stimmt",
+      "many": "{{count}} Zahlungen brauchen dich noch — kläre sie, damit die Meldung stimmt",
+      "start": "Starten"
+    },
+    "send": {
+      "button": "Ans Finanzamt senden",
+      "via": "Geht raus über",
+      "readyFrom": "Bereit zum Senden ab",
+      "fix": {
+        "one": "Zuerst 1 Zahlung klären",
+        "many": "Zuerst {{count}} Zahlungen klären"
+      }
+    },
+    "sent": {
+      "title": "Früher gesendet",
+      "on": "gesendet am",
+      "chip": "Gesendet",
+      "receipt": "Protokoll",
+      "receiptFor": "Protokoll für {{period}}",
+      "pay": "zu zahlen",
+      "refund": "Erstattung"
+    },
+    "year": {
+      "title": "Dieses Jahr bisher",
+      "net": "Beträge ohne Umsatzsteuer",
+      "gross": "Beträge wie gezahlt, du berechnest keine Umsatzsteuer",
+      "income": "Einnahmen",
+      "costs": "Ausgaben",
+      "earlier": "frühere Monate",
+      "since": "Ab",
+      "total": "Gesamt bisher",
+      "profit": "Gewinn",
+      "categories": "Ausgaben nach Kategorie",
+      "incomeTax": "Einkommensteuer zurücklegen",
+      "returns": "Erklärungen zum Jahresende",
+      "due": "fällig am",
+      "prepared": "Diese werden am Jahresende vorbereitet."
+    }
   },
   "taxReminder": {
     "title": "{{count}} Steuererklärungen stehen an",

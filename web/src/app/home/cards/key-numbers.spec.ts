@@ -111,7 +111,7 @@ describe('KeyNumbers', () => {
 
   it('third tile links to the taxes page', () => {
     expect(tile(render(), 'tax')!.querySelector('[data-testid="tile-tax-open"]')?.getAttribute('href')).toBe(
-      '/soon/taxes',
+      '/taxes',
     );
   });
 

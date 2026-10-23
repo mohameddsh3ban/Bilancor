@@ -75,6 +75,36 @@
       "de": "Finanzamt",
       "explain": "The local office that handles your taxes. Its name is on its letters."
     },
+    "umsatzsteuer": {
+      "label": "VAT you charged",
+      "de": "Umsatzsteuer",
+      "explain": "The VAT you added to your invoices to customers. You pass it on to the tax office, minus the VAT you paid yourself."
+    },
+    "vorsteuer": {
+      "label": "VAT you paid",
+      "de": "Vorsteuer",
+      "explain": "The VAT in the bills you paid for your business. You subtract it from the VAT you charged."
+    },
+    "elster": {
+      "label": "Online tax filing",
+      "de": "ELSTER",
+      "explain": "ELSTER is the tax office's official online channel. What you send through it arrives there directly."
+    },
+    "einkommensteuererklaerung": {
+      "label": "Income tax return",
+      "de": "Einkommensteuererklärung",
+      "explain": "Your personal yearly tax return. It lists all your taxable income, including the profit of your business."
+    },
+    "feststellungserklaerung": {
+      "label": "Partnership profit return",
+      "de": "Feststellungserklärung",
+      "explain": "The return of a partnership such as a GbR. It shows the profit of the business and how it is shared between the partners, who each report their share in their own income tax return."
+    },
+    "umsatzsteuererklaerung": {
+      "label": "Annual VAT return",
+      "de": "Umsatzsteuererklärung",
+      "explain": "The yearly summary of all your VAT, filed after the monthly or quarterly returns."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -93,7 +123,6 @@
     "home": "Home",
     "payments": "Payments",
     "invoices": "Invoices",
-    "taxes": "Taxes",
     "reports": "Reports",
     "help": "Help",
     "more": "More",
@@ -122,6 +151,86 @@
     "logo": "Your logo",
     "needsAction": "Needs action",
     "earlier": "Earlier"
+  },
+  "taxes": {
+    "title": "Taxes",
+    "tabs": {
+      "label": "Taxes",
+      "vat": "VAT return",
+      "year": "Year (EÜR)"
+    },
+    "missing": "Add your tax details to see your taxes",
+    "noVat": "No VAT return needed",
+    "deadline": {
+      "inProgress": "in progress",
+      "due": "due",
+      "overdue": "Overdue since"
+    },
+    "result": {
+      "pay": "You pay {{amount}}",
+      "refund": "You get {{amount}} back",
+      "paySoFar": "So far you pay {{amount}}",
+      "refundSoFar": "So far you get {{amount}} back",
+      "toOffice": "to the tax office",
+      "fromOffice": "from the tax office",
+      "unknown": "Amount not known yet"
+    },
+    "how": {
+      "title": "How it adds up",
+      "sales": {
+        "one": "1 sale",
+        "many": "{{count}} sales"
+      },
+      "net": "net",
+      "purchases": {
+        "one": "1 purchase",
+        "many": "{{count}} purchases"
+      },
+      "pay": "To pay",
+      "refund": "To get back",
+      "basis": "Based on payment dates",
+      "none": "No booked payment with VAT in this period yet.",
+      "payments": "See the payments"
+    },
+    "needs": {
+      "one": "1 payment still needs you — fix it so the return is right",
+      "many": "{{count}} payments still need you — fix them so the return is right",
+      "start": "Start"
+    },
+    "send": {
+      "button": "Send to the tax office",
+      "via": "Goes out through",
+      "readyFrom": "Ready to send from",
+      "fix": {
+        "one": "Fix 1 payment first",
+        "many": "Fix {{count}} payments first"
+      }
+    },
+    "sent": {
+      "title": "Sent earlier",
+      "on": "sent",
+      "chip": "Sent",
+      "receipt": "Receipt",
+      "receiptFor": "Receipt for {{period}}",
+      "pay": "to pay",
+      "refund": "refund"
+    },
+    "year": {
+      "title": "This year so far",
+      "net": "Amounts without VAT",
+      "gross": "Amounts as paid, you charge no VAT",
+      "income": "Income",
+      "costs": "Costs",
+      "earlier": "earlier months",
+      "since": "From",
+      "total": "Total so far",
+      "profit": "Profit",
+      "categories": "Costs by category",
+      "incomeTax": "Income tax to set aside",
+      "returns": "Returns at the end of the year",
+      "due": "due",
+      "prepared": "These are prepared at the end of the year."
+    }
   },
   "taxReminder": {
     "title": "{{count}} tax returns are coming up",

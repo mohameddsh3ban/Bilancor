@@ -5,6 +5,7 @@ import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { AppTaxPeriodPipe } from '../core/format/tax-period.pipe';
 import { Term } from '../core/i18n/term';
+import { daysLeftWording } from '../domain/vat-return';
 import { TaxReminderService, type TaxReminderItem } from '../state/tax-reminder.service';
 
 /**
@@ -65,7 +66,7 @@ import { TaxReminderService, type TaxReminderItem } from '../state/tax-reminder.
                   } @else {
                     {{ 'taxReminder.due' | transloco }}
                     <bdi dir="ltr">{{ item.view.dueDate | appDate }}</bdi>
-                    · {{ daysTextKey(item.view.daysLeft) | transloco: { days: item.view.daysLeft } }}
+                    · {{ 'taxReminder.' + daysLeftWording(item.view.daysLeft) | transloco: { days: item.view.daysLeft } }}
                   }
                 </p>
               </div>
@@ -124,9 +125,5 @@ export class TaxReminder {
     if (state === 'closed') this.reminder.notNow();
   }
 
-  /** "in 19 days", "in 1 day" or "today". */
-  protected daysTextKey(daysLeft: number): string {
-    if (daysLeft === 0) return 'taxReminder.today';
-    return daysLeft === 1 ? 'taxReminder.inOneDay' : 'taxReminder.inDays';
-  }
+  protected readonly daysLeftWording = daysLeftWording;
 }

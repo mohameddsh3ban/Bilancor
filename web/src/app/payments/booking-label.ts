@@ -8,8 +8,11 @@ export function showsBookingLabel(lang: Lang): boolean {
   return lang !== 'de';
 }
 
+/** What a label needs of a booking: a category's name and SKR03 account (a yearly category total has these, too). */
+export type BookingLabelled = Pick<Booking, 'labelKey' | 'skr03' | 'nameDe'>;
+
 /** The SKR03 number with its German name; the caller keeps it left-to-right. */
-export function skr03Text(booking: Booking): string {
+export function skr03Text(booking: BookingLabelled): string {
   return `${booking.skr03} ${booking.nameDe}`;
 }
 
@@ -31,7 +34,7 @@ export function skr03Text(booking: Booking): string {
 export class BookingLabel {
   private readonly language = inject(LanguageService);
 
-  readonly booking = input.required<Booking>();
+  readonly booking = input.required<BookingLabelled>();
 
   protected readonly showLabel = computed(() => showsBookingLabel(this.language.lang()));
   protected readonly skr03 = computed(() => skr03Text(this.booking()));

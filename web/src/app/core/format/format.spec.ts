@@ -1,4 +1,4 @@
-import { formatDate, formatIban, formatMoney, formatTaxPeriod } from './format';
+import { formatDate, formatIban, formatMoney, formatMonthRange, formatTaxPeriod } from './format';
 
 describe('formatMoney', () => {
   it('en', () => {
@@ -109,5 +109,18 @@ describe('formatTaxPeriod', () => {
       'الربع الرابع 2026',
     ]);
     expect(formatTaxPeriod(october, 'ar')).not.toMatch(/[٠-٩]/);
+  });
+});
+
+describe('formatMonthRange', () => {
+  it('names the months of a span, without the year', () => {
+    expect(formatMonthRange('2026-01', '2026-07', 'en')).toBe('January–July');
+    expect(formatMonthRange('2026-01', '2026-06', 'de')).toBe('Januar–Juni');
+    expect(formatMonthRange('2026-01', '2026-07', 'ar')).toBe('يناير–يوليو');
+  });
+
+  it('names a span of one month once', () => {
+    expect(formatMonthRange('2026-01', '2026-01', 'en')).toBe('January');
+    expect(formatMonthRange('2026-03', '2026-03', 'de')).toBe('März');
   });
 });

@@ -4,9 +4,11 @@ import { BUSINESSES } from '../data/sample-data';
 import {
   DUE_SOON_DAYS,
   currentVatReturn,
+  daysLeftWording,
   dueDateFor,
   nextPeriod,
   periodFor,
+  resultWording,
   vatPartCents,
   vatReturnFor,
   type TaxPeriod,
@@ -289,5 +291,31 @@ describe('the current return', () => {
     it('is overdue from the day after the due date, with the days left below 0', () => {
       expect(vatReturnFor(weber, october, '2026-11-11')).toMatchObject({ state: 'overdue', daysLeft: -1 });
     });
+  });
+});
+
+describe('resultWording', () => {
+  it('a positive result is to pay, as its own amount', () => {
+    expect(resultWording({ resultCents: 39333 })).toEqual({ key: 'pay', cents: 39333 });
+  });
+
+  it('a negative result is a refund, as a positive amount', () => {
+    expect(resultWording({ resultCents: -6623 })).toEqual({ key: 'refund', cents: 6623 });
+  });
+
+  it('a result of nothing is nothing to pay', () => {
+    expect(resultWording({ resultCents: 0 })).toEqual({ key: 'pay', cents: 0 });
+  });
+
+  it('takes a return view as it is', () => {
+    expect(resultWording(viewOf(weber))).toEqual({ key: 'pay', cents: 39333 });
+  });
+});
+
+describe('daysLeftWording', () => {
+  it('says today, in 1 day or in some days', () => {
+    expect(daysLeftWording(0)).toBe('today');
+    expect(daysLeftWording(1)).toBe('inOneDay');
+    expect(daysLeftWording(19)).toBe('inDays');
   });
 });

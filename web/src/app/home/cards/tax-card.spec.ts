@@ -100,10 +100,10 @@ describe('TaxCard', () => {
     expect(el.querySelector('[data-testid="tax-tracker-percent"]')!.className).toContain('text-warning');
   });
 
-  it('links to the taxes page', () => {
+  it('menu and homepage open /taxes: Open taxes links to the taxes page', () => {
     for (const id of ['weber-design', 'sara-yoga']) {
       const link = render(id).querySelector('[data-testid="tax-open"]');
-      expect(link?.getAttribute('href')).toBe('/soon/taxes');
+      expect(link?.getAttribute('href')).toBe('/taxes');
     }
   });
 
