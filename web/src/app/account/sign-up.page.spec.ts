@@ -99,11 +99,10 @@ describe('SignUpPage', () => {
     await submit('business-form');
   }
 
-  /** Step 3: the terms, the code and the saved backup codes. */
+  /** Step 3: the terms and the code of the authenticator app. */
   async function protect(code = '123456'): Promise<void> {
     await choose('terms-accept');
     await type('two-step-code', code);
-    await click('two-step-done');
   }
 
   async function finish(): Promise<void> {
@@ -346,26 +345,22 @@ describe('SignUpPage', () => {
       await finish();
       expect(q('finish-form')).not.toBeNull();
       expect(text(q('terms-error'))).toBe('Tick the box to continue.');
-      expect(text(q('finish-error-two-step'))).toBe(
-        'Type the 6-digit code and save your backup codes first.',
-      );
+      expect(text(q('two-step-error'))).toBe('The code has 6 digits.');
       expect(accounts.persons()).toHaveLength(1);
       expect(accounts.signedIn()).toBe(false);
 
-      // A code that is not 6 digits does not count, and "I've saved them" says why.
+      // A code that is not 6 digits does not count, and the message stays under the field.
       await type('two-step-code', '12345');
-      await click('two-step-done');
-      expect(text(q('two-step-error'))).toBe('The code has 6 digits.');
       await finish();
+      expect(text(q('two-step-error'))).toBe('The code has 6 digits.');
       expect(accounts.persons()).toHaveLength(1);
 
-      // The code alone is not enough either.
+      // 6 digits take the message away, but the code alone is not enough.
       await type('two-step-code', '123456');
-      await click('two-step-done');
+      expect(q('two-step-error')).toBeNull();
       await finish();
       expect(accounts.persons()).toHaveLength(1);
       expect(q('terms-error')).not.toBeNull();
-      expect(q('finish-error-two-step')).toBeNull();
 
       // Ticking the terms takes their message away, and then Finish works.
       await choose('terms-accept');
@@ -376,15 +371,27 @@ describe('SignUpPage', () => {
       expect(router.url).toBe('/');
     });
 
-    it('the terms alone are not enough: the code and the saved backup codes are needed', async () => {
+    it('the terms alone are not enough: a 6-digit code is needed, and the cursor goes to its field', async () => {
       await choose('terms-accept');
       await finish();
       expect(accounts.persons()).toHaveLength(1);
       expect(q('terms-error')).toBeNull();
-      expect(q('finish-error-two-step')).not.toBeNull();
+      expect(text(q('two-step-error'))).toBe('The code has 6 digits.');
+      await vi.waitFor(() => expect(document.activeElement).toBe(q('two-step-code')));
     });
 
-    it('shows the legal lines and the 8 backup codes', () => {
+    it('terms ticked and 6 digits typed: one tap on Finish lands on the homepage', async () => {
+      await protect();
+      expect(q('two-step-done')).toBeNull();
+      await finish();
+      expect(accounts.persons()).toHaveLength(2);
+      expect(accounts.signedIn()).toBe(true);
+      expect(accounts.person().email).toBe('mia@example.com');
+      expect(router.url).toBe('/');
+      expect(q('setup-checklist')).not.toBeNull();
+    });
+
+    it('shows the legal lines and the 8 backup codes from the start, with no button besides Finish', () => {
       expect(text(q('terms-binding'))).toBe(
         'The German version is binding; the others are for reading.',
       );
@@ -392,6 +399,7 @@ describe('SignUpPage', () => {
         'You keep your own books and send your own returns: the app does the work, you confirm.',
       );
       expect(el.querySelectorAll('[data-testid="two-step-backup"] li')).toHaveLength(8);
+      expect(q('two-step-done')).toBeNull();
       expect(text(q('finish-submit'))).toBe('Finish');
     });
 

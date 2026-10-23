@@ -95,4 +95,54 @@ describe('TwoStepSetup', () => {
     expect(text(q('two-step-demo'))).toBe('Demo: Jeder 6-stellige Code funktioniert.');
     expect(text(q('two-step-done'))).toBe('Ich habe sie gespeichert');
   });
+
+  describe('without its own button, for a page with a final button of its own (confirmable false)', () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(TwoStepSetup);
+      fixture.componentRef.setInput('codes', demoBackupCodes(0));
+      fixture.componentRef.setInput('confirmable', false);
+      done = 0;
+      fixture.componentInstance.done.subscribe(() => done++);
+      fixture.detectChanges();
+      el = fixture.nativeElement as HTMLElement;
+    });
+
+    it("has no I've saved them and shows the backup codes from the start", () => {
+      expect(q('two-step-done')).toBeNull();
+      expect(q('two-step-saved')).toBeNull();
+      expect(el.querySelectorAll('[data-testid="two-step-backup"] li')).toHaveLength(8);
+      expect(text(el)).not.toContain("I've saved them");
+    });
+
+    it('lets the page read what is typed, and never says done', () => {
+      expect(fixture.componentInstance.code()).toBe('');
+      type('123 456');
+      expect(fixture.componentInstance.code()).toBe('123 456');
+      expect(q('two-step-error')).toBeNull();
+      expect(code().readOnly).toBe(false);
+      expect(done).toBe(0);
+    });
+
+    it('shows the message the page gives under the field, and takes it away with it', () => {
+      fixture.componentRef.setInput('error', 'auth.twoStep.error.digits');
+      fixture.detectChanges();
+      expect(text(q('two-step-error'))).toBe('The code has 6 digits.');
+      expect(code().getAttribute('aria-invalid')).toBe('true');
+      expect(code().getAttribute('aria-describedby')).toContain(q('two-step-error')!.id);
+
+      fixture.componentRef.setInput('error', null);
+      fixture.detectChanges();
+      expect(q('two-step-error')).toBeNull();
+      expect(code().getAttribute('aria-invalid')).toBeNull();
+    });
+
+    it("leaves Enter to the form around it, which is the page's Finish", () => {
+      type('654321');
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+      code().dispatchEvent(event);
+      fixture.detectChanges();
+      expect(event.defaultPrevented).toBe(false);
+      expect(done).toBe(0);
+    });
+  });
 });

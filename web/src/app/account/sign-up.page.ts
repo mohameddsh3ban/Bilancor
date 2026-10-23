@@ -11,7 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { LanguageService } from '../core/i18n/language.service';
-import { isEmail, isNewPassword, normalEmail } from '../domain/people';
+import { isAppCode, isEmail, isNewPassword, normalEmail } from '../domain/people';
 import { clearErrors, focusAfterRender } from '../settings/form-helpers';
 import { FieldError, INPUT_CLASS } from '../settings/form-parts';
 import { AccountService, demoBackupCodes } from '../state/account.service';
@@ -334,10 +334,12 @@ interface NameErrors {
               <h2 class="text-lg font-semibold" id="protect-title">
                 {{ 'auth.signUp.finish.protect' | transloco }}
               </h2>
-              <app-two-step-setup [codes]="backupCodes" (done)="twoStepDone.set(true)" />
-              @if (twoStepError(); as key) {
-                <p [appFieldError]="key" data-testid="finish-error-two-step"></p>
-              }
+              <app-two-step-setup
+                [codes]="backupCodes"
+                [confirmable]="false"
+                [(code)]="code"
+                [error]="codeError()"
+              />
             </section>
 
             <button hlmBtn size="lg" type="submit" class="w-full" data-testid="finish-submit">
@@ -394,13 +396,14 @@ export class SignUpPage {
 
   // The terms and a safe login.
   protected readonly accepted = signal(false);
-  protected readonly twoStepDone = signal(false);
+  /** The 6 digits typed for the authenticator app (the page checks them when Finish is pressed). */
+  protected readonly code = signal('');
   private readonly triedFinish = signal(false);
   protected readonly termsError = computed(() =>
     this.triedFinish() && !this.accepted() ? 'auth.terms.error' : null,
   );
-  protected readonly twoStepError = computed(() =>
-    this.triedFinish() && !this.twoStepDone() ? 'auth.signUp.finish.error.twoStep' : null,
+  protected readonly codeError = computed(() =>
+    this.triedFinish() && !isAppCode(this.code()) ? 'auth.twoStep.error.digits' : null,
   );
   /** Set when Finish starts, so a second tap before the page has gone makes no second account. */
   private finishing = false;
@@ -462,8 +465,8 @@ export class SignUpPage {
   }
 
   /**
-   * Step 3: needs the terms ticked and the code of the app with the backup codes saved, then makes the person and their
-   * business, signs them in and opens the homepage.
+   * Step 3: needs the terms ticked and 6 digits for the authenticator app, then makes the person and their business,
+   * signs them in and opens the homepage. A missing tick or code is named under its field and the cursor goes there.
    */
   protected finish(event: Event): void {
     event.preventDefault();
@@ -473,7 +476,7 @@ export class SignUpPage {
       this.focus('[data-testid="terms-accept"] input');
       return;
     }
-    if (!this.twoStepDone()) {
+    if (!isAppCode(this.code())) {
       this.focus('[data-testid="two-step-code"]');
       return;
     }

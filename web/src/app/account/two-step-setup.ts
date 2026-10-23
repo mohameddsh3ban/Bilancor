@@ -3,8 +3,10 @@ import {
   Component,
   ElementRef,
   Injector,
+  computed,
   inject,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
@@ -62,8 +64,13 @@ const QR_PATH = (() => {
  * Setting up the second step of signing in (the code of an authenticator app), as one block that the pages around it
  * share: sign-up and joining (with the first set of backup codes), and My account (with new ones, in a dialog). It shows
  * a QR picture and the key to type for a phone that can't scan, the field for the app's 6-digit code (any 6 digits work in
- * the demo), and the backup codes to save. **I've saved them** needs the 6 digits, says so when they are not, and then
- * tells the page (`done`): the block is finished and keeps its code and its words, so the page can go on.
+ * the demo), and the backup codes to save (shown from the start).
+ *
+ * Two ways to end it. `confirmable` (the default, for a dialog with no button of its own, such as My account's "Use a new
+ * phone") adds **I've saved them**: it needs the 6 digits, says so when they are not, and then tells the page (`done`);
+ * the block is finished and keeps its code and its words. A page with its own final button (sign-up's Finish, joining's
+ * Join) passes `confirmable` false: there is no button here, the page reads the typed `code` (two-way) and decides, and
+ * shows its message under the field through `error`. Enter in the field then submits the page's form.
  */
 @Component({
   selector: 'app-two-step-setup',
@@ -106,13 +113,13 @@ const QR_PATH = (() => {
           [class]="inputClass"
           [value]="code()"
           [readOnly]="saved()"
-          [attr.aria-invalid]="codeError() ? 'true' : null"
-          [attr.aria-describedby]="codeError() ? uid + '-error ' + uid + '-scan' : uid + '-scan'"
+          [attr.aria-invalid]="shownError() ? 'true' : null"
+          [attr.aria-describedby]="shownError() ? uid + '-error ' + uid + '-scan' : uid + '-scan'"
           (input)="setCode($event)"
           (keydown.enter)="enter($event)"
         />
       </label>
-      @if (codeError(); as messageKey) {
+      @if (shownError(); as messageKey) {
         <p [appFieldError]="messageKey" [id]="uid + '-error'" data-testid="two-step-error"></p>
       }
     </div>
@@ -133,36 +140,44 @@ const QR_PATH = (() => {
       </ul>
     </section>
 
-    <div role="status">
-      @if (saved()) {
-        <p
-          class="text-positive flex items-center gap-2 text-sm outline-none"
-          tabindex="-1"
-          data-testid="two-step-saved"
-        >
-          <ng-icon name="lucideCheck" size="16" aria-hidden="true" />
-          {{ 'auth.twoStep.saved' | transloco }}
-        </p>
-      } @else {
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="lg"
-          class="w-full"
-          data-testid="two-step-done"
-          (click)="save()"
-        >
-          {{ 'auth.twoStep.save' | transloco }}
-        </button>
-      }
-    </div>
+    @if (confirmable()) {
+      <div role="status">
+        @if (saved()) {
+          <p
+            class="text-positive flex items-center gap-2 text-sm outline-none"
+            tabindex="-1"
+            data-testid="two-step-saved"
+          >
+            <ng-icon name="lucideCheck" size="16" aria-hidden="true" />
+            {{ 'auth.twoStep.saved' | transloco }}
+          </p>
+        } @else {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="lg"
+            class="w-full"
+            data-testid="two-step-done"
+            (click)="save()"
+          >
+            {{ 'auth.twoStep.save' | transloco }}
+          </button>
+        }
+      </div>
+    }
   `,
 })
 export class TwoStepSetup {
   /** The backup codes to show (and the person to save): the page makes them. */
   readonly codes = input.required<string[]>();
-  /** The 6-digit code is right and the backup codes are saved. */
+  /** Whether the block ends with its own **I've saved them** (and `done`); false when the page has a final button of its own. */
+  readonly confirmable = input(true);
+  /** What is typed in the code field; a page without `confirmable` reads it to decide. */
+  readonly code = model('');
+  /** The message (a translation key) a page shows under the code field, or null for none. */
+  readonly error = input<string | null>(null);
+  /** The 6-digit code is right and the backup codes are saved (only with `confirmable`). */
   readonly done = output<void>();
 
   private readonly injector = inject(Injector);
@@ -174,17 +189,19 @@ export class TwoStepSetup {
   protected readonly qrPath = QR_PATH;
   protected readonly uid = `two-step-${nextSetupId++}`;
 
-  protected readonly code = signal('');
-  protected readonly codeError = signal<string | null>(null);
+  private readonly codeError = signal<string | null>(null);
   protected readonly saved = signal(false);
+  /** The block's own message about the code, else the page's. */
+  protected readonly shownError = computed(() => this.codeError() ?? this.error());
 
   protected setCode(event: Event): void {
     this.code.set((event.target as HTMLInputElement).value);
     this.codeError.set(null);
   }
 
-  /** Enter in the field is the button: a form around the block must not take it for its own Finish. */
+  /** With the button, Enter in the field is the button (a form around the block must not take it for its own Finish); without, it is the form's. */
   protected enter(event: Event): void {
+    if (!this.confirmable()) return;
     event.preventDefault();
     this.save();
   }

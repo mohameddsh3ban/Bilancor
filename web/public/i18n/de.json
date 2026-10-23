@@ -1513,10 +1513,7 @@
       "finish": {
         "title": "Bedingungen und ein sicherer Login",
         "protect": "Schütze deinen Login",
-        "submit": "Abschließen",
-        "error": {
-          "twoStep": "Gib den 6-stelligen Code ein und speichere zuerst deine Backup-Codes."
-        }
+        "submit": "Abschließen"
       }
     },
     "addBusiness": {

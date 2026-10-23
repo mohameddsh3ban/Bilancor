@@ -1513,10 +1513,7 @@
       "finish": {
         "title": "Terms and a safe login",
         "protect": "Protect your login",
-        "submit": "Finish",
-        "error": {
-          "twoStep": "Type the 6-digit code and save your backup codes first."
-        }
+        "submit": "Finish"
       }
     },
     "addBusiness": {
