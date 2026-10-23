@@ -34,7 +34,9 @@ export type TermKey =
   | 'zugferd'
   | 'xrechnung'
   | 'zahlungserinnerung'
-  | 'mahnung';
+  | 'mahnung'
+  | 'leitwegId'
+  | 'reverseCharge';
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({

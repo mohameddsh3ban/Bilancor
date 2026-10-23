@@ -3,7 +3,6 @@ import {
   Component,
   ElementRef,
   Injector,
-  afterNextRender,
   computed,
   inject,
   linkedSignal,
@@ -20,6 +19,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { Term, TermText } from '../core/i18n/term';
 import { GERMAN_STATES } from '../data/banks';
 import { DemoStateService } from '../state/demo-state.service';
+import { clearErrors, focusAfterRender } from './form-helpers';
 import { ChoiceCard, FieldError, INPUT_CLASS, NotSureHint } from './form-parts';
 import { backUrlOf, openedFrom, openedInvoiceId } from './opened-from';
 import {
@@ -527,7 +527,7 @@ export class TaxDetailsPage {
   /** Changes some answers, and takes the errors of the questions they answer away. */
   protected set(patch: Partial<TaxDraft>, ...answered: TaxQuestion[]): void {
     this.draft.update((draft) => ({ ...draft, ...patch }));
-    this.clearErrors(...answered);
+    clearErrors(this.errors, ...answered);
   }
 
   /** No, a Kleinunternehmer: the VAT answers go, so that choosing Yes again starts them empty. */
@@ -559,7 +559,7 @@ export class TaxDetailsPage {
   /** Mine is different (the day and month fields, the cursor in the first), or back to the calendar year. */
   protected useOwnYear(own: boolean): void {
     this.set({ ownFiscalYear: own }, 'year');
-    if (own) this.focusAfterRender('[data-testid="year-day"]');
+    if (own) focusAfterRender(this.injector, this.host.nativeElement, '[data-testid="year-day"]');
   }
 
   protected save(event: Event): void {
@@ -568,7 +568,11 @@ export class TaxDetailsPage {
     const result = validateDraft(this.draft());
     if ('errors' in result) {
       this.errors.set(result.errors);
-      this.focusAfterRender('[data-invalid] input, [data-invalid] select');
+      focusAfterRender(
+        this.injector,
+        this.host.nativeElement,
+        '[data-invalid] input, [data-invalid] select',
+      );
       return;
     }
     this.saving = true;
@@ -577,21 +581,5 @@ export class TaxDetailsPage {
     void this.router
       .navigateByUrl(this.backUrl(), { replaceUrl: true })
       .finally(() => (this.saving = false));
-  }
-
-  private clearErrors(...questions: TaxQuestion[]): void {
-    if (!questions.some((question) => this.errors()[question] !== undefined)) return;
-    this.errors.update((errors) => {
-      const next = { ...errors };
-      for (const question of questions) delete next[question];
-      return next;
-    });
-  }
-
-  /** Puts the cursor in the first element that matches, once the page has been drawn again. */
-  private focusAfterRender(selector: string): void {
-    afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(), {
-      injector: this.injector,
-    });
   }
 }

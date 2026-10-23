@@ -32,6 +32,7 @@ import {
   invoiceStatus,
   invoiceTotals,
   leftCents,
+  lineNetCents,
   nextInvoiceNumber,
   owedSummary,
   paidCents,
@@ -222,6 +223,18 @@ describe('EU_COUNTRIES', () => {
     expect(EU_COUNTRIES).toContain('FR');
     expect(EU_COUNTRIES).toContain('IE');
     for (const outside of ['GB', 'CH', 'NO', 'US']) expect(EU_COUNTRIES).not.toContain(outside);
+  });
+});
+
+describe('lineNetCents', () => {
+  it('is quantity times unit price, rounded to a cent, the amount invoiceTotals lists for the line', () => {
+    const lines: InvoiceLine[] = [
+      { description: 'A', quantity: 1.5, unit: 'hour', unitPriceCents: 3333 }, // 4999.5 -> 5000
+      { description: 'B', quantity: 3, unit: 'piece', unitPriceCents: 1001 },
+      { description: 'C', quantity: -2, unit: 'day', unitPriceCents: 4950 },
+    ];
+    expect(lines.map(lineNetCents)).toEqual([5000, 3003, -9900]);
+    expect(invoiceTotals(draft({ lines }), VAT).lineNets).toEqual(lines.map(lineNetCents));
   });
 });
 
@@ -647,7 +660,7 @@ describe('invoiceChecklist', () => {
 
   it('EU business abroad: rate 0, reverse charge, and the customer VAT ID is required', () => {
     const noId = draft({ customer: customer({ country: 'FR', vatId: null }) });
-    const b = business();
+    const b = business({ taxProfile: { ...VAT, vatId: 'DE123456789' } });
     expect(itemOf(invoiceChecklist(noId, b, ALL_DONE), 'customerVatId')).toMatchObject({ ok: false, fixAt: 'customer' });
     expect(canSendInvoice(noId, b, ALL_DONE)).toBe(false);
     const withId = draft({ customer: customer({ country: 'FR', vatId: 'FR12345678901' }) });
@@ -691,6 +704,55 @@ describe('invoiceChecklist', () => {
     const items = invoiceChecklist(abroad, business(), ALL_DONE);
     expect(itemOf(items, 'privateAbroad')).toMatchObject({ ok: false, fixAt: 'customer' });
     expect(canSendInvoice(abroad, business(), ALL_DONE)).toBe(false);
+  });
+
+  it("a public office abroad can't be sent either: customers abroad are businesses only for now", () => {
+    const abroad = draft({ customer: customer({ kind: 'public', country: 'AT', leitwegId: '99-1234-56' }) });
+    const items = invoiceChecklist(abroad, business(), ALL_DONE);
+    expect(itemOf(items, 'privateAbroad')).toMatchObject({ ok: false, fixAt: 'customer' });
+    expect(canSendInvoice(abroad, business(), ALL_DONE)).toBe(false);
+    // The same office in Germany is fine.
+    const home = draft({ customer: customer({ kind: 'public', leitwegId: '99-1234-56' }) });
+    expect(keysOf(invoiceChecklist(home, business(), ALL_DONE))).not.toContain('privateAbroad');
+    expect(canSendInvoice(home, business(), ALL_DONE)).toBe(true);
+  });
+
+  it('a business abroad is not caught by the abroad item', () => {
+    const us = draft({ customer: customer({ country: 'US' }) });
+    expect(keysOf(invoiceChecklist(us, business(), ALL_DONE))).not.toContain('privateAbroad');
+  });
+
+  it('reverse charge: the seller needs a VAT ID of their own (§ 14a UStG), added in the tax settings', () => {
+    const fr = draft({ customer: customer({ country: 'FR', vatId: 'FR12345678901' }) });
+    const noId = business();
+    expect(itemOf(invoiceChecklist(fr, noId, ALL_DONE), 'sellerVatId')).toMatchObject({ ok: false, fixAt: 'settingsTax' });
+    expect(canSendInvoice(fr, noId, ALL_DONE)).toBe(false);
+
+    const withId = business({ taxProfile: { ...VAT, vatId: 'DE123456789' } });
+    expect(itemOf(invoiceChecklist(fr, withId, ALL_DONE), 'sellerVatId')).toMatchObject({ ok: true, fixAt: 'settingsTax' });
+    expect(canSendInvoice(fr, withId, ALL_DONE)).toBe(true);
+
+    // A blank ID is no ID, and the tax details only count once the tax step is done (like the tax number).
+    const blank = business({ taxProfile: { ...VAT, vatId: '  ' } });
+    expect(itemOf(invoiceChecklist(fr, blank, ALL_DONE), 'sellerVatId')?.ok).toBe(false);
+    expect(itemOf(invoiceChecklist(fr, withId, { ...ALL_DONE, tax: false }), 'sellerVatId')?.ok).toBe(false);
+  });
+
+  it('the seller VAT ID is asked for under reverse charge only, and comes right after the tax number', () => {
+    const withId = business({ taxProfile: { ...VAT, vatId: 'DE123456789' } });
+    const fr = draft({ customer: customer({ country: 'FR', vatId: 'FR12345678901' }) });
+    expect(keysOf(invoiceChecklist(fr, withId, ALL_DONE))).toEqual([
+      'sellerAddress', 'taxNumber', 'sellerVatId', 'customerName', 'customerAddress', 'customerEmail', 'customerVatId', 'lines', 'servicePeriod',
+    ]);
+    const others: [string, Invoice, Business][] = [
+      ['a customer in Germany', draft(), business()],
+      ['a business outside the EU', draft({ customer: customer({ country: 'US' }) }), business()],
+      ['a Kleinunternehmer', fr, business({ taxProfile: KU })],
+      ['a private person', draft({ customer: customer({ kind: 'private' }) }), business()],
+    ];
+    for (const [name, invoice, b] of others) {
+      expect(keysOf(invoiceChecklist(invoice, b, ALL_DONE)), name).not.toContain('sellerVatId');
+    }
   });
 
   it('a private person in Germany is fine', () => {

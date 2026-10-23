@@ -3,7 +3,6 @@ import {
   Component,
   ElementRef,
   Injector,
-  afterNextRender,
   computed,
   inject,
   linkedSignal,
@@ -19,6 +18,7 @@ import { formatIban } from '../core/format/format';
 import type { Account, InvoiceProfile } from '../data/models';
 import { accountName, maskIban } from '../domain/bank-connection';
 import { DemoStateService } from '../state/demo-state.service';
+import { clearErrors, focusAfterRender } from './form-helpers';
 import { ChoiceCard, FieldError, INPUT_CLASS } from './form-parts';
 import {
   PAYMENT_TERMS,
@@ -322,7 +322,7 @@ export class InvoiceDetailsPage {
   /** Changes some details, and takes the errors of the fields they answer away. */
   protected set(patch: Partial<InvoiceDraft>, ...answered: InvoiceQuestion[]): void {
     this.draft.update((draft) => ({ ...draft, ...patch }));
-    this.clearErrors(...answered);
+    clearErrors(this.errors, ...answered);
   }
 
   protected setText(field: AddressField['field'], event: Event): void {
@@ -342,7 +342,7 @@ export class InvoiceDetailsPage {
     const id = (event.target as HTMLSelectElement).value;
     const account = this.accounts().find((candidate) => candidate.id === id);
     this.set({ iban: account ? formatIban(account.iban) : '' }, 'iban');
-    if (!account) this.focusAfterRender('[data-testid="iban"]');
+    if (!account) focusAfterRender(this.injector, this.host.nativeElement, '[data-testid="iban"]');
   }
 
   protected save(event: Event): void {
@@ -351,7 +351,7 @@ export class InvoiceDetailsPage {
     const result = validateDraft(this.draft(), this.demo.business().invoiceProfile);
     if ('errors' in result) {
       this.errors.set(result.errors);
-      this.focusAfterRender('[data-invalid] input');
+      focusAfterRender(this.injector, this.host.nativeElement, '[data-invalid] input');
       return;
     }
     this.saving = true;
@@ -360,21 +360,5 @@ export class InvoiceDetailsPage {
     void this.router
       .navigateByUrl(this.backUrl(), { replaceUrl: true })
       .finally(() => (this.saving = false));
-  }
-
-  private clearErrors(...questions: InvoiceQuestion[]): void {
-    if (!questions.some((question) => this.errors()[question] !== undefined)) return;
-    this.errors.update((errors) => {
-      const next = { ...errors };
-      for (const question of questions) delete next[question];
-      return next;
-    });
-  }
-
-  /** Puts the cursor in the first element that matches, once the page has been drawn again. */
-  private focusAfterRender(selector: string): void {
-    afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(), {
-      injector: this.injector,
-    });
   }
 }

@@ -109,6 +109,43 @@ describe('InvoiceService', () => {
       invoices.saveDraft({ ...invoiceOf('inv-wd-draft'), sentOn: DEMO_TODAY, number: 'RE-2026-999' });
       expect(businessOf()).toBe(business);
     });
+
+    it('two new drafts in a row never share an id, saved or not', () => {
+      const first = invoices.newDraft();
+      const second = invoices.newDraft();
+      expect(second.id).not.toBe(first.id);
+
+      const count = businessOf().invoices.length;
+      invoices.saveDraft(first);
+      invoices.saveDraft(second);
+      expect(businessOf().invoices).toHaveLength(count + 2);
+
+      expect(new Set([first.id, second.id, invoices.newDraft().id]).size).toBe(3);
+    });
+
+    it('a draft that is not saved yet keeps its id when a copy or a cancellation invoice is made meanwhile', () => {
+      const draft = invoices.newDraft();
+      const copyId = invoices.duplicate('inv-wd-044');
+      const cancellationId = invoices.cancel('inv-wd-044')!;
+      expect(new Set([draft.id, copyId, cancellationId]).size).toBe(3);
+
+      invoices.saveDraft(draft);
+      expect(invoiceOf(draft.id).customer.name).toBe('');
+      expect(invoiceOf(copyId).customer.name).toBe('Studio Kern');
+      expect(invoiceOf(cancellationId).cancels).toBe('inv-wd-044');
+    });
+
+    it('a copy made before a new draft is saved does not share its id either', () => {
+      const copyId = invoices.duplicate('inv-wd-044');
+      const draft = invoices.newDraft();
+      expect(draft.id).not.toBe(copyId);
+      expect(invoices.newDraft().id).not.toBe(draft.id);
+    });
+
+    it('ids belong to the business that makes them', () => {
+      demo.setBusiness('sara-yoga');
+      expect(invoices.newDraft().id).toMatch(/^inv-sara-yoga-\d+$/);
+    });
   });
 
   describe('send', () => {
@@ -195,8 +232,9 @@ describe('InvoiceService', () => {
       expect(invoiceOf('inv-wd-draft').seller?.street).toBe('Neue Str. 9');
     });
 
-    it('send freezes 0 % and the note for a business in another EU country', async () => {
+    it('send freezes 0 % and the note for a business in another EU country (the seller needs a VAT ID of their own for that)', async () => {
       const draft = invoiceOf('inv-wd-draft');
+      demo.saveTaxProfile({ ...businessOf().taxProfile, vatId: 'DE123456789' });
       demo.saveInvoice({
         ...draft,
         customer: { ...draft.customer, kind: 'business', country: 'AT', vatId: 'ATU12345678', leitwegId: null },

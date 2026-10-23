@@ -145,6 +145,16 @@
       "de": "Mahnung",
       "explain": "Eine zweite, deutlichere Erinnerung nach der Zahlungserinnerung. Sie nennt ein neues Zahlungsdatum und weist darauf hin, dass Verzugszinsen berechnet werden können. Zinsen oder Gebühren rechnet die App nicht aus."
     },
+    "leitwegId": {
+      "label": "Leitweg-ID",
+      "de": "Leitweg-ID",
+      "explain": "Die Routing-Nummer, die dir eine Behörde gibt, damit sie deine Rechnung empfangen kann. Ohne sie kann die Behörde die Rechnung nicht annehmen."
+    },
+    "reverseCharge": {
+      "label": "Steuerschuldnerschaft des Leistungsempfängers",
+      "de": "Steuerschuldnerschaft des Leistungsempfängers",
+      "explain": "Bei einem Geschäftskunden in einem anderen EU-Land berechnest du keine deutsche Umsatzsteuer. Dein Kunde zahlt die Steuer in seinem Land, und die Rechnung sagt das."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -785,6 +795,138 @@
         "close": "Schließen"
       },
       "demo": "Zahlung des Kunden simulieren"
+    }
+  },
+  "invoiceForm": {
+    "titleEdit": "Entwurf bearbeiten",
+    "close": "Schließen",
+    "saved": "Als Entwurf gespeichert. Du kannst jederzeit gehen.",
+    "customer": {
+      "title": "Kunde",
+      "new": "Neuer Kunde",
+      "edit": "Angaben bearbeiten",
+      "kind": {
+        "title": "Für wen ist die Rechnung?",
+        "business": "Unternehmen",
+        "private": "Privatperson",
+        "public": "Behörde"
+      },
+      "name": "Name",
+      "street": "Straße und Hausnummer",
+      "postcode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "email": "E-Mail",
+      "emailHint": "An diese Adresse geht die Rechnung.",
+      "vatIdHint": "Die USt-IdNr. deines Kunden, zum Beispiel FR12345678901. Sie steht auf der Rechnung.",
+      "leitwegHint": "Die Behörde nennt dir diese Nummer. Ohne sie kann sie die Rechnung nicht annehmen.",
+      "abroadNote": "Kunden im Ausland sind vorerst nur Unternehmen."
+    },
+    "lines": {
+      "title": "Was du gemacht hast",
+      "line": "Position {{n}}",
+      "description": "Beschreibung",
+      "quantity": "Menge",
+      "unit": "Einheit",
+      "price": "Preis pro Einheit",
+      "net": "Betrag",
+      "add": "Position hinzufügen",
+      "remove": "Position {{n}} entfernen",
+      "hintNet": "Die Preise sind ohne Umsatzsteuer. Die Steuer kommt unten dazu.",
+      "hintGross": "Die Preise sind das, was dein Kunde zahlt.",
+      "quantityError": "Gib eine Zahl über 0 ein, zum Beispiel 1 oder 2,5.",
+      "priceError": "Gib einen Betrag über 0 ein, zum Beispiel 49,90."
+    },
+    "unit": {
+      "piece": "Stück",
+      "hour": "Stunden",
+      "day": "Tage",
+      "flat": "Pauschale"
+    },
+    "vat": {
+      "title": "Umsatzsteuer",
+      "rate": "{{rate}} % Umsatzsteuer",
+      "standard": "Regelsatz",
+      "reduced": "Ermäßigter Satz",
+      "net": "Netto",
+      "vat": "USt. {{rate}} %",
+      "total": "Gesamt",
+      "note": {
+        "kleinunternehmer": "Keine Umsatzsteuer auf dieser Rechnung. Als Kleinunternehmer berechnest du sie nicht, und die Rechnung trägt den Hinweis nach § 19.",
+        "reverseCharge": "Keine deutsche Umsatzsteuer auf dieser Rechnung. Dein Kunde zahlt die Steuer in seinem Land, und die Rechnung sagt das.",
+        "notTaxable": "Keine deutsche Umsatzsteuer auf dieser Rechnung. Eine Leistung an ein Unternehmen außerhalb der EU ist in Deutschland nicht steuerbar, und die Rechnung sagt das."
+      }
+    },
+    "dates": {
+      "title": "Daten",
+      "issueDate": "Rechnungsdatum",
+      "workDone": "Leistung erbracht im",
+      "month": "Ein Monat",
+      "day": "Ein Tag",
+      "chooseMonth": "Monat wählen",
+      "term": "Zahlbar innerhalb von",
+      "due": "Fällig am {{date}}"
+    },
+    "ready": {
+      "title": "Bereit zum Senden",
+      "format": "Format",
+      "pdf": "PDF",
+      "number": "Die Nummer {{number}} bekommt die Rechnung beim Senden.",
+      "blocked": "Behebe, was oben markiert ist, dann kannst du senden."
+    },
+    "check": {
+      "sellerAddress": {
+        "ok": "Dein Name und deine Adresse",
+        "missing": "Name und Adresse in den Einstellungen ergänzen"
+      },
+      "taxNumber": {
+        "ok": "Deine Steuernummer",
+        "missing": "Steuernummer in den Einstellungen ergänzen"
+      },
+      "sellerVatId": {
+        "ok": "Deine USt-IdNr.",
+        "missing": "USt-IdNr. in den Einstellungen ergänzen"
+      },
+      "customerName": {
+        "ok": "Kunde",
+        "missing": "Kunden auswählen oder hinzufügen"
+      },
+      "customerAddress": {
+        "ok": "Adresse des Kunden",
+        "missing": "Vollständige Adresse des Kunden ergänzen"
+      },
+      "customerEmail": {
+        "ok": "E-Mail des Kunden",
+        "missing": "E-Mail des Kunden ergänzen"
+      },
+      "customerVatId": {
+        "ok": "USt-IdNr. des Kunden",
+        "missing": "USt-IdNr. des Kunden ergänzen"
+      },
+      "leitwegId": {
+        "ok": "Leitweg-ID der Behörde",
+        "missing": "Leitweg-ID der Behörde ergänzen"
+      },
+      "privateAbroad": {
+        "ok": "Kunde in Deutschland",
+        "missing": "Kunden im Ausland sind vorerst nur Unternehmen"
+      },
+      "lines": {
+        "ok": "Was du gemacht hast, mit Preisen",
+        "missing": "Positionen vervollständigen: Jede braucht Beschreibung, Menge und Preis"
+      },
+      "servicePeriod": {
+        "ok": "Wann die Leistung erbracht wurde",
+        "missing": "Angeben, wann die Leistung erbracht wurde"
+      }
+    },
+    "delete": {
+      "button": "Entwurf löschen",
+      "title": "Diesen Entwurf löschen?",
+      "body": "Der Entwurf wird endgültig entfernt. Rechnungen, die du gesendet hast, bleiben unberührt.",
+      "keep": "Entwurf behalten",
+      "confirm": "Entwurf löschen",
+      "close": "Schließen"
     }
   },
   "print": {

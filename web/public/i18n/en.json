@@ -145,6 +145,16 @@
       "de": "Mahnung",
       "explain": "A firmer second reminder, sent after the friendly one. It sets a new date to pay by and says that late-payment interest may be charged. The app does not work out any interest or fees."
     },
+    "leitwegId": {
+      "label": "Routing ID for public offices",
+      "de": "Leitweg-ID",
+      "explain": "The routing number a public office gives you so it can receive your invoice. Without it, the office cannot take the invoice."
+    },
+    "reverseCharge": {
+      "label": "Reverse charge",
+      "de": "Steuerschuldnerschaft des Leistungsempfängers",
+      "explain": "For a business customer in another EU country, you do not charge German VAT. Your customer pays the VAT in their own country, and the invoice says so."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -785,6 +795,138 @@
         "close": "Close"
       },
       "demo": "Simulate the customer's payment"
+    }
+  },
+  "invoiceForm": {
+    "titleEdit": "Edit draft",
+    "close": "Close",
+    "saved": "Saved as a draft. You can leave any time.",
+    "customer": {
+      "title": "Customer",
+      "new": "New customer",
+      "edit": "Edit details",
+      "kind": {
+        "title": "Who is it for?",
+        "business": "Business",
+        "private": "Private person",
+        "public": "Public office"
+      },
+      "name": "Name",
+      "street": "Street and number",
+      "postcode": "Postcode",
+      "city": "Town",
+      "country": "Country",
+      "email": "Email",
+      "emailHint": "The invoice is sent to this address.",
+      "vatIdHint": "Your customer's VAT ID, for example FR12345678901. It goes on the invoice.",
+      "leitwegHint": "The office gives you this number. Without it, they cannot take the invoice.",
+      "abroadNote": "Customers abroad are businesses only for now."
+    },
+    "lines": {
+      "title": "What you did",
+      "line": "Line {{n}}",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "price": "Price per unit",
+      "net": "Amount",
+      "add": "Add a line",
+      "remove": "Remove line {{n}}",
+      "hintNet": "Prices are without VAT. The VAT is added below.",
+      "hintGross": "Prices are what your customer pays.",
+      "quantityError": "Enter a number above 0, like 1 or 2.5.",
+      "priceError": "Enter an amount above 0, like 49.90."
+    },
+    "unit": {
+      "piece": "Pieces",
+      "hour": "Hours",
+      "day": "Days",
+      "flat": "Flat rate"
+    },
+    "vat": {
+      "title": "VAT",
+      "rate": "{{rate}} % VAT",
+      "standard": "Standard rate",
+      "reduced": "Reduced rate",
+      "net": "Net",
+      "vat": "VAT {{rate}} %",
+      "total": "Total",
+      "note": {
+        "kleinunternehmer": "No VAT on this invoice. As a small business you do not charge it, and the invoice carries the § 19 note.",
+        "reverseCharge": "No German VAT on this invoice. Your customer pays the VAT in their own country, and the invoice says so.",
+        "notTaxable": "No German VAT on this invoice. A service for a business outside the EU is not taxable in Germany, and the invoice says so."
+      }
+    },
+    "dates": {
+      "title": "Dates",
+      "issueDate": "Invoice date",
+      "workDone": "Work done in",
+      "month": "A month",
+      "day": "One day",
+      "chooseMonth": "Choose a month",
+      "term": "Pay within",
+      "due": "Due on {{date}}"
+    },
+    "ready": {
+      "title": "Ready to send",
+      "format": "Format",
+      "pdf": "PDF",
+      "number": "Number {{number}} is given when you send.",
+      "blocked": "Fix what is marked above, then you can send."
+    },
+    "check": {
+      "sellerAddress": {
+        "ok": "Your name and address",
+        "missing": "Add your name and address in Settings"
+      },
+      "taxNumber": {
+        "ok": "Your tax number",
+        "missing": "Add your tax number in Settings"
+      },
+      "sellerVatId": {
+        "ok": "Your VAT ID",
+        "missing": "Add your VAT ID in Settings"
+      },
+      "customerName": {
+        "ok": "Customer",
+        "missing": "Choose or add a customer"
+      },
+      "customerAddress": {
+        "ok": "Customer address",
+        "missing": "Add the customer's full address"
+      },
+      "customerEmail": {
+        "ok": "Customer email",
+        "missing": "Add the customer's email"
+      },
+      "customerVatId": {
+        "ok": "Customer VAT ID",
+        "missing": "Add the customer's VAT ID"
+      },
+      "leitwegId": {
+        "ok": "Leitweg-ID of the office",
+        "missing": "Add the office's Leitweg-ID"
+      },
+      "privateAbroad": {
+        "ok": "Customer in Germany",
+        "missing": "Customers abroad are businesses only for now"
+      },
+      "lines": {
+        "ok": "What you did, with prices",
+        "missing": "Finish your lines: each needs a description, a quantity and a price"
+      },
+      "servicePeriod": {
+        "ok": "When the work was done",
+        "missing": "Say when the work was done"
+      }
+    },
+    "delete": {
+      "button": "Delete draft",
+      "title": "Delete this draft?",
+      "body": "The draft is removed for good. Invoices you sent are not affected.",
+      "keep": "Keep draft",
+      "confirm": "Delete draft",
+      "close": "Close"
     }
   },
   "print": {

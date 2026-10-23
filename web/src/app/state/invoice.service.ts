@@ -44,13 +44,11 @@ function newId(prefix: string, taken: readonly string[]): string {
   return `${prefix}-${n}`;
 }
 
-const newInvoiceId = (business: Business): string => newId(`inv-${business.id}`, business.invoices.map((i) => i.id));
-
 /** A new draft with nothing filled in: today's date, the current month, and the term, language and VAT rate a new invoice starts with. */
-function blankDraft(business: Business): Invoice {
+function blankDraft(business: Business, id: string): Invoice {
   const profile = business.invoiceProfile;
   return {
-    id: newInvoiceId(business),
+    id,
     number: null,
     customer: { name: '', street: '', postcode: '', city: '', country: 'DE', email: '', kind: 'business', vatId: null, leitwegId: null },
     lines: [],
@@ -108,6 +106,9 @@ function paymentFor(
 export class InvoiceService {
   private readonly demo = inject(DemoStateService);
 
+  /** Every invoice id this service has handed out, also for a draft that is not saved yet, so that no two drafts, copies or cancellation invoices ever share one. */
+  private readonly handedOut = new Set<string>();
+
   private readonly onItsWay = signal<OnItsWay | null>(null);
   /** The id of the invoice (or the one a reminder is for) on its way to the customer, or null. Reset demo drops it: it is null from then, not only when the time is up. */
   readonly sending = computed<string | null>(() => {
@@ -115,9 +116,14 @@ export class InvoiceService {
     return way !== null && way.generation === this.demo.dataGeneration() ? way.invoiceId : null;
   });
 
-  /** A new draft of the open business, not saved yet: today's date, the current month, the term and language of the invoice details, and 19 % VAT. */
+  /**
+   * A new draft of the open business, not saved yet: today's date, the current month, the term and language of the invoice
+   * details, and 19 % VAT. Its id is reserved at once, so another draft, a copy or a cancellation invoice made before this one
+   * is saved never gets the same.
+   */
   newDraft(): Invoice {
-    return blankDraft(this.demo.business());
+    const business = this.demo.business();
+    return blankDraft(business, this.newInvoiceId(business));
   }
 
   /** Saves a draft of the open business (a new one, or the next version of one saved before). A sent invoice is never replaced, and a draft on its way to the customer is not changed. */
@@ -174,7 +180,7 @@ export class InvoiceService {
     const status = invoiceStatus(original, business);
     if (status !== 'open' && status !== 'overdue') return null;
 
-    const cancellationId = newInvoiceId(business);
+    const cancellationId = this.newInvoiceId(business);
     const number = nextInvoiceNumber(business, DEMO_TODAY.slice(0, 4));
     const cancellation: Invoice = {
       ...original,
@@ -218,7 +224,7 @@ export class InvoiceService {
     const source = business.invoices.find((i) => i.id === id);
     if (!source) throw new Error(`There is no invoice ${id} to duplicate`);
     const copy: Invoice = {
-      ...blankDraft(business),
+      ...blankDraft(business, this.newInvoiceId(business)),
       customer: { ...source.customer },
       lines: source.lines.map((line) => ({ ...line })),
       vatRate: source.sentOn !== null && source.taxNote !== null ? 19 : source.vatRate,
@@ -277,6 +283,15 @@ export class InvoiceService {
   /** The person says yes to "Is this the payment for this invoice?" in the review inbox: the payment pays the invoice (see `DemoStateService.linkInvoicePayment`). */
   confirmMatch(txId: string, invoiceId: string): void {
     this.demo.linkInvoicePayment(invoiceId, txId, false);
+  }
+
+  /** An invoice id of the business that neither one of its invoices nor anything this service handed out before has. */
+  private newInvoiceId(business: Business): string {
+    const prefix = `inv-${business.id}`;
+    const reserved = [...this.handedOut].filter((id) => id.startsWith(`${prefix}-`));
+    const id = newId(prefix, [...business.invoices.map((i) => i.id), ...reserved]);
+    this.handedOut.add(id);
+    return id;
   }
 
   /** The open business with its invoice of this id, when the invoice is sent, not cancelled, and has something left to pay. */

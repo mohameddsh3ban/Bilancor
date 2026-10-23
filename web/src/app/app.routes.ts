@@ -65,7 +65,15 @@ export const routes: Routes = [
         path: 'invoices',
         loadComponent: () => import('./invoices/invoices.page').then((m) => m.InvoicesPage),
       },
-      // A fixed path under invoices (such as invoices/new) must be listed above this one.
+      // A fixed path under invoices (such as invoices/new) must be listed above invoices/:id, or "new" is taken for an id.
+      {
+        path: 'invoices/new',
+        loadComponent: () => import('./invoices/invoice-form.page').then((m) => m.InvoiceFormPage),
+      },
+      {
+        path: 'invoices/:id/edit',
+        loadComponent: () => import('./invoices/invoice-form.page').then((m) => m.InvoiceFormPage),
+      },
       {
         path: 'invoices/:id',
         loadComponent: () => import('./invoices/invoice.page').then((m) => m.InvoicePage),

@@ -81,11 +81,16 @@ export function invoiceFileFormat(invoice: Invoice, profile: TaxProfile): Invoic
   return invoiceFormat(invoice.customer, { ...profile, kleinunternehmer: effectiveTaxNote(invoice, profile) === 'kleinunternehmer' });
 }
 
+/** What one line comes to: quantity times unit price, rounded to a cent. */
+export function lineNetCents(line: InvoiceLine): number {
+  return roundCents(line.quantity * line.unitPriceCents);
+}
+
 export interface InvoiceTotals { lineNets: number[]; netCents: number; vatCents: number; grossCents: number }
 
 /** The amounts of an invoice: each line rounded to a cent, the VAT on their sum rounded to a cent. A Kleinunternehmer's lines are the gross (VAT is 0). */
 export function invoiceTotals(invoice: Invoice, profile: TaxProfile): InvoiceTotals {
-  const lineNets = invoice.lines.map((line) => roundCents(line.quantity * line.unitPriceCents));
+  const lineNets = invoice.lines.map((line) => lineNetCents(line));
   const netCents = lineNets.reduce((sum, cents) => sum + cents, 0);
   const vatCents = roundCents((netCents * effectiveVatRate(invoice, profile)) / 100);
   return { lineNets, netCents, vatCents, grossCents: netCents + vatCents };
@@ -147,7 +152,7 @@ export function nextInvoiceNumber(business: Business, year: string): string {
 }
 
 export type ChecklistKey =
-  | 'sellerAddress' | 'taxNumber' | 'customerName' | 'customerAddress' | 'customerEmail'
+  | 'sellerAddress' | 'taxNumber' | 'sellerVatId' | 'customerName' | 'customerAddress' | 'customerEmail'
   | 'customerVatId' | 'leitwegId' | 'privateAbroad' | 'lines' | 'servicePeriod';
 export interface ChecklistItem {
   key: ChecklistKey;
@@ -168,7 +173,10 @@ function servicePeriodIsComplete(period: Invoice['servicePeriod']): boolean {
 /**
  * What an invoice needs before it can be sent (§ 14 UStG), only the items that apply to this invoice, each with whether it
  * is there and where to fix it. The tax number is there only once the tax step is done and the tax details hold a tax
- * number or a VAT ID. A private customer abroad is never ok: invoices abroad are for businesses only for now.
+ * number or a VAT ID. When the customer owes the VAT (reverse charge) the invoice also carries the seller's own VAT ID
+ * (§ 14a UStG), and the customer's: `sellerVatId` is ok once the tax step is done and the tax details hold one. A
+ * customer abroad who is not a business (a private person or a public office) is never ok: invoices abroad are for
+ * businesses only for now.
  */
 export function invoiceChecklist(invoice: Invoice, business: Business, steps: SetupSteps): ChecklistItem[] {
   const seller = business.invoiceProfile;
@@ -177,13 +185,17 @@ export function invoiceChecklist(invoice: Invoice, business: Business, steps: Se
   const items: ChecklistItem[] = [
     { key: 'sellerAddress', ok: [seller.name, seller.street, seller.postcode, seller.city].every(filled), fixAt: 'settingsInvoice' },
     { key: 'taxNumber', ok: steps.tax && (filled(tax.taxNumber) || filled(tax.vatId)), fixAt: 'settingsTax' },
+  ];
+  const reverseCharge = taxNoteFor(customer, tax) === 'reverseCharge';
+  if (reverseCharge) items.push({ key: 'sellerVatId', ok: steps.tax && filled(tax.vatId), fixAt: 'settingsTax' });
+  items.push(
     { key: 'customerName', ok: filled(customer.name), fixAt: 'customer' },
     { key: 'customerAddress', ok: [customer.street, customer.postcode, customer.city, customer.country].every(filled), fixAt: 'customer' },
     { key: 'customerEmail', ok: filled(customer.email), fixAt: 'customer' },
-  ];
-  if (taxNoteFor(customer, tax) === 'reverseCharge') items.push({ key: 'customerVatId', ok: filled(customer.vatId), fixAt: 'customer' });
+  );
+  if (reverseCharge) items.push({ key: 'customerVatId', ok: filled(customer.vatId), fixAt: 'customer' });
   if (customer.kind === 'public') items.push({ key: 'leitwegId', ok: filled(customer.leitwegId), fixAt: 'customer' });
-  if (customer.kind === 'private' && customer.country !== 'DE') items.push({ key: 'privateAbroad', ok: false, fixAt: 'customer' });
+  if (customer.kind !== 'business' && customer.country !== 'DE') items.push({ key: 'privateAbroad', ok: false, fixAt: 'customer' });
   items.push(
     { key: 'lines', ok: invoice.lines.length > 0 && invoice.lines.every(lineIsComplete), fixAt: 'lines' },
     { key: 'servicePeriod', ok: servicePeriodIsComplete(invoice.servicePeriod), fixAt: 'dates' },

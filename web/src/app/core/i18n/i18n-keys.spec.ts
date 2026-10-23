@@ -67,6 +67,8 @@ describe('translation files', () => {
       'xrechnung',
       'zahlungserinnerung',
       'mahnung',
+      'leitwegId',
+      'reverseCharge',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {
