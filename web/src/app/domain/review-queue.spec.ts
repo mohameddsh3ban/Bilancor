@@ -21,6 +21,8 @@ describe('reviewItems', () => {
       // Same date as the document below: the payment comes first.
       { kind: 'payment', id: 'wd-t1', date: '2026-10-20', problem: 'confirm' },
       { kind: 'document', id: 'wd-d1', date: '2026-10-20', problem: 'checkAmount' },
+      // Studio Kern's payment came in the day after.
+      { kind: 'payment', id: 'wd-t19', date: '2026-10-21', problem: 'noReceipt' },
     ]);
   });
 
@@ -48,7 +50,7 @@ describe('reviewItems', () => {
   });
 
   it('halfway counts payments and documents, since a bank is connected', () => {
-    expect(reviewItems(business('weber-design'), presetSteps('halfway'))).toHaveLength(6);
+    expect(reviewItems(business('weber-design'), presetSteps('halfway'))).toHaveLength(7);
   });
 
   it('a document with no date is dated by the day it was added', () => {
@@ -56,7 +58,7 @@ describe('reviewItems', () => {
     const undated = wd.documents.map((d) => (d.id === 'wd-d1' ? { ...d, date: null, addedOn: '2026-10-01' } : d));
     const items = reviewItems(weberWith({ documents: undated }), presetSteps('active'));
     expect(items[0]).toEqual({ kind: 'document', id: 'wd-d1', date: '2026-10-01', problem: 'checkAmount' });
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
   });
 
   it('reports the problem of a document that needs the person, and leaves out the ones that do not', () => {
@@ -98,8 +100,8 @@ describe('reviewItems', () => {
 });
 
 describe('the shared needs-you count', () => {
-  it('decisionCount is 6 for weber-design, 3 for sara-yoga and 0 for cafe-linde', () => {
-    expect(decisionCount(business('weber-design'), presetSteps('active'))).toBe(6);
+  it('decisionCount is 7 for weber-design, 3 for sara-yoga and 0 for cafe-linde', () => {
+    expect(decisionCount(business('weber-design'), presetSteps('active'))).toBe(7);
     expect(decisionCount(business('sara-yoga'), presetSteps('active'))).toBe(3);
     expect(decisionCount(business('cafe-linde'), presetSteps('active'))).toBe(0);
   });

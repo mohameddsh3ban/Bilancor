@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { formatDate } from '../core/format/format';
+import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { CATEGORIES } from '../data/categories';
 import type { Doc } from '../data/models';
+import { DemoStateService } from '../state/demo-state.service';
 import { DocumentStatusChip } from './document-status-chip';
 
 const base: Doc = {
@@ -26,6 +27,7 @@ const base: Doc = {
   bookingConfirmed: false,
   paymentId: null,
   history: [],
+  invoice: null,
 };
 const doc = (patch: Partial<Doc>): Doc => ({ ...base, ...patch });
 
@@ -125,5 +127,50 @@ describe('DocumentStatusChip', () => {
     TestBed.inject(LanguageService).setLang('de');
     fixture.detectChanges();
     expect(chip.textContent?.trim()).toContain('fällig');
+  });
+
+  describe("the document of an invoice written in Invoices", () => {
+    /** Text without the marks that keep an amount or a number in its own direction inside a sentence. */
+    const plain = (d: Doc) => word(d)!.replace(/[\u2066\u2068\u2069]/g, '');
+
+    const sample = (businessId: string, id: string): Doc => {
+      const demo = TestBed.inject(DemoStateService);
+      demo.setBusiness(businessId);
+      return demo.documents().find((d) => d.id === id)!;
+    };
+
+    it("partly paid chip shows what's left", () => {
+      const partly = sample('sara-yoga', 'sy-d2'); // RE-2026-021: 300,00 € of 600,00 € paid, due 13 Nov
+      expect(plain(partly)).toBe(`Waiting for payment · ${formatMoney(30000, 'en')} left`);
+      expect(render(partly).classList).toContain('text-muted-foreground');
+    });
+
+    it('a partly paid invoice that is past its due date says since when, and what is left', () => {
+      const partly = { ...sample('sara-yoga', 'sy-d2'), dueDate: '2026-10-20' };
+      expect(plain(partly)).toBe(`Overdue since ${formatDate('2026-10-20', 'en')} · ${formatMoney(30000, 'en')} left`);
+      expect(render(partly).classList).toContain('text-negative');
+    });
+
+    it('an invoice that was not paid shows its usual chip', () => {
+      expect(plain(sample('weber-design', 'wd-d2'))).toBe('Waiting for payment · due 30 Oct');
+      expect(plain(sample('weber-design', 'wd-d3'))).toBe(`Overdue since ${formatDate('2026-09-30', 'en')}`);
+      expect(plain(sample('weber-design', 'doc-wd-t1'))).toBe('Done');
+    });
+
+    it('cancelled and cancellation chips', () => {
+      const cancelled = sample('weber-design', 'wd-d5'); // RE-2026-040
+      const cancellation = sample('weber-design', 'wd-d6'); // RE-2026-042 cancels it
+      expect(plain(cancelled)).toBe('Done · Cancelled');
+      expect(plain(cancellation)).toBe('Cancellation of RE-2026-040');
+      expect(render(cancelled).classList).toContain('text-positive');
+      expect(render(cancellation).classList).toContain('text-positive');
+    });
+
+    it('follow the language', () => {
+      TestBed.inject(LanguageService).setLang('de');
+      expect(plain(sample('sara-yoga', 'sy-d2'))).toBe(`Wartet auf Zahlung · ${formatMoney(30000, 'de')} offen`);
+      expect(plain(sample('weber-design', 'wd-d5'))).toBe('Erledigt · Storniert');
+      expect(plain(sample('weber-design', 'wd-d6'))).toBe('Stornorechnung zu RE-2026-040');
+    });
   });
 });

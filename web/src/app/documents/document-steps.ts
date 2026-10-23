@@ -3,7 +3,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Doc, Transaction } from '../data/models';
-import { missingField } from '../domain/document-status';
+import { isClosedInvoice, missingField } from '../domain/document-status';
 
 type StepId = 'read' | 'booked' | 'paid';
 type StepState = 'done' | 'current' | 'todo';
@@ -21,7 +21,8 @@ interface Step {
  * Where a document is on its way: Read, Booked, Paid. A step is done when nothing is missing from the document, when
  * its booking has a category and is confirmed (the payment's booking once there is a payment), when a payment is
  * linked. The first step that is not done is the current one. A booking that waits for the person reads Confirm, and
- * the last step of an invoice the person sent reads Waiting for payment until it is linked.
+ * the last step of an invoice the person sent reads Waiting for payment until it is linked. A cancelled invoice and a
+ * cancellation invoice need no payment: their last step is Closed, and done.
  */
 @Component({
   selector: 'app-document-steps',
@@ -85,7 +86,8 @@ export class DocumentSteps {
     const confirmed = payment ? payment.confirmed : doc.bookingConfirmed;
     const read = missingField(doc) === null;
     const booked = booking !== null && confirmed;
-    const paid = doc.paymentId !== null;
+    const closed = isClosedInvoice(doc);
+    const paid = doc.paymentId !== null || closed;
     const done = [read, booked, paid];
     const current = done.indexOf(false);
     const state = (index: number): StepState =>
@@ -102,7 +104,7 @@ export class DocumentSteps {
       },
       {
         id: 'paid',
-        label: doc.direction === 'sent' && !paid ? 'waiting' : 'paid',
+        label: closed ? 'closed' : doc.direction === 'sent' && !paid ? 'waiting' : 'paid',
         state: state(2),
         line: line(2),
       },

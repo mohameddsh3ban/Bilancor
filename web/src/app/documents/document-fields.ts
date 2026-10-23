@@ -26,7 +26,8 @@ const NO_BOOKING: Booking = { skr03: '', nameDe: '', labelKey: '', vatRate: 0 };
 /**
  * What reading found in a document (type, from and to, invoice number, date, amount, VAT, due date), the note on why
  * it was filed as received or sent, and Edit, which swaps the list for the edit form. The form closes when another
- * document is shown, and there is nothing to edit while the document is still being read.
+ * document is shown, and there is nothing to edit while the document is still being read, or for the document of an
+ * invoice written in Invoices (it is locked).
  */
 @Component({
   selector: 'app-document-fields',
@@ -39,7 +40,7 @@ const NO_BOOKING: Booking = { skr03: '', nameDe: '', labelKey: '', vatRate: 0 };
         <h2 class="text-muted-foreground text-sm font-medium">
           {{ 'documents.detail.fields.title' | transloco }}
         </h2>
-        @if (!editing() && !doc().reading) {
+        @if (!editing() && !doc().reading && doc().invoice === null) {
           <button
             #editButton
             hlmBtn

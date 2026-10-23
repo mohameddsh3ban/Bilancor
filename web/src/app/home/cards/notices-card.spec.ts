@@ -4,6 +4,7 @@ import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
 import { LanguageService } from '../../core/i18n/language.service';
 import { DemoStateService } from '../../state/demo-state.service';
 import { withConnection } from '../../state/demo-state.testing';
+import { SEND_MS, InvoiceService } from '../../state/invoice.service';
 import { NoticeService } from '../../state/notice.service';
 import { NoticesCard } from './notices-card';
 
@@ -28,7 +29,7 @@ describe('NoticesCard', () => {
 
   const q = (el: HTMLElement, id: string) => el.querySelector<HTMLElement>(`[data-testid="${id}"]`);
 
-  it('shows the two most urgent notices with an action link each, and leaves the third to "+1 more"', () => {
+  it('shows the two most urgent notices with an action link each, and leaves the others to "+2 more"', () => {
     const { el } = render();
     expect(q(el, 'notice-wd-n1')?.textContent).toContain('New terms from our bank-connection provider');
     expect(q(el, `notice-${BANK_EXPIRY}`)?.textContent).toContain('Your Qonto connection expires in 5 days');
@@ -84,11 +85,68 @@ describe('NoticesCard', () => {
   });
 
   it('Fix opens Documents', () => {
-    // Fixing needs the unreadable notice on show: it moves up once the bank notice is dismissed.
+    // Fixing needs the unreadable notice on show: it moves up once the bank notice and the late invoice's are dismissed.
     TestBed.inject(NoticeService).dismiss(BANK_EXPIRY);
+    TestBed.inject(NoticeService).dismiss('invoice-overdue-inv-wd-039');
     const { el } = render();
     expect(q(el, 'notice-action-wd-n3')?.textContent?.trim()).toBe('Fix');
     expect(q(el, 'notice-action-wd-n3')?.getAttribute('href')).toBe('/documents');
+  });
+
+  describe('an overdue invoice', () => {
+    const LATE = 'invoice-overdue-inv-wd-039';
+    const EMAIL = { to: 'info@baeckerei-lange.example', subject: 'Zahlungserinnerung', body: 'Hallo' };
+
+    afterEach(() => vi.useRealTimers());
+
+    /** The notice is the third one of Weber Design: it comes up once the bank notice is out of the way. */
+    function renderLate() {
+      TestBed.inject(NoticeService).dismiss(BANK_EXPIRY);
+      return render();
+    }
+
+    it('Bäckerei Lange notice links to the reminder; it disappears after reminding', async () => {
+      const { fixture, el } = renderLate();
+      expect(q(el, `notice-${LATE}`)?.querySelector('p')?.textContent?.trim()).toBe(
+        'Bäckerei Lange is 22 days late with RE-2026-039',
+      );
+      expect(q(el, `notice-action-${LATE}`)?.textContent?.trim()).toBe('Send reminder');
+      expect(q(el, `notice-action-${LATE}`)?.getAttribute('href')).toBe('/invoices/inv-wd-039?remind=1');
+      expect(q(el, `notice-dismiss-${LATE}`)).not.toBeNull();
+
+      vi.useFakeTimers();
+      const sent = TestBed.inject(InvoiceService).remind('inv-wd-039', 1, EMAIL);
+      await vi.advanceTimersByTimeAsync(SEND_MS);
+      expect(await sent).toBe(true);
+      fixture.detectChanges();
+
+      expect(q(el, `notice-${LATE}`)).toBeNull();
+      expect(q(el, 'notice-wd-n3')).not.toBeNull(); // the next notice comes up
+    });
+
+    it('disappears once the invoice is paid', () => {
+      const { fixture, el } = renderLate();
+      expect(q(el, `notice-${LATE}`)).not.toBeNull();
+
+      TestBed.inject(InvoiceService).simulatePayment('inv-wd-039');
+      fixture.detectChanges();
+
+      expect(q(el, `notice-${LATE}`)).toBeNull();
+    });
+
+    it('speaks German and Arabic', () => {
+      const language = TestBed.inject(LanguageService);
+      language.setLang('de');
+      expect(q(renderLate().el, `notice-${LATE}`)?.querySelector('p')?.textContent?.trim()).toBe(
+        'Bäckerei Lange ist mit RE-2026-039 seit 22 Tagen im Rückstand',
+      );
+      expect(q(render().el, `notice-action-${LATE}`)?.textContent?.trim()).toBe('Zahlungserinnerung senden');
+      language.setLang('ar');
+      const text = q(render().el, `notice-${LATE}`)?.querySelector('p')?.textContent ?? '';
+      expect(text).toContain('⁨Bäckerei Lange⁩');
+      expect(text).toContain('⁨RE-2026-039⁩');
+      expect(q(render().el, `notice-action-${LATE}`)?.textContent?.trim()).toBe('إرسال تذكير');
+    });
   });
 
   it('blocking notice has no dismiss', () => {
@@ -103,14 +161,16 @@ describe('NoticesCard', () => {
     fixture.detectChanges();
     expect(q(el, `notice-${BANK_EXPIRY}`)).toBeNull();
     expect(q(el, 'notice-wd-n1')).not.toBeNull();
-    expect(q(el, 'notice-wd-n3')).not.toBeNull();
-    expect(q(el, 'notices-more')).toBeNull();
+    // The late invoice (urgency 2) comes up in its place; the unreadable receipts (3) are still behind it.
+    expect(q(el, 'notice-invoice-overdue-inv-wd-039')).not.toBeNull();
+    expect(q(el, 'notice-wd-n3')).toBeNull();
+    expect(q(el, 'notices-more')?.textContent?.trim()).toBe('+1 more');
   });
 
   it('"+N more" opens the bell panel', () => {
     const { fixture, el } = render();
     const more = q(el, 'notices-more')!;
-    expect(more.textContent?.trim()).toBe('+1 more');
+    expect(more.textContent?.trim()).toBe('+2 more');
     expect(TestBed.inject(NoticeService).bellOpen()).toBe(false);
     more.click();
     fixture.detectChanges();

@@ -8,6 +8,7 @@ import { Term } from '../core/i18n/term';
 import { DEMO_TODAY } from '../data/demo-date';
 import { profileTaxOffice } from '../domain/tax-details';
 import { DemoStateService } from '../state/demo-state.service';
+import { LABEL_CLASS, ROW_CLASS, VALUE_CLASS } from './answer-rows';
 import { CALENDAR_YEAR } from './tax-form';
 
 /** Where Edit and Add your tax details lead: the tax page, which comes back here when it is saved. */
@@ -148,11 +149,9 @@ export class TaxAnswers {
   private readonly demo = inject(DemoStateService);
 
   protected readonly taxPage = TAX_PAGE;
-  /** A label above its answer on a phone, beside it from `sm`. */
-  protected readonly rowClass =
-    'flex flex-col gap-0.5 sm:grid sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-4';
-  protected readonly labelClass = 'text-muted-foreground';
-  protected readonly valueClass = 'min-w-0 [overflow-wrap:anywhere]';
+  protected readonly rowClass = ROW_CLASS;
+  protected readonly labelClass = LABEL_CLASS;
+  protected readonly valueClass = VALUE_CLASS;
 
   /** The answers exist only once the tax step is done; the sample profiles are not "saved" before that. */
   protected readonly done = computed(() => this.demo.setup().tax);

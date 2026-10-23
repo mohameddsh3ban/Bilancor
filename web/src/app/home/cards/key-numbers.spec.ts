@@ -43,9 +43,9 @@ describe('KeyNumbers', () => {
     const el = render();
     const t = tile(el, 'decisions')!;
     const count = decisionCount(demo.business(), demo.setup());
-    expect(count).toBe(6);
+    expect(count).toBe(7);
     expect(t.querySelector('p')?.textContent?.trim()).toBe(String(count));
-    expect(t.textContent).toContain('about 6 minutes');
+    expect(t.textContent).toContain('about 7 minutes');
     const start = t.querySelector('a')!;
     expect(start.textContent).toContain('Start');
     expect(start.getAttribute('href')).toBe('/review');

@@ -647,6 +647,12 @@ describe('DocumentDetailPage', () => {
     describe('Edit', () => {
       const edit = async () => click(d('edit-fields'));
 
+      // The document of an invoice written in Invoices is locked (see 'an invoice written in Invoices'), so these invoices
+      // of the sample stand for a sent invoice that was added from a file, which can be edited.
+      beforeEach(() => {
+        for (const id of ['wd-d2', 'wd-d3']) demo.updateDocument(id, (x) => ({ ...x, invoice: null }));
+      });
+
       it('opens one form with every field, filled in', async () => {
         await render('/documents/wd-d2');
         await edit();
@@ -847,6 +853,7 @@ describe('DocumentDetailPage', () => {
 
       it('a Kleinunternehmer is not asked for a VAT rate', async () => {
         demo.setBusiness('sara-yoga');
+        demo.updateDocument('doc-sy-t2', (x) => ({ ...x, invoice: null })); // as if it was added from a file
         await render('/documents/doc-sy-t2');
         await edit();
         expect(d('edit-vat')).toBeNull();
@@ -987,13 +994,23 @@ describe('DocumentDetailPage', () => {
       expect(options('payment-picker-option')).toHaveLength(5);
     });
 
+    it("suggests Kern Studio Berlin's payment, which has no receipt yet, for Studio Kern's invoice", async () => {
+      await render('/documents/wd-d2');
+      expect(text(d('payment-intro'))).toBe('No payment yet. These might be it:');
+      const suggestions = da('payment-suggestion');
+      expect(suggestions).toHaveLength(1);
+      expect(text(inside(suggestions[0], 'suggestion-name'))).toBe('Kern Studio Berlin');
+    });
+
     it('says so when there is no matching payment, and keeps the other ways', async () => {
+      // Kern Studio Berlin's payment (wd-t19) is the match for this invoice; with its receipt not needed, no payment is left.
+      demo.updateTransaction('wd-t19', (t) => ({ ...t, receipt: 'notNeeded' }));
       await render('/documents/wd-d2');
       expect(text(d('payment-intro'))).toBe('No payment yet.');
       expect(text(d('payment-none'))).toBe('No matching payments yet');
       expect(da('payment-suggestion')).toHaveLength(0);
       expect(d('search-payments')).not.toBeNull();
-      expect(d('cash-payment')).not.toBeNull();
+      expect(d('pay-in-invoice')).not.toBeNull(); // wd-d2 is the document of an invoice, which has its own Mark as paid
     });
 
     it('suggests nothing while no bank is connected', async () => {
@@ -1224,6 +1241,166 @@ describe('DocumentDetailPage', () => {
     });
   });
 
+  describe('an invoice written in Invoices', () => {
+    /** The text of a node with the marks that keep an amount or a number in its own direction taken out. */
+    const bare = (node: Element | null | undefined) => plain(node).replace(/[⁦⁩]/g, '');
+
+    it("an invoice's document is locked and opens the invoice", async () => {
+      await render('/documents/wd-d2');
+      expect(text(d('written-in-invoices'))).toContain('Written in Invoices');
+      const open = d('open-invoice')!;
+      expect(text(open)).toBe('Open invoice');
+      expect(open.getAttribute('href')).toBe('/invoices/inv-wd-044');
+      expect(d('edit-fields')).toBeNull();
+      expect(d('remove-document')).toBeNull();
+      expect(d('change-category')).toBeNull();
+
+      // the same for a paid invoice, whose document is linked to the payment that paid it
+      await render('/documents/doc-wd-t1');
+      expect(d('open-invoice')!.getAttribute('href')).toBe('/invoices/inv-wd-041');
+      expect(d('edit-fields')).toBeNull();
+      expect(d('remove-document')).toBeNull();
+      expect(d('change-category')).toBeNull();
+      expect(d('linked-payment')!.getAttribute('href')).toBe('/payments/wd-t1');
+      expect(d('unlink-payment')).toBeNull();
+    });
+
+    it('a document that was not written in Invoices keeps Edit, Remove and Change', async () => {
+      await render('/documents/wd-d4');
+      expect(d('written-in-invoices')).toBeNull();
+      expect(d('open-invoice')).toBeNull();
+      expect(d('edit-fields')).not.toBeNull();
+      expect(d('remove-document')).not.toBeNull();
+      expect(d('change-category')).not.toBeNull();
+    });
+
+    it('still confirms the booking of the payment that paid the invoice', async () => {
+      await render('/documents/doc-wd-t1');
+      expect(tx('wd-t1').confirmed).toBe(false);
+      await click(d('confirm-booking'));
+      expect(tx('wd-t1').confirmed).toBe(true);
+    });
+
+    it('a cancelled invoice and its cancellation invoice are Done, open their own invoices and need no payment', async () => {
+      await render('/documents/wd-d5');
+      expect(bare(d('doc-status'))).toBe('Done · Cancelled');
+      expect(d('open-invoice')!.getAttribute('href')).toBe('/invoices/inv-wd-040');
+      expect(text(d('payment-closed'))).toBe('This invoice was cancelled, so no payment is needed.');
+      expect(da('payment-suggestion')).toHaveLength(0);
+      expect(d('payment-intro')).toBeNull();
+      expect(d('search-payments')).toBeNull();
+      expect(d('cash-payment')).toBeNull();
+      expect(d('edit-fields')).toBeNull();
+      expect(d('remove-document')).toBeNull();
+
+      await render('/documents/wd-d6');
+      expect(bare(d('doc-status'))).toBe('Cancellation of RE-2026-040');
+      expect(d('open-invoice')!.getAttribute('href')).toBe('/invoices/inv-wd-042');
+      expect(text(d('payment-closed'))).toBe('A cancellation invoice needs no payment.');
+      expect(d('search-payments')).toBeNull();
+      expect(d('cash-payment')).toBeNull();
+    });
+
+    it('the steps of a cancelled invoice end as closed, not as waiting for a payment', async () => {
+      await render('/documents/wd-d5');
+      expect(stepStates()).toEqual([
+        ['Read', 'done'],
+        ['Booked', 'done'],
+        ['Closed', 'done'],
+      ]);
+      await render('/documents/wd-d6');
+      expect(stepStates()[2]).toEqual(['Closed', 'done']);
+    });
+
+    it('a partly paid invoice says what is left, and its payment section shows what came in instead of looking for a first payment', async () => {
+      demo.setBusiness('sara-yoga');
+      await render('/documents/sy-d2');
+      expect(bare(d('doc-status'))).toBe(`Waiting for payment · ${formatMoney(30000, 'en')} left`);
+      expect(d('open-invoice')!.getAttribute('href')).toBe('/invoices/inv-sy-021');
+      expect(d('payment-closed')).toBeNull();
+
+      // It does not say "No payment yet": the payment that came in is there, and no list of payments it might be.
+      expect(text(d('payment-section'))).not.toContain('No payment yet');
+      expect(d('payment-intro')).toBeNull();
+      expect(text(d('payment-part'))).toBe('Part paid so far:');
+      expect(da('payment-suggestion')).toHaveLength(0);
+      expect(da('link-payment')).toHaveLength(0);
+      const received = da('linked-payment');
+      expect(received).toHaveLength(1);
+      expect(received[0].getAttribute('href')).toBe('/payments/sy-t15');
+      expect(plain(inside(received[0], 'linked-name'))).toBe('Physio Zentrum Mitte');
+      expect(text(inside(received[0], 'linked-amount'))).toBe(formatMoney(30000, 'en', { signed: true }));
+      expect(da('unlink-payment')).toHaveLength(0);
+
+      // The rest can still be found by searching, and the invoice is where cash is marked.
+      expect(d('search-payments')).not.toBeNull();
+      expect(d('cash-payment')).toBeNull();
+      expect(d('pay-in-invoice')!.getAttribute('href')).toBe('/invoices/inv-sy-021');
+    });
+
+    it('every payment that came in on a partly paid invoice is listed, the first one first', async () => {
+      demo.setBusiness('sara-yoga');
+      demo.addTransaction({ ...tx('sy-t15'), id: 'sy-more', amountCents: 10000, receipt: 'missing', receiptFile: null, history: [] });
+      demo.linkInvoicePayment('inv-sy-021', 'sy-more', false);
+      expect(doc('sy-d2').paymentId).toBeNull(); // 300 + 100 of 600: still part paid
+      await render('/documents/sy-d2');
+      expect(bare(d('doc-status'))).toBe(`Waiting for payment · ${formatMoney(20000, 'en')} left`);
+      expect(da('linked-payment').map((link) => link.getAttribute('href'))).toEqual(['/payments/sy-t15', '/payments/sy-more']);
+    });
+
+    it('an invoice with nothing paid yet still offers the payments it might be, and leads to the invoice for cash', async () => {
+      await render('/documents/wd-d2');
+      expect(d('payment-part')).toBeNull();
+      expect(text(d('payment-intro'))).toBe('No payment yet. These might be it:');
+      expect(da('payment-suggestion').length).toBeGreaterThan(0);
+      expect(d('search-payments')).not.toBeNull();
+    });
+
+    it("Paid in cash or privately is not offered on an invoice's document: its invoice has Mark as paid, so it links there", async () => {
+      await render('/documents/wd-d2');
+      expect(d('cash-payment')).toBeNull();
+      const link = d('pay-in-invoice')!;
+      expect(text(link)).toBe('Paid in cash? Mark it in the invoice');
+      expect(link.getAttribute('href')).toBe('/invoices/inv-wd-044');
+
+      // A cancelled invoice, a cancellation invoice and a paid one need no payment: neither is offered.
+      for (const id of ['wd-d5', 'wd-d6', 'doc-wd-t1']) {
+        await render(`/documents/${id}`);
+        expect(d('cash-payment'), id).toBeNull();
+        expect(d('pay-in-invoice'), id).toBeNull();
+      }
+
+      // A document that is not an invoice written here keeps it.
+      await render('/documents/wd-d4');
+      expect(text(d('cash-payment'))).toBe('Paid in cash or privately');
+      expect(d('pay-in-invoice')).toBeNull();
+    });
+
+    it('the hint on an invoice document does not talk of cancelling: it fits an open, a paid, a cancelled and a cancellation invoice', async () => {
+      const hint = "This document can't be changed or removed here. Open the invoice to work with it.";
+      for (const id of ['wd-d2', 'doc-wd-t1', 'wd-d5', 'wd-d6']) {
+        await render(`/documents/${id}`);
+        expect(text(d('written-in-invoices')), id).toBe(`Written in Invoices ${hint} Open invoice`);
+      }
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('written-in-invoices'))).toContain(de.documents.detail.written.hint);
+      expect(de.documents.detail.written.hint).not.toMatch(/storn/i);
+    });
+
+    it('This one on the document of an open invoice pays the invoice, and the document is Done', async () => {
+      await render('/documents/wd-d2');
+      await click(inside(da('payment-suggestion')[0], 'link-payment'));
+      expect(doc('wd-d2').paymentId).toBe('wd-t19');
+      expect(demo.business().invoices.find((i) => i.id === 'inv-wd-044')!.paymentIds).toEqual(['wd-t19']);
+      expect(status()).toBe('Done');
+      expect(tx('wd-t19').history[0].key).toBe('paysInvoice');
+      expect(d('linked-payment')!.getAttribute('href')).toBe('/payments/wd-t19');
+      expect(d('unlink-payment')).toBeNull();
+      expect(d('remove-document')).toBeNull();
+    });
+  });
+
   describe('history and Remove', () => {
     it('lists what happened, newest first', async () => {
       await render('/documents/wd-d4');
@@ -1252,10 +1429,10 @@ describe('DocumentDetailPage', () => {
     });
 
     it('Remove takes an unlinked document out and goes back to the list', async () => {
-      await render('/documents/wd-d3');
+      await render('/documents/wd-d4');
       expect(text(d('remove-document'))).toBe('Remove');
       await click(d('remove-document'));
-      expect(demo.documents().some((x) => x.id === 'wd-d3')).toBe(false);
+      expect(demo.documents().some((x) => x.id === 'wd-d4')).toBe(false);
       expect(TestBed.inject(Router).url).toBe('/documents');
       expect(q('document-detail')).toBeNull();
     });
@@ -1276,6 +1453,8 @@ describe('DocumentDetailPage', () => {
         '/documents/wd-d4',
         '/documents/wd-d2',
         '/documents/doc-wd-t1',
+        '/documents/wd-d5',
+        '/documents/wd-d6',
       ]) {
         await render(url);
         if (d('edit-fields')) await click(d('edit-fields'));

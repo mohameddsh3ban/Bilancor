@@ -926,6 +926,30 @@ describe('TaxDetailsPage', () => {
       await navigate('/settings/tax?from=somewhere');
       expect(q('back-link')!.getAttribute('href')).toBe('/settings');
     });
+
+    it('opened from an invoice, goes back to that invoice, or to the new invoice when none is named', async () => {
+      await render('/settings/tax?from=invoice&invoice=inv-weber-design-9');
+      expect(q('back-link')!.getAttribute('href')).toBe('/invoices/inv-weber-design-9/edit');
+      expect(text(q('back-link'))).toBe('Back to your invoice');
+      expect(q('back-link')!.querySelector('ng-icon')!.classList).toContain('rtl:rotate-180');
+
+      await navigate('/settings/tax?from=invoice');
+      expect(q('back-link')!.getAttribute('href')).toBe('/invoices/new');
+      expect(text(q('back-link'))).toBe('Back to your invoice');
+    });
+
+    it('Save goes back to the invoice with replaceUrl, and the invoice id only counts for an invoice', async () => {
+      await render('/settings/tax?from=invoice&invoice=inv-weber-design-9');
+      const go = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+      await click('save');
+      expect(go).toHaveBeenCalledWith('/invoices/inv-weber-design-9/edit', { replaceUrl: true });
+      go.mockRestore();
+
+      await navigate('/settings/tax?from=home&invoice=inv-weber-design-9');
+      expect(q('back-link')!.getAttribute('href')).toBe('/');
+      await navigate('/settings/tax?invoice=inv-weber-design-9');
+      expect(q('back-link')!.getAttribute('href')).toBe('/settings');
+    });
   });
 
   describe('languages', () => {

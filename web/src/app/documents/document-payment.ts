@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -9,6 +10,8 @@ import { MoneyPipe } from '../core/format/money.pipe';
 import { Account, Doc, Transaction } from '../data/models';
 import { accountName } from '../domain/bank-connection';
 import { paymentCandidates } from '../domain/document-matching';
+import { isClosedInvoice } from '../domain/document-status';
+import { invoiceDocNote, invoicePayments } from '../domain/invoices';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentPicker } from './payment-picker';
 
@@ -19,13 +22,26 @@ const SUGGESTIONS = 3;
  * The payment of a document. Not linked yet: the payments it might be (best first, at most three) each with "This
  * one", a search over all of them, and the way out for a payment that has no bank line. Linked: the payment, which
  * opens in Payments, and "Not this payment" to take the link away. While the document is still being read there is
- * nothing to link yet, so only "No payment yet." shows. Each action does something only while it still applies, so a
- * double tap writes one history line on each side.
+ * nothing to link yet, so only "No payment yet." shows. For a cancelled invoice and a cancellation invoice no payment is
+ * looked for: it says none is needed. The document of an invoice written in Invoices cannot be unlinked ("Not this
+ * payment" is not there): the payment is the invoice's. Once part of the invoice is paid it lists the payments that came
+ * in instead of looking for a first one, and in place of "Paid in cash or privately" (which is coming soon) it leads to the
+ * invoice, where Mark as paid works. Each action does something only while it still applies, so a double tap writes one
+ * history line on each side.
  */
 @Component({
   selector: 'app-document-payment',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppDatePipe, HlmButton, MoneyPipe, NgIcon, PaymentPicker, RouterLink, TranslocoPipe],
+  imports: [
+    AppDatePipe,
+    HlmButton,
+    MoneyPipe,
+    NgIcon,
+    NgTemplateOutlet,
+    PaymentPicker,
+    RouterLink,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons({ lucideChevronRight })],
   host: { class: 'block' },
   template: `
@@ -34,7 +50,7 @@ const SUGGESTIONS = 3;
         {{ 'documents.detail.payment.title' | transloco }}
       </h2>
 
-      @if (payment(); as linked) {
+      <ng-template #paymentRow let-linked>
         @let account = accountOf(linked);
         <a
           class="bg-muted/50 hover:bg-muted border-border flex items-center gap-3 rounded-lg border p-3"
@@ -66,24 +82,45 @@ const SUGGESTIONS = 3;
             aria-hidden="true"
           />
         </a>
-        <div class="flex flex-wrap gap-2">
-          <button
-            hlmBtn
-            variant="outline"
-            size="lg"
-            type="button"
-            data-testid="unlink-payment"
-            (click)="unlink()"
-          >
-            {{ 'documents.detail.payment.notThis' | transloco }}
-          </button>
-        </div>
+      </ng-template>
+
+      @if (payment(); as linked) {
+        <ng-container *ngTemplateOutlet="paymentRow; context: { $implicit: linked }" />
+        @if (doc().invoice === null) {
+          <div class="flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              variant="outline"
+              size="lg"
+              type="button"
+              data-testid="unlink-payment"
+              (click)="unlink()"
+            >
+              {{ 'documents.detail.payment.notThis' | transloco }}
+            </button>
+          </div>
+        }
       } @else if (doc().reading) {
         <p class="text-sm" data-testid="payment-intro">
           {{ 'documents.detail.payment.none' | transloco }}
         </p>
+      } @else if (closedKey(); as closed) {
+        <p class="text-sm" data-testid="payment-closed">
+          {{ 'documents.detail.payment.' + closed | transloco }}
+        </p>
       } @else {
-        @if (suggestions().length > 0) {
+        @if (received(); as paid) {
+          <p class="text-sm" data-testid="payment-part">
+            {{ 'documents.detail.payment.partPaid' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-2">
+            @for (item of paid; track item.id) {
+              <li>
+                <ng-container *ngTemplateOutlet="paymentRow; context: { $implicit: item }" />
+              </li>
+            }
+          </ul>
+        } @else if (suggestions().length > 0) {
           <p class="text-sm" data-testid="payment-intro">
             {{ 'documents.detail.payment.intro' | transloco }}
           </p>
@@ -145,15 +182,27 @@ const SUGGESTIONS = 3;
         }
         <div class="flex flex-wrap items-center gap-2">
           <app-payment-picker [payments]="candidates()" (picked)="link($event)" />
-          <a
-            hlmBtn
-            variant="outline"
-            size="lg"
-            data-testid="cash-payment"
-            [routerLink]="['/soon', 'cashPayment']"
-          >
-            {{ 'documents.detail.payment.cash' | transloco }}
-          </a>
+          @if (doc().invoice; as written) {
+            <a
+              hlmBtn
+              variant="outline"
+              size="lg"
+              data-testid="pay-in-invoice"
+              [routerLink]="['/invoices', written.id]"
+            >
+              {{ 'documents.detail.payment.payInInvoice' | transloco }}
+            </a>
+          } @else {
+            <a
+              hlmBtn
+              variant="outline"
+              size="lg"
+              data-testid="cash-payment"
+              [routerLink]="['/soon', 'cashPayment']"
+            >
+              {{ 'documents.detail.payment.cash' | transloco }}
+            </a>
+          }
         </div>
       }
     </section>
@@ -175,6 +224,21 @@ export class DocumentPayment {
       : [],
   );
   protected readonly suggestions = computed(() => this.candidates().slice(0, SUGGESTIONS));
+  /** The payments that came in on a part-paid invoice written in Invoices, the first one first; otherwise null. */
+  protected readonly received = computed<Transaction[] | null>(() => {
+    const doc = this.doc();
+    const business = this.demo.business();
+    const invoice = business.invoices.find((i) => i.id === doc.invoice?.id);
+    if (!invoice || invoiceDocNote(doc, business)?.kind !== 'left') return null;
+    const payments = invoicePayments(invoice, business);
+    return payments.length > 0 ? payments : null;
+  });
+  /** For a cancelled invoice and a cancellation invoice, the text that says no payment is needed (no payment is looked for); otherwise null. */
+  protected readonly closedKey = computed(() => {
+    const doc = this.doc();
+    if (!isClosedInvoice(doc)) return null;
+    return doc.invoice?.role === 'cancellation' ? 'closedCancellation' : 'closedCancelled';
+  });
 
   protected accountOf(payment: Transaction): Account | undefined {
     return this.demo.business().accounts.find((account) => account.id === payment.accountId);

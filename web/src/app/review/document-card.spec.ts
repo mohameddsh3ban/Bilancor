@@ -69,9 +69,12 @@ describe('DocumentCard', () => {
     fixture.detectChanges();
   }
 
-  /** `wd-d3` as a possible duplicate of `wd-d2`, which is the oldest decision then. */
+  /**
+   * `wd-d3` as a possible duplicate of `wd-d2`, which is the oldest decision then. A duplicate is a file that was added, so it is
+   * not the document of an invoice written in Invoices (that one cannot be removed).
+   */
   function makeDuplicate(extra: Partial<Doc> = {}): void {
-    demo.updateDocument('wd-d3', (d) => ({ ...d, duplicateOf: 'wd-d2', ...extra }));
+    demo.updateDocument('wd-d3', (d) => ({ ...d, duplicateOf: 'wd-d2', invoice: null, ...extra }));
   }
 
   it('shows the paper with the unclear spot marked', () => {
@@ -116,7 +119,7 @@ describe('DocumentCard', () => {
 
       expect(doc('wd-d1')!.amountCents).toBe(4990);
       expect(doc('wd-d1')!.history[0].key).toBe('docEdited');
-      expect(queueLength()).toBe(5);
+      expect(queueLength()).toBe(6);
       play(SAVING_MS);
       expect(text(q('tick-text'))).toBe('Amount saved');
       expect(review.lastAnswer()?.labelKey).toBe('review.result.amountSaved');
@@ -267,13 +270,13 @@ describe('DocumentCard', () => {
       vi.useFakeTimers();
       makeDuplicate();
       show('wd-d3');
-      expect(queueLength()).toBe(7); // the six decisions of the sample data, and this one
+      expect(queueLength()).toBe(8); // the seven decisions of the sample data, and this one
 
       click(q('answer-remove'));
 
       expect(doc('wd-d3')).toBeUndefined();
       expect(review.summary().duplicatesRemoved).toBe(1);
-      expect(queueLength()).toBe(6);
+      expect(queueLength()).toBe(7);
       expect(text(q('card-name'))).toBe('Bäckerei Lange');
       play(SAVING_MS);
       expect(text(q('tick-text'))).toBe('Removed');

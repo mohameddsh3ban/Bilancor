@@ -110,6 +110,51 @@
       "de": "Übertragungsprotokoll",
       "explain": "Der Nachweis, dass deine Erklärung ans Finanzamt gesendet wurde, mit dem Transfer-Ticket als Beleg."
     },
+    "rechnung": {
+      "label": "Rechnung",
+      "de": "Rechnung",
+      "explain": "Die Rechnung, die du an einen Kunden schickst. In Deutschland braucht sie beide Adressen, eine fortlaufende Nummer, das Datum, die Leistung mit Zeitpunkt und den Betrag mit Umsatzsteuer."
+    },
+    "stornorechnung": {
+      "label": "Stornorechnung",
+      "de": "Stornorechnung",
+      "explain": "Eine verschickte Rechnung darf nicht geändert werden. Du stornierst sie mit einer Stornorechnung, die sie mit negativen Beträgen wiederholt. Das Original bleibt erhalten."
+    },
+    "eRechnung": {
+      "label": "E-Rechnung",
+      "de": "E-Rechnung",
+      "explain": "Eine Rechnung, deren Daten ein Computer lesen kann. Unternehmen in Deutschland müssen sie empfangen können, und das Verschicken wird Schritt für Schritt Pflicht."
+    },
+    "zugferd": {
+      "label": "ZUGFeRD",
+      "de": "ZUGFeRD",
+      "explain": "Eine E-Rechnung, die wie ein normales PDF aussieht und sich so öffnen lässt, mit den lesbaren Daten darin. Das übliche Format für Geschäftskunden in Deutschland."
+    },
+    "xrechnung": {
+      "label": "XRechnung",
+      "de": "XRechnung",
+      "explain": "Eine E-Rechnung als reine Datendatei. Behörden in Deutschland verlangen sie, zusammen mit ihrer Leitweg-ID."
+    },
+    "zahlungserinnerung": {
+      "label": "Zahlungserinnerung",
+      "de": "Zahlungserinnerung",
+      "explain": "Eine freundliche erste Erinnerung an eine Rechnung, die bis zum Fälligkeitsdatum nicht bezahlt wurde. Sie kostet nichts extra und gibt deinem Kunden eine Woche Zeit zum Zahlen."
+    },
+    "mahnung": {
+      "label": "Mahnung",
+      "de": "Mahnung",
+      "explain": "Eine zweite, deutlichere Erinnerung nach der Zahlungserinnerung. Sie nennt ein neues Zahlungsdatum und weist darauf hin, dass Verzugszinsen berechnet werden können. Zinsen oder Gebühren rechnet die App nicht aus."
+    },
+    "leitwegId": {
+      "label": "Leitweg-ID",
+      "de": "Leitweg-ID",
+      "explain": "Die Routing-Nummer, die dir eine Behörde gibt, damit sie deine Rechnung empfangen kann. Ohne sie kann die Behörde die Rechnung nicht annehmen."
+    },
+    "reverseCharge": {
+      "label": "Steuerschuldnerschaft des Leistungsempfängers",
+      "de": "Steuerschuldnerschaft des Leistungsempfängers",
+      "explain": "Bei einem Geschäftskunden in einem anderen EU-Land berechnest du keine deutsche Umsatzsteuer. Dein Kunde zahlt die Steuer in seinem Land, und die Rechnung sagt das."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -127,7 +172,6 @@
   "soon": {
     "home": "Start",
     "payments": "Zahlungen",
-    "invoices": "Rechnungen",
     "reports": "Auswertungen",
     "help": "Hilfe",
     "more": "Mehr",
@@ -298,6 +342,11 @@
     "revenueLimit": {
       "text": "Du hast {{percent}} % deiner Umsatzgrenze als Kleinunternehmer erreicht",
       "action": "Details"
+    },
+    "invoiceOverdue": {
+      "text": "{{name}} ist mit {{number}} seit {{days}} Tagen im Rückstand",
+      "textOne": "{{name}} ist mit {{number}} seit 1 Tag im Rückstand",
+      "action": "Zahlungserinnerung senden"
     }
   },
   "booking": {
@@ -313,6 +362,8 @@
     "rent": "Miete",
     "revenue19": "Einnahmen (19 % USt)",
     "revenue7": "Einnahmen (7 % USt)",
+    "revenueAbroad": "Einnahmen (Ausland, ohne USt)",
+    "revenueEuRc": "Einnahmen (EU, Reverse Charge)",
     "revenueKU": "Einnahmen (ohne USt)",
     "salaries": "Gehälter",
     "software": "Software & Wartung",
@@ -347,7 +398,18 @@
     "taxChanged": "Du hast deine Steuerangaben geändert",
     "bankConnected": "Du hast {{account}} bei {{bank}} verbunden",
     "bankRenewed": "Du hast die Verbindung zu {{bank}} erneuert",
-    "cashAdded": "Du hast eine Kasse hinzugefügt"
+    "cashAdded": "Du hast eine Kasse hinzugefügt",
+    "invoiceCreated": "Du hast die Rechnung erstellt",
+    "invoiceSent": "Du hast sie per E-Mail an {{email}} gesendet",
+    "invoiceReminded": "Du hast Erinnerung {{level}} von 2 per E-Mail gesendet",
+    "invoicePaid": "Vollständig bezahlt",
+    "invoicePartlyPaid": "Teilzahlung erhalten",
+    "invoiceCancelled": "Du hast sie mit der Stornorechnung {{number}} storniert",
+    "invoiceCancellation": "Du hast sie erstellt, um die Rechnung {{number}} zu stornieren",
+    "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
+    "paidInCash": "Du hast sie als bar bezahlt markiert",
+    "paysInvoice": "Bezahlt die Rechnung {{number}}",
+    "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht"
   },
   "payments": {
     "title": "Zahlungen",
@@ -395,6 +457,7 @@
     "detail": {
       "back": "Zahlungen",
       "close": "Schließen",
+      "paysInvoice": "Bezahlt die Rechnung {{number}}",
       "receipt": {
         "title": "Beleg",
         "notNeeded": "Kein Beleg nötig",
@@ -418,7 +481,8 @@
         "kind": "Diese Zahlung ist",
         "business": "Geschäftlich",
         "private": "Privat",
-        "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung."
+        "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung.",
+        "privateBlockedInvoice": "Diese Zahlung bezahlt eine Rechnung, deshalb bleibt sie geschäftlich."
       },
       "picker": {
         "search": "Kategorien durchsuchen",
@@ -509,7 +573,11 @@
       "waiting": "Wartet auf Zahlung",
       "waitingDue": "Wartet auf Zahlung · fällig {{date}}",
       "overdue": "Überfällig seit {{date}}",
-      "done": "Erledigt"
+      "done": "Erledigt",
+      "waitingLeft": "Wartet auf Zahlung · {{left}} offen",
+      "overdueLeft": "Überfällig seit {{date}} · {{left}} offen",
+      "doneCancelled": "Erledigt · Storniert",
+      "cancellationOf": "Stornorechnung zu {{number}}"
     },
     "needsYou": {
       "title": "Braucht dich · {{count}}",
@@ -568,6 +636,7 @@
         "confirm": "Bestätigen",
         "paid": "Bezahlt",
         "waiting": "Wartet auf Zahlung",
+        "closed": "Abgeschlossen",
         "done": "erledigt",
         "current": "aktueller Schritt"
       },
@@ -601,14 +670,291 @@
         "thisOne": "Diese",
         "searchAll": "Alle Zahlungen durchsuchen",
         "cash": "Bar oder privat bezahlt",
-        "notThis": "Nicht diese Zahlung"
+        "payInInvoice": "Bar bezahlt? In der Rechnung markieren",
+        "partPaid": "Bisher teilweise bezahlt:",
+        "notThis": "Nicht diese Zahlung",
+        "closedCancelled": "Diese Rechnung wurde storniert, deshalb ist keine Zahlung nötig.",
+        "closedCancellation": "Eine Stornorechnung braucht keine Zahlung."
       },
       "picker": {
         "search": "Zahlungen durchsuchen",
         "placeholder": "Name oder Betrag",
         "empty": "Keine Zahlung passt"
       },
-      "remove": "Entfernen"
+      "remove": "Entfernen",
+      "written": {
+        "title": "In Rechnungen geschrieben",
+        "hint": "Dieses Dokument lässt sich hier nicht ändern oder entfernen. Öffne die Rechnung, um damit zu arbeiten.",
+        "open": "Rechnung öffnen"
+      }
+    }
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "new": "Neue Rechnung",
+    "owed": {
+      "title": "Das bekommst du noch",
+      "overdue": "überfällig"
+    },
+    "count": {
+      "one": "1 Rechnung",
+      "many": "{{count}} Rechnungen"
+    },
+    "filter": {
+      "label": "Rechnungen filtern",
+      "all": "Alle",
+      "open": "Offen",
+      "overdue": "Überfällig",
+      "drafts": "Entwürfe",
+      "paid": "Bezahlt"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "due": "Fällig am {{date}}",
+      "dueToday": "Heute fällig",
+      "open": "Offen",
+      "overdueDays": {
+        "one": "1 Tag überfällig",
+        "many": "{{count}} Tage überfällig"
+      },
+      "partlyPaid": "Teilweise bezahlt · {{left}} offen",
+      "paid": "Bezahlt",
+      "paidOn": "Bezahlt am {{date}}",
+      "cancelled": "Storniert",
+      "cancellation": "Stornorechnung"
+    },
+    "row": {
+      "draft": "Entwurf",
+      "fromFile": "Aus einer Datei hinzugefügt",
+      "noCustomer": "Noch kein Kunde",
+      "remind": "Zahlungserinnerung senden",
+      "remindFormal": "Mahnung senden",
+      "reminded": "Erinnert am {{date}}",
+      "remindedLater": "Erinnert am {{date}} · Mahnung ab {{from}} möglich"
+    },
+    "empty": {
+      "none": {
+        "title": "Noch keine Rechnungen",
+        "body": "Schreib deine erste Rechnung. Sie geht per E-Mail an deinen Kunden und erscheint bei deinen Dokumenten."
+      },
+      "filter": {
+        "open": "Keine offenen Rechnungen",
+        "overdue": "Keine überfälligen Rechnungen",
+        "drafts": "Keine Entwürfe",
+        "paid": "Noch keine bezahlten Rechnungen"
+      },
+      "showAll": "Alle anzeigen"
+    },
+    "detail": {
+      "back": "Rechnungen",
+      "paper": "Die Rechnung, wie dein Kunde sie sieht",
+      "due": "fällig am {{date}}",
+      "history": {
+        "title": "Was passiert ist"
+      },
+      "next": {
+        "title": "Nächster Schritt"
+      },
+      "edit": "Bearbeiten",
+      "download": "PDF herunterladen",
+      "send": "Ansehen und senden",
+      "sending": "Wird gesendet…",
+      "remind": "Zahlungserinnerung senden",
+      "remindFormal": "Mahnung senden",
+      "duplicate": "Duplizieren",
+      "correctCopy": "Korrigierte Kopie erstellen",
+      "notReady": "Noch nicht bereit zum Senden. Unter „Bearbeiten“ siehst du, was fehlt.",
+      "cancelledNote": "Storniert mit der Stornorechnung {{number}}. Das Original bleibt erhalten.",
+      "format": "Format",
+      "notFound": {
+        "title": "Rechnung nicht gefunden",
+        "body": "Sie wurde vielleicht entfernt oder gehört zu einem anderen Unternehmen.",
+        "back": "Zurück zu den Rechnungen"
+      }
+    },
+    "send": {
+      "title": {
+        "invoice": "Rechnung senden",
+        "reminder1": "Zahlungserinnerung senden",
+        "reminder2": "Mahnung senden",
+        "sending": "Wird gesendet…",
+        "sent": "Gesendet ✓"
+      },
+      "type": "Art",
+      "to": "An",
+      "subject": "Betreff",
+      "attachment": "Anhang",
+      "message": "Nachricht",
+      "cancel": "Abbrechen",
+      "confirm": "Senden",
+      "close": "Schließen",
+      "onItsWay": "Deine E-Mail an {{email}} ist unterwegs.",
+      "doneInvoice": "Deine Rechnung wurde an {{email}} gesendet.",
+      "doneReminder": "Die Erinnerung wurde an {{email}} gesendet.",
+      "number": "Rechnungsnummer"
+    },
+    "actions": {
+      "markPaid": "Als bezahlt markieren",
+      "more": "Weitere Aktionen",
+      "duplicate": "Duplizieren",
+      "cancel": "Rechnung stornieren",
+      "cancelPaid": "Eine bezahlte Rechnung lässt sich nur mit einer Gutschrift stornieren – kommt später",
+      "cancelPartlyPaid": "Eine teilweise bezahlte Rechnung lässt sich nur mit einer Gutschrift stornieren – kommt später",
+      "cancelDialog": {
+        "title": "Rechnung {{number}} stornieren?",
+        "body": "Dabei entsteht eine Stornorechnung. Das Original bleibt erhalten.",
+        "keep": "Rechnung behalten",
+        "confirm": "Rechnung stornieren",
+        "close": "Schließen"
+      },
+      "payDialog": {
+        "title": "{{number}} als bezahlt markieren",
+        "body": "Bar bezahlt am",
+        "hint": "Das wird als Barzahlung erfasst und zählt wie jede andere Zahlung für deine Umsatzsteuer-Voranmeldung und die Jahreszahlen.",
+        "error": "Wähle einen Tag vom Rechnungsdatum bis heute.",
+        "confirm": "Als bezahlt markieren",
+        "cancel": "Abbrechen",
+        "close": "Schließen"
+      },
+      "demo": "Zahlung des Kunden simulieren"
+    }
+  },
+  "invoiceForm": {
+    "titleEdit": "Entwurf bearbeiten",
+    "close": "Schließen",
+    "saved": "Als Entwurf gespeichert. Du kannst jederzeit gehen.",
+    "customer": {
+      "title": "Kunde",
+      "new": "Neuer Kunde",
+      "edit": "Angaben bearbeiten",
+      "kind": {
+        "title": "Für wen ist die Rechnung?",
+        "business": "Unternehmen",
+        "private": "Privatperson",
+        "public": "Behörde"
+      },
+      "name": "Name",
+      "street": "Straße und Hausnummer",
+      "postcode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "email": "E-Mail",
+      "emailHint": "An diese Adresse geht die Rechnung.",
+      "vatIdHint": "Die USt-IdNr. deines Kunden, zum Beispiel FR12345678901. Sie steht auf der Rechnung.",
+      "leitwegHint": "Die Behörde nennt dir diese Nummer. Ohne sie kann sie die Rechnung nicht annehmen.",
+      "abroadNote": "Kunden im Ausland sind vorerst nur Unternehmen."
+    },
+    "lines": {
+      "title": "Was du gemacht hast",
+      "line": "Position {{n}}",
+      "description": "Beschreibung",
+      "quantity": "Menge",
+      "unit": "Einheit",
+      "price": "Preis pro Einheit",
+      "net": "Betrag",
+      "add": "Position hinzufügen",
+      "remove": "Position {{n}} entfernen",
+      "suggestions": "Frühere Positionen",
+      "hintNet": "Die Preise sind ohne Umsatzsteuer. Die Steuer kommt unten dazu.",
+      "hintGross": "Die Preise sind das, was dein Kunde zahlt.",
+      "quantityError": "Gib eine Zahl über 0 mit höchstens zwei Nachkommastellen ein, zum Beispiel 1 oder 2,5.",
+      "priceError": "Gib einen Betrag über 0 ein, zum Beispiel 49,90."
+    },
+    "unit": {
+      "piece": "Stück",
+      "hour": "Stunden",
+      "day": "Tage",
+      "flat": "Pauschale"
+    },
+    "vat": {
+      "title": "Umsatzsteuer",
+      "rate": "{{rate}} % Umsatzsteuer",
+      "standard": "Regelsatz",
+      "reduced": "Ermäßigter Satz",
+      "net": "Netto",
+      "vat": "USt. {{rate}} %",
+      "total": "Gesamt",
+      "note": {
+        "kleinunternehmer": "Keine Umsatzsteuer auf dieser Rechnung. Als Kleinunternehmer berechnest du sie nicht, und die Rechnung trägt den Hinweis nach § 19.",
+        "reverseCharge": "Keine deutsche Umsatzsteuer auf dieser Rechnung. Dein Kunde zahlt die Steuer in seinem Land, und die Rechnung sagt das.",
+        "notTaxable": "Keine deutsche Umsatzsteuer auf dieser Rechnung. Eine Leistung an ein Unternehmen außerhalb der EU ist in Deutschland nicht steuerbar, und die Rechnung sagt das."
+      }
+    },
+    "dates": {
+      "title": "Daten",
+      "issueDate": "Rechnungsdatum",
+      "issueDateError": "Wähle einen Tag vom 1. Januar dieses Jahres bis heute.",
+      "workDone": "Leistung erbracht im",
+      "month": "Ein Monat",
+      "day": "Ein Tag",
+      "chooseMonth": "Monat wählen",
+      "term": "Zahlbar innerhalb von",
+      "due": "Fällig am {{date}}"
+    },
+    "ready": {
+      "title": "Bereit zum Senden",
+      "format": "Format",
+      "pdf": "PDF",
+      "number": "Die Nummer {{number}} bekommt die Rechnung beim Senden.",
+      "blocked": "Behebe, was oben markiert ist, dann kannst du senden."
+    },
+    "check": {
+      "sellerAddress": {
+        "ok": "Dein Name und deine Adresse",
+        "missing": "Name und Adresse in den Einstellungen ergänzen"
+      },
+      "taxNumber": {
+        "ok": "Deine Steuernummer",
+        "missing": "Steuernummer in den Einstellungen ergänzen"
+      },
+      "sellerVatId": {
+        "ok": "Deine USt-IdNr.",
+        "missing": "USt-IdNr. in den Einstellungen ergänzen"
+      },
+      "customerName": {
+        "ok": "Kunde",
+        "missing": "Kunden auswählen oder hinzufügen"
+      },
+      "customerAddress": {
+        "ok": "Adresse des Kunden",
+        "missing": "Vollständige Adresse des Kunden ergänzen"
+      },
+      "customerEmail": {
+        "ok": "E-Mail des Kunden",
+        "missing": "E-Mail des Kunden ergänzen"
+      },
+      "customerVatId": {
+        "ok": "USt-IdNr. des Kunden",
+        "missing": "USt-IdNr. des Kunden ergänzen"
+      },
+      "leitwegId": {
+        "ok": "Leitweg-ID der Behörde",
+        "missing": "Leitweg-ID der Behörde ergänzen"
+      },
+      "privateAbroad": {
+        "ok": "Kunde in Deutschland",
+        "missing": "Kunden im Ausland sind vorerst nur Unternehmen"
+      },
+      "lines": {
+        "ok": "Was du gemacht hast, mit Preisen",
+        "missing": "Positionen vervollständigen: Jede braucht Beschreibung, Menge und Preis"
+      },
+      "issueDate": {
+        "ok": "Rechnungsdatum",
+        "missing": "Wähle ein Rechnungsdatum vom 1. Januar dieses Jahres bis heute"
+      },
+      "servicePeriod": {
+        "ok": "Wann die Leistung erbracht wurde",
+        "missing": "Angeben, wann die Leistung erbracht wurde"
+      }
+    },
+    "delete": {
+      "button": "Entwurf löschen",
+      "title": "Diesen Entwurf löschen?",
+      "body": "Der Entwurf wird endgültig entfernt. Rechnungen, die du gesendet hast, bleiben unberührt.",
+      "keep": "Entwurf behalten",
+      "confirm": "Entwurf löschen",
+      "close": "Schließen"
     }
   },
   "print": {
@@ -702,7 +1048,8 @@
     "q": {
       "unclear": "Wofür war das?",
       "confirm": "Wir haben das als {{category}} gebucht. Stimmt das?",
-      "noReceipt": "Für diese Zahlung gibt es noch keinen Beleg."
+      "noReceipt": "Für diese Zahlung gibt es noch keinen Beleg.",
+      "invoiceMatch": "Ist das die Zahlung für Rechnung {{number}} an {{name}}?"
     },
     "a": {
       "private": "Privat, nicht fürs Geschäft",
@@ -710,7 +1057,9 @@
       "confirm": "Ja, stimmt",
       "changeCategory": "Kategorie ändern",
       "takePhoto": "Foto aufnehmen",
-      "removeThis": "Diesen entfernen"
+      "removeThis": "Diesen entfernen",
+      "yes": "Ja",
+      "pickAnother": "Andere wählen"
     },
     "result": {
       "booked": "Gebucht",
@@ -725,7 +1074,8 @@
       "sent": "Als gesendet markiert",
       "amountSaved": "Betrag gespeichert",
       "dateSaved": "Datum gespeichert",
-      "nameSaved": "Name gespeichert"
+      "nameSaved": "Name gespeichert",
+      "invoicePaid": "Rechnung bezahlt"
     },
     "learned": "Alles klar — {{name}} wird ab jetzt automatisch als {{category}} gebucht.",
     "learnedMore": {
@@ -754,7 +1104,8 @@
   "taxDetails": {
     "back": {
       "home": "Zurück zur Startseite",
-      "settings": "Zurück zu den Einstellungen"
+      "settings": "Zurück zu den Einstellungen",
+      "invoice": "Zurück zu deiner Rechnung"
     },
     "title": "Deine Steuerangaben",
     "intro": "Damit wir richtig buchen und melden. Die meisten Antworten findest du im Brief vom Finanzamt.",
@@ -879,6 +1230,57 @@
       "body": "Das dauert einen Moment."
     }
   },
+  "invoiceDetails": {
+    "back": {
+      "settings": "Zurück zu den Einstellungen",
+      "invoice": "Zurück zu deiner Rechnung"
+    },
+    "title": "Rechnungsangaben",
+    "intro": "Das steht auf jeder Rechnung, die du verschickst. Deine Steuernummer oder USt-IdNr. kommt aus deinen Steuerangaben.",
+    "address": {
+      "title": "Name und Adresse",
+      "name": "Name deines Unternehmens",
+      "street": "Straße und Hausnummer",
+      "postcode": "Postleitzahl",
+      "city": "Ort"
+    },
+    "iban": {
+      "title": "Bankkonto (IBAN)",
+      "account": "Eines deiner Konten verwenden",
+      "other": "Anderes Konto (unten eintippen)",
+      "label": "IBAN",
+      "hint": "Steht auf deinen Rechnungen, damit deine Kunden wissen, wohin sie zahlen. Leer lassen, wenn kein Konto draufstehen soll.",
+      "error": "Das sieht nicht wie eine IBAN aus. Prüfe sie und versuche es noch einmal."
+    },
+    "email": {
+      "title": "Absender-E-Mail",
+      "hint": "Deine Kunden bekommen deine Rechnungen von dieser Adresse."
+    },
+    "pattern": {
+      "title": "Rechnungsnummern",
+      "label": "Muster",
+      "hint": "Es braucht {YYYY}, das zum Jahr wird, und {NNN}, die laufende Nummer, zum Beispiel RE-{YYYY}-{NNN}.",
+      "next": "Nächste Nummer:",
+      "errorNumber": "Das Muster braucht {NNN}, die laufende Nummer. Ohne sie bekäme jede Rechnung dieselbe Nummer.",
+      "errorYear": "Das Muster braucht {YYYY}, das Jahr. Die Rechnungsnummern beginnen jedes Jahr neu.",
+      "errorBraces": "In geschweiften Klammern dürfen nur {YYYY} und {NNN} stehen."
+    },
+    "term": {
+      "title": "Zahlungsziel",
+      "hint": "Wie lange deine Kunden Zeit zum Zahlen haben. Du kannst es bei jeder Rechnung ändern.",
+      "d7": "7 Tage",
+      "d14": "14 Tage",
+      "d30": "30 Tage",
+      "other": "{{days}} Tage"
+    },
+    "language": {
+      "title": "Sprache der Rechnung",
+      "hint": "Die Sprache der Rechnung, ihrer E-Mail und ihrer Erinnerungen. Die App bleibt in deiner Sprache.",
+      "de": "Deutsch",
+      "en": "Englisch"
+    },
+    "save": "Speichern"
+  },
   "settings": {
     "title": "Einstellungen",
     "tax": {
@@ -894,6 +1296,17 @@
       "basis": "Umsatzsteuer ist fällig",
       "notGiven": "Nicht angegeben",
       "yearFrom": "Beginnt am {{date}}"
+    },
+    "invoice": {
+      "title": "Rechnungsangaben",
+      "edit": "Bearbeiten",
+      "editLabel": "Deine Rechnungsangaben bearbeiten",
+      "address": "Name und Adresse",
+      "iban": "Bankkonto (IBAN)",
+      "numbers": "Rechnungsnummern",
+      "term": "Zahlungsziel",
+      "language": "Sprache der Rechnung",
+      "notGiven": "Nicht angegeben"
     },
     "bank": {
       "title": "Bankkonten",

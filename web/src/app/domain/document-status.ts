@@ -15,9 +15,15 @@ const CHECK_STATUS: Record<DocField, DocStatus> = {
   name: 'checkName',
 };
 
+/** Whether the document belongs to an invoice that no payment will settle: a cancelled invoice, or the cancellation invoice that cancels one. */
+export function isClosedInvoice(doc: Doc): boolean {
+  return doc.invoice !== null && (doc.invoice.role === 'cancellation' || doc.invoice.cancelled);
+}
+
 /**
  * Where a document stands, decided in this order: still being read, a possible duplicate, no direction,
- * a field to check, linked to a payment, past its due date. Only a due date makes a document overdue.
+ * a field to check, linked to a payment or closed (a cancelled invoice and its cancellation invoice), past its due date.
+ * Only a due date makes a document overdue.
  */
 export function docStatus(doc: Doc, today = DEMO_TODAY): DocStatus {
   if (doc.reading) return 'reading';
@@ -25,7 +31,7 @@ export function docStatus(doc: Doc, today = DEMO_TODAY): DocStatus {
   if (doc.direction === null) return 'direction';
   const missing = missingField(doc);
   if (missing !== null) return CHECK_STATUS[missing];
-  if (doc.paymentId !== null) return 'done';
+  if (doc.paymentId !== null || isClosedInvoice(doc)) return 'done';
   if (doc.dueDate !== null && doc.dueDate < today) return 'overdue';
   return 'waiting';
 }

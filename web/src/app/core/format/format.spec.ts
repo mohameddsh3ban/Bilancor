@@ -1,4 +1,4 @@
-import { formatDate, formatIban, formatMoney, formatMonthRange, formatTaxPeriod } from './format';
+import { countryName, formatDate, formatIban, formatMoney, formatMonthRange, formatNumber, formatTaxPeriod } from './format';
 
 describe('formatMoney', () => {
   it('en', () => {
@@ -122,5 +122,32 @@ describe('formatMonthRange', () => {
   it('names a span of one month once', () => {
     expect(formatMonthRange('2026-01', '2026-01', 'en')).toBe('January');
     expect(formatMonthRange('2026-03', '2026-03', 'de')).toBe('März');
+  });
+});
+
+describe('countryName', () => {
+  it('names a country in the language asked for', () => {
+    expect(countryName('DE', 'en')).toBe('Germany');
+    expect(countryName('DE', 'de')).toBe('Deutschland');
+    expect(countryName('FR', 'de')).toBe('Frankreich');
+    expect(countryName('GB', 'ar')).toBe('المملكة المتحدة');
+  });
+
+  it('gives back a code it cannot name, and nothing for no code', () => {
+    expect(countryName('not a code', 'en')).toBe('not a code');
+    expect(countryName('', 'en')).toBe('');
+  });
+});
+
+describe('formatNumber', () => {
+  it('uses the separators of the language and at most two decimals', () => {
+    expect(formatNumber(1234.5, 'en')).toBe('1,234.5');
+    expect(formatNumber(1234.5, 'de')).toBe('1.234,5');
+    expect(formatNumber(0.125, 'en')).toBe('0.13');
+    expect(formatNumber(-2, 'de')).toBe('-2');
+  });
+
+  it('uses Western digits in Arabic', () => {
+    expect(formatNumber(12, 'ar')).toBe('12');
   });
 });

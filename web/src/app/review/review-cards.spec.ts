@@ -118,16 +118,60 @@ describe('the review cards on the page', () => {
     nextCard();
     seen.push(url());
 
-    expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review']);
+    // wd-t19: Kern Studio Berlin's payment has no receipt; is it the payment for RE-2026-044? Yes
+    expect(name()).toBe('Kern Studio Berlin');
+    expect(text(q('card-question'))).toBe(
+      'Is this the payment for invoice RE-2026-044 from Studio Kern?',
+    );
+    click('answer-invoice-yes');
+    nextCard();
+    seen.push(url());
+
+    expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review', '/review']);
     expect(url()).toBe('/review');
     expect(q('review-card')).toBeNull();
-    expect(text(q('finish-summary'))).toBe('5 decisions · 1 receipt added');
+    // The photo and the invoice are the two receipts added.
+    expect(text(q('finish-summary'))).toBe('6 decisions · 2 receipts added');
+    expect(demo.business().invoices.find((i) => i.id === 'inv-wd-044')!.paymentIds).toEqual(['wd-t19']);
+  });
+
+  it("the invoice question stays on the card while its answer shows, until the card slides away", async () => {
+    // Settle what is in front of the Kern payment, so it is the card on the page (and the last one).
+    for (
+      let item = review.current();
+      item !== null && item.id !== 'wd-t19';
+      item = review.current()
+    ) {
+      settleItem(demo, item);
+    }
+    await render();
+    vi.useFakeTimers();
+    const question = 'Is this the payment for invoice RE-2026-044 from Studio Kern?';
+    const card = q('review-card-host')!;
+    expect(text(q('card-question'))).toBe(question);
+
+    click('answer-invoice-yes');
+    play(SAVING_MS);
+
+    // The payment is linked to the invoice now, but the card still shows what it was asked and answered.
+    expect(text(q('tick-text'))).toBe('Invoice paid');
+    expect(q('review-card-host')).toBe(card);
+    expect(text(q('card-question'))).toBe(question);
+    expect(text(q('answer-invoice-yes'))).toBe('Yes');
+    expect(text(q('pick-document'))).toBe('Pick another');
+    expect(q('answer-photo')).toBeNull();
+
+    play(TICK_MS); // the card slides out with its tick still up
+    expect(text(q('card-question'))).toBe(question);
+    expect(q('answer-photo')).toBeNull();
+    play(SLIDE_MS);
+    expect(q('review-finish')).not.toBeNull();
   });
 
   it('learning shows under the tick, the other Amazon payment leaves the queue, and the card slides on', async () => {
     await render();
     vi.useFakeTimers();
-    expect(text(q('review-meta'))).toBe('1 of 6 · about 6 min left');
+    expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
 
     click('answer-suggestion');
     play(SAVING_MS);
@@ -137,7 +181,7 @@ describe('the review cards on the page', () => {
     );
     expect(text(q('card-tick'))).toContain('…and 1 more Amazon payment booked.');
     // The other Amazon payment (wd-t4) was booked by the rule, so it is not a decision any more.
-    expect(review.total()).toBe(5);
+    expect(review.total()).toBe(6);
     expect(review.current()!.id).toBe('wd-t17');
     expect(name()).toBe('Amazon'); // the card is held for the tick, then slides away
     play(TICK_NOTE_MS - TICK_MS + TICK_MS); // the tick has time to be read
@@ -152,7 +196,7 @@ describe('the review cards on the page', () => {
     const card = q('review-card-host')!;
     expect(name()).toBe('Amazon');
     expect(text(q('card-question'))).toBe('What was this for?');
-    expect(text(q('review-meta'))).toBe('1 of 6 · about 6 min left');
+    expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
 
     click('answer-suggestion');
     play(SAVING_MS + TICK_NOTE_MS);
@@ -174,7 +218,7 @@ describe('the review cards on the page', () => {
 
   it('a document with two problems stays on one card too, and what was typed is not carried over', async () => {
     demo.updateDocument('wd-d1', (d) => ({ ...d, direction: null })); // no direction, and no amount
-    // Settle the payments in front of it, so the document is the one decision.
+    // Settle the payments in front of it, and the one behind it (Kern Studio Berlin's), so the document is the one decision.
     for (
       let item = review.current();
       item !== null && item.id !== 'wd-d1';
@@ -182,6 +226,7 @@ describe('the review cards on the page', () => {
     ) {
       settleItem(demo, item);
     }
+    settleItem(demo, { kind: 'payment', id: 'wd-t19', date: '2026-10-21', problem: 'noReceipt' });
     await render();
     vi.useFakeTimers();
     const card = q('review-card-host')!;

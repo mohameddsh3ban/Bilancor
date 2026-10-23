@@ -21,24 +21,25 @@ describe('TransactionsCard', () => {
 
   it('shows the 5 newest transactions', () => {
     expect(rows()).toHaveLength(5);
-    expect(rows()[0].textContent).toContain('Müller GmbH');
+    expect(rows()[0].textContent).toContain('Kern Studio Berlin');
+    expect(rows()[1].textContent).toContain('Müller GmbH');
     expect(el.textContent).not.toContain('Adobe');
   });
 
   it('homepage rows link to their payment, and See all to the payments page', () => {
     expect(rows().map((r) => r.getAttribute('href'))).toEqual([
+      '/payments/wd-t19',
       '/payments/wd-t1',
       '/payments/wd-t2',
       '/payments/wd-t3',
       '/payments/wd-t4',
-      '/payments/wd-t6',
     ]);
     expect(el.querySelector('[data-testid="tx-see-all"]')?.getAttribute('href')).toBe('/payments');
   });
 
   it('shows a status chip for each row', () => {
     const chips = rows().map((r) => r.querySelector('[data-testid="tx-status"]')?.textContent?.trim());
-    expect(chips).toEqual(['Please confirm', 'Booked', 'Receipt missing', 'Unclear', 'Booked']);
+    expect(chips).toEqual(['Receipt missing', 'Please confirm', 'Booked', 'Receipt missing', 'Unclear']);
   });
 
   it('amount is wrapped in ltr bdi', () => {
@@ -48,7 +49,7 @@ describe('TransactionsCard', () => {
   });
 
   it('signs and colours amounts', () => {
-    const [income, expense] = rows().map((r) => r.querySelector<HTMLElement>('[data-testid="tx-amount"]')!);
+    const [income, , expense] = rows().map((r) => r.querySelector<HTMLElement>('[data-testid="tx-amount"]')!);
     expect(income.textContent).toContain('+');
     expect(income.className).toContain('text-positive');
     expect(expense.textContent).toMatch(/[-−]/);
@@ -56,9 +57,10 @@ describe('TransactionsCard', () => {
   });
 
   it('counterparty cell truncates at its own end and its row still contains the amount', () => {
+    // Any row does: the long name of the Rundfunk payment is no longer among the five newest.
     const name = rows()
       .map((r) => r.querySelector<HTMLElement>('[data-testid="tx-counterparty"]')!)
-      .find((n) => n.textContent?.includes('Rundfunk ARD'))!;
+      .find((n) => n.textContent?.includes('Kern Studio Berlin'))!;
     expect(name.classList).toContain('truncate');
     expect(name.parentElement?.classList).toContain('min-w-0');
     const amount = name.closest('[data-testid="tx-row"]')!.querySelector('[data-testid="tx-amount"]')!;
@@ -97,7 +99,8 @@ describe('TransactionsCard', () => {
     it('has the same 5 newest payments as the list', () => {
       const root = renderTable();
       expect(tableRows(root)).toHaveLength(5);
-      expect(tableRows(root)[0].textContent).toContain('Müller GmbH');
+      expect(tableRows(root)[0].textContent).toContain('Kern Studio Berlin');
+      expect(tableRows(root)[1].textContent).toContain('Müller GmbH');
       expect(root.querySelector('[data-testid="tx-table"]')!.textContent).not.toContain('Adobe');
     });
 

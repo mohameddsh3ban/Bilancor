@@ -54,14 +54,15 @@ describe('NeedsYouButton', () => {
     bookingConfirmed: false,
     paymentId: null,
     history: [],
+    invoice: null,
   });
 
-  it('shows "Needs you · 6" for weber-design and links to /review', () => {
+  it('shows "Needs you · 7" for weber-design and links to /review', () => {
     demo.setBusiness('weber-design');
     const el = render().nativeElement as HTMLElement;
 
     const link = button(el)!;
-    expect(text(link)).toBe('Needs you · 6');
+    expect(text(link)).toBe('Needs you · 7');
     expect(link.tagName).toBe('A');
     expect(link.getAttribute('href')).toBe('/review');
   });
@@ -72,8 +73,8 @@ describe('NeedsYouButton', () => {
 
     const count = link.querySelector('bdi');
     expect(count?.getAttribute('dir')).toBe('ltr');
-    expect(count?.textContent).toBe('6');
-    expect(text(link)).toBe('Needs you · 6');
+    expect(count?.textContent).toBe('7');
+    expect(text(link)).toBe('Needs you · 7');
   });
 
   it('is at least 40 px tall to tap, and uses the warning colours', () => {
@@ -102,7 +103,7 @@ describe('NeedsYouButton', () => {
   it('is shown in halfway when something needs you', () => {
     demo.setBusiness('weber-design');
     demo.setSetup('halfway');
-    expect(text(button(render().nativeElement as HTMLElement))).toBe('Needs you · 6');
+    expect(text(button(render().nativeElement as HTMLElement))).toBe('Needs you · 7');
   });
 
   it('is hidden in the new-client state, until an added document needs the person', () => {
@@ -122,17 +123,17 @@ describe('NeedsYouButton', () => {
     const review = TestBed.inject(ReviewService);
     const fixture = render();
     const el = fixture.nativeElement as HTMLElement;
-    expect(text(button(el))).toBe('Needs you · 6');
+    expect(text(button(el))).toBe('Needs you · 7');
 
     await review.answer(() => settleItem(demo, review.current()!), {
       labelKey: 'home.status.booked',
     });
     fixture.detectChanges();
-    expect(text(button(el))).toBe('Needs you · 5');
+    expect(text(button(el))).toBe('Needs you · 6');
 
     review.undo();
     fixture.detectChanges();
-    expect(text(button(el))).toBe('Needs you · 6');
+    expect(text(button(el))).toBe('Needs you · 7');
   });
 
   it('disappears when the last decision is made', () => {
@@ -153,11 +154,11 @@ describe('NeedsYouButton', () => {
 
     TestBed.inject(LanguageService).setLang('de');
     fixture.detectChanges();
-    expect(text(button(el))).toBe('Braucht dich · 6');
+    expect(text(button(el))).toBe('Braucht dich · 7');
 
     TestBed.inject(LanguageService).setLang('ar');
     fixture.detectChanges();
-    expect(text(button(el))).toBe('يحتاج إليك · 6');
+    expect(text(button(el))).toBe('يحتاج إليك · 7');
     expect(button(el)!.querySelector('bdi')?.getAttribute('dir')).toBe('ltr');
   });
 });

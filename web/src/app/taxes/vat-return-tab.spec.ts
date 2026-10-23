@@ -205,16 +205,16 @@ describe('VatReturnTab', () => {
   it('needs-you card starts the review', () => {
     render('weber-design');
     const card = q('vat-needs')!;
-    expect(text(card)).toContain('5 payments still need you — fix them so the return is right');
+    expect(text(card)).toContain('6 payments still need you — fix them so the return is right');
     const start = q('vat-needs-start')!;
     expect(text(start)).toBe('Start');
     expect(start.getAttribute('href')).toBe('/review');
   });
 
   it('says one payment in the singular', () => {
-    // Confirming four of the five leaves one.
+    // Confirming five of the six leaves one.
     demo.setBusiness('weber-design');
-    for (const id of ['wd-t1', 'wd-t3', 'wd-t4', 'wd-t17']) {
+    for (const id of ['wd-t1', 'wd-t3', 'wd-t4', 'wd-t17', 'wd-t19']) {
       demo.updateTransaction(id, (tx) => ({
         ...tx,
         booking: tx.booking ?? SOFTWARE,

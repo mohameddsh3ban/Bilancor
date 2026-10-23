@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { homeCards } from '../domain/home-cards';
+import { OwedCard } from '../invoices/owed-card';
 import { DemoStateService } from '../state/demo-state.service';
 import { NoticeService } from '../state/notice.service';
 import { BalancesCard } from './cards/balances-card';
@@ -11,14 +12,14 @@ import { TaxCard } from './cards/tax-card';
 import { TransactionsCard } from './cards/transactions-card';
 
 /**
- * The homepage: notices, setup checklist, decisions, transactions, balances and tax, each when setup allows it.
+ * The homepage: notices, setup checklist, decisions, what customers owe, transactions, balances and tax, each when setup allows it.
  * From `lg` the decisions, balances and tax cards give way to the key-number tiles, and the transactions card
  * (which becomes a table) moves below them at full width.
  */
 @Component({
   selector: 'app-home-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BalancesCard, DecisionsCard, KeyNumbers, NoticesCard, SetupChecklist, TaxCard, TransactionsCard],
+  imports: [BalancesCard, DecisionsCard, KeyNumbers, NoticesCard, OwedCard, SetupChecklist, TaxCard, TransactionsCard],
   template: `
     <div class="flex flex-col gap-4">
       @if (notices.shown().length > 0) {
@@ -32,6 +33,9 @@ import { TransactionsCard } from './cards/transactions-card';
       }
       @if (cards().decisions) {
         <app-decisions-card class="lg:hidden" />
+      }
+      @if (cards().owed) {
+        <app-owed-card />
       }
       @if (cards().transactions) {
         <app-transactions-card />
@@ -49,5 +53,5 @@ export class HomePage {
   protected readonly notices = inject(NoticeService);
   private readonly demo = inject(DemoStateService);
 
-  protected readonly cards = computed(() => homeCards(this.demo.setup()));
+  protected readonly cards = computed(() => homeCards(this.demo.setup(), this.demo.business()));
 }

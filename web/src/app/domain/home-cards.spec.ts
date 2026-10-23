@@ -1,3 +1,4 @@
+import { BUSINESSES } from '../data/sample-data';
 import { ALL_DONE, homeCards, presetOf, presetSteps } from './home-cards';
 
 describe('presetSteps', () => {
@@ -34,33 +35,47 @@ describe('presetOf', () => {
 });
 
 describe('homeCards', () => {
+  const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
+  /** Weber Design with no invoices at all: nothing is owed. */
+  const nothingOwed = { ...weber, invoices: [] };
+
   it('new: only the checklist shows', () => {
-    expect(homeCards(presetSteps('new'))).toEqual({
+    expect(homeCards(presetSteps('new'), weber)).toEqual({
       checklist: true,
       transactions: false,
       balances: false,
       tax: false,
       decisions: false,
+      owed: false,
     });
   });
 
-  it('halfway: checklist, transactions and balances show', () => {
-    expect(homeCards(presetSteps('halfway'))).toEqual({
+  it('halfway: checklist, transactions, balances and what is owed show', () => {
+    expect(homeCards(presetSteps('halfway'), weber)).toEqual({
       checklist: true,
       transactions: true,
       balances: true,
       tax: false,
       decisions: false,
+      owed: true,
     });
   });
 
-  it('active: checklist hides and all four cards show', () => {
-    expect(homeCards(presetSteps('active'))).toEqual({
+  it('active: checklist hides and all five cards show', () => {
+    expect(homeCards(presetSteps('active'), weber)).toEqual({
       checklist: false,
       transactions: true,
       balances: true,
       tax: true,
       decisions: true,
+      owed: true,
     });
+  });
+
+  it('owed shows only once the bank step is done and a customer owes something', () => {
+    expect(homeCards(presetSteps('active'), nothingOwed).owed).toBe(false);
+    expect(homeCards(presetSteps('halfway'), nothingOwed).owed).toBe(false);
+    expect(homeCards({ bank: false, tax: true, receipt: true }, weber).owed).toBe(false);
+    expect(homeCards({ bank: true, tax: false, receipt: false }, weber).owed).toBe(true);
   });
 });

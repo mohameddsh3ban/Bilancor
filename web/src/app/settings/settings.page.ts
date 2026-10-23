@@ -4,21 +4,24 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { CopyButton } from '../documents/copy-button';
 import { DemoStateService } from '../state/demo-state.service';
 import { BankAccounts } from './bank-accounts';
+import { InvoiceDetails } from './invoice-details';
 import { TaxAnswers } from './tax-answers';
 
 /**
- * Settings (`/settings`): three cards, one under the other on a phone and on a computer: Business and tax (the saved
- * answers, with Edit), Bank accounts (each connection and its health, with Renew) and the Documents inbox address.
+ * Settings (`/settings`): four cards, one under the other on a phone and on a computer: Business and tax (the saved
+ * answers, with Edit), Invoice details (what the invoices print, with Edit), Bank accounts (each connection and its
+ * health, with Renew) and the Documents inbox address.
  */
 @Component({
   selector: 'app-settings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BankAccounts, CopyButton, HlmCardImports, TaxAnswers, TranslocoPipe],
+  imports: [BankAccounts, CopyButton, HlmCardImports, InvoiceDetails, TaxAnswers, TranslocoPipe],
   host: { class: 'flex flex-col gap-4' },
   template: `
     <h1 class="text-2xl font-semibold">{{ 'settings.title' | transloco }}</h1>
 
     <app-tax-answers />
+    <app-invoice-details />
     <app-bank-accounts />
 
     <section hlmCard size="sm" data-testid="settings-inbox">

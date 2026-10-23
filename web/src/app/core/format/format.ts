@@ -32,6 +32,21 @@ export function formatDate(iso: string, lang: Lang, opts: { year?: boolean } = {
   }).format(new Date(iso));
 }
 
+/** A number with the separators of the language and at most `maxDecimals` decimals (two unless told otherwise): a quantity such as 1,5. */
+export function formatNumber(value: number, lang: Lang, maxDecimals = 2): string {
+  return new Intl.NumberFormat(LOCALES[lang], { maximumFractionDigits: maxDecimals }).format(value);
+}
+
+/** The name of a country (ISO 3166 alpha-2) in the language. A code that cannot be named is given back as it is; no code gives nothing. */
+export function countryName(code: string, lang: Lang): string {
+  if (code === '') return '';
+  try {
+    return new Intl.DisplayNames([LOCALES[lang]], { type: 'region' }).of(code) ?? code;
+  } catch {
+    return code; // not a region code at all
+  }
+}
+
 /** An IBAN in groups of four, as banks print it. */
 export function formatIban(iban: string): string {
   return iban.replace(/(.{4})(?=.)/g, '$1 ');

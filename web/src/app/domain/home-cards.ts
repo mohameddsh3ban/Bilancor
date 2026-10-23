@@ -1,4 +1,5 @@
-import type { SetupState, SetupSteps } from '../data/models';
+import type { Business, SetupState, SetupSteps } from '../data/models';
+import { owedSummary } from './invoices';
 
 /** A business that was never touched has finished its setup. */
 export const ALL_DONE: SetupSteps = Object.freeze({ bank: true, tax: true, receipt: true });
@@ -9,6 +10,7 @@ export interface HomeCards {
   balances: boolean;
   tax: boolean;
   decisions: boolean;
+  owed: boolean;
 }
 
 /** The steps a demo toolbar shortcut sets. */
@@ -34,7 +36,11 @@ export function presetOf(steps: SetupSteps): SetupState | null {
   );
 }
 
-export function homeCards(steps: SetupSteps): HomeCards {
+/**
+ * Which cards the homepage shows. What customers owe shows once the bank step is done and something is owed (an
+ * invoice with money left to pay), so a business that has sent nothing, or has been paid in full, has no such card.
+ */
+export function homeCards(steps: SetupSteps, business: Business): HomeCards {
   const allDone = steps.bank && steps.tax && steps.receipt;
   return {
     checklist: !allDone,
@@ -42,5 +48,6 @@ export function homeCards(steps: SetupSteps): HomeCards {
     balances: steps.bank,
     tax: steps.tax,
     decisions: steps.receipt,
+    owed: steps.bank && owedSummary(business, steps).owedCount > 0,
   };
 }

@@ -22,6 +22,7 @@ const base: Doc = {
   bookingConfirmed: false,
   paymentId: null,
   history: [],
+  invoice: null,
 };
 const doc = (patch: Partial<Doc>): Doc => ({ ...base, ...patch });
 

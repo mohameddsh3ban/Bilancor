@@ -6,6 +6,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { READING_MS } from '../domain/document-upload';
+import { invoiceStatus } from '../domain/invoices';
 import { DocumentDetailPage } from '../documents/document-detail.page';
 import { DocumentsPage } from '../documents/documents.page';
 import { DemoStateService } from '../state/demo-state.service';
@@ -144,11 +145,11 @@ describe('PaymentDetailPage', () => {
   describe('actions', () => {
     it('confirm turns Müller into booked and lowers Needs you', async () => {
       await render('/payments/wd-t1');
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
       await click('confirm-booking');
       expect(status()).toBe('Booked');
       expect(d('confirm-booking')).toBeNull();
-      expect(text(q('needs-you-count'))).toBe('4');
+      expect(text(q('needs-you-count'))).toBe('5');
       expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
       expect(text(d('history-date'))).toBe('22 Oct');
       const row = Array.from(el.querySelectorAll('[data-testid="payment-row"]')).find((r) =>
@@ -169,13 +170,13 @@ describe('PaymentDetailPage', () => {
     it('no receipt needed books Deutsche Bahn', async () => {
       await render('/payments/wd-t3');
       expect(status()).toBe('Receipt missing');
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
       await click('no-receipt-needed');
       expect(status()).toBe('Booked');
       expect(text(d('receipt-state'))).toBe('No receipt needed');
       expect(d('no-receipt-needed')).toBeNull();
       expect(d('take-photo')).toBeNull();
-      expect(text(q('needs-you-count'))).toBe('4');
+      expect(text(q('needs-you-count'))).toBe('5');
       expect(historyTexts()[0]).toBe('You marked: no receipt needed');
     });
 
@@ -193,7 +194,7 @@ describe('PaymentDetailPage', () => {
       expect(text(d('booking-vat'))).toBe('19%');
       expect(d('change-category')!.textContent?.trim()).toBe('Change');
       expect(historyTexts()[0]).toBe('You changed the category to Software & maintenance');
-      expect(text(q('needs-you-count'))).toBe('4');
+      expect(text(q('needs-you-count'))).toBe('5');
     });
 
     it('choosing the category a payment already has changes nothing when it is booked', async () => {
@@ -218,14 +219,14 @@ describe('PaymentDetailPage', () => {
     it('choosing the suggested category of a payment that needs confirming confirms it', async () => {
       await render('/payments/wd-t1');
       expect(status()).toBe('Please confirm');
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
       await choose('Revenue (19% VAT)');
       expect(status()).toBe('Booked');
       expect(d('confirm-booking')).toBeNull();
       expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
       expect(historyTexts().filter((t) => t.startsWith('You'))).toHaveLength(1);
       expect(options()).toHaveLength(0);
-      expect(text(q('needs-you-count'))).toBe('4');
+      expect(text(q('needs-you-count'))).toBe('5');
     });
 
     it('choosing the suggested category of a payment that needs confirming and has no receipt leaves the receipt to do', async () => {
@@ -260,9 +261,10 @@ describe('PaymentDetailPage', () => {
     });
 
     it('a private payment offers no Change, Confirm or receipt actions', async () => {
-      // Its document has to go first: a payment with a document can't be marked private.
-      demo.unlink('doc-wd-t1');
-      await render('/payments/wd-t1');
+      // A payment with a document, or one that pays an invoice, can't be marked private: Kern's incoming payment has neither,
+      // and is made to wait for its confirmation.
+      demo.updateTransaction('wd-t19', (t) => ({ ...t, confirmed: false }));
+      await render('/payments/wd-t19');
       expect(d('confirm-booking')).not.toBeNull();
       await click('kind-private');
       for (const id of ['change-category', 'confirm-booking', 'no-receipt-needed', 'take-photo']) {
@@ -507,6 +509,66 @@ describe('PaymentDetailPage', () => {
       );
     });
 
+    it('payment shows Pays invoice RE-2026-041', async () => {
+      await render('/payments/wd-t1');
+      const pays = d('pays-invoice')!;
+      expect(plain(pays)).toBe('Pays invoice RE-2026-041');
+      expect(pays.getAttribute('href')).toBe('/invoices/inv-wd-041');
+      // a payment that pays no invoice says nothing of the kind
+      await harness.navigateByUrl('/payments/wd-t2');
+      await settle();
+      expect(d('pays-invoice')).toBeNull();
+    });
+
+    it('a part payment of an invoice shows Pays invoice too, though the invoice document is not linked to it', async () => {
+      demo.setBusiness('sara-yoga');
+      await render('/payments/sy-t15');
+      expect(d('open-document')).toBeNull();
+      expect(plain(d('pays-invoice'))).toBe('Pays invoice RE-2026-021');
+      expect(d('pays-invoice')!.getAttribute('href')).toBe('/invoices/inv-sy-021');
+    });
+
+    it('Pays invoice follows the language, and keeps the number left-to-right', async () => {
+      await render('/payments/wd-t1');
+      expect(text(d('pays-invoice'))).toContain(String.fromCodePoint(0x2068) + 'RE-2026-041' + String.fromCodePoint(0x2069));
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(plain(d('pays-invoice'))).toBe('Bezahlt die Rechnung RE-2026-041');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(plain(d('pays-invoice'))).toBe(ar.payments.detail.paysInvoice.replace('{{number}}', 'RE-2026-041'));
+    });
+
+    it("picking Studio Kern's document for the Kern payment pays the invoice", async () => {
+      await render('/payments/wd-t19');
+      expect(status()).toBe('Receipt missing');
+      expect(d('pays-invoice')).toBeNull();
+      await pick('Studio Kern');
+      expect(status()).toBe('Booked');
+      expect(text(d('receipt-state'))).toBe('RE-2026-044.pdf');
+      expect(plain(d('pays-invoice'))).toBe('Pays invoice RE-2026-044');
+      expect(d('pick-document')).toBeNull();
+      expect(doc('wd-d2').paymentId).toBe('wd-t19');
+      const invoice = demo.business().invoices.find((i) => i.id === 'inv-wd-044')!;
+      expect(invoice.paymentIds).toEqual(['wd-t19']);
+      expect(invoiceStatus(invoice, demo.business())).toBe('paid');
+      expect(historyTexts()[0]).toBe('Pays invoice RE-2026-044');
+      expect(d('open-document')!.getAttribute('href')).toBe('/documents/wd-d2');
+    });
+
+    it("picking the document of a partly paid invoice adds the payment to what was paid", async () => {
+      demo.setBusiness('sara-yoga');
+      const part = demo.business().transactions.find((t) => t.id === 'sy-t15')!;
+      demo.addTransaction({ ...part, id: 'sy-t90', date: '2026-10-22', receipt: 'missing', receiptFile: null, reference: 'Rest', history: [] });
+      await render('/payments/sy-t90');
+      await pick('Physio');
+      const invoice = demo.business().invoices.find((i) => i.id === 'inv-sy-021')!;
+      expect(invoice.paymentIds).toEqual(['sy-t15', 'sy-t90']);
+      expect(invoiceStatus(invoice, demo.business())).toBe('paid');
+      expect(doc('sy-d2').paymentId).toBe('sy-t90');
+      expect(plain(d('pays-invoice'))).toBe('Pays invoice RE-2026-021');
+    });
+
     it('Open document goes to the linked document', async () => {
       await render('/payments/wd-t17');
       expect(d('open-document')).toBeNull();
@@ -583,6 +645,40 @@ describe('PaymentDetailPage', () => {
       expect(d('private-blocked')).toBeNull();
       await click('kind-private');
       expect(tx('wd-t3').isPrivate).toBe(true);
+    });
+
+    /** What the payment says in its place when it pays an invoice: no switch, and no word about unlinking a document (the invoice's document cannot be unlinked). */
+    function expectStaysBusiness(): void {
+      expect(text(d('private-blocked'))).toBe('This payment pays an invoice, so it stays business.');
+      expect(d('kind-private')).toBeNull();
+      expect(d('kind-business')).toBeNull();
+    }
+
+    it('a payment that pays all of an invoice stays business, in every language', async () => {
+      await render('/payments/wd-t1');
+      expect(d('open-document')).not.toBeNull(); // the invoice's document is linked to it, and cannot be unlinked
+      expectStaysBusiness();
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlockedInvoice);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlockedInvoice);
+    });
+
+    it('a part payment of an invoice stays business too, though no document is linked to it', async () => {
+      demo.setBusiness('sara-yoga');
+      await render('/payments/sy-t15');
+      expect(d('open-document')).toBeNull();
+      expectStaysBusiness();
+      expect(tx('sy-t15')).toMatchObject({ isPrivate: false, receipt: 'attached' });
+    });
+
+    it('a payment picked for an invoice stays business from then on', async () => {
+      await render('/payments/wd-t19');
+      expect(d('kind-private')).not.toBeNull();
+      await pick('Studio Kern');
+      expectStaysBusiness();
     });
   });
 

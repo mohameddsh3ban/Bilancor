@@ -1,7 +1,7 @@
 import { Notice } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { bankNotices } from './bank-connection';
-import { noticeTextKey, noticesForSetup, splitNotices, withUnreadableCount } from './notices';
+import { invoiceNotices, noticeTextKey, noticesForSetup, splitNotices, withUnreadableCount } from './notices';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
 const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
@@ -114,5 +114,72 @@ describe('noticeTextKey', () => {
     expect(noticeTextKey(terms)).toBe('notice.terms.text');
     expect(noticeTextKey(unreadable)).toBe('notice.unreadable.text');
     expect(noticeTextKey(bankEnded)).toBe('notice.bankEnded.text');
+  });
+});
+
+describe('invoiceNotices', () => {
+  const cafe = BUSINESSES.find((b) => b.id === 'cafe-linde')!;
+  const lange = weber.invoices.find((i) => i.id === 'inv-wd-039')!;
+  /** Weber Design with RE-2026-039 changed. */
+  const withLange = (change: Partial<typeof lange>) => ({
+    ...weber,
+    invoices: weber.invoices.map((i) => (i.id === lange.id ? { ...i, ...change } : i)),
+  });
+
+  it('asks for a reminder for the invoice that is overdue and not reminded yet', () => {
+    expect(invoiceNotices(weber)).toEqual([
+      {
+        id: 'invoice-overdue-inv-wd-039',
+        kind: 'invoiceOverdue',
+        urgency: 2,
+        blocking: false,
+        params: { name: 'Bäckerei Lange', number: 'RE-2026-039', days: 22, id: 'inv-wd-039' },
+        date: '2026-10-22',
+      },
+    ]);
+  });
+
+  it('has none for an invoice that is not due yet, and counts the days from the day after the due date', () => {
+    expect(invoiceNotices(weber, '2026-09-30')).toEqual([]); // due on the 30th: not late yet
+    expect(invoiceNotices(weber, '2026-10-01')[0].params['days']).toBe(1);
+    expect(invoiceNotices(sara)).toEqual([]); // RE-2026-021 is open, not overdue
+  });
+
+  it('has none once the invoice is reminded: the café one was, ten days ago', () => {
+    expect(cafe.invoices.some((i) => i.number === 'RE-2026-053' && i.reminders.length === 1)).toBe(true);
+    expect(invoiceNotices(cafe)).toEqual([]);
+    expect(invoiceNotices(withLange({ reminders: [{ level: 1, sentOn: '2026-10-22' }] }))).toEqual([]);
+  });
+
+  it('has none once the invoice is paid, cancelled, or is a draft', () => {
+    expect(invoiceNotices(withLange({ paymentIds: ['wd-t7'] }))).toEqual([]); // 2,975.00 euros: more than its 1,190.00
+    expect(invoiceNotices(withLange({ cancelledBy: 'inv-wd-099' }))).toEqual([]);
+    expect(invoiceNotices(withLange({ sentOn: null, number: null }))).toEqual([]);
+  });
+
+  it('asks for one on a partly paid invoice that is past its due date', () => {
+    const part = { ...weber.transactions[0], id: 'wd-part', amountCents: 50000 };
+    const business = { ...withLange({ paymentIds: ['wd-part'] }), transactions: [part, ...weber.transactions] };
+    expect(invoiceNotices(business).map((n) => n.id)).toEqual(['invoice-overdue-inv-wd-039']);
+  });
+
+  it('is one notice per late invoice, the one that has been late longest first', () => {
+    const other = { ...lange, id: 'inv-x', number: 'RE-2026-099', issueDate: '2026-08-01' };
+    expect(invoiceNotices({ ...weber, invoices: [...weber.invoices, other] }).map((n) => n.id)).toEqual([
+      'invoice-overdue-inv-x',
+      'invoice-overdue-inv-wd-039',
+    ]);
+  });
+
+  it('waits for the bank step, like every notice that talks about payments', () => {
+    const done = { bank: true, tax: true, receipt: true };
+    const notices = invoiceNotices(weber);
+    expect(noticesForSetup(notices, done, weber.taxProfile)).toEqual(notices);
+    expect(noticesForSetup(notices, { ...done, bank: false }, weber.taxProfile)).toEqual([]);
+  });
+
+  it('has its own text for one day late', () => {
+    expect(noticeTextKey(invoiceNotices(weber, '2026-10-01')[0])).toBe('notice.invoiceOverdue.textOne');
+    expect(noticeTextKey(invoiceNotices(weber)[0])).toBe('notice.invoiceOverdue.text');
   });
 });

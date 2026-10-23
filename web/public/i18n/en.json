@@ -110,6 +110,51 @@
       "de": "Übertragungsprotokoll",
       "explain": "The record that your return was sent to the tax office, with the transfer ticket as proof."
     },
+    "rechnung": {
+      "label": "Invoice",
+      "de": "Rechnung",
+      "explain": "The bill you send to a customer. In Germany it has to show both addresses, a running number, the date, what you did and when, and the amount with its VAT."
+    },
+    "stornorechnung": {
+      "label": "Cancellation invoice",
+      "de": "Stornorechnung",
+      "explain": "A sent invoice may not be changed. You cancel it with a cancellation invoice that repeats it with negative amounts. The original stays on record."
+    },
+    "eRechnung": {
+      "label": "E-invoice",
+      "de": "E-Rechnung",
+      "explain": "An invoice that carries its data in a form a computer can read. Businesses in Germany must be able to receive one, and sending one becomes required step by step."
+    },
+    "zugferd": {
+      "label": "PDF with data inside",
+      "de": "ZUGFeRD",
+      "explain": "An e-invoice that looks and opens like a normal PDF, with the readable data inside it. It is the usual format for business customers in Germany."
+    },
+    "xrechnung": {
+      "label": "Data file for public offices",
+      "de": "XRechnung",
+      "explain": "An e-invoice as a pure data file. Public offices in Germany require it, together with their routing number (Leitweg-ID)."
+    },
+    "zahlungserinnerung": {
+      "label": "Friendly reminder",
+      "de": "Zahlungserinnerung",
+      "explain": "A polite first nudge for an invoice that was not paid by its due date. It adds no fees and gives your customer a week to pay."
+    },
+    "mahnung": {
+      "label": "Formal reminder",
+      "de": "Mahnung",
+      "explain": "A firmer second reminder, sent after the friendly one. It sets a new date to pay by and says that late-payment interest may be charged. The app does not work out any interest or fees."
+    },
+    "leitwegId": {
+      "label": "Routing ID for public offices",
+      "de": "Leitweg-ID",
+      "explain": "The routing number a public office gives you so it can receive your invoice. Without it, the office cannot take the invoice."
+    },
+    "reverseCharge": {
+      "label": "Reverse charge",
+      "de": "Steuerschuldnerschaft des Leistungsempfängers",
+      "explain": "For a business customer in another EU country, you do not charge German VAT. Your customer pays the VAT in their own country, and the invoice says so."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -127,7 +172,6 @@
   "soon": {
     "home": "Home",
     "payments": "Payments",
-    "invoices": "Invoices",
     "reports": "Reports",
     "help": "Help",
     "more": "More",
@@ -298,6 +342,11 @@
     "revenueLimit": {
       "text": "You have reached {{percent}}% of your small-business revenue limit",
       "action": "Details"
+    },
+    "invoiceOverdue": {
+      "text": "{{name}} is {{days}} days late with {{number}}",
+      "textOne": "{{name}} is 1 day late with {{number}}",
+      "action": "Send reminder"
     }
   },
   "booking": {
@@ -313,6 +362,8 @@
     "rent": "Rent",
     "revenue19": "Revenue (19% VAT)",
     "revenue7": "Revenue (7% VAT)",
+    "revenueAbroad": "Revenue (outside Germany, no VAT)",
+    "revenueEuRc": "Revenue (EU, reverse charge)",
     "revenueKU": "Revenue (no VAT)",
     "salaries": "Salaries",
     "software": "Software & maintenance",
@@ -347,7 +398,18 @@
     "taxChanged": "You changed your tax details",
     "bankConnected": "You connected {{account}} at {{bank}}",
     "bankRenewed": "You renewed the connection to {{bank}}",
-    "cashAdded": "You added a cash box"
+    "cashAdded": "You added a cash box",
+    "invoiceCreated": "You created the invoice",
+    "invoiceSent": "You sent it by email to {{email}}",
+    "invoiceReminded": "You sent reminder {{level}} of 2 by email",
+    "invoicePaid": "Paid in full",
+    "invoicePartlyPaid": "Part payment received",
+    "invoiceCancelled": "You cancelled it with cancellation invoice {{number}}",
+    "invoiceCancellation": "You created it to cancel invoice {{number}}",
+    "invoiceDuplicated": "You copied it from invoice {{number}}",
+    "paidInCash": "You marked it as paid in cash",
+    "paysInvoice": "Pays invoice {{number}}",
+    "bookedByInvoice": "Booked as {{category}} to match the invoice"
   },
   "payments": {
     "title": "Payments",
@@ -395,6 +457,7 @@
     "detail": {
       "back": "Payments",
       "close": "Close",
+      "paysInvoice": "Pays invoice {{number}}",
       "receipt": {
         "title": "Receipt",
         "notNeeded": "No receipt needed",
@@ -418,7 +481,8 @@
         "kind": "This payment is",
         "business": "Business",
         "private": "Private",
-        "privateBlocked": "This payment has a document. Unlink it first."
+        "privateBlocked": "This payment has a document. Unlink it first.",
+        "privateBlockedInvoice": "This payment pays an invoice, so it stays business."
       },
       "picker": {
         "search": "Search categories",
@@ -509,7 +573,11 @@
       "waiting": "Waiting for payment",
       "waitingDue": "Waiting for payment · due {{date}}",
       "overdue": "Overdue since {{date}}",
-      "done": "Done"
+      "done": "Done",
+      "waitingLeft": "Waiting for payment · {{left}} left",
+      "overdueLeft": "Overdue since {{date}} · {{left}} left",
+      "doneCancelled": "Done · Cancelled",
+      "cancellationOf": "Cancellation of {{number}}"
     },
     "needsYou": {
       "title": "Needs you · {{count}}",
@@ -568,6 +636,7 @@
         "confirm": "Confirm",
         "paid": "Paid",
         "waiting": "Waiting for payment",
+        "closed": "Closed",
         "done": "done",
         "current": "current step"
       },
@@ -601,14 +670,291 @@
         "thisOne": "This one",
         "searchAll": "Search all payments",
         "cash": "Paid in cash or privately",
-        "notThis": "Not this payment"
+        "payInInvoice": "Paid in cash? Mark it in the invoice",
+        "partPaid": "Part paid so far:",
+        "notThis": "Not this payment",
+        "closedCancelled": "This invoice was cancelled, so no payment is needed.",
+        "closedCancellation": "A cancellation invoice needs no payment."
       },
       "picker": {
         "search": "Search payments",
         "placeholder": "Name or amount",
         "empty": "No payments match"
       },
-      "remove": "Remove"
+      "remove": "Remove",
+      "written": {
+        "title": "Written in Invoices",
+        "hint": "This document can't be changed or removed here. Open the invoice to work with it.",
+        "open": "Open invoice"
+      }
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "new": "New invoice",
+    "owed": {
+      "title": "Owed to you",
+      "overdue": "overdue"
+    },
+    "count": {
+      "one": "1 invoice",
+      "many": "{{count}} invoices"
+    },
+    "filter": {
+      "label": "Filter invoices",
+      "all": "All",
+      "open": "Open",
+      "overdue": "Overdue",
+      "drafts": "Drafts",
+      "paid": "Paid"
+    },
+    "status": {
+      "draft": "Draft",
+      "due": "Due {{date}}",
+      "dueToday": "Due today",
+      "open": "Open",
+      "overdueDays": {
+        "one": "Overdue 1 day",
+        "many": "Overdue {{count}} days"
+      },
+      "partlyPaid": "Partly paid · {{left}} left",
+      "paid": "Paid",
+      "paidOn": "Paid {{date}}",
+      "cancelled": "Cancelled",
+      "cancellation": "Cancellation"
+    },
+    "row": {
+      "draft": "Draft",
+      "fromFile": "Added from a file",
+      "noCustomer": "No customer yet",
+      "remind": "Send reminder",
+      "remindFormal": "Send formal reminder",
+      "reminded": "Reminded {{date}}",
+      "remindedLater": "Reminded {{date}} · formal reminder possible from {{from}}"
+    },
+    "empty": {
+      "none": {
+        "title": "No invoices yet",
+        "body": "Write your first invoice. It goes to your customer by email and shows up in your documents."
+      },
+      "filter": {
+        "open": "No open invoices",
+        "overdue": "No overdue invoices",
+        "drafts": "No drafts",
+        "paid": "No paid invoices yet"
+      },
+      "showAll": "Show all"
+    },
+    "detail": {
+      "back": "Invoices",
+      "paper": "The invoice as your customer sees it",
+      "due": "due {{date}}",
+      "history": {
+        "title": "What happened"
+      },
+      "next": {
+        "title": "Next step"
+      },
+      "edit": "Edit",
+      "download": "Download PDF",
+      "send": "Preview and send",
+      "sending": "Sending…",
+      "remind": "Send a friendly reminder",
+      "remindFormal": "Send formal reminder",
+      "duplicate": "Duplicate",
+      "correctCopy": "Make a corrected copy",
+      "notReady": "Not ready to send yet. Edit shows what is missing.",
+      "cancelledNote": "Cancelled with cancellation invoice {{number}}. The original stays on record.",
+      "format": "Format",
+      "notFound": {
+        "title": "Invoice not found",
+        "body": "It may have been removed, or it belongs to another business.",
+        "back": "Back to invoices"
+      }
+    },
+    "send": {
+      "title": {
+        "invoice": "Send invoice",
+        "reminder1": "Send a friendly reminder",
+        "reminder2": "Send formal reminder",
+        "sending": "Sending…",
+        "sent": "Sent ✓"
+      },
+      "type": "Type",
+      "to": "To",
+      "subject": "Subject",
+      "attachment": "Attachment",
+      "message": "Message",
+      "cancel": "Cancel",
+      "confirm": "Send",
+      "close": "Close",
+      "onItsWay": "Your email to {{email}} is on its way.",
+      "doneInvoice": "Your invoice was sent to {{email}}.",
+      "doneReminder": "The reminder was sent to {{email}}.",
+      "number": "Invoice number"
+    },
+    "actions": {
+      "markPaid": "Mark as paid",
+      "more": "More actions",
+      "duplicate": "Duplicate",
+      "cancel": "Cancel invoice",
+      "cancelPaid": "Cancelling a paid invoice needs a credit note — coming later",
+      "cancelPartlyPaid": "Cancelling an invoice that was partly paid needs a credit note — coming later",
+      "cancelDialog": {
+        "title": "Cancel invoice {{number}}?",
+        "body": "This creates a cancellation invoice. The original stays on record.",
+        "keep": "Keep invoice",
+        "confirm": "Cancel invoice",
+        "close": "Close"
+      },
+      "payDialog": {
+        "title": "Mark {{number}} as paid",
+        "body": "Paid in cash on",
+        "hint": "It's recorded as a cash payment and counts like any other payment in your VAT return and year figures.",
+        "error": "Pick a day from the invoice date up to today.",
+        "confirm": "Mark as paid",
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "demo": "Simulate the customer's payment"
+    }
+  },
+  "invoiceForm": {
+    "titleEdit": "Edit draft",
+    "close": "Close",
+    "saved": "Saved as a draft. You can leave any time.",
+    "customer": {
+      "title": "Customer",
+      "new": "New customer",
+      "edit": "Edit details",
+      "kind": {
+        "title": "Who is it for?",
+        "business": "Business",
+        "private": "Private person",
+        "public": "Public office"
+      },
+      "name": "Name",
+      "street": "Street and number",
+      "postcode": "Postcode",
+      "city": "Town",
+      "country": "Country",
+      "email": "Email",
+      "emailHint": "The invoice is sent to this address.",
+      "vatIdHint": "Your customer's VAT ID, for example FR12345678901. It goes on the invoice.",
+      "leitwegHint": "The office gives you this number. Without it, they cannot take the invoice.",
+      "abroadNote": "Customers abroad are businesses only for now."
+    },
+    "lines": {
+      "title": "What you did",
+      "line": "Line {{n}}",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "price": "Price per unit",
+      "net": "Amount",
+      "add": "Add a line",
+      "remove": "Remove line {{n}}",
+      "suggestions": "Earlier lines",
+      "hintNet": "Prices are without VAT. The VAT is added below.",
+      "hintGross": "Prices are what your customer pays.",
+      "quantityError": "Enter a number above 0 with up to two decimals, like 1 or 2.5.",
+      "priceError": "Enter an amount above 0, like 49.90."
+    },
+    "unit": {
+      "piece": "Pieces",
+      "hour": "Hours",
+      "day": "Days",
+      "flat": "Flat rate"
+    },
+    "vat": {
+      "title": "VAT",
+      "rate": "{{rate}} % VAT",
+      "standard": "Standard rate",
+      "reduced": "Reduced rate",
+      "net": "Net",
+      "vat": "VAT {{rate}} %",
+      "total": "Total",
+      "note": {
+        "kleinunternehmer": "No VAT on this invoice. As a small business you do not charge it, and the invoice carries the § 19 note.",
+        "reverseCharge": "No German VAT on this invoice. Your customer pays the VAT in their own country, and the invoice says so.",
+        "notTaxable": "No German VAT on this invoice. A service for a business outside the EU is not taxable in Germany, and the invoice says so."
+      }
+    },
+    "dates": {
+      "title": "Dates",
+      "issueDate": "Invoice date",
+      "issueDateError": "Pick a day from 1 January of this year up to today.",
+      "workDone": "Work done in",
+      "month": "A month",
+      "day": "One day",
+      "chooseMonth": "Choose a month",
+      "term": "Pay within",
+      "due": "Due on {{date}}"
+    },
+    "ready": {
+      "title": "Ready to send",
+      "format": "Format",
+      "pdf": "PDF",
+      "number": "Number {{number}} is given when you send.",
+      "blocked": "Fix what is marked above, then you can send."
+    },
+    "check": {
+      "sellerAddress": {
+        "ok": "Your name and address",
+        "missing": "Add your name and address in Settings"
+      },
+      "taxNumber": {
+        "ok": "Your tax number",
+        "missing": "Add your tax number in Settings"
+      },
+      "sellerVatId": {
+        "ok": "Your VAT ID",
+        "missing": "Add your VAT ID in Settings"
+      },
+      "customerName": {
+        "ok": "Customer",
+        "missing": "Choose or add a customer"
+      },
+      "customerAddress": {
+        "ok": "Customer address",
+        "missing": "Add the customer's full address"
+      },
+      "customerEmail": {
+        "ok": "Customer email",
+        "missing": "Add the customer's email"
+      },
+      "customerVatId": {
+        "ok": "Customer VAT ID",
+        "missing": "Add the customer's VAT ID"
+      },
+      "leitwegId": {
+        "ok": "Leitweg-ID of the office",
+        "missing": "Add the office's Leitweg-ID"
+      },
+      "privateAbroad": {
+        "ok": "Customer in Germany",
+        "missing": "Customers abroad are businesses only for now"
+      },
+      "lines": {
+        "ok": "What you did, with prices",
+        "missing": "Finish your lines: each needs a description, a quantity and a price"
+      },
+      "issueDate": {
+        "ok": "Invoice date",
+        "missing": "Pick an invoice date from 1 January of this year up to today"
+      },
+      "servicePeriod": {
+        "ok": "When the work was done",
+        "missing": "Say when the work was done"
+      }
+    },
+    "delete": {
+      "button": "Delete draft",
+      "title": "Delete this draft?",
+      "body": "The draft is removed for good. Invoices you sent are not affected.",
+      "keep": "Keep draft",
+      "confirm": "Delete draft",
+      "close": "Close"
     }
   },
   "print": {
@@ -702,7 +1048,8 @@
     "q": {
       "unclear": "What was this for?",
       "confirm": "We booked this as {{category}}. Is that right?",
-      "noReceipt": "There's no receipt for this payment yet."
+      "noReceipt": "There's no receipt for this payment yet.",
+      "invoiceMatch": "Is this the payment for invoice {{number}} from {{name}}?"
     },
     "a": {
       "private": "Private, not for the business",
@@ -710,7 +1057,9 @@
       "confirm": "Yes, that's right",
       "changeCategory": "Change category",
       "takePhoto": "Take a photo",
-      "removeThis": "Remove this one"
+      "removeThis": "Remove this one",
+      "yes": "Yes",
+      "pickAnother": "Pick another"
     },
     "result": {
       "booked": "Booked",
@@ -725,7 +1074,8 @@
       "sent": "Marked as sent",
       "amountSaved": "Amount saved",
       "dateSaved": "Date saved",
-      "nameSaved": "Name saved"
+      "nameSaved": "Name saved",
+      "invoicePaid": "Invoice paid"
     },
     "learned": "Got it — {{name}} will be booked as {{category}} automatically from now on.",
     "learnedMore": {
@@ -754,7 +1104,8 @@
   "taxDetails": {
     "back": {
       "home": "Back to home",
-      "settings": "Back to Settings"
+      "settings": "Back to Settings",
+      "invoice": "Back to your invoice"
     },
     "title": "Your tax details",
     "intro": "So we book and file the right way. You'll find most answers in your letter from the tax office.",
@@ -879,6 +1230,57 @@
       "body": "This takes a moment."
     }
   },
+  "invoiceDetails": {
+    "back": {
+      "settings": "Back to Settings",
+      "invoice": "Back to your invoice"
+    },
+    "title": "Invoice details",
+    "intro": "This is printed on every invoice you send. Your tax number or VAT ID comes from your tax details.",
+    "address": {
+      "title": "Name and address",
+      "name": "Name of your business",
+      "street": "Street and number",
+      "postcode": "Postcode",
+      "city": "Town"
+    },
+    "iban": {
+      "title": "Bank account (IBAN)",
+      "account": "Use one of your accounts",
+      "other": "Another account (type it below)",
+      "label": "IBAN",
+      "hint": "Printed on your invoices, so customers know where to pay. Leave it empty to print no account.",
+      "error": "This doesn't look like an IBAN. Check it and try again."
+    },
+    "email": {
+      "title": "Sender email",
+      "hint": "Your customers get your invoices from this address."
+    },
+    "pattern": {
+      "title": "Invoice numbers",
+      "label": "Pattern",
+      "hint": "It needs {YYYY}, which becomes the year, and {NNN}, the running number, for example RE-{YYYY}-{NNN}.",
+      "next": "Next number:",
+      "errorNumber": "The pattern needs {NNN}, the running number. Without it every invoice would get the same number.",
+      "errorYear": "The pattern needs {YYYY}, the year. Invoice numbers start again each year.",
+      "errorBraces": "Only {YYYY} and {NNN} can go in curly brackets."
+    },
+    "term": {
+      "title": "Payment term",
+      "hint": "How long your customers have to pay. You can change it on each invoice.",
+      "d7": "7 days",
+      "d14": "14 days",
+      "d30": "30 days",
+      "other": "{{days}} days"
+    },
+    "language": {
+      "title": "Invoice language",
+      "hint": "The language of the invoice, its email and its reminders. The app stays in your language.",
+      "de": "German",
+      "en": "English"
+    },
+    "save": "Save"
+  },
   "settings": {
     "title": "Settings",
     "tax": {
@@ -894,6 +1296,17 @@
       "basis": "VAT is due",
       "notGiven": "Not given",
       "yearFrom": "Starts on {{date}}"
+    },
+    "invoice": {
+      "title": "Invoice details",
+      "edit": "Edit",
+      "editLabel": "Edit your invoice details",
+      "address": "Name and address",
+      "iban": "Bank account (IBAN)",
+      "numbers": "Invoice numbers",
+      "term": "Payment term",
+      "language": "Invoice language",
+      "notGiven": "Not given"
     },
     "bank": {
       "title": "Bank accounts",

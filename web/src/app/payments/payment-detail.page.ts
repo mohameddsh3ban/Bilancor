@@ -19,7 +19,7 @@ import { formatIban } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
-import { Account, Booking, Doc, Transaction } from '../data/models';
+import { Account, Booking, Doc, Invoice, Transaction } from '../data/models';
 import { accountName } from '../domain/bank-connection';
 import {
   changeCategory,
@@ -27,6 +27,7 @@ import {
   markNoReceiptNeeded,
   setPrivate,
 } from '../domain/payment-actions';
+import { invoiceOfPayment } from '../domain/invoices';
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
 import { DemoStateService } from '../state/demo-state.service';
@@ -34,14 +35,16 @@ import { UploadService } from '../state/upload.service';
 import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
 import { DocumentPicker } from './document-picker';
-import { PaymentHistory } from './payment-history';
+import { PaymentHistory, isolateText } from './payment-history';
 import { PaymentStatusChip } from './payment-status-chip';
 
 /**
  * One payment of the open business: what it is, its receipt, its booking, the other party's bank details and
  * what happened to it. Confirming, "no receipt needed", picking a document as the receipt, changing the category
- * and business/private really change the sample data (Take photo shows Reading…, then links a receipt made from the payment). A payment that a document links to can't be marked private
- * (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
+ * and business/private really change the sample data (Take photo shows Reading…, then links a receipt made from the payment).
+ * A payment that pays an invoice written in Invoices says so, with a link to it; picking the document of such an invoice as
+ * the receipt pays the invoice (see `DemoStateService.link`). A payment that pays an invoice stays business, and says why;
+ * a payment that another document links to can't be marked private either (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
  * the list.
  * When the payment is not there (another business opened, an unknown id, no bank yet) it goes back to the list.
  */
@@ -115,6 +118,15 @@ import { PaymentStatusChip } from './payment-status-chip';
             {{ tx.date | appDate }} ·
             {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
           </p>
+          @if (paidInvoice(); as invoice) {
+            <a
+              class="text-primary inline-flex min-h-10 items-center self-start text-sm font-medium hover:underline"
+              data-testid="pays-invoice"
+              [routerLink]="['/invoices', invoice.id]"
+            >
+              {{ 'payments.detail.paysInvoice' | transloco: { number: isolate(invoice.number ?? '') } }}
+            </a>
+          }
         </header>
 
         <section class="flex flex-col gap-3" data-testid="receipt-section">
@@ -263,7 +275,11 @@ import { PaymentStatusChip } from './payment-status-chip';
             }
           </div>
 
-          @if (linkedDoc()) {
+          @if (paidInvoice()) {
+            <p class="text-muted-foreground text-sm" data-testid="private-blocked">
+              {{ 'payments.detail.booking.privateBlockedInvoice' | transloco }}
+            </p>
+          } @else if (linkedDoc()) {
             <p class="text-muted-foreground text-sm" data-testid="private-blocked">
               {{ 'payments.detail.booking.privateBlocked' | transloco }}
             </p>
@@ -384,6 +400,12 @@ export class PaymentDetailPage {
     return id ? (this.demo.documents().find((doc) => doc.paymentId === id) ?? null) : null;
   });
 
+  /** The invoice the open payment pays (it is one of the invoice's payments), if any: a part payment of it as well. */
+  protected readonly paidInvoice = computed<Invoice | null>(() => {
+    const id = this.payment()?.id;
+    return id ? invoiceOfPayment(this.demo.business(), id) : null;
+  });
+
   /** Whether a photo is being read for the open payment. */
   protected readonly photoReading = computed(() => {
     const id = this.payment()?.id;
@@ -392,6 +414,8 @@ export class PaymentDetailPage {
 
   protected readonly paymentStatus = paymentStatus;
   protected readonly formatIban = formatIban;
+  /** An invoice number set apart from the sentence around it, so it keeps its left-to-right order in Arabic. */
+  protected readonly isolate = isolateText;
 
   constructor() {
     effect(() => {

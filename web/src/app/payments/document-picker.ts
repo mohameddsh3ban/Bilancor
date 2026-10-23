@@ -20,6 +20,7 @@ import { DocumentStatusChip } from '../documents/document-status-chip';
 import { documentCandidates } from '../domain/document-matching';
 import { docDay } from '../domain/document-search';
 import { docName, missingField, visibleDocuments } from '../domain/document-status';
+import { invoiceDocNote } from '../domain/invoices';
 import { parseAmountQuery } from '../domain/payment-filters';
 import { DemoStateService } from '../state/demo-state.service';
 
@@ -40,9 +41,11 @@ export function matchDocuments(docs: readonly Doc[], query: string): Doc[] {
 }
 
 /**
- * A "Pick from Documents" button that opens a searchable list of the documents the payment could get as its
- * receipt (the ones that fit, best first). Choosing one emits its id and closes the list. The list is a popover that
- * is nearly as wide as the screen on a phone. Linking is the page's job, not this list's.
+ * A "Pick from Documents" button (its words can be changed with `labelKey`) that opens a searchable list of the
+ * documents the payment could get as its receipt (the ones that fit, best first). Choosing one emits its id and closes the list. The list is a popover that
+ * is nearly as wide as the screen on a phone. Linking is the page's job, not this list's (`DemoStateService.link`: for the
+ * document of an invoice written in Invoices it pays the invoice, so part payments add up; a partly paid invoice's row says
+ * what is left).
  */
 @Component({
   selector: 'app-document-picker',
@@ -62,7 +65,7 @@ export function matchDocuments(docs: readonly Doc[], query: string): Doc[] {
   template: `
     <hlm-popover align="start" (stateChanged)="onState($event)">
       <button hlmPopoverTrigger hlmBtn variant="outline" size="lg" data-testid="pick-document">
-        {{ 'payments.detail.receipt.pickDocument' | transloco }}
+        {{ labelKey() | transloco }}
       </button>
       <ng-template hlmPopoverPortal let-popover>
         <!-- On a phone the list starts where the button does (inside the page and card padding), so it is 4.5rem narrower than the screen. -->
@@ -111,7 +114,7 @@ export function matchDocuments(docs: readonly Doc[], query: string): Doc[] {
                         >
                       </span>
                     }
-                    @if (missingField(doc) !== null) {
+                    @if (showsStatus(doc)) {
                       <app-document-status-chip class="self-start" [doc]="doc" />
                     }
                   </span>
@@ -167,6 +170,8 @@ export class DocumentPicker {
 
   /** The payment that needs a receipt. */
   readonly payment = input.required<Transaction>();
+  /** The translation key of the button: "Pick from Documents", or another wording where the card has a guess to offer first. */
+  readonly labelKey = input('payments.detail.receipt.pickDocument');
   /** Offer a link to Documents to add one when none fits. Off where the person must not leave the page (the review inbox). */
   readonly canAdd = input(true);
   /** The id of the document the person chose. */
@@ -180,7 +185,11 @@ export class DocumentPicker {
   protected readonly matches = computed(() => matchDocuments(this.candidates(), this.query()));
 
   protected readonly day = docDay;
-  protected readonly missingField = missingField;
+
+  /** Whether a row says its document's status: something could not be read, or the invoice was paid in part, so the person sees what is left. */
+  protected showsStatus(doc: Doc): boolean {
+    return missingField(doc) !== null || invoiceDocNote(doc, this.demo.business())?.kind === 'left';
+  }
 
   protected setQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);

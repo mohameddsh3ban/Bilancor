@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  signal,
   viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -11,8 +12,9 @@ import { lucideCamera, lucideLoaderCircle } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { LanguageService } from '../core/i18n/language.service';
-import type { Booking } from '../data/models';
+import type { Booking, Invoice } from '../data/models';
 import { counterpartyKey } from '../domain/category-rules';
+import { invoiceMatch, invoiceOfPayment } from '../domain/invoices';
 import {
   changeCategory,
   confirmBooking,
@@ -25,6 +27,7 @@ import { CategoryPicker } from '../payments/category-picker';
 import { DocumentPicker } from '../payments/document-picker';
 import { isolateText } from '../payments/payment-history';
 import { DemoStateService } from '../state/demo-state.service';
+import { InvoiceService } from '../state/invoice.service';
 import { ReviewService, reviewItemKey, type ReviewAnswerResult } from '../state/review.service';
 import { UploadService } from '../state/upload.service';
 import { ANSWERS_CLASS, ReviewCard, type TickNote } from './review-card';
@@ -39,6 +42,10 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
  *
  * The question follows the problem the stage hands over (`item().problem`): a payment with two problems keeps this card,
  * and after the first answer the same card asks the next question.
+ *
+ * A payment that is missing its receipt and probably pays one open invoice (see `invoiceGuess`) is asked that first, "Is
+ * this the payment for invoice …?": Yes pays the invoice, Pick another opens the list of documents, and No receipt needed
+ * is as it always was.
  *
  * Only a category chosen for an Unclear payment teaches the app: it makes a rule for that counterparty (see `choose`).
  */
@@ -122,30 +129,53 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
             </div>
           }
           @case ('noReceipt') {
+            <!-- An incoming payment that fits one open invoice (and does not name it) asks about that invoice first. -->
+            @let guess = invoiceGuess();
             <p class="text-lg font-semibold" data-testid="card-question">
-              {{ 'review.q.noReceipt' | transloco }}
+              @if (guess) {
+                {{
+                  'review.q.invoiceMatch'
+                    | transloco: { number: shown(guess.number ?? ''), name: shown(guess.customer.name) }
+                }}
+              } @else {
+                {{ 'review.q.noReceipt' | transloco }}
+              }
             </p>
             <div [class]="answersClass">
-              <button
-                hlmBtn
-                size="lg"
-                type="button"
-                data-testid="answer-photo"
-                [disabled]="reading()"
-                (click)="takePhoto()"
-              >
-                <ng-icon
-                  size="16"
-                  aria-hidden="true"
-                  [name]="reading() ? 'lucideLoaderCircle' : 'lucideCamera'"
-                  [class]="reading() ? 'animate-spin motion-reduce:animate-none' : ''"
-                />
-                {{
-                  (reading() ? 'payments.detail.receipt.reading' : 'review.a.takePhoto') | transloco
-                }}
-              </button>
+              @if (guess) {
+                <button
+                  hlmBtn
+                  size="lg"
+                  type="button"
+                  data-testid="answer-invoice-yes"
+                  (click)="confirmInvoice(guess)"
+                >
+                  {{ 'review.a.yes' | transloco }}
+                </button>
+              } @else {
+                <button
+                  hlmBtn
+                  size="lg"
+                  type="button"
+                  data-testid="answer-photo"
+                  [disabled]="reading()"
+                  (click)="takePhoto()"
+                >
+                  <ng-icon
+                    size="16"
+                    aria-hidden="true"
+                    [name]="reading() ? 'lucideLoaderCircle' : 'lucideCamera'"
+                    [class]="reading() ? 'animate-spin motion-reduce:animate-none' : ''"
+                  />
+                  {{
+                    (reading() ? 'payments.detail.receipt.reading' : 'review.a.takePhoto')
+                      | transloco
+                  }}
+                </button>
+              }
               <app-document-picker
                 class="w-full"
+                [labelKey]="guess ? 'review.a.pickAnother' : 'payments.detail.receipt.pickDocument'"
                 [payment]="tx"
                 [canAdd]="false"
                 (picked)="pickDocument($event)"
@@ -169,6 +199,7 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
 })
 export class PaymentCard {
   private readonly demo = inject(DemoStateService);
+  private readonly invoices = inject(InvoiceService);
   private readonly review = inject(ReviewService);
   private readonly upload = inject(UploadService);
   private readonly transloco = inject(TranslocoService);
@@ -192,10 +223,34 @@ export class PaymentCard {
     );
   });
 
-  /** A payment that a document is linked to cannot be private (the Documents page does not allow it either). */
-  protected readonly canBePrivate = computed(
-    () => !this.demo.business().documents.some((doc) => doc.paymentId === this.item().id),
-  );
+  /** A payment that a document is linked to, or that pays an invoice, cannot be private (the payment's own page does not allow it either). */
+  protected readonly canBePrivate = computed(() => {
+    const business = this.demo.business();
+    const id = this.item().id;
+    return !business.documents.some((doc) => doc.paymentId === id) && invoiceOfPayment(business, id) === null;
+  });
+
+  /**
+   * The invoice this payment is probably for, as the data says now: money coming in with no receipt, whose reference
+   * names no invoice, and whose amount is what exactly one open invoice still has to be paid. Null for every other
+   * payment (one that names its invoice is linked, not asked about), and for this one as soon as an answer changes it.
+   */
+  private readonly liveGuess = computed<Invoice | null>(() => {
+    const tx = this.payment();
+    const match = tx ? invoiceMatch(this.demo.business(), tx) : null;
+    return match && !match.certain ? match.invoice : null;
+  });
+
+  /** The invoice the card was asking about when it was answered; see `invoiceGuess`. */
+  private readonly askedGuess = signal<Invoice | null>(null);
+
+  /**
+   * The invoice the card asks about before it asks for a receipt. Once the card is answered it keeps asking it, as the
+   * result shows, until the card leaves: Yes or a picked document link the payment, which then fits no invoice any more,
+   * and the card must not turn into the plain receipt question (and change its height) under its own tick. Undo brings the
+   * live guess back, and a card that comes back is a new one.
+   */
+  protected readonly invoiceGuess = computed<Invoice | null>(() => this.liveGuess() ?? this.askedGuess());
 
   /** What names this card to the review service, so an answer given here never lands on another card. */
   private readonly key = computed(() => reviewItemKey(this.item()));
@@ -272,6 +327,25 @@ export class PaymentCard {
     );
   }
 
+  /** A name or number in a sentence of the question: in Arabic it is set apart, so that it keeps its own direction. */
+  protected shown(text: string): string {
+    return this.language.lang() === 'ar' ? isolateText(text) : text;
+  }
+
+  /**
+   * Yes, this payment pays the invoice (see `InvoiceService.confirmMatch`): the invoice is paid, and its sent document is the
+   * payment's receipt, which counts as a receipt added like one picked from Documents.
+   */
+  protected confirmInvoice(invoice: Invoice): void {
+    const tx = this.payment();
+    if (!tx) return;
+    this.answer(
+      () => this.invoices.confirmMatch(tx.id, invoice.id),
+      'review.result.invoicePaid',
+      'receipt',
+    );
+  }
+
   protected pickDocument(docId: string): void {
     const tx = this.payment();
     if (!tx) return;
@@ -307,6 +381,7 @@ export class PaymentCard {
 
   /** Answers the current decision with `apply`, and ticks in the same breath, as the card frame asks. */
   private answer(apply: () => void, labelKey: string, counts?: ReviewAnswerResult['counts']): void {
+    this.askedGuess.set(this.liveGuess());
     void this.review.answer(apply, { labelKey, counts }, this.key());
     this.frame()?.showTick(labelKey);
   }

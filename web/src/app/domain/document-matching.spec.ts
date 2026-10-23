@@ -35,6 +35,7 @@ function docFromPool(poolIndex: number): Doc {
     bookingConfirmed: false,
     paymentId: null,
     history: [],
+    invoice: null,
   };
 }
 
@@ -122,6 +123,22 @@ describe('paymentCandidates', () => {
     const ranked = paymentCandidates(unread, [missingPayment({})]);
     expect(ids(ranked)).toEqual(['wd-t17']);
   });
+
+  it('offers no payment for a cancelled invoice or a cancellation invoice, which no payment settles', () => {
+    const incoming = missingPayment({ id: 'in', amountCents: 59500 });
+    const open = freeDoc({ direction: 'sent', amountCents: 59500, invoice: { id: 'a', role: 'invoice', cancelled: false } });
+    const cancelled = { ...open, invoice: { id: 'b', role: 'invoice' as const, cancelled: true } };
+    const cancellation = { ...open, invoice: { id: 'c', role: 'cancellation' as const, cancelled: false } };
+    expect(ids(paymentCandidates(open, [incoming]))).toEqual(['in']);
+    expect(paymentCandidates(cancelled, [incoming])).toEqual([]);
+    expect(paymentCandidates(cancellation, [incoming])).toEqual([]);
+  });
+
+  it('offers no payment for the cancelled and the cancellation documents of the sample', () => {
+    expect(paymentCandidates(doc(weber, 'wd-d5'), weber.transactions)).toEqual([]);
+    expect(paymentCandidates(doc(weber, 'wd-d6'), weber.transactions)).toEqual([]);
+    expect(ids(paymentCandidates(doc(weber, 'wd-d2'), weber.transactions))).toContain('wd-t19');
+  });
 });
 
 describe('documentCandidates', () => {
@@ -135,6 +152,19 @@ describe('documentCandidates', () => {
     const duplicate = freeDoc({ id: 'dup', duplicateOf: 'doc-wd-t2' });
     const free = freeDoc({ id: 'free' });
     expect(ids(documentCandidates(tx(weber, 'wd-t17'), [linked, reading, duplicate, free]))).toEqual(['free']);
+  });
+
+  it('leaves out a cancelled invoice and a cancellation invoice, which are done and have no payment to wait for', () => {
+    const incoming = missingPayment({ amountCents: 59500 });
+    const open = freeDoc({ id: 'open', direction: 'sent', amountCents: 59500, invoice: { id: 'a', role: 'invoice', cancelled: false } });
+    const cancelled = freeDoc({ id: 'cancelled', direction: 'sent', amountCents: 59500, invoice: { id: 'b', role: 'invoice', cancelled: true } });
+    const cancellation = freeDoc({ id: 'cancellation', direction: 'sent', amountCents: 59500, invoice: { id: 'c', role: 'cancellation', cancelled: false } });
+    expect(ids(documentCandidates(incoming, [cancelled, cancellation, open]))).toEqual(['open']);
+  });
+
+  it('offers the sample invoices that wait for a payment, and not the cancelled pair', () => {
+    const kern = tx(weber, 'wd-t19');
+    expect(ids(documentCandidates(kern, weber.documents))).toEqual(['wd-d2', 'wd-d3']);
   });
 
   it('offers nothing for a payment of 0 euros', () => {

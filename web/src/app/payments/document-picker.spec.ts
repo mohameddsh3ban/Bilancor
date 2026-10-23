@@ -113,6 +113,15 @@ describe('DocumentPicker', () => {
     expect(options().length).toBeGreaterThan(0);
   });
 
+  it('can be named in other words, for a card that has a guess to offer first', async () => {
+    await render('wd-t17');
+    fixture.componentRef.setInput('labelKey', 'review.a.pickAnother');
+    await settle();
+    expect(text((fixture.nativeElement as HTMLElement).querySelector('[data-testid="pick-document"]'))).toBe(
+      'Pick another',
+    );
+  });
+
   it('lists the documents that fit, the one with the same amount first', async () => {
     await render('wd-t17');
     await open();
@@ -139,6 +148,25 @@ describe('DocumentPicker', () => {
     expect(text(inside(unread, 'picker-amount'))).toBe('—');
     expect(text(inside(unread, 'doc-status'))).toBe('Check amount');
     expect(inside(read, 'doc-status')).toBeNull();
+  });
+
+  it('says what is left on the invoice that was paid in part, and nothing about one that was not', async () => {
+    demo.setBusiness('sara-yoga');
+    const part = demo.business().transactions.find((t) => t.id === 'sy-t15')!;
+    demo.addTransaction({ ...part, id: 'sy-t90', receipt: 'missing', receiptFile: null, history: [] });
+    await render('sy-t90');
+    await open();
+    expect(names()).toEqual(['Physio Zentrum Mitte']);
+    expect(text(inside(options()[0], 'doc-status')).replace(/[⁦⁩]/g, '')).toBe(
+      `Waiting for payment · ${formatMoney(30000, 'en')} left`,
+    );
+    fixture.destroy();
+
+    demo.setBusiness('weber-design');
+    await render('wd-t19');
+    await open();
+    expect(names()).toEqual(['Studio Kern', 'Bäckerei Lange']);
+    expect(options().map((o) => inside(o, 'doc-status'))).toEqual([null, null]);
   });
 
   it('shows the file name once for a document whose name is unknown', async () => {

@@ -51,6 +51,7 @@ export function newReadingDoc(id: string, fileName: string, source: DocSource): 
     bookingConfirmed: false,
     paymentId: null,
     history: [{ date: DEMO_TODAY, key: ADDED_KEY[source], params: {} }],
+    invoice: null,
   };
 }
 

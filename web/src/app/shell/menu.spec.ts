@@ -14,12 +14,13 @@ describe('menu', () => {
     ]);
   });
 
-  it('Home, Payments, Documents, Taxes and Settings are real pages; everything else opens coming soon', () => {
+  it('Home, Payments, Documents, Invoices, Taxes and Settings are real pages; everything else opens coming soon', () => {
     for (const item of MENU_ITEMS) {
       const real: Record<string, string> = {
         home: '/',
         payments: '/payments',
         documents: '/documents',
+        invoices: '/invoices',
         taxes: '/taxes',
         settings: '/settings',
       };
@@ -34,6 +35,11 @@ describe('menu', () => {
 
   it('menu Documents goes to /documents', () => {
     expect(MENU_ITEMS.find((i) => i.id === 'documents')?.route).toBe('/documents');
+  });
+
+  it('menu and bottom bar open /invoices', () => {
+    expect(MENU_ITEMS.find((i) => i.id === 'invoices')?.route).toBe('/invoices');
+    expect(BOTTOM_BAR_ITEMS.find((i) => i.id === 'invoices')?.route).toBe('/invoices');
   });
 
   it('menu and homepage open /taxes: the menu entry, also from the more sheet', () => {

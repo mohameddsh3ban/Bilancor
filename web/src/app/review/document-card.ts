@@ -15,7 +15,8 @@ import { editDocument, keepDuplicate, setDirection } from '../domain/document-ac
 import { docName } from '../domain/document-status';
 import type { ReviewItem } from '../domain/review-queue';
 import { DocumentPaper } from '../documents/document-paper';
-import { type DocChanges, parseDocAmount } from '../documents/document-edit-form';
+import { type DocChanges } from '../documents/document-edit-form';
+import { parseDocAmount } from '../domain/amount-input';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService, reviewItemKey, type ReviewAnswerResult } from '../state/review.service';
 import { ANSWERS_CLASS, ReviewCard } from './review-card';

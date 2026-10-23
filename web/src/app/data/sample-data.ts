@@ -18,8 +18,9 @@ import {
   TRAVEL,
   UTILITIES,
 } from './categories';
-import { Account, AccountConnection, Booking, Business, CategoryTotal, HistoryEntry, Person, ReceiptState, Transaction } from './models';
+import { Account, AccountConnection, Booking, Business, CategoryTotal, Doc, HistoryEntry, Invoice, Person, ReceiptState, Transaction } from './models';
 import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
+import { INVOICE_PROFILES, SAMPLE_INVOICES } from './sample-invoices';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
 
@@ -70,12 +71,47 @@ function pay(p: PaySpec): Transaction {
 /** A business as written out below; `withDocuments()` adds its documents. */
 type BusinessSpec = Omit<Business, 'documents'>;
 
-/** One document linked to every payment with a receipt attached, then the business's extra documents. */
+/**
+ * Whether the payment only pays part of an invoice written in the app, with that invoice's own sent document as its receipt
+ * (a part payment): that document waits for the rest, so the payment gets no document of its own.
+ */
+const paysPartOfInvoice = (b: BusinessSpec, tx: Transaction): boolean =>
+  b.invoices.some((invoice) => invoice.paymentIds.includes(tx.id) && invoice.docId !== `doc-${tx.id}`);
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The day an invoice is due: its date plus the payment term. This is `dueDateOf` (domain/invoices.ts), which this file cannot import (a cycle through the banks); sample-invoices.spec.ts checks they agree. */
+const dueOn = (invoice: Invoice): string => new Date(Date.parse(invoice.issueDate) + invoice.paymentTermDays * DAY_MS).toISOString().slice(0, 10);
+
+/**
+ * The document of an invoice written in the app is marked as one, and shows the invoice: its number, its customer, the day it
+ * was issued (also the day it was added) and the day it is due (a cancellation invoice has none), so Documents reads like Invoices.
+ * The payment that paid it may have another name and date.
+ */
+function markedAsInvoice(doc: Doc, invoices: readonly Invoice[]): Doc {
+  const invoice = invoices.find((candidate) => candidate.docId === doc.id);
+  if (!invoice) return doc;
+  const role = invoice.cancels !== null ? 'cancellation' : 'invoice';
+  return {
+    ...doc,
+    name: invoice.customer.name,
+    invoiceNo: invoice.number ?? doc.invoiceNo,
+    date: invoice.issueDate,
+    addedOn: invoice.issueDate,
+    dueDate: role === 'cancellation' ? null : dueOn(invoice),
+    invoice: { id: invoice.id, role, cancelled: invoice.cancelledBy !== null },
+  };
+}
+
+/**
+ * One document linked to every payment with a receipt attached (except a part payment of an invoice), then the business's
+ * extra documents. The documents of the business's invoices are marked as such.
+ */
 function withDocuments(b: BusinessSpec): Business {
   const linked = b.transactions
-    .filter((tx) => tx.receipt === 'attached')
+    .filter((tx) => tx.receipt === 'attached' && !paysPartOfInvoice(b, tx))
     .map((tx) => linkedDocFor(tx, b.taxProfile.kleinunternehmer));
-  return { ...b, documents: [...linked, ...(EXTRA_DOCUMENTS[b.id] ?? [])] };
+  return { ...b, documents: [...linked, ...(EXTRA_DOCUMENTS[b.id] ?? [])].map((doc) => markedAsInvoice(doc, b.invoices)) };
 }
 
 /** What the system would offer for an Amazon order it cannot sort: office supplies, software or other costs. */
@@ -140,6 +176,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     },
     accounts: [WD_QONTO, WD_CASH],
     transactions: [
+      // Studio Kern's payment for RE-2026-044, with no invoice number in it and no receipt: the review inbox asks whether it pays that invoice.
+      pay({ id: 'wd-t19', date: '2026-10-21', who: 'Kern Studio Berlin', acct: WD_QONTO, cents: 238000, booking: REVENUE_19, receipt: 'missing', iban: 'DE16120300000987654321', ref: 'Danke für die Zusammenarbeit' }),
       pay({ id: 'wd-t1', date: '2026-10-20', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, confirmed: false, iban: 'DE68210501700012345678', ref: 'RE-2026-041' }),
       pay({ id: 'wd-t2', date: '2026-10-19', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0712, Mobilfunk Oktober', file: 'telekom-rechnung-oktober.pdf' }),
       pay({ id: 'wd-t3', date: '2026-10-17', who: 'Deutsche Bahn', acct: WD_QONTO, cents: -12000, booking: TRAVEL, receipt: 'missing', iban: 'DE35100100100098765432', ref: 'Fahrkarte Berlin-Hamburg, Buchung 8841' }),
@@ -187,6 +225,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'wd-h2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 30 }, date: '2026-09-21' },
     ],
     categoryRules: [],
+    invoices: SAMPLE_INVOICES['weber-design'],
+    invoiceProfile: INVOICE_PROFILES['weber-design'],
     history: [],
   },
   {
@@ -206,6 +246,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     },
     accounts: [SY_QONTO],
     transactions: [
+      // A part payment of RE-2026-021 (600,00 €): the invoice is its receipt, and 300,00 € are left.
+      pay({ id: 'sy-t15', date: '2026-10-21', who: 'Physio Zentrum Mitte', acct: SY_QONTO, cents: 30000, booking: REVENUE_KU, file: 'RE-2026-021.pdf', iban: 'DE41100500001230987654', ref: 'RE-2026-021 Anzahlung' }),
       pay({ id: 'sy-t1', date: '2026-10-19', who: 'Studio Mitte, Kursgebühren Oktober', acct: SY_QONTO, cents: 96000, booking: REVENUE_KU, iban: 'DE55100700240123456780', ref: 'RE-2026-019' }),
       pay({ id: 'sy-t2', date: '2026-10-16', who: 'Anna Keller, Workshop Wochenende', acct: SY_QONTO, cents: 18500, booking: REVENUE_KU, confirmed: false, iban: 'DE18500105175407324931', ref: 'RE-2026-020' }),
       pay({ id: 'sy-t3', date: '2026-10-10', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete Oktober' }),
@@ -223,8 +265,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     ],
     vatReturns: [],
     legalForm: 'sole',
-    // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 300,00 € of income, so the year reaches 21 300,00 €.
-    yearOpening: opening(1830000, [
+    // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 000,00 € of income, so the year reaches 21 300,00 €.
+    yearOpening: opening(1800000, [
       total(RENT, 245000),
       total(INSURANCE, 42000),
       total(SUPPLIES, 38000),
@@ -240,6 +282,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'sy-h1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 80, limit: 25000 }, date: '2026-09-24' },
     ],
     categoryRules: [],
+    invoices: SAMPLE_INVOICES['sara-yoga'],
+    invoiceProfile: INVOICE_PROFILES['sara-yoga'],
     history: [],
   },
   {
@@ -302,6 +346,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'cl-h1', kind: 'terms', urgency: 1, blocking: false, params: {}, date: '2026-09-15' },
     ],
     categoryRules: [],
+    invoices: SAMPLE_INVOICES['cafe-linde'],
+    invoiceProfile: INVOICE_PROFILES['cafe-linde'],
     history: [],
   },
 ];

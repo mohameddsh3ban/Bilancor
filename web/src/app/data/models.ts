@@ -45,7 +45,18 @@ export type HistoryKey =
   | 'taxChanged'
   | 'bankConnected' // params: bank, account
   | 'bankRenewed' // params: bank
-  | 'cashAdded';
+  | 'cashAdded'
+  | 'invoiceCreated'
+  | 'invoiceSent' // params: email (the address it went to)
+  | 'invoiceReminded' // params: level ('1' or '2')
+  | 'invoicePaid'
+  | 'invoicePartlyPaid'
+  | 'invoiceCancelled' // params: number (of the cancellation invoice)
+  | 'invoiceCancellation' // params: number (of the invoice it cancels)
+  | 'invoiceDuplicated' // params: number (of the invoice it was copied from)
+  | 'paidInCash'
+  | 'paysInvoice' // on a payment; params: number
+  | 'bookedByInvoice'; // on a payment that pays an invoice taxed differently from how it was booked; params: category
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
@@ -71,10 +82,11 @@ export interface Doc {
   booking: Booking | null; bookingConfirmed: boolean; // the prepared booking while not linked
   paymentId: string | null;
   history: HistoryEntry[]; // newest first
+  invoice: { id: string; role: 'invoice' | 'cancellation'; cancelled: boolean } | null; // set on the sent document of an invoice written in the app; null on every other document
 } // the status is calculated by docStatus(), never stored
 /** A ready-made reading result for a simulated upload; `plain` marks the receipts a pool repeats. */
 export type PoolResult = Pick<Doc, 'name' | 'direction' | 'invoiceNo' | 'date' | 'dueDate' | 'amountCents' | 'vatRate' | 'duplicateOf' | 'booking'> & { plain: boolean };
-export type NoticeKind = 'terms' | 'bankExpiry' | 'bankEnded' | 'unreadable' | 'revenueLimit';
+export type NoticeKind = 'terms' | 'bankExpiry' | 'bankEnded' | 'unreadable' | 'revenueLimit' | 'invoiceOverdue';
 export interface Notice { id: string; kind: NoticeKind; urgency: number; blocking: boolean; params: Record<string, string | number>; date: string } // lower urgency = more urgent; text from i18n "notice.<kind>.text" / ".action"
 export type BusinessKind = 'freelance' | 'trade';
 export type VatPeriod = 'monthly' | 'quarterly' | 'yearly';
@@ -94,6 +106,48 @@ export interface SentVatReturn {
 }
 /** What a category adds up to in a year: the category's label, SKR03 account and German name (a `Booking`'s), and the amount. */
 export interface CategoryTotal { labelKey: string; skr03: string; nameDe: string; cents: number }
+/** The kind of customer decides the invoice format and what the invoice needs: a business, a private person or a public office. */
+export type CustomerKind = 'business' | 'private' | 'public';
+export interface InvoiceCustomer {
+  name: string; street: string; postcode: string; city: string;
+  country: string; // ISO 3166 alpha-2, 'DE' by default
+  email: string; kind: CustomerKind;
+  vatId: string | null; // the customer's EU VAT ID; needed for a business in another EU country
+  leitwegId: string | null; // needed for a public office (XRechnung)
+}
+export type InvoiceUnit = 'piece' | 'hour' | 'day' | 'flat';
+/** One line of an invoice; the unit price is net for a business that charges VAT, and as charged for a Kleinunternehmer. */
+export interface InvoiceLine { description: string; quantity: number; unit: InvoiceUnit; unitPriceCents: number }
+/** When the work was done: on one day, or during a month ('YYYY-MM'). */
+export type ServicePeriod = { kind: 'date'; date: string } | { kind: 'month'; month: string };
+/** The note an invoice carries instead of VAT: § 19 UStG, reverse charge (a business in another EU country), or not taxable in Germany (a business outside the EU). */
+export type TaxNote = 'kleinunternehmer' | 'reverseCharge' | 'notTaxable';
+/** The seller as an invoice prints it: the business's address, email and bank account from its invoice details, and its tax number and VAT ID from its tax details. */
+export interface InvoiceSeller {
+  name: string; street: string; postcode: string; city: string; email: string;
+  iban: string | null; taxNumber: string | null; vatId: string | null;
+}
+/**
+ * An invoice written in the app. A draft has no number and no `sentOn`; sending gives it both and freezes `vatRate`, `taxNote` and `seller`.
+ * The status is calculated by invoiceStatus(), never stored.
+ */
+export interface Invoice {
+  id: string; number: string | null; // null while a draft
+  customer: InvoiceCustomer; lines: InvoiceLine[];
+  vatRate: 0 | 7 | 19; taxNote: TaxNote | null; // the chosen rate for a draft; the frozen effective rate and note once sent
+  language: 'de' | 'en'; issueDate: string; servicePeriod: ServicePeriod; paymentTermDays: number;
+  sentOn: string | null; docId: string | null; paymentIds: string[]; // docId: the sent document on Documents
+  seller: InvoiceSeller | null; // the seller as the invoice was sent with it (frozen then); null on a draft, which follows the business's details until it is sent
+  reminders: { level: 1 | 2; sentOn: string }[];
+  cancelledBy: string | null; cancels: string | null; // ids of the cancellation invoice, and of the invoice a cancellation invoice cancels
+  history: HistoryEntry[]; // newest first
+}
+/** What the business prints on its invoices, and how they are numbered. */
+export interface InvoiceProfile {
+  name: string; street: string; postcode: string; city: string; email: string; iban: string | null;
+  numberPattern: string; // e.g. 'RE-{YYYY}-{NNN}'
+  paymentTermDays: number; language: 'de' | 'en';
+}
 export interface Business {
   id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[];
   vatReturns: SentVatReturn[]; // the returns sent so far; the next one is calculated (see vat-return.ts), never stored
@@ -104,6 +158,7 @@ export interface Business {
    */
   yearOpening: { incomeCents: number; costsCents: number; costsByCategory: CategoryTotal[] };
   incomeTaxReserveCents: number;
+  invoices: Invoice[]; invoiceProfile: InvoiceProfile; // the invoices written in the app (drafts included), and how they are printed and numbered
   notices: Notice[]; noticeHistory: Notice[]; categoryRules: CategoryRule[];
   history: HistoryEntry[]; // changes to the tax details and bank accounts, newest first: stored, not shown yet
 }

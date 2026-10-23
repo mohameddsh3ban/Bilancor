@@ -149,10 +149,11 @@ describe('sample payments', () => {
 describe('sample documents', () => {
   const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
 
-  it('every payment with a receipt attached has exactly one document linked to it', () => {
+  it("every payment with a receipt attached has exactly one document linked to it, except a part payment of an invoice: that invoice's own document waits for the rest", () => {
     for (const b of BUSINESSES) {
       for (const t of b.transactions.filter((x) => x.receipt === 'attached')) {
-        expect(b.documents.filter((d) => d.paymentId === t.id), t.id).toHaveLength(1);
+        const partPayment = b.invoices.some((i) => i.paymentIds.includes(t.id) && i.docId !== `doc-${t.id}`);
+        expect(b.documents.filter((d) => d.paymentId === t.id), t.id).toHaveLength(partPayment ? 0 : 1);
       }
     }
   });
@@ -191,9 +192,9 @@ describe('sample documents', () => {
     }
   });
 
-  it('the documents that are not linked wait for a payment or a decision: wd-d1 to wd-d4 and sy-d1', () => {
+  it('the documents that are not linked wait for a payment or a decision, or are closed invoices: wd-d1 to wd-d6, sy-d1, sy-d2 and cl-d1', () => {
     const unlinked = BUSINESSES.flatMap((b) => b.documents.filter((d) => d.paymentId === null).map((d) => d.id));
-    expect(unlinked).toEqual(['wd-d1', 'wd-d2', 'wd-d3', 'wd-d4', 'sy-d1']);
+    expect(unlinked).toEqual(['wd-d1', 'wd-d2', 'wd-d3', 'wd-d4', 'wd-d5', 'wd-d6', 'sy-d1', 'sy-d2', 'cl-d1']);
   });
 
   it('wd-d1 is a photo with no amount yet; wd-d4 and sy-d1 are receipts for payments that lack one', () => {
