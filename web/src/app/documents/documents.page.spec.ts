@@ -35,6 +35,7 @@ const base: Doc = {
   bookingConfirmed: false,
   paymentId: null,
   history: [],
+  invoice: null,
 };
 
 describe('DocumentsPage', () => {

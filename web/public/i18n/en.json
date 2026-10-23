@@ -313,6 +313,8 @@
     "rent": "Rent",
     "revenue19": "Revenue (19% VAT)",
     "revenue7": "Revenue (7% VAT)",
+    "revenueAbroad": "Revenue (outside Germany, no VAT)",
+    "revenueEuRc": "Revenue (EU, reverse charge)",
     "revenueKU": "Revenue (no VAT)",
     "salaries": "Salaries",
     "software": "Software & maintenance",
@@ -347,7 +349,17 @@
     "taxChanged": "You changed your tax details",
     "bankConnected": "You connected {{account}} at {{bank}}",
     "bankRenewed": "You renewed the connection to {{bank}}",
-    "cashAdded": "You added a cash box"
+    "cashAdded": "You added a cash box",
+    "invoiceCreated": "You created the invoice",
+    "invoiceSent": "You sent it by email to {{email}}",
+    "invoiceReminded": "You sent reminder {{level}} of 2 by email",
+    "invoicePaid": "Paid in full",
+    "invoicePartlyPaid": "Part payment received",
+    "invoiceCancelled": "You cancelled it with cancellation invoice {{number}}",
+    "invoiceCancellation": "You created it to cancel invoice {{number}}",
+    "invoiceDuplicated": "You copied it from invoice {{number}}",
+    "paidInCash": "You marked it as paid in cash",
+    "paysInvoice": "Pays invoice {{number}}"
   },
   "payments": {
     "title": "Payments",

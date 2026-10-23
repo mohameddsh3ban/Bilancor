@@ -10,6 +10,20 @@ export const REVENUE_KU: Booking = {
   labelKey: 'revenueKU',
   vatRate: 0,
 };
+/** Revenue from a business in another EU country, where the customer owes the VAT (reverse charge). Not offered as a category to pick: only an invoice books to it. */
+export const REVENUE_EU_RC: Booking = {
+  skr03: '8336',
+  nameDe: 'Erlöse aus im Inland nicht steuerbaren Umsätzen (EU, Reverse Charge)',
+  labelKey: 'revenueEuRc',
+  vatRate: 0,
+};
+/** Revenue from a business outside the EU, not taxable in Germany. Not offered as a category to pick: only an invoice books to it. */
+export const REVENUE_ABROAD: Booking = {
+  skr03: '8338',
+  nameDe: 'Erlöse aus im Drittland steuerbaren Leistungen',
+  labelKey: 'revenueAbroad',
+  vatRate: 0,
+};
 export const PHONE: Booking = { skr03: '4920', nameDe: 'Telefon', labelKey: 'phone', vatRate: 19 };
 export const TRAVEL: Booking = { skr03: '4670', nameDe: 'Reisekosten Unternehmer', labelKey: 'travel', vatRate: 7 };
 export const SOFTWARE: Booking = {

@@ -111,6 +111,7 @@ describe('newReadingDoc', () => {
       bookingConfirmed: false,
       paymentId: null,
       history: [{ date: DEMO_TODAY, key: 'addedFile', params: {} }],
+      invoice: null,
     });
   });
 

@@ -35,6 +35,7 @@ function docFromPool(poolIndex: number): Doc {
     bookingConfirmed: false,
     paymentId: null,
     history: [],
+    invoice: null,
   };
 }
 

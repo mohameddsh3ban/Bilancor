@@ -7,6 +7,7 @@ const STEP_FOR_KIND: Record<NoticeKind, keyof SetupSteps> = {
   terms: 'bank',
   unreadable: 'receipt',
   revenueLimit: 'tax',
+  invoiceOverdue: 'bank',
 };
 
 /**

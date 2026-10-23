@@ -313,6 +313,8 @@
     "rent": "Miete",
     "revenue19": "Einnahmen (19 % USt)",
     "revenue7": "Einnahmen (7 % USt)",
+    "revenueAbroad": "Einnahmen (Ausland, ohne USt)",
+    "revenueEuRc": "Einnahmen (EU, Reverse Charge)",
     "revenueKU": "Einnahmen (ohne USt)",
     "salaries": "Gehälter",
     "software": "Software & Wartung",
@@ -347,7 +349,17 @@
     "taxChanged": "Du hast deine Steuerangaben geändert",
     "bankConnected": "Du hast {{account}} bei {{bank}} verbunden",
     "bankRenewed": "Du hast die Verbindung zu {{bank}} erneuert",
-    "cashAdded": "Du hast eine Kasse hinzugefügt"
+    "cashAdded": "Du hast eine Kasse hinzugefügt",
+    "invoiceCreated": "Du hast die Rechnung erstellt",
+    "invoiceSent": "Du hast sie per E-Mail an {{email}} gesendet",
+    "invoiceReminded": "Du hast Erinnerung {{level}} von 2 per E-Mail gesendet",
+    "invoicePaid": "Vollständig bezahlt",
+    "invoicePartlyPaid": "Teilzahlung erhalten",
+    "invoiceCancelled": "Du hast sie mit der Stornorechnung {{number}} storniert",
+    "invoiceCancellation": "Du hast sie erstellt, um die Rechnung {{number}} zu stornieren",
+    "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
+    "paidInCash": "Du hast es als bar bezahlt markiert",
+    "paysInvoice": "Bezahlt die Rechnung {{number}}"
   },
   "payments": {
     "title": "Zahlungen",

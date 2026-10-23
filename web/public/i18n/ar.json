@@ -313,6 +313,8 @@
     "rent": "الإيجار",
     "revenue19": "إيرادات (ضريبة 19%)",
     "revenue7": "إيرادات (ضريبة 7%)",
+    "revenueAbroad": "إيرادات (خارج ألمانيا، بدون ضريبة)",
+    "revenueEuRc": "إيرادات (الاتحاد الأوروبي، التحمّل العكسي)",
     "revenueKU": "إيرادات (بدون ضريبة)",
     "salaries": "الرواتب",
     "software": "البرمجيات والصيانة",
@@ -347,7 +349,17 @@
     "taxChanged": "غيّرت بياناتك الضريبية",
     "bankConnected": "ربطت {{account}} لدى {{bank}}",
     "bankRenewed": "جدّدت الربط مع {{bank}}",
-    "cashAdded": "أضفت صندوقًا نقديًا"
+    "cashAdded": "أضفت صندوقًا نقديًا",
+    "invoiceCreated": "أنشأت الفاتورة",
+    "invoiceSent": "أرسلتها بالبريد الإلكتروني إلى {{email}}",
+    "invoiceReminded": "أرسلت التذكير {{level}} من 2 بالبريد الإلكتروني",
+    "invoicePaid": "مدفوعة بالكامل",
+    "invoicePartlyPaid": "تم استلام دفعة جزئية",
+    "invoiceCancelled": "ألغيتها بفاتورة إلغاء رقم {{number}}",
+    "invoiceCancellation": "أنشأتها لإلغاء الفاتورة {{number}}",
+    "invoiceDuplicated": "نسختها من الفاتورة {{number}}",
+    "paidInCash": "حددتها كمدفوعة نقدًا",
+    "paysInvoice": "تسدد الفاتورة {{number}}"
   },
   "payments": {
     "title": "المدفوعات",

@@ -18,7 +18,7 @@ import {
   TRAVEL,
   UTILITIES,
 } from './categories';
-import { Account, AccountConnection, Booking, Business, CategoryTotal, HistoryEntry, Person, ReceiptState, Transaction } from './models';
+import { Account, AccountConnection, Booking, Business, CategoryTotal, HistoryEntry, InvoiceProfile, Person, ReceiptState, Transaction } from './models';
 import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
@@ -77,6 +77,19 @@ function withDocuments(b: BusinessSpec): Business {
     .map((tx) => linkedDocFor(tx, b.taxProfile.kleinunternehmer));
   return { ...b, documents: [...linked, ...(EXTRA_DOCUMENTS[b.id] ?? [])] };
 }
+
+/** The invoice details of a business before it has any: its name, no address yet, the usual number pattern, 14 days, German. */
+const placeholderProfile = (name: string): InvoiceProfile => ({
+  name,
+  street: '',
+  postcode: '',
+  city: '',
+  email: '',
+  iban: null,
+  numberPattern: 'RE-{YYYY}-{NNN}',
+  paymentTermDays: 14,
+  language: 'de',
+});
 
 /** What the system would offer for an Amazon order it cannot sort: office supplies, software or other costs. */
 const AMAZON_SUGGESTIONS = [OFFICE.labelKey, SOFTWARE.labelKey, OTHER_COSTS.labelKey];
@@ -187,6 +200,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'wd-h2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 30 }, date: '2026-09-21' },
     ],
     categoryRules: [],
+    invoices: [],
+    invoiceProfile: placeholderProfile('Weber Design'),
     history: [],
   },
   {
@@ -240,6 +255,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'sy-h1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 80, limit: 25000 }, date: '2026-09-24' },
     ],
     categoryRules: [],
+    invoices: [],
+    invoiceProfile: placeholderProfile('Sara Weber Yoga'),
     history: [],
   },
   {
@@ -302,6 +319,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'cl-h1', kind: 'terms', urgency: 1, blocking: false, params: {}, date: '2026-09-15' },
     ],
     categoryRules: [],
+    invoices: [],
+    invoiceProfile: placeholderProfile('Café Linde GbR'),
     history: [],
   },
 ];

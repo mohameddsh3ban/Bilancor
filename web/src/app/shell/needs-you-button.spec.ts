@@ -54,6 +54,7 @@ describe('NeedsYouButton', () => {
     bookingConfirmed: false,
     paymentId: null,
     history: [],
+    invoice: null,
   });
 
   it('shows "Needs you · 6" for weber-design and links to /review', () => {
