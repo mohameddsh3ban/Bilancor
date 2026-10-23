@@ -1,11 +1,24 @@
 import { TAX_OFFICES } from '../data/banks';
 import type { TaxProfile } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
-import { findTaxOffice, isVatId } from './tax-details';
+import { findTaxOffice, isVatId, profileTaxOffice } from './tax-details';
 
 const profileOf = (id: string): TaxProfile => BUSINESSES.find((b) => b.id === id)!.taxProfile;
 const sara = profileOf('sara-yoga');
 const cafe = profileOf('cafe-linde');
+
+describe('profileTaxOffice', () => {
+  it('finds the office of a saved profile', () => {
+    expect(profileTaxOffice(sara)).toBe('Berlin Mitte');
+    expect(profileTaxOffice(cafe)).toBe('Hamburg-Altona');
+  });
+
+  it('is null while the state or the number is not answered, or when they give no office', () => {
+    expect(profileTaxOffice({ ...sara, taxState: null })).toBeNull();
+    expect(profileTaxOffice({ ...sara, taxNumber: null })).toBeNull();
+    expect(profileTaxOffice({ ...sara, taxNumber: '99/123/45678' })).toBeNull();
+  });
+});
 
 describe('findTaxOffice', () => {
   it('finds the office for a matching number', () => {

@@ -9,6 +9,7 @@ import {
   nextPeriod,
   periodFor,
   resultWording,
+  sentPeriod,
   vatPartCents,
   vatReturnFor,
   type TaxPeriod,
@@ -317,5 +318,38 @@ describe('daysLeftWording', () => {
     expect(daysLeftWording(0)).toBe('today');
     expect(daysLeftWording(1)).toBe('inOneDay');
     expect(daysLeftWording(19)).toBe('inDays');
+  });
+});
+
+describe('sentPeriod', () => {
+  const sent = (periodStart: string, periodEnd: string) => ({
+    periodStart,
+    periodEnd,
+    sentOn: '2026-10-22',
+    chargedCents: 0,
+    paidCents: 0,
+    resultCents: 0,
+    ticket: 'ET-2026-1022-00000',
+  });
+
+  it('a return for one month is a monthly period', () => {
+    expect(sentPeriod(sent('2026-08-01', '2026-08-31'))).toEqual({
+      start: '2026-08-01',
+      end: '2026-08-31',
+      kind: 'monthly',
+    });
+  });
+
+  it('a return for three months is a quarter', () => {
+    expect(sentPeriod(sent('2026-04-01', '2026-06-30'))).toEqual({
+      start: '2026-04-01',
+      end: '2026-06-30',
+      kind: 'quarterly',
+    });
+  });
+
+  it('turns the returns the sample businesses sent into the periods they were', () => {
+    expect(weber.vatReturns.map((r) => sentPeriod(r).kind)).toEqual(['monthly', 'monthly']);
+    expect(cafe.vatReturns.map((r) => sentPeriod(r).kind)).toEqual(['quarterly']);
   });
 });

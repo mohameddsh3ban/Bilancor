@@ -5,6 +5,7 @@ import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { AppTaxPeriodPipe } from '../core/format/tax-period.pipe';
 import { Term } from '../core/i18n/term';
+import { DialogCard } from '../core/layout/dialog-card';
 import { daysLeftWording } from '../domain/vat-return';
 import { TaxReminderService, type TaxReminderItem } from '../state/tax-reminder.service';
 
@@ -16,7 +17,7 @@ import { TaxReminderService, type TaxReminderItem } from '../state/tax-reminder.
 @Component({
   selector: 'app-tax-reminder',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppDatePipe, AppTaxPeriodPipe, HlmButton, HlmDialogImports, Term, TranslocoPipe],
+  imports: [AppDatePipe, AppTaxPeriodPipe, DialogCard, HlmButton, HlmDialogImports, Term, TranslocoPipe],
   host: { class: 'contents' },
   template: `
     <hlm-dialog
@@ -26,8 +27,8 @@ import { TaxReminderService, type TaxReminderItem } from '../state/tax-reminder.
     >
       <hlm-dialog-content
         *hlmDialogPortal
+        appDialogCard
         data-testid="tax-reminder"
-        class="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto"
         [closeLabel]="'taxReminder.close' | transloco"
       >
         <hlm-dialog-header class="pe-8">

@@ -6,27 +6,22 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppTaxPeriodPipe } from '../core/format/tax-period.pipe';
+import { pluralKey } from '../core/i18n/plural-key';
 import { Term } from '../core/i18n/term';
-import type { SentVatReturn } from '../data/models';
-import { addDays } from '../domain/bank-connection';
 import { yearSummary } from '../domain/tax-year';
 import {
   DUE_SOON_DAYS,
   currentVatReturn,
   daysLeftWording,
   resultWording,
-  type TaxPeriod,
+  sentPeriod,
   type VatReturnView,
 } from '../domain/vat-return';
 import { DemoStateService } from '../state/demo-state.service';
-import { TaxService } from '../state/tax.service';
+import { SendCard } from './send-card';
 
 /** Stands where the amount goes in a translated sentence, so the amount can sit in a left-to-right element of its own. */
 const AMOUNT_MARK = '\u0001';
-
-/** A sent return is a month or a quarter; the stored return has only its first and last day. */
-const periodKindOf = (sent: SentVatReturn): TaxPeriod['kind'] =>
-  sent.periodStart.slice(0, 7) === sent.periodEnd.slice(0, 7) ? 'monthly' : 'quarterly';
 
 /**
  * The VAT return tab of the Taxes page: the deadline, what the return comes to and how it adds up, what still needs
@@ -43,6 +38,7 @@ const periodKindOf = (sent: SentVatReturn): TaxPeriod['kind'] =>
     HlmCardImports,
     MoneyPipe,
     RouterLink,
+    SendCard,
     Term,
     TranslocoPipe,
   ],
@@ -191,50 +187,7 @@ const periodKindOf = (sent: SentVatReturn): TaxPeriod['kind'] =>
           </section>
         }
 
-        <section hlmCard size="sm" data-testid="vat-send">
-          <div hlmCardContent class="flex flex-col gap-3">
-            @if (view.state === 'inProgress') {
-              <button
-                hlmBtn
-                size="lg"
-                type="button"
-                disabled
-                aria-describedby="vat-send-note"
-                data-testid="vat-send-button"
-              >
-                {{ 'taxes.send.button' | transloco }}
-              </button>
-              <p
-                id="vat-send-note"
-                class="text-muted-foreground text-sm"
-                data-testid="vat-send-note"
-              >
-                {{ 'taxes.send.readyFrom' | transloco }}
-                <bdi dir="ltr">{{ readyFrom(view) | appDate }}</bdi>
-              </p>
-            } @else if (!tax.canSend(view)) {
-              <a
-                hlmBtn
-                size="lg"
-                variant="outline"
-                routerLink="/review"
-                data-testid="vat-send-button"
-              >
-                {{
-                  plural('taxes.send.fix', view.needsYouCount)
-                    | transloco: { count: view.needsYouCount }
-                }}
-              </a>
-            } @else {
-              <button hlmBtn size="lg" type="button" data-testid="vat-send-button">
-                {{ 'taxes.send.button' | transloco }}
-              </button>
-            }
-            <p class="text-muted-foreground text-xs" data-testid="vat-send-via">
-              {{ 'taxes.send.via' | transloco }} <app-term key="elster" />
-            </p>
-          </div>
-        </section>
+        <app-send-card [view]="view" />
       }
 
       @if (sent().length > 0) {
@@ -296,7 +249,6 @@ const periodKindOf = (sent: SentVatReturn): TaxPeriod['kind'] =>
   `,
 })
 export class VatReturnTab {
-  protected readonly tax = inject(TaxService);
   private readonly demo = inject(DemoStateService);
 
   protected readonly mark = AMOUNT_MARK;
@@ -330,7 +282,7 @@ export class VatReturnTab {
       .sort((a, b) => b.periodStart.localeCompare(a.periodStart))
       .map((sent) => ({
         periodStart: sent.periodStart,
-        period: { start: sent.periodStart, kind: periodKindOf(sent) },
+        period: sentPeriod(sent),
         sentOn: sent.sentOn,
         result: resultWording(sent),
       })),
@@ -344,13 +296,5 @@ export class VatReturnTab {
       : 'border-border bg-card text-card-foreground';
   }
 
-  /** The first day a return can be sent: the day after its period. */
-  protected readyFrom(view: VatReturnView): string {
-    return addDays(view.period.end, 1);
-  }
-
-  /** `base.one` for one thing and `base.many` for any other number. */
-  protected plural(base: string, count: number): string {
-    return `${base}.${count === 1 ? 'one' : 'many'}`;
-  }
+  protected readonly plural = pluralKey;
 }

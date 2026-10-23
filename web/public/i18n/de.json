@@ -105,6 +105,11 @@
       "de": "Umsatzsteuererklärung",
       "explain": "Die Jahresübersicht über deine gesamte Umsatzsteuer, die du nach den monatlichen oder vierteljährlichen Voranmeldungen abgibst."
     },
+    "uebertragungsprotokoll": {
+      "label": "Übertragungsprotokoll",
+      "de": "Übertragungsprotokoll",
+      "explain": "Der Nachweis, dass deine Erklärung ans Finanzamt gesendet wurde, mit dem Transfer-Ticket als Beleg."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -199,12 +204,28 @@
     },
     "send": {
       "button": "Ans Finanzamt senden",
+      "sending": "Wird gesendet…",
+      "sent": "Gesendet ✓",
       "via": "Geht raus über",
       "readyFrom": "Bereit zum Senden ab",
+      "period": "Zeitraum",
+      "ticket": "Transfer-Ticket",
       "fix": {
         "one": "Zuerst 1 Zahlung klären",
         "many": "Zuerst {{count}} Zahlungen klären"
+      },
+      "dialog": {
+        "via": "Deine Erklärung wird über {{term}} gesendet, den offiziellen Weg zum Finanzamt.",
+        "cancel": "Abbrechen",
+        "confirm": "Senden",
+        "sending": "Deine Erklärung ist auf dem Weg zum Finanzamt.",
+        "done": "Deine Erklärung für {{period}} wurde ans Finanzamt gesendet.",
+        "receipt": "Protokoll drucken",
+        "close": "Schließen"
       }
+    },
+    "receipt": {
+      "sentOn": "Gesendet am"
     },
     "sent": {
       "title": "Früher gesendet",

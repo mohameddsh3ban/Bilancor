@@ -1,4 +1,5 @@
 import { GERMAN_STATES, TAX_OFFICES } from '../data/banks';
+import type { TaxProfile } from '../data/models';
 
 /**
  * The tax office a tax number belongs to, found in the sample table that stands in for the real lookup. The number
@@ -18,6 +19,12 @@ export function findTaxOffice(stateId: string, taxNumber: string): string | null
     if (!found || office.prefix.length > found.prefix.length) found = office;
   }
   return found?.name ?? null;
+}
+
+/** The tax office of a saved tax profile (see `findTaxOffice`); null while the state or the number is not answered. */
+export function profileTaxOffice(profile: Pick<TaxProfile, 'taxState' | 'taxNumber'>): string | null {
+  const { taxState, taxNumber } = profile;
+  return taxState !== null && taxNumber !== null ? findTaxOffice(taxState, taxNumber) : null;
 }
 
 /** Whether the text is a German VAT ID (USt-IdNr.): `DE` and nine digits. Spaces are ignored. */

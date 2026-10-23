@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { SentVatReturn } from '../data/models';
 import { currentVatReturn, type VatReturnView } from '../domain/vat-return';
@@ -24,9 +24,13 @@ function ticketFor(businessId: string, periodStart: string, sentOn: string): str
 export class TaxService {
   private readonly demo = inject(DemoStateService);
 
-  private readonly sendingSignal = signal(false);
-  /** A return is on its way to the tax office. It stays true until its time is up, even when Reset demo came in meanwhile. */
-  readonly sending = this.sendingSignal.asReadonly();
+  private readonly sendingForSignal = signal<string | null>(null);
+  /** The business whose return is on its way to the tax office, or null. It stays set until the time is up, even when Reset demo came in meanwhile. */
+  readonly sendingFor = this.sendingForSignal.asReadonly();
+  /** A return, of whichever business, is on its way: no other can be sent until it has arrived. */
+  readonly sending = computed(() => this.sendingForSignal() !== null);
+  /** The return on its way is the open business's, so only its screens say "Sending…". */
+  readonly sendingOpenBusiness = computed(() => this.sendingForSignal() === this.demo.business().id);
 
   /** A return can be sent once its period is over and every payment in it is booked; one still in progress, or with payments waiting for the person, cannot. */
   canSend(view: VatReturnView): boolean {
@@ -45,7 +49,7 @@ export class TaxService {
   send(): Promise<SentVatReturn | null> {
     const business = this.demo.business();
     const current = currentVatReturn(business);
-    if (this.sendingSignal() || current?.kind !== 'return' || !this.canSend(current.view))
+    if (this.sending() || current?.kind !== 'return' || !this.canSend(current.view))
       return Promise.resolve(null);
 
     const { period, chargedCents, paidCents, resultCents } = current.view;
@@ -59,10 +63,10 @@ export class TaxService {
       resultCents,
       ticket: ticketFor(business.id, period.start, DEMO_TODAY),
     };
-    this.sendingSignal.set(true);
+    this.sendingForSignal.set(business.id);
     return new Promise((resolve) => {
       setTimeout(() => {
-        this.sendingSignal.set(false);
+        this.sendingForSignal.set(null);
         if (this.demo.dataGeneration() !== generation) return resolve(null);
         this.demo.recordSentReturn(sent, business.id);
         resolve(sent);

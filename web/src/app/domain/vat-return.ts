@@ -1,5 +1,5 @@
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Business, TaxProfile, Transaction } from '../data/models';
+import type { Business, SentVatReturn, TaxProfile, Transaction } from '../data/models';
 import { addDays, daysBetween } from './bank-connection';
 import { paymentStatus } from './payment-status';
 
@@ -38,6 +38,12 @@ export function periodFor(date: string, kind: TaxPeriod['kind']): TaxPeriod {
 /** The period right after another, in the same kind. */
 export function nextPeriod(p: TaxPeriod): TaxPeriod {
   return periodFor(addDays(p.end, 1), p.kind);
+}
+
+/** The period a sent return was for: a month or a quarter, as the stored return has only its first and last day. */
+export function sentPeriod(sent: Pick<SentVatReturn, 'periodStart' | 'periodEnd'>): TaxPeriod {
+  const sameMonth = sent.periodStart.slice(0, 7) === sent.periodEnd.slice(0, 7);
+  return { start: sent.periodStart, end: sent.periodEnd, kind: sameMonth ? 'monthly' : 'quarterly' };
 }
 
 /**

@@ -79,6 +79,29 @@ describe('TaxService', () => {
     expect(tax.sending()).toBe(false);
   });
 
+  it('sendingFor names the business whose return is on its way, and is null before and after', async () => {
+    expect(tax.sendingFor()).toBeNull();
+    const result = tax.send();
+    expect(tax.sendingFor()).toBe('cafe-linde');
+
+    // Another business opening mid-wait changes nothing about whose return it is.
+    demo.setBusiness('weber-design');
+    expect(tax.sendingFor()).toBe('cafe-linde');
+    expect(tax.sending()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(SEND_MS);
+    await result;
+    expect(tax.sendingFor()).toBeNull();
+    expect(tax.sending()).toBe(false);
+  });
+
+  it('a send that is dropped by a reset clears sendingFor too', async () => {
+    void tax.send();
+    demo.resetData();
+    await vi.advanceTimersByTimeAsync(SEND_MS);
+    expect(tax.sendingFor()).toBeNull();
+  });
+
   it('a second send while sending returns null and sends nothing twice', async () => {
     const first = tax.send();
     await vi.advanceTimersByTimeAsync(SEND_MS - 100);

@@ -105,6 +105,11 @@
       "de": "Umsatzsteuererklärung",
       "explain": "The yearly summary of all your VAT, filed after the monthly or quarterly returns."
     },
+    "uebertragungsprotokoll": {
+      "label": "Transfer receipt",
+      "de": "Übertragungsprotokoll",
+      "explain": "The record that your return was sent to the tax office, with the transfer ticket as proof."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -199,12 +204,28 @@
     },
     "send": {
       "button": "Send to the tax office",
+      "sending": "Sending…",
+      "sent": "Sent ✓",
       "via": "Goes out through",
       "readyFrom": "Ready to send from",
+      "period": "Period",
+      "ticket": "Transfer ticket",
       "fix": {
         "one": "Fix 1 payment first",
         "many": "Fix {{count}} payments first"
+      },
+      "dialog": {
+        "via": "Your return will be sent through {{term}}, the tax office's official channel.",
+        "cancel": "Cancel",
+        "confirm": "Send",
+        "sending": "Your return is on its way to the tax office.",
+        "done": "Your VAT return for {{period}} was sent to the tax office.",
+        "receipt": "Print receipt",
+        "close": "Close"
       }
+    },
+    "receipt": {
+      "sentOn": "Sent on"
     },
     "sent": {
       "title": "Sent earlier",
