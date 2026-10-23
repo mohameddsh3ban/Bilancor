@@ -205,11 +205,22 @@ describe('InvoiceFormPage', () => {
     it('the customers come as saved, the most recent first, and one is chosen with a tap', async () => {
       await render('/invoices/new');
       const cards = qa('[data-testid^="customer-saved-"]').map((card) => text(card));
-      expect(cards).toHaveLength(6);
-      expect(cards[0]).toContain('Bezirksamt Pankow');
-      expect(cards[1]).toContain('Studio Kern');
+      expect(cards).toHaveLength(5);
+      expect(cards[0]).toContain('Studio Kern');
+      expect(cards[1]).toContain('Atelier Sommer GmbH');
+      expect(cards[2]).toContain('Agentur Nord');
       expect(text(q('customer-new'))).toBe('New customer');
       expect(q('customer-name')).toBeNull();
+    });
+
+    it('only customers that were sent an invoice are offered: not the customer of a draft, the sample one or a half-typed one', async () => {
+      const typing = invoices.newDraft();
+      invoices.saveDraft({ ...typing, customer: { ...typing.customer, name: 'Agentur S' } });
+      await render('/invoices/new');
+      const cards = qa('[data-testid^="customer-saved-"]').map((card) => text(card));
+      expect(cards).toHaveLength(5);
+      expect(cards.join(' ')).not.toContain('Agentur S');
+      expect(cards.join(' ')).not.toContain('Bezirksamt Pankow');
     });
 
     it('a customer that is typed is not offered in its own list', async () => {
@@ -878,7 +889,7 @@ describe('InvoiceFormPage', () => {
       expect(q('customer-name')).toBeNull();
       expect(text(q('draft-saved'))).toBe('');
       expect(business().invoices.some((i) => i.customer.name === 'Agentur Süd')).toBe(false);
-      expect(qa('[data-testid^="customer-saved-"]')).toHaveLength(6);
+      expect(qa('[data-testid^="customer-saved-"]')).toHaveLength(5);
     });
   });
 

@@ -1207,10 +1207,19 @@ describe('savedCustomers', () => {
     expect(savedCustomers(business({ invoices: [de, fr] })).map((c) => c.country)).toEqual(['FR', 'DE']);
   });
 
-  it('includes the customer of a draft, but not a draft that has no name yet', () => {
+  it("a half-typed draft's customer isn't offered: a customer is saved with the first invoice that is sent to them", () => {
+    const sentOne = sent('a', 'RE-2026-030', '2026-08-01', 100, { customer: customer({ name: 'Studio Kern' }) });
     const named = draft({ id: 'd1', issueDate: '2026-10-20', customer: customer({ name: 'Bezirksamt Pankow', kind: 'public' }) });
-    const blank = draft({ id: 'd2', issueDate: '2026-10-21', customer: customer({ name: '  ' }) });
-    expect(savedCustomers(business({ invoices: [named, blank] })).map((c) => c.name)).toEqual(['Bezirksamt Pankow']);
+    const typing = draft({ id: 'd2', issueDate: '2026-10-21', customer: customer({ name: 'Agentur S', street: '' }) });
+    const blank = draft({ id: 'd3', issueDate: '2026-10-22', customer: customer({ name: '  ' }) });
+    expect(savedCustomers(business({ invoices: [sentOne, named, typing, blank] })).map((c) => c.name)).toEqual(['Studio Kern']);
+    expect(savedCustomers(business({ invoices: [named, typing, blank] }))).toEqual([]);
+  });
+
+  it('an invoice and the cancellation invoice that repeats it name the customer once', () => {
+    const original = sent('a', 'RE-2026-040', '2026-10-01', 500, { customer: customer({ name: 'Agentur Nord' }), cancelledBy: 'b' });
+    const cancellation = sent('b', 'RE-2026-042', '2026-10-07', -500, { customer: customer({ name: 'Agentur Nord' }), cancels: 'a' });
+    expect(savedCustomers(business({ invoices: [original, cancellation] })).map((c) => c.name)).toEqual(['Agentur Nord']);
   });
 
   it('no invoices, no customers', () => {

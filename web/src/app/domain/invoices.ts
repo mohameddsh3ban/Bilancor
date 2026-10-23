@@ -441,11 +441,15 @@ function newestFirst(invoices: readonly Invoice[]): Invoice[] {
   return [...invoices].sort((a, b) => b.issueDate.localeCompare(a.issueDate) || (b.number ?? '').localeCompare(a.number ?? ''));
 }
 
-/** The customers the business has invoiced, once each (by name and country), the most recent invoice first, with the details of that invoice. A draft with no customer name yet is left out. */
+/**
+ * The customers the business has sent an invoice to, once each (by name and country), the most recent invoice first, with the
+ * details of that invoice: a customer is saved with the first invoice that is sent to them. A draft's customer is not offered
+ * (it may be half typed), and an invoice and the cancellation invoice that repeats it count once.
+ */
 export function savedCustomers(business: Business): InvoiceCustomer[] {
   const seen = new Set<string>();
   const customers: InvoiceCustomer[] = [];
-  for (const { customer } of newestFirst(business.invoices)) {
+  for (const { customer } of newestFirst(business.invoices.filter((invoice) => !isDraft(invoice)))) {
     const key = `${customer.name.trim().toLowerCase()}|${customer.country}`;
     if (!filled(customer.name) || seen.has(key)) continue;
     seen.add(key);

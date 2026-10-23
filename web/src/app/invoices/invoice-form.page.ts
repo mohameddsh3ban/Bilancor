@@ -642,8 +642,8 @@ export class InvoiceFormPage {
     invoices: this.business().invoices.filter((invoice) => invoice.id !== this.draft()?.id),
   }));
 
-  /** The customers of the other invoices, the most recent first: the draft's own customer is not among them. */
-  protected readonly customers = computed(() => savedCustomers(this.others()));
+  /** The customers an invoice was sent to, the most recent first (a draft's customer, this one's too, is not among them). */
+  protected readonly customers = computed(() => savedCustomers(this.business()));
   /** The lines of the other invoices, the most recent first, to suggest from. */
   protected readonly earlier = computed(() => earlierLines(this.others()));
 

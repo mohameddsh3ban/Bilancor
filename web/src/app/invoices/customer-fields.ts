@@ -108,7 +108,7 @@ export function countryOptions(lang: Lang, current: string): CountryOption[] {
 type View = 'fields' | 'picked' | 'choose';
 
 /**
- * "Customer": the customers written to before, most recent first, as cards to tap, with "New customer" last; the fields of a
+ * "Customer": the customers an invoice was sent to, most recent first, as cards to tap, with "New customer" last; the fields of a
  * new customer (name, address, email and what kind of customer, with a country to choose only for a business); and what
  * only some customers need, the VAT ID of a customer who owes the VAT (`needsVatId`) and the Leitweg-ID of a public office.
  *
@@ -365,7 +365,7 @@ export class CustomerFields {
 
   /** The customer of the invoice as it is now. */
   readonly customer = input.required<InvoiceCustomer>();
-  /** The customers to choose from, most recent first (the invoice's own customer is not among them). */
+  /** The customers to choose from, most recent first (those an invoice was sent to: no draft's customer is among them). */
   readonly saved = input<readonly InvoiceCustomer[]>([]);
   /** The invoice says the customer owes the VAT, so the customer's VAT ID is asked for. */
   readonly needsVatId = input(false);
