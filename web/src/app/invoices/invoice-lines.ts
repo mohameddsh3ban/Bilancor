@@ -100,6 +100,10 @@ const sameLines = (a: readonly InvoiceLine[], b: readonly InvoiceLine[]): boolea
  * Typing a description offers earlier lines (`suggestions`) with their price and unit; choosing one fills description, unit
  * and price and puts the cursor in the quantity. Prices and quantities accept `49,90` and `49.90`; one that cannot be read
  * is named under its field. The last row cannot be removed, so there is always a line to write in.
+ *
+ * Layout: the description has a row of its own; below it quantity, unit, price, amount and remove are two by two while the
+ * list is narrow, and one row of five once the list itself is 32rem wide (a container query on the list, not the screen:
+ * on a computer the list sits beside the "Ready to send" card and is narrower than the screen suggests).
  */
 @Component({
   selector: 'app-invoice-lines',
@@ -108,16 +112,16 @@ const sameLines = (a: readonly InvoiceLine[], b: readonly InvoiceLine[]): boolea
   viewProviders: [provideIcons({ lucidePlus, lucideTrash2 })],
   host: { class: 'flex flex-col gap-3' },
   template: `
-    <ul class="flex flex-col gap-3" data-testid="lines">
+    <ul class="@container flex flex-col gap-3" data-testid="lines">
       @for (row of rows(); track $index; let i = $index) {
         <li
           role="group"
-          class="border-border grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border p-3 lg:grid-cols-[minmax(0,1fr)_5rem_8rem_7rem_6rem_2.5rem] lg:items-start"
+          class="border-border grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border p-3 @lg:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2.5rem] @lg:items-start"
           [attr.aria-label]="'invoiceForm.lines.line' | transloco: { n: i + 1 }"
           [attr.data-testid]="'line-row-' + i"
         >
           <div
-            class="col-span-2 flex flex-col gap-1 text-sm lg:col-span-1"
+            class="col-span-2 flex flex-col gap-1 text-sm @lg:col-span-5"
             (focusin)="activeRow.set(i)"
             (focusout)="leaveRow($event, i)"
           >
@@ -247,7 +251,7 @@ const sameLines = (a: readonly InvoiceLine[], b: readonly InvoiceLine[]): boolea
               type="button"
               variant="ghost"
               size="icon-lg"
-              class="col-span-2 justify-self-end lg:col-span-1 lg:mt-6 lg:justify-self-auto"
+              class="col-span-2 justify-self-end @lg:col-span-1 @lg:mt-6 @lg:justify-self-auto"
               [attr.aria-label]="'invoiceForm.lines.remove' | transloco: { n: i + 1 }"
               [attr.data-testid]="'line-remove-' + i"
               (click)="remove(i)"

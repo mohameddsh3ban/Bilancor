@@ -893,6 +893,57 @@ describe('InvoiceFormPage', () => {
     });
   });
 
+  describe('translations', () => {
+    /**
+     * The translation keys that show as themselves on the page (and in its pop-ups): a key that is in no language file is
+     * written out as it is, in the text and in the labels read out to a screen reader.
+     */
+    function untranslated(): string[] {
+      const html = document.body.innerHTML;
+      return Array.from(
+        html.matchAll(/\b(?:invoiceForm|invoiceDetails|terms)\.[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*/g),
+        (m) => m[0],
+      );
+    }
+
+    it.each(['en', 'de', 'ar'] as const)(
+      'no key is left untranslated, in every state of the form (%s)',
+      async (lang) => {
+        TestBed.inject(LanguageService).setLang(lang);
+        await render('/invoices/new');
+        const seen = new Set(untranslated());
+
+        // A new customer of every kind, abroad, with a line whose description suggests earlier lines.
+        await choose('customer-new');
+        await choose('customer-kind-public');
+        for (const key of untranslated()) seen.add(key);
+        await choose('customer-kind-business');
+        await select('customer-country', 'FR');
+        await type('line-description-0', 'Design');
+        expect(q('suggestions-0')).not.toBeNull();
+        expect(q('suggestions-0')!.getAttribute('aria-label')).not.toMatch(/^invoiceForm\./);
+        for (const key of untranslated()) seen.add(key);
+        await choose('customer-kind-private');
+        for (const key of untranslated()) seen.add(key);
+
+        // Every note, the checklist with something missing and with nothing missing, the delete question.
+        await render('/invoices/inv-wd-draft/edit');
+        await press('delete-draft');
+        await vi.waitFor(async () => {
+          await settle();
+          expect(dialog()).not.toBeNull();
+        });
+        for (const key of untranslated()) seen.add(key);
+        inDialog('delete-keep')!.click();
+        demo.setBusiness('sara-yoga');
+        await render('/invoices/new');
+        for (const key of untranslated()) seen.add(key);
+
+        expect([...seen]).toEqual([]);
+      },
+    );
+  });
+
   describe('languages', () => {
     it('German', async () => {
       TestBed.inject(LanguageService).setLang('de');

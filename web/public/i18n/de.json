@@ -832,6 +832,7 @@
       "net": "Betrag",
       "add": "Position hinzufügen",
       "remove": "Position {{n}} entfernen",
+      "suggestions": "Frühere Positionen",
       "hintNet": "Die Preise sind ohne Umsatzsteuer. Die Steuer kommt unten dazu.",
       "hintGross": "Die Preise sind das, was dein Kunde zahlt.",
       "quantityError": "Gib eine Zahl über 0 ein, zum Beispiel 1 oder 2,5.",

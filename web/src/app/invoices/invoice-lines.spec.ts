@@ -324,6 +324,39 @@ describe('InvoiceLines', () => {
     });
   });
 
+  describe('the layout of a row', () => {
+    it('follows the width of the list, not of the screen: the list is a container and no class inside it asks for `lg:`', async () => {
+      await render([
+        { description: 'Design-Beratung', quantity: 2, unit: 'hour', unitPriceCents: 8000 },
+      ]);
+      expect(q('lines')!.classList).toContain('@container');
+      const viewportClasses = Array.from(q('lines')!.querySelectorAll('[class]')).flatMap((node) =>
+        Array.from(node.classList).filter((name) => /^(sm|md|lg|xl|2xl):/.test(name)),
+      );
+      expect(viewportClasses).toEqual([]);
+    });
+
+    it('the description has a row of its own, over quantity, unit, price, amount and remove', async () => {
+      await render([
+        { description: 'Design-Beratung', quantity: 2, unit: 'hour', unitPriceCents: 8000 },
+        { description: 'Logo', quantity: 1, unit: 'flat', unitPriceCents: 34000 },
+      ]);
+      const row = q('line-row-0')!;
+      const description = field('line-description-0').closest('div')!;
+      expect(description.classList).toContain('col-span-2');
+      expect(description.classList).toContain('@lg:col-span-5');
+      // The five small fields come after it, in this order.
+      const order = [
+        'line-quantity-0',
+        'line-unit-0',
+        'line-price-0',
+        'line-net-0',
+        'line-remove-0',
+      ].map((id) => Array.from(row.children).findIndex((cell) => cell.contains(q(id))));
+      expect(order).toEqual([1, 2, 3, 4, 5]);
+    });
+  });
+
   describe('adding and removing', () => {
     it('Add a line puts one more row below, with the cursor in its description', async () => {
       await render();
@@ -379,6 +412,7 @@ describe('InvoiceLines', () => {
       expect(q('suggestions-0')).toBeNull();
       await type('line-description-0', 'Design-');
       expect(text(q('suggestions-0'))).toBe('Design-Beratung €80.00 · Hours');
+      expect(q('suggestions-0')!.getAttribute('aria-label')).toBe('Earlier lines');
       expect(q('suggestions-0')!.querySelectorAll('button')).toHaveLength(1);
       expect(q('suggestions-0')!.querySelector('bdi[dir="ltr"]')).not.toBeNull();
     });

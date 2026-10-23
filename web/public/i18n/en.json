@@ -832,6 +832,7 @@
       "net": "Amount",
       "add": "Add a line",
       "remove": "Remove line {{n}}",
+      "suggestions": "Earlier lines",
       "hintNet": "Prices are without VAT. The VAT is added below.",
       "hintGross": "Prices are what your customer pays.",
       "quantityError": "Enter a number above 0, like 1 or 2.5.",
