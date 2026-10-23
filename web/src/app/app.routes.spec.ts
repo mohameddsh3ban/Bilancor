@@ -71,6 +71,37 @@ describe('the routes', () => {
     expect(router.url).toBe('/');
   });
 
+  it('signed out, /sign-up opens the sign-up page outside the app shell', async () => {
+    const harness = await RouterTestingHarness.create('/sign-up');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-up');
+    const page = harness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('[data-testid="sign-up-form"]')).not.toBeNull();
+    expect(document.querySelector('app-shell')).toBeNull();
+  });
+
+  it('signed in, /sign-up goes to the homepage too', async () => {
+    signInAsSara();
+    const harness = await RouterTestingHarness.create('/sign-up');
+    harness.detectChanges();
+    expect(router.url).toBe('/');
+  });
+
+  it('Add a business is inside the app shell: signed out it asks for signing in first', async () => {
+    const harness = await RouterTestingHarness.create('/businesses/new');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fbusinesses%2Fnew');
+    expect(nextOf()).toBe('/businesses/new');
+
+    signInAsSara();
+    await harness.navigateByUrl('/businesses/new');
+    harness.detectChanges();
+    expect(router.url).toBe('/businesses/new');
+    const page = harness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('app-top-bar')).not.toBeNull();
+    expect(page.querySelector('app-add-business-page')).not.toBeNull();
+  });
+
   it('signed in, the pages of the app open', async () => {
     signInAsSara();
     const harness = await RouterTestingHarness.create('/payments');

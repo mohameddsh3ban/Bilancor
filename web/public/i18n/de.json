@@ -1453,6 +1453,104 @@
         "body": "Du bist auf deinen anderen Geräten abgemeldet.",
         "signIn": "Anmelden"
       }
+    },
+    "signUp": {
+      "title": "Deine Buchhaltung, für dich geführt",
+      "step": {
+        "account": "Schritt 1 von 3",
+        "checkEmail": "Schritt 1 von 3 · E-Mail bestätigen",
+        "business": "Schritt 2 von 3",
+        "finish": "Schritt 3 von 3"
+      },
+      "price": {
+        "title": "Ein Preis, alles inklusive",
+        "amount": "€ — im Monat",
+        "trial": "Die ersten 30 Tage gratis, ohne Karte",
+        "perBusiness": "Jedes Unternehmen hat seinen eigenen Tarif"
+      },
+      "passwordHint": "Mindestens 10 Zeichen.",
+      "submit": "Konto erstellen",
+      "haveAccount": "Du hast schon ein Konto?",
+      "signIn": "Anmelden",
+      "error": {
+        "emailInvalid": "Das sieht nicht nach einer E-Mail-Adresse aus.",
+        "emailTaken": "Zu dieser E-Mail-Adresse gibt es schon ein Konto.",
+        "passwordShort": "Nimm mindestens 10 Zeichen.",
+        "firstName": "Gib deinen Vornamen ein.",
+        "lastName": "Gib deinen Nachnamen ein."
+      },
+      "checkEmail": {
+        "title": "Schau in dein Postfach",
+        "before": "Wir haben einen Link an ",
+        "after": " geschickt. Er gilt 24 Stunden.",
+        "again": "Nochmal senden",
+        "sentAgain": "Nochmal gesendet",
+        "wrong": "Falsche Adresse?",
+        "change": "Ändern"
+      },
+      "mail": {
+        "subject": "Bestätige deine E-Mail-Adresse",
+        "body": "Willkommen! Bestätige deine E-Mail-Adresse, um dein Konto fertig einzurichten. Der Link gilt 24 Stunden.",
+        "action": "Meine E-Mail bestätigen"
+      },
+      "business": {
+        "title": "Du und dein Unternehmen",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "name": "Name des Unternehmens",
+        "kind": "Welche Art von Arbeit?",
+        "legalForm": "Nur du oder mit Partnern?",
+        "sole": "Nur ich",
+        "partners": "Mit Partnern",
+        "noGmbh": "Eine GmbH kann sich noch nicht anmelden.",
+        "continue": "Weiter",
+        "error": {
+          "name": "Gib den Namen deines Unternehmens ein.",
+          "kind": "Wähle die Art der Arbeit.",
+          "legalForm": "Wähle eins: nur du oder mit Partnern."
+        }
+      },
+      "finish": {
+        "title": "Bedingungen und ein sicherer Login",
+        "protect": "Schütze deinen Login",
+        "submit": "Abschließen",
+        "error": {
+          "twoStep": "Gib den 6-stelligen Code ein und speichere zuerst deine Backup-Codes."
+        }
+      }
+    },
+    "addBusiness": {
+      "back": "Zurück zur Startseite",
+      "title": "Unternehmen hinzufügen",
+      "intro": "Jedes Unternehmen hat seinen eigenen Tarif, seine eigenen Bücher und seine eigenen Personen. Du bist Inhaber:in.",
+      "about": "Zum Unternehmen",
+      "terms": "Bedingungen",
+      "submit": "Unternehmen hinzufügen"
+    },
+    "terms": {
+      "accept": "Ich akzeptiere die {{terms}} und die {{avv}}",
+      "termsLink": "Nutzungsbedingungen",
+      "binding": "Die deutsche Fassung ist verbindlich; die anderen dienen zum Lesen.",
+      "books": "Du führst deine Bücher selbst und schickst deine Erklärungen selbst ab: Die App erledigt die Arbeit, du bestätigst.",
+      "error": "Setze den Haken, um weiterzumachen.",
+      "notice": {
+        "title": "Die Rechtstexte sind noch nicht geschrieben",
+        "body": "Die Nutzungsbedingungen, die Datenschutzerklärung und der Auftragsverarbeitungsvertrag (AVV) werden geschrieben, bevor die App für Kunden öffnet. Die deutsche Fassung wird die verbindliche sein; Englisch und Arabisch gibt es als Übersetzungen zum Lesen.",
+        "close": "Schließen"
+      }
+    },
+    "twoStep": {
+      "scan": "Scanne den QR-Code mit einer Authenticator-App und gib dann ihren 6-stelligen Code ein.",
+      "keyIntro": "Scannen geht nicht? Gib diesen Schlüssel in der App ein:",
+      "code": "6-stelliger Code",
+      "demo": "Demo: Jeder 6-stellige Code funktioniert.",
+      "codesTitle": "Deine Backup-Codes",
+      "codesHint": "Speichere diese 8 Codes an einem sicheren Ort. Jeder gilt nur einmal, falls du dein Handy nicht nutzen kannst.",
+      "save": "Ich habe sie gespeichert",
+      "saved": "Die Anmeldung in zwei Schritten ist eingerichtet.",
+      "error": {
+        "digits": "Der Code hat 6 Ziffern."
+      }
     }
   }
 }

@@ -15,6 +15,9 @@ export const SUPPORT_DAYS = 7;
 /** The roles an invitation or a role change can give: everything but the owner. */
 export type GrantedRole = Exclude<Role, 'owner'>;
 
+/** A new password needs at least this many characters (sign-up, joining, a forgotten password and a changed one). */
+export const MIN_PASSWORD = 10;
+
 /** Why an email can't be invited: it isn't an address, it already has access, or it is already invited. */
 export type InviteError = 'invalid' | 'hasAccess' | 'invited';
 
@@ -26,6 +29,16 @@ export function normalEmail(email: string): string {
 /** Whether the text looks like an email address: something, an @, something, a dot, something. */
 export function isEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail(email));
+}
+
+/** Whether a new password is long enough: it counts characters, so a letter outside the basic alphabet or an emoji is one. */
+export function isNewPassword(password: string): boolean {
+  return Array.from(password).length >= MIN_PASSWORD;
+}
+
+/** Whether the text is the code of an authenticator app: exactly 6 digits (the app shows two groups of three, so spaces don't count). */
+export function isAppCode(code: string): boolean {
+  return /^\d{6}$/.test(code.replace(/\s/g, ''));
 }
 
 /** The joined row of a login in the business; a waiting invitation is nobody's row yet. */

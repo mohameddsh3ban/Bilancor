@@ -14,14 +14,12 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { take, type Subscription } from 'rxjs';
 import { LanguageService } from '../core/i18n/language.service';
 import type { Lang } from '../data/models';
+import { isNewPassword } from '../domain/people';
 import { focusAfterRender } from '../settings/form-helpers';
 import { FieldError, INPUT_CLASS } from '../settings/form-parts';
 import { AccountService } from '../state/account.service';
 import { AuthFrame } from './auth-frame';
 import { DemoEmail } from './demo-email';
-
-/** A new password needs at least this many characters (sign-up, a new password and a changed one). */
-const MIN_PASSWORD = 10;
 
 type Step = 'email' | 'sent' | 'choose' | 'done';
 
@@ -271,7 +269,7 @@ export class ForgotPasswordPage {
     const id = this.personId();
     if (id === null) return;
     // The password is not stored (nothing here is a real account), so only its length is checked.
-    if (Array.from(this.newPassword()).length < MIN_PASSWORD) {
+    if (!isNewPassword(this.newPassword())) {
       this.tooShort.set(true);
       focusAfterRender(this.injector, this.host, '[aria-invalid="true"]');
       return;

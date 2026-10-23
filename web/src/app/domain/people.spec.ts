@@ -4,6 +4,7 @@ import { BUSINESSES } from '../data/sample-data';
 import { PERSON } from '../data/sample-person';
 import {
   INVITE_DAYS,
+  MIN_PASSWORD,
   SUPPORT_DAYS,
   acceptInvite,
   cancelInvite,
@@ -11,7 +12,9 @@ import {
   invite,
   inviteError,
   isEmail,
+  isAppCode,
   isExpired,
+  isNewPassword,
   leave,
   makeOwner,
   memberOf,
@@ -54,6 +57,25 @@ describe('constants', () => {
   it('an invitation link and support access both run 7 days', () => {
     expect(INVITE_DAYS).toBe(7);
     expect(SUPPORT_DAYS).toBe(7);
+  });
+});
+
+describe('the password and the code', () => {
+  it('a new password needs 10 characters, counted as people count them', () => {
+    expect(MIN_PASSWORD).toBe(10);
+    expect(isNewPassword('123456789')).toBe(false);
+    expect(isNewPassword('1234567890')).toBe(true);
+    expect(isNewPassword('😀'.repeat(10))).toBe(true);
+    expect(isNewPassword('😀'.repeat(9))).toBe(false);
+    expect(isNewPassword('')).toBe(false);
+  });
+
+  it('a code is exactly 6 digits, with or without a space between the groups of three', () => {
+    for (const good of ['123456', '000000', '123 456', ' 123456 '])
+      expect(isAppCode(good), good).toBe(true);
+    for (const bad of ['', '12345', '1234567', '12345a', 'abcdef', '123-456', '１２３４５６']) {
+      expect(isAppCode(bad), bad).toBe(false);
+    }
   });
 });
 

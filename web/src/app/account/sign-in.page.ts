@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
+import { isAppCode } from '../domain/people';
 import { clearErrors, focusAfterRender } from '../settings/form-helpers';
 import { ChoiceCard, FieldError, INPUT_CLASS } from '../settings/form-parts';
 import { AccountService } from '../state/account.service';
@@ -27,9 +28,6 @@ interface CredentialErrors {
   /** The email is somebody the demo knows but cannot sign in, or nobody. */
   account?: 'member' | 'unknown';
 }
-
-/** A code of the authenticator app is 6 digits; the app shows it as two groups of three. */
-const APP_CODE = /^\d{6}$/;
 
 /**
  * The sign-in page (`/sign-in`), outside the app shell: email and password, then the code of the authenticator app unless
@@ -341,7 +339,7 @@ export class SignInPage {
 
   /** The message for a code of the app that is not 6 digits (spaces do not count), or null when it is. */
   private appCodeError(value: string): string | null {
-    return APP_CODE.test(value.replace(/\s/g, '')) ? null : 'auth.code.error.digits';
+    return isAppCode(value) ? null : 'auth.code.error.digits';
   }
 
   /** The message for a backup code that is empty or that the person has none left for, or null: the code is used up. */

@@ -1453,6 +1453,104 @@
         "body": "You're signed out on your other devices.",
         "signIn": "Sign in"
       }
+    },
+    "signUp": {
+      "title": "Your books, kept for you",
+      "step": {
+        "account": "Step 1 of 3",
+        "checkEmail": "Step 1 of 3 · Confirm your email",
+        "business": "Step 2 of 3",
+        "finish": "Step 3 of 3"
+      },
+      "price": {
+        "title": "One price, everything included",
+        "amount": "€ — a month",
+        "trial": "First 30 days free, no card needed",
+        "perBusiness": "Each business has its own plan"
+      },
+      "passwordHint": "At least 10 characters.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "error": {
+        "emailInvalid": "This doesn't look like an email address.",
+        "emailTaken": "There is already an account with this email.",
+        "passwordShort": "Use at least 10 characters.",
+        "firstName": "Type your first name.",
+        "lastName": "Type your last name."
+      },
+      "checkEmail": {
+        "title": "Check your email",
+        "before": "We sent a link to ",
+        "after": ". It works for 24 hours.",
+        "again": "Send it again",
+        "sentAgain": "Sent again",
+        "wrong": "Wrong address?",
+        "change": "Change it"
+      },
+      "mail": {
+        "subject": "Confirm your email",
+        "body": "Welcome! Confirm your email address to finish creating your account. The link works for 24 hours.",
+        "action": "Confirm my email"
+      },
+      "business": {
+        "title": "You and your business",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "name": "Business name",
+        "kind": "What kind of work?",
+        "legalForm": "Just you, or with partners?",
+        "sole": "Just me",
+        "partners": "Partners",
+        "noGmbh": "A GmbH can't sign up yet.",
+        "continue": "Continue",
+        "error": {
+          "name": "Type the name of your business.",
+          "kind": "Choose the kind of work.",
+          "legalForm": "Choose one: just you, or with partners."
+        }
+      },
+      "finish": {
+        "title": "Terms and a safe login",
+        "protect": "Protect your login",
+        "submit": "Finish",
+        "error": {
+          "twoStep": "Type the 6-digit code and save your backup codes first."
+        }
+      }
+    },
+    "addBusiness": {
+      "back": "Back to the homepage",
+      "title": "Add a business",
+      "intro": "Each business has its own plan, its own books and its own people. You are its owner.",
+      "about": "About the business",
+      "terms": "Terms",
+      "submit": "Add the business"
+    },
+    "terms": {
+      "accept": "I accept the {{terms}} and the {{avv}}",
+      "termsLink": "Terms of use",
+      "binding": "The German version is binding; the others are for reading.",
+      "books": "You keep your own books and send your own returns: the app does the work, you confirm.",
+      "error": "Tick the box to continue.",
+      "notice": {
+        "title": "The legal texts aren't written yet",
+        "body": "The terms of use, the privacy policy and the data processing agreement (AVV) will be written before the app opens to clients. The German version will be the binding one; English and Arabic come as translations for reading.",
+        "close": "Close"
+      }
+    },
+    "twoStep": {
+      "scan": "Scan with an authenticator app, then type its 6-digit code.",
+      "keyIntro": "Can't scan? Type this key into the app:",
+      "code": "6-digit code",
+      "demo": "Demo: any 6 digits work.",
+      "codesTitle": "Your backup codes",
+      "codesHint": "Save these 8 codes somewhere safe. Each one works once, for when you can't use your phone.",
+      "save": "I've saved them",
+      "saved": "Two-step login is set up.",
+      "error": {
+        "digits": "The code has 6 digits."
+      }
     }
   }
 }

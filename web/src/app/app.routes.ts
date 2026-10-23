@@ -10,6 +10,11 @@ export const routes: Routes = [
     loadComponent: () => import('./account/sign-in.page').then((m) => m.SignInPage),
   },
   {
+    path: 'sign-up',
+    canActivate: [signedOutGuard],
+    loadComponent: () => import('./account/sign-up.page').then((m) => m.SignUpPage),
+  },
+  {
     path: 'forgot-password',
     canActivate: [signedOutGuard],
     loadComponent: () => import('./account/forgot-password.page').then((m) => m.ForgotPasswordPage),
@@ -89,6 +94,11 @@ export const routes: Routes = [
       {
         path: 'invoices/:id',
         loadComponent: () => import('./invoices/invoice.page').then((m) => m.InvoicePage),
+      },
+      {
+        path: 'businesses/new',
+        loadComponent: () =>
+          import('./account/add-business.page').then((m) => m.AddBusinessPage),
       },
       {
         path: 'soon/:feature',
