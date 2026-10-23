@@ -17,7 +17,8 @@ const isPayment = (entry: HistoryEntry): boolean =>
 
 /**
  * What happened to an invoice, newest line first: created, sent by email, reminded, paid, cancelled. A line that speaks of
- * another record leads to it: a payment line to the payment (the payments are in the order they were linked, so the
+ * another record leads to it: a payment line to the payment it names (`params.paymentId`; a line written before that
+ * was kept leads to the payment in the same place of the list: the payments are in the order they were linked, so the
  * oldest payment line is the first payment), "cancelled with RE-… " to the cancellation invoice, "created to cancel
  * RE-…" to the original, and "copied from RE-…" to the invoice it was copied from. Email addresses and numbers keep
  * their own direction inside an Arabic sentence.
@@ -85,7 +86,7 @@ export class InvoiceHistory {
     });
   });
 
-  /** Where a line leads: the payment (`paymentIndex`: its place among the payments, oldest first), the cancellation invoice, the original, or the invoice it was copied from. */
+  /** Where a line leads: the payment (the one it names, else the one at `paymentIndex`, its place among the payments, oldest first), the cancellation invoice, the original, or the invoice it was copied from. */
   private linkOf(
     entry: HistoryEntry,
     invoice: Invoice,
@@ -96,7 +97,7 @@ export class InvoiceHistory {
     switch (entry.key) {
       case 'invoicePaid':
       case 'invoicePartlyPaid': {
-        const id = invoice.paymentIds[paymentIndex];
+        const id = entry.params['paymentId'] ?? invoice.paymentIds[paymentIndex];
         return id !== undefined && paymentIds.has(id) ? ['/payments', id] : null;
       }
       case 'invoiceCancelled':

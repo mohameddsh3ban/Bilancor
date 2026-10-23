@@ -3,6 +3,7 @@ import { REVENUE_19, REVENUE_KU } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Business, Doc, Invoice, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { connectionStatus } from '../domain/bank-connection';
 import { docStatus, visibleDocuments } from '../domain/document-status';
 import {
   effectiveVatRate,
@@ -566,7 +567,7 @@ describe('InvoiceService', () => {
 
       expect(statusOf('inv-sy-021', 'sara-yoga')).toBe('paid');
       expect(keys(invoice.history).slice(0, 2)).toEqual(['invoicePaid', 'paidInCash']);
-      expect(invoice.history[0].date).toBe('2026-10-21');
+      expect(invoice.history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: { paymentId: tx.id } });
       expect(docOf('sy-d2', 'sara-yoga').paymentId).toBe(tx.id); // the payment that completes it
       expect(docStatus(docOf('sy-d2', 'sara-yoga'))).toBe('done');
     });
@@ -622,7 +623,7 @@ describe('InvoiceService', () => {
       expect(keys(tx.history)).toEqual(['paysInvoice', 'autoBooked', 'imported']);
       expect(paymentStatus(tx)).toBe('booked');
       expect(statusOf('inv-wd-044')).toBe('paid');
-      expect(invoiceOf('inv-wd-044').history[0]).toEqual({ date: DEMO_TODAY, key: 'invoicePaid', params: {} });
+      expect(invoiceOf('inv-wd-044').history[0]).toEqual({ date: DEMO_TODAY, key: 'invoicePaid', params: { paymentId: tx.id } });
       expect(docOf('wd-d2')).toMatchObject({ paymentId: tx.id });
       expect(docOf('wd-d2').history[0].key).toBe('linkedAuto');
       expect(owedSummary(business, demo.setup()).owedCents).toBe(119000);
@@ -642,6 +643,41 @@ describe('InvoiceService', () => {
       expect(businessOf()).toBe(before);
     });
 
+    it('simulate payment needs a bank that works: its sign-in ended means nothing arrives, and renewing it brings it back', () => {
+      demo.setBusiness('sara-yoga');
+      expect(invoices.canSimulatePayment('inv-sy-021')).toBe(false);
+      const before = businessOf('sara-yoga');
+      invoices.simulatePayment('inv-sy-021'); // Qonto's consent ended on 20 Oct
+      expect(businessOf('sara-yoga')).toBe(before);
+
+      demo.renewConnection('sy-qonto');
+      expect(invoices.canSimulatePayment('inv-sy-021')).toBe(true);
+      invoices.simulatePayment('inv-sy-021');
+      expect(statusOf('inv-sy-021', 'sara-yoga')).toBe('paid');
+    });
+
+    it('simulate payment also works when the consent of the bank ends soon (Weber, 27 Oct), and skips an account that does not work', () => {
+      expect(connectionStatus(businessOf().accounts.find((a) => a.id === 'wd-qonto')!).kind).toBe('renewSoon');
+      expect(invoices.canSimulatePayment('inv-wd-044')).toBe(true);
+
+      // Café Linde's Sparkasse is a statement account and its Qonto works: the payment arrives on Qonto.
+      demo.setBusiness('cafe-linde');
+      invoices.simulatePayment('inv-cl-053');
+      expect(businessOf('cafe-linde').transactions[0].accountId).toBe('cl-qonto');
+    });
+
+    it('canSimulatePayment is for an invoice with something left to pay, with a bank that works', () => {
+      expect(invoices.canSimulatePayment('inv-wd-044')).toBe(true); // open
+      expect(invoices.canSimulatePayment('inv-wd-039')).toBe(true); // overdue
+      expect(invoices.canSimulatePayment('inv-wd-draft')).toBe(false);
+      expect(invoices.canSimulatePayment('inv-wd-041')).toBe(false); // paid
+      expect(invoices.canSimulatePayment('inv-wd-040')).toBe(false); // cancelled
+      expect(invoices.canSimulatePayment('inv-wd-042')).toBe(false); // cancellation invoice
+      expect(invoices.canSimulatePayment('nope')).toBe(false);
+      demo.setSetup('new'); // no bank yet
+      expect(invoices.canSimulatePayment('inv-wd-044')).toBe(false);
+    });
+
     it('simulate payment pays an overdue reminded invoice on the first bank account', () => {
       demo.setBusiness('cafe-linde');
       invoices.simulatePayment('inv-cl-053');
@@ -653,6 +689,7 @@ describe('InvoiceService', () => {
 
     it("partial payment then the rest → paid, doc done", () => {
       demo.setBusiness('sara-yoga');
+      demo.renewConnection('sy-qonto'); // the sign-in of the sample ended on 20 Oct, and a payment cannot arrive without it
       const part = paymentOf('sy-t15', 'sara-yoga');
       expect(part.amountCents).toBe(30000);
 
@@ -678,7 +715,7 @@ describe('InvoiceService', () => {
 
       expect(statusOf('inv-wd-044')).toBe('paid');
       expect(invoiceOf('inv-wd-044').paymentIds).toEqual(['wd-t19']);
-      expect(invoiceOf('inv-wd-044').history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: {} });
+      expect(invoiceOf('inv-wd-044').history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: { paymentId: 'wd-t19' } });
       expect(paymentOf('wd-t19')).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf' });
       expect(paymentOf('wd-t19').history[0]).toEqual({ date: DEMO_TODAY, key: 'paysInvoice', params: { number: 'RE-2026-044' } });
       expect(paymentStatus(paymentOf('wd-t19'))).toBe('booked');

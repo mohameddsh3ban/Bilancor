@@ -35,7 +35,9 @@ import {
   nextInvoiceNumber,
   owedSummary,
   paidCents,
+  receivingBank,
   reminderState,
+  reminderSummary,
   revenueBookingFor,
   savedCustomers,
   sellerOf,
@@ -759,6 +761,86 @@ describe('reminderState', () => {
     const invoice = sent('o', 'RE-2026-044', '2026-10-16', 100000, { paymentIds: ['t1'] });
     const b = businessOf([invoice], [payment('t1', 30000)]);
     expect(reminderState(invoice, b, today)).toEqual({ next: null, availableFrom: null });
+  });
+});
+
+describe('reminderSummary', () => {
+  const today = '2026-10-22';
+  const late = (patch: Partial<Invoice> = {}): Invoice => sent('i', 'RE-2026-039', '2026-09-16', 100000, patch); // due 30 Sep
+
+  it('says the next reminder to send on a late invoice nobody reminded', () => {
+    const invoice = late();
+    expect(reminderSummary(invoice, businessOf([invoice]), today)).toEqual({ next: 1, lastSentOn: null, availableFrom: null });
+  });
+
+  it('between the levels: when the first went out, and when the formal one becomes possible', () => {
+    const invoice = late({ reminders: [{ level: 1, sentOn: '2026-10-18' }] });
+    expect(reminderSummary(invoice, businessOf([invoice]), today)).toEqual({
+      next: null,
+      lastSentOn: '2026-10-18',
+      availableFrom: '2026-10-25',
+    });
+  });
+
+  it('level 2 on offer: the day of the first reminder is still said', () => {
+    const invoice = late({ reminders: [{ level: 1, sentOn: '2026-10-12' }] });
+    expect(reminderSummary(invoice, businessOf([invoice]), today)).toEqual({ next: 2, lastSentOn: '2026-10-12', availableFrom: null });
+  });
+
+  it('after the formal reminder: only the day of the last one', () => {
+    const invoice = late({ reminders: [{ level: 1, sentOn: '2026-10-01' }, { level: 2, sentOn: '2026-10-10' }] });
+    expect(reminderSummary(invoice, businessOf([invoice]), today)).toEqual({ next: null, lastSentOn: '2026-10-10', availableFrom: null });
+  });
+
+  it('a late invoice that is partly paid is summed up as well', () => {
+    const invoice = late({ paymentIds: ['t1'], reminders: [{ level: 1, sentOn: '2026-10-12' }] });
+    expect(reminderSummary(invoice, businessOf([invoice], [payment('t1', 30000)]), today)).toEqual({
+      next: 2,
+      lastSentOn: '2026-10-12',
+      availableFrom: null,
+    });
+  });
+
+  it('nothing for an invoice that is not late: open, paid, cancelled, draft', () => {
+    const open = sent('o', 'RE-2026-044', '2026-10-16', 100000, { reminders: [{ level: 1, sentOn: '2026-10-01' }] });
+    expect(reminderSummary(open, businessOf([open]), today)).toBeNull();
+    const paid = late({ paymentIds: ['t1'], reminders: [{ level: 1, sentOn: '2026-10-01' }] });
+    expect(reminderSummary(paid, businessOf([paid], [payment('t1', 119000)]), today)).toBeNull();
+    const cancelled = late({ cancelledBy: 'c', reminders: [{ level: 1, sentOn: '2026-10-01' }] });
+    expect(reminderSummary(cancelled, businessOf([cancelled]), today)).toBeNull();
+    expect(reminderSummary(draft(), business(), today)).toBeNull();
+  });
+});
+
+describe('receivingBank', () => {
+  const today = '2026-10-22';
+  const bank = (id: string, connection: Partial<Account['connection']>): Account => ({
+    ...BANK,
+    id,
+    connection: { ...BANK.connection, ...connection },
+  });
+
+  it('is the first bank account whose connection works', () => {
+    expect(receivingBank(business({ accounts: [BANK, CASH] }), today)).toBe(BANK);
+  });
+
+  it('a connection that ends soon still works', () => {
+    const soon = bank('soon', { consentUntil: '2026-10-27' });
+    expect(receivingBank(business({ accounts: [CASH, soon] }), today)).toBe(soon);
+  });
+
+  it('skips an account that needs a new sign-in, a statement account and the cash box', () => {
+    const ended = bank('ended', { consentUntil: '2026-10-20' });
+    const broken = bank('broken', { broken: true });
+    const statement = bank('statement', { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null });
+    const works = bank('works', {});
+    expect(receivingBank(business({ accounts: [CASH, ended, broken, statement, works] }), today)).toBe(works);
+  });
+
+  it('is none when no account works', () => {
+    const ended = bank('ended', { consentUntil: '2026-10-20' });
+    expect(receivingBank(business({ accounts: [CASH, ended] }), today)).toBeNull();
+    expect(receivingBank(business({ accounts: [] }), today)).toBeNull();
   });
 });
 

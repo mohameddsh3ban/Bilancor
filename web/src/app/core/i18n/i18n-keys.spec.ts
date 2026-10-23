@@ -65,6 +65,8 @@ describe('translation files', () => {
       'eRechnung',
       'zugferd',
       'xrechnung',
+      'zahlungserinnerung',
+      'mahnung',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

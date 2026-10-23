@@ -135,6 +135,16 @@
       "de": "XRechnung",
       "explain": "An e-invoice as a pure data file. Public offices in Germany require it, together with their routing number (Leitweg-ID)."
     },
+    "zahlungserinnerung": {
+      "label": "Friendly reminder",
+      "de": "Zahlungserinnerung",
+      "explain": "A polite first nudge for an invoice that was not paid by its due date. It adds no fees and gives your customer a week to pay."
+    },
+    "mahnung": {
+      "label": "Formal reminder",
+      "de": "Mahnung",
+      "explain": "A firmer second reminder, sent after the friendly one. It sets a new date to pay by and says that late-payment interest may be charged. The app does not work out any interest or fees."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -715,12 +725,66 @@
       },
       "edit": "Edit",
       "download": "Download PDF",
+      "send": "Preview and send",
+      "sending": "Sending…",
+      "remind": "Send a friendly reminder",
+      "remindFormal": "Send formal reminder",
+      "duplicate": "Duplicate",
+      "correctCopy": "Make a corrected copy",
+      "notReady": "Not ready to send yet. Edit shows what is missing.",
+      "cancelledNote": "Cancelled with cancellation invoice {{number}}. The original stays on record.",
       "format": "Format",
       "notFound": {
         "title": "Invoice not found",
         "body": "It may have been removed, or it belongs to another business.",
         "back": "Back to invoices"
       }
+    },
+    "send": {
+      "title": {
+        "invoice": "Send invoice",
+        "reminder1": "Send a friendly reminder",
+        "reminder2": "Send formal reminder",
+        "sending": "Sending…",
+        "sent": "Sent ✓"
+      },
+      "type": "Type",
+      "to": "To",
+      "subject": "Subject",
+      "attachment": "Attachment",
+      "message": "Message",
+      "cancel": "Cancel",
+      "confirm": "Send",
+      "close": "Close",
+      "onItsWay": "Your email to {{email}} is on its way.",
+      "doneInvoice": "Your invoice was sent to {{email}}.",
+      "doneReminder": "The reminder was sent to {{email}}.",
+      "number": "Invoice number"
+    },
+    "actions": {
+      "markPaid": "Mark as paid",
+      "more": "More actions",
+      "duplicate": "Duplicate",
+      "cancel": "Cancel invoice",
+      "cancelPaid": "Cancelling a paid invoice needs a credit note — coming later",
+      "cancelPartlyPaid": "Cancelling an invoice that was partly paid needs a credit note — coming later",
+      "cancelDialog": {
+        "title": "Cancel invoice {{number}}?",
+        "body": "This creates a cancellation invoice. The original stays on record.",
+        "keep": "Keep invoice",
+        "confirm": "Cancel invoice",
+        "close": "Close"
+      },
+      "payDialog": {
+        "title": "Mark {{number}} as paid",
+        "body": "Paid in cash on",
+        "hint": "The money goes into your cash box and counts like any other payment in your VAT return and year figures.",
+        "error": "Pick a day from the invoice date up to today.",
+        "confirm": "Mark as paid",
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "demo": "Simulate the customer's payment"
     }
   },
   "print": {

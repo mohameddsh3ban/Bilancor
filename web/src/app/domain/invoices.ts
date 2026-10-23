@@ -1,6 +1,7 @@
 import { REVENUE_19, REVENUE_7, REVENUE_ABROAD, REVENUE_EU_RC, REVENUE_KU } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
 import type {
+  Account,
   Booking,
   Business,
   Doc,
@@ -14,7 +15,7 @@ import type {
   TaxProfile,
   Transaction,
 } from '../data/models';
-import { addDays } from './bank-connection';
+import { addDays, connectionStatus } from './bank-connection';
 import { docStatus, visibleDocuments } from './document-status';
 
 export type InvoiceStatus = 'draft' | 'open' | 'overdue' | 'partlyPaid' | 'paid' | 'cancelled' | 'cancellation';
@@ -303,6 +304,12 @@ export function owedSummary(business: Business, steps: SetupSteps, today = DEMO_
   return summary;
 }
 
+/** Whether an invoice is owed and past its due date: overdue, or part paid and past it. */
+function isLate(invoice: Invoice, business: Business, today: string): boolean {
+  const status = invoiceStatus(invoice, business, today);
+  return status === 'overdue' || (status === 'partlyPaid' && dueDateOf(invoice) < today);
+}
+
 /**
  * Which reminder can be sent now, for an invoice that is past its due date (a partly paid one included): level 1 while
  * none was sent, level 2 once the first is `REMINDER_GAP_DAYS` old. Before that, `next` is null and `availableFrom` is the day
@@ -310,13 +317,40 @@ export function owedSummary(business: Business, steps: SetupSteps, today = DEMO_
  */
 export function reminderState(invoice: Invoice, business: Business, today = DEMO_TODAY): { next: 1 | 2 | null; availableFrom: string | null } {
   const none = { next: null, availableFrom: null };
-  const status = invoiceStatus(invoice, business, today);
-  const late = status === 'overdue' || (status === 'partlyPaid' && dueDateOf(invoice) < today);
-  if (!late || invoice.reminders.some((reminder) => reminder.level === 2)) return none;
+  if (!isLate(invoice, business, today) || invoice.reminders.some((reminder) => reminder.level === 2)) return none;
   const first = invoice.reminders.find((reminder) => reminder.level === 1);
   if (!first) return { next: 1, availableFrom: null };
   const from = addDays(first.sentOn, REMINDER_GAP_DAYS);
   return from <= today ? { next: 2, availableFrom: null } : { next: null, availableFrom: from };
+}
+
+/**
+ * What a late invoice says about its reminders: `next`, the reminder that can be sent now (see `reminderState`);
+ * `lastSentOn`, the day the last one went out; `availableFrom`, the day the formal one becomes possible. Null when the
+ * invoice is not late, or when there is nothing to send and nothing was sent.
+ */
+export function reminderSummary(
+  invoice: Invoice,
+  business: Business,
+  today = DEMO_TODAY,
+): { next: 1 | 2 | null; lastSentOn: string | null; availableFrom: string | null } | null {
+  if (!isLate(invoice, business, today)) return null;
+  const { next, availableFrom } = reminderState(invoice, business, today);
+  const lastSentOn = invoice.reminders.reduce<string | null>(
+    (latest, reminder) => (latest === null || reminder.sentOn > latest ? reminder.sentOn : latest),
+    null,
+  );
+  return next === null && lastSentOn === null ? null : { next, lastSentOn, availableFrom };
+}
+
+/** The first bank account whose connection works (connected, or its consent ends soon), where a customer's payment can arrive. A statement account, the cash box and a connection that needs a new sign-in cannot receive one. */
+export function receivingBank(business: Business, today = DEMO_TODAY): Account | null {
+  return (
+    business.accounts.find((account) => {
+      const { kind } = connectionStatus(account, today);
+      return account.kind === 'bank' && (kind === 'connected' || kind === 'renewSoon');
+    }) ?? null
+  );
 }
 
 /** The invoices a payment could be for: sent, not cancelled, with something left to pay. */

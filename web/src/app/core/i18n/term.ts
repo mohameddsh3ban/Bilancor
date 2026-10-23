@@ -32,7 +32,9 @@ export type TermKey =
   | 'stornorechnung'
   | 'eRechnung'
   | 'zugferd'
-  | 'xrechnung';
+  | 'xrechnung'
+  | 'zahlungserinnerung'
+  | 'mahnung';
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({

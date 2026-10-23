@@ -9,9 +9,8 @@ import { formatDate } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { docName } from '../domain/document-status';
-import { invoiceTotals, reminderState, type InvoiceRow } from '../domain/invoices';
+import { invoiceTotals, reminderSummary, type InvoiceRow } from '../domain/invoices';
 import { DemoStateService } from '../state/demo-state.service';
-import { matchesFilter } from './invoice-filter';
 import { InvoiceStatusChip } from './invoice-status-chip';
 
 /** What a row of the list is called in a `@for`: an invoice by its id, a document from a file by its id. */
@@ -154,17 +153,11 @@ export class InvoiceListRow {
    * reminded (`sentOn`) with the day the formal one becomes possible (`from`); null when there is nothing to say.
    */
   protected readonly reminder = computed(() => {
-    const row = this.row();
     const invoice = this.invoice();
     if (invoice === null) return null;
-    const state = reminderState(invoice, this.demo.business());
-    const last = invoice.reminders.reduce<string | null>(
-      (latest, r) => (latest === null || r.sentOn > latest ? r.sentOn : latest),
-      null,
-    );
-    const sentOn = matchesFilter(row, 'overdue') ? last : null;
-    if (state.next === null && sentOn === null) return null;
-    return { invoiceId: invoice.id, level: state.next, sentOn, from: state.availableFrom };
+    const summary = reminderSummary(invoice, this.demo.business());
+    if (summary === null) return null;
+    return { invoiceId: invoice.id, level: summary.next, sentOn: summary.lastSentOn, from: summary.availableFrom };
   });
   protected readonly reminderWords = computed(() => {
     const next = this.reminder();

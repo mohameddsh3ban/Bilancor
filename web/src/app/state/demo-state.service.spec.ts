@@ -1132,7 +1132,7 @@ describe('DemoStateService', () => {
       const paid = invoice(state, 'inv-wd-044');
       expect(paid.paymentIds).toEqual(['wd-t19']);
       expect(invoiceStatus(paid, state.business())).toBe('paid');
-      expect(paid.history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: {} }); // the day the money came in
+      expect(paid.history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: { paymentId: 'wd-t19' } }); // the day the money came in, and the payment it was
 
       const tx = payment(state, 'wd-t19');
       expect(tx).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf', confirmed: true });
@@ -1159,7 +1159,7 @@ describe('DemoStateService', () => {
       state.linkInvoicePayment('inv-wd-044', 'wd-t90', true);
       expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('partlyPaid');
       expect(leftCents(invoice(state, 'inv-wd-044'), state.business())).toBe(138000);
-      expect(invoice(state, 'inv-wd-044').history[0]).toEqual({ date: '2026-10-21', key: 'invoicePartlyPaid', params: {} });
+      expect(invoice(state, 'inv-wd-044').history[0]).toEqual({ date: '2026-10-21', key: 'invoicePartlyPaid', params: { paymentId: 'wd-t90' } });
       expect(payment(state, 'wd-t90')).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf' });
       expect(doc(state, 'wd-d2').paymentId).toBeNull();
       expect(docStatus(doc(state, 'wd-d2'))).toBe('waiting');
@@ -1167,7 +1167,7 @@ describe('DemoStateService', () => {
       state.linkInvoicePayment('inv-wd-044', 'wd-t91', true);
       expect(invoice(state, 'inv-wd-044').paymentIds).toEqual(['wd-t90', 'wd-t91']);
       expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('paid');
-      expect(invoice(state, 'inv-wd-044').history[0].key).toBe('invoicePaid');
+      expect(invoice(state, 'inv-wd-044').history[0]).toMatchObject({ key: 'invoicePaid', params: { paymentId: 'wd-t91' } });
       expect(doc(state, 'wd-d2').paymentId).toBe('wd-t91'); // only the payment that completes it
       expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
     });

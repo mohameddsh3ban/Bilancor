@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Business, HistoryEntry, Invoice, Transaction } from '../data/models';
+import type { Account, Business, HistoryEntry, Invoice, Transaction } from '../data/models';
 import {
   canSendInvoice,
   effectiveTaxNote,
@@ -10,6 +10,7 @@ import {
   invoiceStatus,
   leftCents,
   nextInvoiceNumber,
+  receivingBank,
   reminderState,
   revenueBookingFor,
   sellerOf,
@@ -247,16 +248,22 @@ export class InvoiceService {
     this.demo.linkInvoicePayment(id, tx.id, false);
   }
 
+  /** Whether the demo can let the customer pay an invoice of the open business: it has something left to pay, and a bank that works (see `receivingBank`) is connected to receive the money. */
+  canSimulatePayment(id: string): boolean {
+    return this.simulation(id) !== null;
+  }
+
   /**
    * Demo only: the customer pays what is left of an invoice of the open business. An incoming payment of that amount, with
-   * the invoice's number as its reference, arrives on the first connected bank account today, booked and confirmed; the
-   * system matches it to the invoice at once (the reference names it, so it is certain), so the invoice turns paid or
-   * stays partly paid, in front of the person. Ignored while no bank is connected, and for an invoice with nothing left to pay.
+   * the invoice's number as its reference, arrives on the first bank account whose connection works today, booked and
+   * confirmed; the system matches it to the invoice at once (the reference names it, so it is certain), so the invoice
+   * turns paid or stays partly paid, in front of the person. Ignored while no bank works (not connected yet, or its
+   * sign-in ended), and for an invoice with nothing left to pay (see `canSimulatePayment`).
    */
   simulatePayment(id: string): void {
-    const found = this.payable(id);
-    const bank = found?.business.accounts.find((account) => account.kind === 'bank' && account.connection.kind === 'connected');
-    if (!found || !bank || !this.demo.bankConnected()) return;
+    const found = this.simulation(id);
+    if (!found) return;
+    const { bank } = found;
     const booking = revenueBookingFor(found.invoice, found.business.taxProfile);
     const tx = paymentFor(found.business, found.invoice, bank.id, DEMO_TODAY, CUSTOMER_IBAN, [
       { date: DEMO_TODAY, key: 'autoBooked', params: { category: booking.labelKey } },
@@ -280,6 +287,13 @@ export class InvoiceService {
     const status = invoiceStatus(invoice, business);
     const open = status === 'open' || status === 'overdue' || status === 'partlyPaid';
     return open && leftCents(invoice, business) > 0 ? { business, invoice } : null;
+  }
+
+  /** What a simulated payment needs: an invoice with something left to pay, the bank that receives it, and the bank step done. */
+  private simulation(id: string): { business: Business; invoice: Invoice; bank: Account } | null {
+    const found = this.payable(id);
+    const bank = found && this.demo.bankConnected() ? receivingBank(found.business) : null;
+    return found && bank ? { ...found, bank } : null;
   }
 
   /** Marks an invoice as on its way for `SEND_MS`, then resolves with what `complete` says, unless Reset demo came in meanwhile. */

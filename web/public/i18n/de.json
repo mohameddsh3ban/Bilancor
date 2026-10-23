@@ -135,6 +135,16 @@
       "de": "XRechnung",
       "explain": "Eine E-Rechnung als reine Datendatei. Behörden in Deutschland verlangen sie, zusammen mit ihrer Leitweg-ID."
     },
+    "zahlungserinnerung": {
+      "label": "Zahlungserinnerung",
+      "de": "Zahlungserinnerung",
+      "explain": "Eine freundliche erste Erinnerung an eine Rechnung, die bis zum Fälligkeitsdatum nicht bezahlt wurde. Sie kostet nichts extra und gibt deinem Kunden eine Woche Zeit zum Zahlen."
+    },
+    "mahnung": {
+      "label": "Mahnung",
+      "de": "Mahnung",
+      "explain": "Eine zweite, deutlichere Erinnerung nach der Zahlungserinnerung. Sie nennt ein neues Zahlungsdatum und weist darauf hin, dass Verzugszinsen berechnet werden können. Zinsen oder Gebühren rechnet die App nicht aus."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -715,12 +725,66 @@
       },
       "edit": "Bearbeiten",
       "download": "PDF herunterladen",
+      "send": "Ansehen und senden",
+      "sending": "Wird gesendet…",
+      "remind": "Zahlungserinnerung senden",
+      "remindFormal": "Mahnung senden",
+      "duplicate": "Duplizieren",
+      "correctCopy": "Korrigierte Kopie erstellen",
+      "notReady": "Noch nicht bereit zum Senden. Unter „Bearbeiten“ siehst du, was fehlt.",
+      "cancelledNote": "Storniert mit der Stornorechnung {{number}}. Das Original bleibt erhalten.",
       "format": "Format",
       "notFound": {
         "title": "Rechnung nicht gefunden",
         "body": "Sie wurde vielleicht entfernt oder gehört zu einem anderen Unternehmen.",
         "back": "Zurück zu den Rechnungen"
       }
+    },
+    "send": {
+      "title": {
+        "invoice": "Rechnung senden",
+        "reminder1": "Zahlungserinnerung senden",
+        "reminder2": "Mahnung senden",
+        "sending": "Wird gesendet…",
+        "sent": "Gesendet ✓"
+      },
+      "type": "Art",
+      "to": "An",
+      "subject": "Betreff",
+      "attachment": "Anhang",
+      "message": "Nachricht",
+      "cancel": "Abbrechen",
+      "confirm": "Senden",
+      "close": "Schließen",
+      "onItsWay": "Deine E-Mail an {{email}} ist unterwegs.",
+      "doneInvoice": "Deine Rechnung wurde an {{email}} gesendet.",
+      "doneReminder": "Die Erinnerung wurde an {{email}} gesendet.",
+      "number": "Rechnungsnummer"
+    },
+    "actions": {
+      "markPaid": "Als bezahlt markieren",
+      "more": "Weitere Aktionen",
+      "duplicate": "Duplizieren",
+      "cancel": "Rechnung stornieren",
+      "cancelPaid": "Eine bezahlte Rechnung lässt sich nur mit einer Gutschrift stornieren – kommt später",
+      "cancelPartlyPaid": "Eine teilweise bezahlte Rechnung lässt sich nur mit einer Gutschrift stornieren – kommt später",
+      "cancelDialog": {
+        "title": "Rechnung {{number}} stornieren?",
+        "body": "Dabei entsteht eine Stornorechnung. Das Original bleibt erhalten.",
+        "keep": "Rechnung behalten",
+        "confirm": "Rechnung stornieren",
+        "close": "Schließen"
+      },
+      "payDialog": {
+        "title": "{{number}} als bezahlt markieren",
+        "body": "Bar bezahlt am",
+        "hint": "Das Geld landet in deiner Kasse und zählt wie jede andere Zahlung für deine Umsatzsteuer-Voranmeldung und die Jahreszahlen.",
+        "error": "Wähle einen Tag vom Rechnungsdatum bis heute.",
+        "confirm": "Als bezahlt markieren",
+        "cancel": "Abbrechen",
+        "close": "Schließen"
+      },
+      "demo": "Zahlung des Kunden simulieren"
     }
   },
   "print": {

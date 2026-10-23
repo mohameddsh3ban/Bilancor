@@ -325,7 +325,7 @@ export class DemoStateService {
    * business (the open one unless named): one change to the invoice, its payment and, when this payment completes the
    * invoice, its document. The payment is then booked with the invoice as its receipt (a payment with no category takes
    * the invoice's revenue booking) and says "Pays invoice …". The invoice says it was paid in full or in part, on the day
-   * the money came in. Only the payment that completes the invoice is linked to its document, so Documents shows it as
+   * the money came in, and keeps the id of the payment in that line (`params.paymentId`), so the line can lead to it. Only the payment that completes the invoice is linked to its document, so Documents shows it as
    * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically".
    *
    * Ignored for an unknown invoice or payment, money going out, an invoice that is a draft, paid or cancelled, and a payment
@@ -357,7 +357,10 @@ export class DemoStateService {
       const complete = leftCents(withPayment, { ...business, transactions }) === 0;
       const paid: Invoice = {
         ...withPayment,
-        history: [{ date: tx.date, key: complete ? 'invoicePaid' : 'invoicePartlyPaid', params: {} }, ...invoice.history],
+        history: [
+          { date: tx.date, key: complete ? 'invoicePaid' : 'invoicePartlyPaid', params: { paymentId: txId } },
+          ...invoice.history,
+        ],
       };
       return {
         ...business,
