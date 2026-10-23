@@ -1,5 +1,5 @@
 import type { Business, HistoryKey, Member, Role } from '../data/models';
-import { addDays } from './bank-connection';
+import { addDays } from './dates';
 
 // Who has access to a business, the invitations waiting, and our support team's access. Every rule returns the business
 // it was given when it changes nothing (the state service relies on that to skip an update), and one that changes
