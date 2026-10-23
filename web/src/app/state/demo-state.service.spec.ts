@@ -481,9 +481,10 @@ describe('DemoStateService', () => {
     it('restore keeps the businesses other fields as the snapshot found them too', () => {
       const state = TestBed.inject(DemoStateService);
       const snapshot = state.snapshot();
-      state.restore({ ...snapshot, name: 'Not my name', vatDue: null });
+      state.restore({ ...snapshot, name: 'Not my name', vatReturns: [] });
       expect(state.business().name).toBe(snapshot.name);
-      expect(state.business().vatDue).toEqual(snapshot.vatDue);
+      expect(state.business().vatReturns).toEqual(snapshot.vatReturns);
+      expect(snapshot.vatReturns.length).toBeGreaterThan(0);
     });
 
     it('a snapshot is a deep copy: later edits do not change it, and restoring brings back a new object', () => {

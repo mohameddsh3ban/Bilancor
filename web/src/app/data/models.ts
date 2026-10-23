@@ -85,9 +85,16 @@ export interface TaxProfile {
   taxState: string | null; taxNumber: string | null; vatId: string | null; // taxState: a GERMAN_STATES id
   fiscalYearStart: string; // 'MM-DD', '01-01' for the calendar year
 }
+/** A VAT return that was sent to the tax office: its period, when it was sent, the VAT it held and the transfer ticket. */
+export interface SentVatReturn {
+  periodStart: string; periodEnd: string; sentOn: string; // ISO dates; the period's first and last day, and the day it was sent
+  chargedCents: number; paidCents: number; resultCents: number; // VAT charged, VAT paid, and charged minus paid (negative: a refund)
+  ticket: string; // the transfer ticket, e.g. 'ET-2026-0908-41827'
+}
 export interface Business {
   id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[];
-  vatDue: { dueDate: string; amountCents: number } | null; incomeTaxReserveCents: number; revenueThisYearCents: number;
+  vatReturns: SentVatReturn[]; // the returns sent so far; the next one is calculated (see vat-return.ts), never stored
+  incomeTaxReserveCents: number; revenueThisYearCents: number;
   notices: Notice[]; noticeHistory: Notice[]; categoryRules: CategoryRule[];
   history: HistoryEntry[]; // changes to the tax details and bank accounts, newest first: stored, not shown yet
 }

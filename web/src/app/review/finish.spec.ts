@@ -137,7 +137,7 @@ describe('ReviewFinish', () => {
 
     it('is left out for a business that does not', () => {
       demo.setBusiness('sara-yoga');
-      expect(demo.business().vatDue).toBeNull();
+      expect(demo.business().taxProfile.kleinunternehmer).toBe(true);
       answerAll();
       render();
 
@@ -168,12 +168,22 @@ describe('ReviewFinish', () => {
       renderWithTax('weber-design', {});
       expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
       renderWithTax('weber-design', { permanentExtension: true });
-      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
-      // Weber Design stores 10 Nov, but a quarterly answer moves the date.
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Dec');
+      // A quarterly answer gives the quarter, whose return is due after the quarter ends.
       renderWithTax('weber-design', { vatPeriod: 'quarterly' });
-      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 11 Jan');
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Jan');
+      // With the extension Café's Q3 is due 10 Nov, so it is not late yet.
       renderWithTax('cafe-linde', { permanentExtension: true });
       expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+    });
+
+    it('says a return that is late is overdue since its date, in red, and names no amount', () => {
+      renderWithTax('cafe-linde', {});
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · overdue since 10 Oct');
+      expect(text(q('finish-vat'))).not.toContain('€');
+      expect(q('finish-vat')!.querySelector('.text-negative')!.textContent!.trim()).toBe('overdue since 10 Oct');
+      renderWithTax('weber-design', {});
+      expect(q('finish-vat')!.querySelector('.text-negative')).toBeNull();
     });
 
     it('names a date for a business switched to VAT that has no sample amount', () => {
@@ -197,7 +207,7 @@ describe('ReviewFinish', () => {
       demo.setBusiness('cafe-linde');
       render();
       expect(text(q('finish-vat'))).toBe(
-        `VAT return (UStVA) · next due ${formatDate('2027-01-11', 'en')}`,
+        `VAT return (UStVA) · overdue since ${formatDate('2026-10-10', 'en')}`,
       );
 
       demo.setBusiness('sara-yoga');
@@ -234,6 +244,21 @@ describe('ReviewFinish', () => {
       `إقرار ضريبة القيمة المضافة (UStVA) · الموعد القادم: ${formatDate('2026-11-10', 'ar')}`,
     );
     expect(text(q('finish-summary'))).toContain('6 قرارات');
+  });
+
+  it('says a late return in German and Arabic', () => {
+    demo.setBusiness('cafe-linde');
+    render();
+
+    TestBed.inject(LanguageService).setLang('de');
+    fixture.detectChanges();
+    expect(text(q('finish-vat'))).toBe(`UStVA · überfällig seit ${formatDate('2026-10-10', 'de')}`);
+
+    TestBed.inject(LanguageService).setLang('ar');
+    fixture.detectChanges();
+    expect(text(q('finish-vat'))).toBe(
+      `إقرار ضريبة القيمة المضافة (UStVA) · متأخر منذ ${formatDate('2026-10-10', 'ar')}`,
+    );
   });
 
   it('draws the check without a bounce when the person asked for less motion', () => {

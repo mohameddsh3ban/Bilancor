@@ -1,5 +1,6 @@
 import { paymentStatus } from '../domain/payment-status';
 import { revenueLimitStatus } from '../domain/revenue-limit';
+import { periodFor, vatReturnFor } from '../domain/vat-return';
 import { GERMAN_STATES, TAX_OFFICES } from './banks';
 import { CATEGORIES, PRIVATE_IN, PRIVATE_OUT } from './categories';
 import { BUSINESSES, PERSON } from './sample-data';
@@ -13,10 +14,10 @@ describe('sample data', () => {
     }
   });
 
-  it('exactly one Kleinunternehmer, with no VAT due', () => {
+  it('exactly one Kleinunternehmer, with no VAT returns', () => {
     const ku = BUSINESSES.filter((b) => b.taxProfile.kleinunternehmer);
     expect(ku.length).toBe(1);
-    expect(ku[0].vatDue).toBeNull();
+    expect(ku[0].vatReturns).toEqual([]);
   });
 
   it('every transaction points to an account of its business', () => {
@@ -516,5 +517,63 @@ describe('sample tax answers', () => {
 
   it('the financial year of every sample business is the calendar year', () => {
     for (const b of BUSINESSES) expect(b.taxProfile.fiscalYearStart, b.id).toBe('01-01');
+  });
+});
+
+describe('sample VAT returns', () => {
+  const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
+
+  it('weber-design has sent August (on 8 September) and September 2026 (on 8 October)', () => {
+    expect(business('weber-design').vatReturns).toMatchObject([
+      { periodStart: '2026-08-01', periodEnd: '2026-08-31', sentOn: '2026-09-08', ticket: 'ET-2026-0908-41827' },
+      { periodStart: '2026-09-01', periodEnd: '2026-09-30', sentOn: '2026-10-08' },
+    ]);
+  });
+
+  it('what weber-design sent equals what the booked payments of those months give', () => {
+    const wd = business('weber-design');
+    for (const sent of wd.vatReturns) {
+      const view = vatReturnFor(wd, periodFor(sent.periodStart, 'monthly'));
+      expect(view.period.end, sent.periodEnd).toBe(sent.periodEnd);
+      expect(sent.chargedCents, sent.periodEnd).toBe(view.chargedCents);
+      expect(sent.paidCents, sent.periodEnd).toBe(view.paidCents);
+      expect(sent.resultCents, sent.periodEnd).toBe(view.resultCents);
+      expect(view.needsYouCount, sent.periodEnd).toBe(0);
+    }
+  });
+
+  it('cafe-linde has sent its Q2 on 9 July, with figures of its own', () => {
+    const [q2, ...more] = business('cafe-linde').vatReturns;
+    expect(more).toEqual([]);
+    expect(q2).toMatchObject({ periodStart: '2026-04-01', periodEnd: '2026-06-30', sentOn: '2026-07-09' });
+    expect(q2.resultCents).toBe(q2.chargedCents - q2.paidCents);
+    expect(q2.resultCents).toBeGreaterThan(0);
+  });
+
+  it('every sent return adds up, ends after it starts and was sent after its period ended, with a ticket that names the day', () => {
+    for (const b of BUSINESSES) {
+      for (const r of b.vatReturns) {
+        expect(r.resultCents, b.id).toBe(r.chargedCents - r.paidCents);
+        expect(Number.isInteger(r.chargedCents) && Number.isInteger(r.paidCents), b.id).toBe(true);
+        expect(r.periodEnd > r.periodStart, b.id).toBe(true);
+        expect(r.sentOn > r.periodEnd, b.id).toBe(true);
+        expect(r.ticket, b.id).toMatch(/^ET-2026-\d{4}-\d{5}$/);
+        expect(r.ticket.slice(8, 12), b.id).toBe(r.sentOn.slice(5, 7) + r.sentOn.slice(8, 10));
+      }
+    }
+  });
+
+  it('sara-yoga, a Kleinunternehmer, has sent none', () => {
+    expect(business('sara-yoga').vatReturns).toEqual([]);
+  });
+
+  it("cafe-linde's Q3 is made of booked payments only, so it can be sent: July has a few, and the result is not zero", () => {
+    const cafe = business('cafe-linde');
+    const july = cafe.transactions.filter((t) => t.date.startsWith('2026-07'));
+    expect(july.length).toBeGreaterThanOrEqual(2);
+    for (const t of july) expect(paymentStatus(t), t.id).toBe('booked');
+    const q3 = vatReturnFor(cafe, periodFor('2026-07-01', 'quarterly'));
+    expect(q3.needsYouCount).toBe(0);
+    expect(q3.resultCents).toBeGreaterThan(0);
   });
 });

@@ -5,14 +5,14 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { Term } from '../core/i18n/term';
-import { vatReturnDue } from '../domain/tax-details';
+import { currentVatReturn } from '../domain/vat-return';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService } from '../state/review.service';
 
 /**
  * What the review inbox says when nothing is left: a check, "All done", one line about what was done (decisions, and
- * receipts added and duplicates removed when there were any), the date of the next VAT return when the business has
- * one, and Back.
+ * receipts added and duplicates removed when there were any), the date of the VAT return still to send when the
+ * business has one (in red when it is late), and Back.
  */
 @Component({
   selector: 'app-review-finish',
@@ -44,10 +44,13 @@ import { ReviewService } from '../state/review.service';
         }
       </p>
     }
-    @if (vatDue(); as date) {
+    @if (vat(); as view) {
       <p class="text-sm font-medium" data-testid="finish-vat">
         <app-term key="ustva" /> ·
-        {{ 'review.finish.vatDue' | transloco: { date: (date | appDate) } }}
+        <span [class.text-negative]="view.state === 'overdue'">{{
+          (view.state === 'overdue' ? 'review.finish.vatOverdue' : 'review.finish.vatDue')
+            | transloco: { date: (view.dueDate | appDate) }
+        }}</span>
       </p>
     }
     <button hlmBtn size="lg" class="mt-2 min-w-32" data-testid="finish-back" (click)="back.emit()">
@@ -62,10 +65,10 @@ export class ReviewFinish {
   /** The person is done and wants to leave. */
   readonly back = output<void>();
 
-  /** The next VAT return's date, from the tax answers like the homepage card; null for a yearly return or a Kleinunternehmer. */
-  protected readonly vatDue = computed(() => {
-    const due = vatReturnDue(this.demo.business().taxProfile);
-    return due?.kind === 'date' ? due.date : null;
+  /** The VAT return still to send, the same as on the homepage card; null for a yearly return or a Kleinunternehmer. */
+  protected readonly vat = computed(() => {
+    const current = currentVatReturn(this.demo.business());
+    return current?.kind === 'return' ? current.view : null;
   });
 
   /**

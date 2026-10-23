@@ -143,7 +143,11 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'wd-t17', date: '2026-10-08', who: 'SCHREIBWAREN BOETTCHER', acct: WD_QONTO, cents: -2380, booking: OFFICE, receipt: 'missing', iban: 'DE45100100100076543210', ref: 'Kartenzahlung 08.10.' }),
       pay({ id: 'wd-t18', date: '2026-10-02', who: 'Amazon', acct: WD_QONTO, cents: -2390, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-4471920-8830', file: 'amazon-bestellung-8830.pdf', suggestions: AMAZON_SUGGESTIONS }),
     ],
-    vatDue: { dueDate: '2026-11-10', amountCents: 184200 },
+    // Sent returns are stored as the figures the person saw; a sample-data test checks them against the booked payments.
+    vatReturns: [
+      { periodStart: '2026-08-01', periodEnd: '2026-08-31', sentOn: '2026-09-08', chargedCents: 23950, paidCents: 6338, resultCents: 17612, ticket: 'ET-2026-0908-41827' },
+      { periodStart: '2026-09-01', periodEnd: '2026-09-30', sentOn: '2026-10-08', chargedCents: 52450, paidCents: 6338, resultCents: 46112, ticket: 'ET-2026-1008-52390' },
+    ],
     incomeTaxReserveCents: 320000,
     revenueThisYearCents: 4860000,
     notices: [
@@ -189,7 +193,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'sy-t13', date: '2026-08-11', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete August' }),
       pay({ id: 'sy-t14', date: '2026-08-04', who: 'Yogashop Berlin', acct: SY_QONTO, cents: -4120, booking: SUPPLIES, iban: 'DE31100100106655443322', ref: 'Rechnung 22-8814, Gurte und Blöcke' }),
     ],
-    vatDue: null,
+    vatReturns: [],
     incomeTaxReserveCents: 210000,
     revenueThisYearCents: 2130000,
     notices: [
@@ -233,8 +237,15 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'cl-t13', date: '2026-08-27', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -131450, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0405-66390' }),
       pay({ id: 'cl-t14', date: '2026-08-15', who: 'Stadtwerke Hamburg', acct: CL_SPARKASSE, cents: -26980, booking: UTILITIES, iban: 'DE83200505501234567801', ref: 'Abschlag Strom und Wasser August' }),
       pay({ id: 'cl-t15', date: '2026-08-10', who: 'Hausverwaltung Lindenallee', acct: CL_SPARKASSE, cents: -185000, booking: RENT, iban: 'DE19200800000556677889', ref: 'Miete August, Lindenallee 4' }),
+      // July: a few booked payments, so that the third quarter has something to pay.
+      pay({ id: 'cl-t16', date: '2026-07-29', who: 'Tagesumsatz Kasse', acct: CL_CASH, cents: 70230, booking: REVENUE_7, iban: 'DE41200300001000200030', ref: 'Kassenabschluss 29.07.' }),
+      pay({ id: 'cl-t17', date: '2026-07-17', who: 'Catering Firma Dittmar', acct: CL_QONTO, cents: 952000, booking: REVENUE_19, iban: 'DE38210800500012349876', ref: 'RE-2026-044, Sommerfest' }),
+      pay({ id: 'cl-t18', date: '2026-07-10', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -141860, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0401-55871' }),
     ],
-    vatDue: { dueDate: '2027-01-10', amountCents: 412000 },
+    // Q2 was sent; Q3 (July to September) is the current return and is not sent yet, so it shows as overdue.
+    vatReturns: [
+      { periodStart: '2026-04-01', periodEnd: '2026-06-30', sentOn: '2026-07-09', chargedCents: 214860, paidCents: 126430, resultCents: 88430, ticket: 'ET-2026-0709-30764' },
+    ],
     incomeTaxReserveCents: 580000,
     revenueThisYearCents: 11240000,
     notices: [],

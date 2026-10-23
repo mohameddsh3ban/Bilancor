@@ -519,7 +519,9 @@
     "tax": {
       "title": "Steuern",
       "vatDue": "Fällig am {{date}}",
+      "vatOverdue": "Überfällig seit {{date}}",
       "vatAmount": "Voraussichtlich zu zahlen",
+      "vatRefund": "Du bekommst zurück",
       "amountUnknown": "Betrag noch nicht bekannt",
       "yearlyOnly": "Nur Umsatzsteuer-Jahreserklärung",
       "of": "von",
@@ -600,6 +602,7 @@
         "many": "{{count}} Duplikate entfernt"
       },
       "vatDue": "als Nächstes fällig am {{date}}",
+      "vatOverdue": "überfällig seit {{date}}",
       "back": "Zurück"
     }
   },

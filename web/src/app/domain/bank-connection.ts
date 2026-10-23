@@ -22,7 +22,7 @@ const MS_PER_DAY = 86_400_000;
 export const CONSENT_DAYS = 180;
 
 /** The whole days from one ISO date to another; negative when `to` is earlier. Dates are read as UTC, so no clock or zone matters. */
-function daysBetween(from: string, to: string): number {
+export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / MS_PER_DAY);
 }
 

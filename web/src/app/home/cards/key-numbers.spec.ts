@@ -81,12 +81,23 @@ describe('KeyNumbers', () => {
     expect(german.textContent).toContain('Kasse');
   });
 
-  it('third tile is VAT for a VAT business', () => {
+  it('third tile is VAT for a VAT business, with the amount its booked October payments give', () => {
     const t = tile(render('weber-design'), 'tax')!;
-    expect(t.textContent).toContain(formatMoney(184200, 'en'));
+    expect(t.textContent).toContain(formatMoney(39333, 'en'));
+    expect(t.textContent).toContain('Estimated to pay');
     expect(t.textContent).toContain('Due 10 Nov');
+    expect(t.querySelector('[data-testid="tile-tax-due"]')!.className).not.toContain('text-negative');
     expect(t.textContent).toContain(formatMoney(320000, 'en'));
     expect(t.querySelector('[role="progressbar"]')).toBeNull();
+  });
+
+  it('third tile shows cafe-linde Q3 as overdue since 10 Oct, in red, with the amount of its booked payments', () => {
+    const t = tile(render('cafe-linde'), 'tax')!;
+    const due = t.querySelector('[data-testid="tile-tax-due"]')!;
+    expect(due.textContent!.trim()).toBe('Overdue since 10 Oct');
+    expect(due.className).toContain('text-negative');
+    expect(t.textContent).not.toContain('Due ');
+    expect(t.textContent).toContain(formatMoney(78564, 'en'));
   });
 
   it('third tile is the tracker for a Kleinunternehmer', () => {
@@ -135,12 +146,18 @@ describe('KeyNumbers', () => {
 
   const SWITCHED_TO_VAT: Partial<TaxProfile> = { kleinunternehmer: false, vatPeriod: 'monthly', vatBasis: 'ist' };
 
-  it('third tile follows the answers for the due date and keeps the stored amount', () => {
-    const t = tile(renderChanged('weber-design', { permanentExtension: true }), 'tax')!;
-    expect(t.textContent).toContain('Due 10 Nov');
-    expect(t.textContent).toContain(formatMoney(184200, 'en'));
-    expect(tile(renderChanged('cafe-linde', {}), 'tax')!.textContent).toContain('Due 11 Jan');
-    expect(tile(renderChanged('weber-design', { vatPeriod: 'quarterly' }), 'tax')!.textContent).toContain('Due 11 Jan');
+  it('third tile follows the answers: the period they give, the date of its return and the amount of its payments', () => {
+    const extended = tile(renderChanged('weber-design', { permanentExtension: true }), 'tax')!;
+    expect(extended.textContent).toContain('Due 10 Dec');
+    expect(extended.textContent).toContain(formatMoney(39333, 'en'));
+    const quarterly = tile(renderChanged('weber-design', { vatPeriod: 'quarterly' }), 'tax')!;
+    expect(quarterly.textContent).toContain('Due 10 Jan');
+    expect(quarterly.textContent).toContain(formatMoney(39333, 'en'));
+    expect(tile(renderChanged('cafe-linde', {}), 'tax')!.textContent).toContain('Overdue since 10 Oct');
+    // With the extension Café's Q3 is due 10 Nov, so it is not late yet.
+    const cafeExtended = tile(renderChanged('cafe-linde', { permanentExtension: true }), 'tax')!;
+    expect(cafeExtended.textContent).toContain('Due 10 Nov');
+    expect(cafeExtended.textContent).not.toContain('Overdue');
   });
 
   it('third tile shows Yearly VAT return only, with no date and no amount, for a yearly profile', () => {
@@ -148,15 +165,25 @@ describe('KeyNumbers', () => {
     expect(t.textContent).toContain('Yearly VAT return only');
     expect(t.textContent).not.toContain('Due ');
     expect(t.textContent).not.toContain('Estimated to pay');
-    expect(t.textContent).not.toContain(formatMoney(184200, 'en'));
+    expect(t.textContent).not.toContain(formatMoney(39333, 'en'));
     expect(t.textContent).toContain(formatMoney(320000, 'en'));
   });
 
-  it('third tile shows Amount not known yet for a business switched to VAT that has no amount', () => {
-    const t = tile(renderChanged('sara-yoga', SWITCHED_TO_VAT), 'tax')!;
+  it('third tile shows Amount not known yet for a business switched to VAT with no booked payment that carries VAT', () => {
+    const t = tile(renderChanged('sara-yoga', SWITCHED_TO_VAT, { transactions: [] }), 'tax')!;
     expect(t.textContent).toContain('Amount not known yet');
     expect(t.textContent).toContain('Due 10 Nov');
     expect(t.textContent).not.toContain('Estimated to pay');
     expect(t.querySelector('[role="progressbar"]')).toBeNull();
+  });
+
+  it('third tile says You get back, with a positive amount, when the result is negative', () => {
+    // Sara's booked October payments hold VAT on what she bought (€66.23) and none on what she charged.
+    const t = tile(renderChanged('sara-yoga', SWITCHED_TO_VAT), 'tax')!;
+    expect(t.textContent).toContain('You get back');
+    expect(t.textContent).toContain('€66.23');
+    expect(t.textContent).not.toMatch(/-\s*€/);
+    expect(t.textContent).not.toContain('Estimated to pay');
+    expect(t.textContent).not.toContain('Amount not known yet');
   });
 });

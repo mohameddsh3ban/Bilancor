@@ -5,13 +5,14 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
-import { vatReturnDue } from '../../domain/tax-details';
+import { currentVatReturn } from '../../domain/vat-return';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
 /**
  * VAT return (VAT businesses) or the revenue-limit tracker (Kleinunternehmer), plus income tax to set aside. The VAT
- * return's date follows the tax answers; its amount is the business's sample amount, when it has one.
+ * return is the current one of the Taxes page: its date follows the tax answers, and its amount is calculated from the
+ * booked payments of its period (a refund is shown as the amount to get back).
  */
 @Component({
   selector: 'app-tax-card',
@@ -41,17 +42,27 @@ import { RevenueTracker } from './revenue-tracker';
       <div hlmCardContent class="flex flex-col gap-4">
         @if (business().taxProfile.kleinunternehmer) {
           <app-revenue-tracker />
-        } @else if (vat(); as due) {
+        } @else if (vat(); as current) {
           <div class="flex flex-col gap-1" data-testid="tax-vat">
             <p class="text-sm font-medium"><app-term key="ustva" /></p>
-            @if (due.kind === 'date') {
-              <p class="text-muted-foreground text-xs">
-                {{ 'home.tax.vatDue' | transloco: { date: (due.date | appDate) } }}
+            @if (current.kind === 'return') {
+              @let view = current.view;
+              <p
+                class="text-xs"
+                [class]="view.state === 'overdue' ? 'text-negative font-medium' : 'text-muted-foreground'"
+                data-testid="tax-vat-due"
+              >
+                {{
+                  (view.state === 'overdue' ? 'home.tax.vatOverdue' : 'home.tax.vatDue')
+                    | transloco: { date: (view.dueDate | appDate) }
+                }}
               </p>
-              @if (business().vatDue; as amount) {
+              @if (view.amountKnown) {
                 <p class="flex items-baseline justify-between gap-3 text-sm">
-                  <span>{{ 'home.tax.vatAmount' | transloco }}</span>
-                  <bdi dir="ltr" class="font-medium">{{ amount.amountCents | money }}</bdi>
+                  <span>{{
+                    (view.resultCents < 0 ? 'home.tax.vatRefund' : 'home.tax.vatAmount') | transloco
+                  }}</span>
+                  <bdi dir="ltr" class="font-medium">{{ abs(view.resultCents) | money }}</bdi>
                 </p>
               } @else {
                 <p class="text-muted-foreground text-sm">
@@ -77,6 +88,7 @@ export class TaxCard {
   private readonly demo = inject(DemoStateService);
 
   protected readonly business = this.demo.business;
-  /** When the VAT return is due, from the open business's tax answers. */
-  protected readonly vat = computed(() => vatReturnDue(this.business().taxProfile));
+  protected readonly abs = Math.abs;
+  /** The open business's current VAT return: its date and amount, "yearly only", or null. */
+  protected readonly vat = computed(() => currentVatReturn(this.business()));
 }

@@ -519,7 +519,9 @@
     "tax": {
       "title": "Taxes",
       "vatDue": "Due {{date}}",
+      "vatOverdue": "Overdue since {{date}}",
       "vatAmount": "Estimated to pay",
+      "vatRefund": "You get back",
       "amountUnknown": "Amount not known yet",
       "yearlyOnly": "Yearly VAT return only",
       "of": "of",
@@ -600,6 +602,7 @@
         "many": "{{count}} duplicates removed"
       },
       "vatDue": "next due {{date}}",
+      "vatOverdue": "overdue since {{date}}",
       "back": "Back"
     }
   },
