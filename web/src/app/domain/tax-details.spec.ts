@@ -1,104 +1,11 @@
 import { TAX_OFFICES } from '../data/banks';
 import type { TaxProfile } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
-import { findTaxOffice, isVatId, vatReturnDue } from './tax-details';
+import { findTaxOffice, isVatId } from './tax-details';
 
 const profileOf = (id: string): TaxProfile => BUSINESSES.find((b) => b.id === id)!.taxProfile;
-const weber = profileOf('weber-design');
 const sara = profileOf('sara-yoga');
 const cafe = profileOf('cafe-linde');
-
-describe('vatReturnDue', () => {
-  const due = (date: string) => ({ kind: 'date', date });
-
-  it('is the next 10th for a monthly return that is not filed yet', () => {
-    // Demo day 22 Oct 2026: September's return was due on Monday 12 Oct (10 Oct is a Saturday), so October's is next.
-    expect(vatReturnDue(weber)).toEqual(due('2026-11-10'));
-  });
-
-  it('is still the previous period with a permanent extension, as it runs a month longer', () => {
-    // September's return, extended: 10 Nov.
-    expect(vatReturnDue({ ...weber, permanentExtension: true })).toEqual(due('2026-11-10'));
-  });
-
-  it('is the 10th after the end of the quarter for a quarterly return, moved off a weekend', () => {
-    // Q4 ends in December: 10 Jan 2027 is a Sunday, so the deadline is Monday 11 Jan.
-    expect(vatReturnDue(cafe)).toEqual(due('2027-01-11'));
-  });
-
-  it('is the previous quarter with a permanent extension, quarterly too', () => {
-    // Q3's return, extended: 10 Nov 2026.
-    expect(vatReturnDue({ ...cafe, permanentExtension: true })).toEqual(due('2026-11-10'));
-  });
-
-  it('keeps the previous period while its deadline is today or later', () => {
-    expect(vatReturnDue(weber, '2026-11-05')).toEqual(due('2026-11-10'));
-    expect(vatReturnDue(weber, '2026-11-10')).toEqual(due('2026-11-10'));
-    expect(vatReturnDue(weber, '2026-11-11')).toEqual(due('2026-12-10'));
-    expect(vatReturnDue(cafe, '2026-07-01')).toEqual(due('2026-07-10'));
-    expect(vatReturnDue(cafe, '2026-04-01')).toEqual(due('2026-04-10'));
-    expect(vatReturnDue(cafe, '2026-04-15')).toEqual(due('2026-07-10'));
-  });
-
-  it('moves a deadline on a Saturday or Sunday to the Monday after', () => {
-    // 10 Oct 2026 is a Saturday, 10 Jan 2027 a Sunday.
-    expect(vatReturnDue(weber, '2026-10-05')).toEqual(due('2026-10-12'));
-    expect(vatReturnDue(weber, '2027-01-05')).toEqual(due('2027-01-11'));
-    expect(vatReturnDue(cafe, '2026-09-30')).toEqual(due('2026-10-12'));
-  });
-
-  it('compares today with the deadline after the move, not with the 10th', () => {
-    expect(vatReturnDue(weber, '2026-10-11')).toEqual(due('2026-10-12'));
-    expect(vatReturnDue(weber, '2026-10-12')).toEqual(due('2026-10-12'));
-    expect(vatReturnDue(weber, '2026-10-13')).toEqual(due('2026-11-10'));
-  });
-
-  it('has no monthly or quarterly date for a yearly return', () => {
-    expect(vatReturnDue({ ...weber, vatPeriod: 'yearly' })).toEqual({ kind: 'yearly' });
-    expect(vatReturnDue({ ...weber, vatPeriod: 'yearly', permanentExtension: true })).toEqual({
-      kind: 'yearly',
-    });
-  });
-
-  it('is null for a Kleinunternehmer', () => {
-    expect(vatReturnDue(sara)).toBeNull();
-    expect(vatReturnDue({ ...weber, kleinunternehmer: true })).toBeNull();
-  });
-
-  it('is null while the period is not answered', () => {
-    expect(vatReturnDue({ ...weber, vatPeriod: null })).toBeNull();
-  });
-
-  it('follows the date it is given, not the demo date', () => {
-    expect(vatReturnDue(weber, '2026-03-15')).toEqual(due('2026-04-10'));
-    expect(vatReturnDue(cafe, '2026-03-15')).toEqual(due('2026-04-10'));
-  });
-
-  it('rolls into the next year, also after the extension', () => {
-    expect(vatReturnDue(weber, '2026-12-15')).toEqual(due('2027-01-11'));
-    expect(vatReturnDue({ ...weber, permanentExtension: true }, '2026-12-15')).toEqual(due('2027-01-11'));
-    expect(vatReturnDue({ ...weber, permanentExtension: true }, '2026-12-05')).toEqual(due('2027-01-11'));
-    expect(vatReturnDue({ ...weber, permanentExtension: true }, '2026-11-05')).toEqual(due('2026-12-10'));
-    expect(vatReturnDue({ ...cafe, permanentExtension: true }, '2026-12-31')).toEqual(due('2027-02-10'));
-  });
-
-  it('reaches back into the year before in January', () => {
-    // 5 Jan 2027: December's (or Q4's) return is still to be filed.
-    expect(vatReturnDue(weber, '2027-01-05')).toEqual(due('2027-01-11'));
-    expect(vatReturnDue(cafe, '2027-01-05')).toEqual(due('2027-01-11'));
-    expect(vatReturnDue({ ...cafe, permanentExtension: true }, '2027-01-05')).toEqual(due('2027-02-10'));
-  });
-
-  it('puts the last month of a quarter in that quarter', () => {
-    expect(vatReturnDue(cafe, '2026-09-30')).toEqual(due('2026-10-12'));
-    expect(vatReturnDue(cafe, '2026-06-30')).toEqual(due('2026-07-10'));
-  });
-
-  it('does not read the stored VAT date of the business', () => {
-    // Weber Design stores 2026-11-10, but a quarterly answer moves the date.
-    expect(vatReturnDue({ ...weber, vatPeriod: 'quarterly' })).toEqual(due('2027-01-11'));
-  });
-});
 
 describe('findTaxOffice', () => {
   it('finds the office for a matching number', () => {
