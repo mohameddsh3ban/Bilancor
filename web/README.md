@@ -1,6 +1,6 @@
 # Bookkeeping app mockup (web)
 
-Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page, the review inbox, and the setup steps with Settings (en / de / ar). No backend.
+Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page, the review inbox, the setup steps with Settings, and the Taxes page with its tax reminder (en / de / ar). No backend.
 All data is sample data in `src/app/data/sample-data.ts`.
 
 ## Install
@@ -31,7 +31,7 @@ The strip at the top of every page is demo-only:
 
 - **Setup state** (New client / Halfway / Active client) is a shortcut for the **open business only**: it sets that business's three setup steps (none / bank only / all three) and nothing else. Connected accounts, tax answers and documents stay as they are. The choice that matches the business's steps is highlighted, and none is when the steps are mixed. In "New client" no bank is connected yet, so Payments has no list.
 - **Business switcher** (in the top bar) changes which business is open.
-- **Reset demo** brings back every notice you dismissed and the sample payments, documents, bank accounts and tax answers, puts every business back to Active client, and forgets what the review inbox learned (dismissals are remembered in the browser until you reset).
+- **Reset demo** brings back every notice you dismissed and the sample payments, documents, bank accounts and tax answers, puts every business back to Active client, forgets what the review inbox learned (dismissals are remembered in the browser until you reset), and brings back the tax reminder and the VAT returns sent from Taxes.
 
 ## Payments
 
@@ -121,6 +121,42 @@ Coming soon (the button opens a placeholder page): importing a bank statement, f
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample accounts, tax answers and setup steps.
 
+## Taxes
+
+The Taxes page (`/taxes`) shows the VAT return the business has to send next, and the year so far. It opens from the menu, from **Open taxes** on the homepage tax card (a tile on a computer) and from the tax reminder (below). It works in English, German and Arabic.
+
+- **Tabs:** a business that charges VAT has two, **VAT return** and **Year (EÜR)** (`/taxes?tab=year`). A Kleinunternehmer has no tabs: the revenue-limit tracker, "No VAT return needed" and the year. Until the business has saved its tax details (or, when it charges VAT, picked a return period) the page only says so and links to the tax details in Settings.
+- **A business that files its VAT once a year** shows "Yearly VAT return only" with the date (31 July next year) and nothing to send.
+
+**How the VAT return is calculated** (`src/app/domain/vat-return.ts`):
+
+- It counts the **booked** payments dated in the period (payment dates, as for Ist-Versteuerung). A payment that is not booked yet is left out and counted as "N payments still need you", with **Start** to open the review inbox.
+- The VAT part of a payment is gross × rate ÷ (100 + rate), rounded to the cent, from the booking's VAT rate (private payments and payments without VAT add nothing). Money in is the **VAT charged** (Umsatzsteuer), money out is the **VAT paid** (Vorsteuer). The result is charged − paid: "You pay €X", or "You get €X back" when it is negative; a period still running says "So far you pay…".
+- The period is a calendar month or quarter, as the tax details in Settings say. A return is due on the 10th of the month after the period ends, one month later with the permanent extension (Dauerfristverlängerung). **The mockup keeps the 10th even when it falls on a weekend** (Café Linde's 10 Oct 2026 is a Saturday). A real product must move a weekend deadline to the next working day.
+- The **current return** is the period after the latest sent one, or the period that holds today when nothing was sent yet. The homepage tax card and tile and the review inbox's "All done" line use this same return and calculation, so the figures never differ. **See the payments** opens Payments on the period's month (the first month of a quarter).
+
+**Year (EÜR):** income, costs (by category, with the SKR03 account), profit so far this year, the income tax to set aside (a sample figure), and the returns to make at the end of the year, each with its German term and due 31 July next year: the EÜR for every business, the income-tax return (Einkommensteuererklärung) or, for a GbR, the partnership return (Feststellungserklärung), and the annual VAT return (Umsatzsteuererklärung) for a business that charges VAT. They are not sent from the app.
+
+- The sample payments only start in July or August, so the earlier months are **one stored opening line** per business (labelled "earlier months", not linked to payments). The rest is calculated from the booked payments that are not private, and links to Payments.
+- Amounts are net of VAT for a business that charges VAT, and as paid for a Kleinunternehmer.
+
+**Sending is simulated:** no ELSTER connection, no certificate, no tax ID.
+
+- **Send to the tax office** opens a check step (period, VAT charged, VAT paid, result). **Send** shows "Sending…" for 1.5 seconds, then "Sent ✓" with a made-up transfer ticket and **Print receipt**. Cancel, ✕, Escape and a tap outside close it before anything is sent; closing it while it sends does not stop the return.
+- The return moves to **Sent earlier** with today's date, its amount and a **Receipt** link: a printable receipt (Übertragungsprotokoll) at `/print/vat-return/<periodStart>`, outside the app shell, which opens the browser's Print dialog (choose Save as PDF to keep a file). It shows the figures stored when the return was sent. The next period then becomes the current return.
+- A return can't be sent while its period is still running (the button is off and says when it is ready) or while payments in it still need the person (the button reads "Fix N payments first" and opens the review inbox). A sent return can't be changed.
+
+**Tax reminder:** a pop-up when the app opens, and again after **Reset demo**, on top of whichever page opened. It lists the businesses of the signed-in person whose current VAT return is due within 21 days or is overdue, each with its name, period and due date, and **Open taxes** (switches to that business and opens `/taxes`). A Kleinunternehmer has none, and neither has a business that has not set its tax details yet.
+
+- **Got it, don't remind me again** stores an acknowledgement per person, business and due date, so the next deadline reminds again. **Not now**, ✕, Escape and a tap outside close it, and it shows again the next time the app is opened. A return that becomes due while the app is open (a changed tax answer) waits for the next open.
+- **Reset demo** clears the acknowledgements and restores the sent returns.
+
+**The sample:** Weber Design (monthly) sent August and September; October is in progress, due 10 Nov, ready to send from 1 Nov. Café Linde GbR (quarterly) sent Q2; Q3 has been overdue since 10 Oct, so it is the one to send in the demo (Q4 is the current return after that). Sara Weber Yoga is a Kleinunternehmer, so it has no VAT return.
+
+Not built: a real ELSTER connection, applying for the permanent extension from Taxes (it only follows the Settings answer), correction returns, sending the EÜR or the income-tax return, and paying the tax. The page states figures and deadlines only, with no tax advice.
+
+Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample data, including the sent returns. The demo's "today" is 22 Oct 2026.
+
 ## Translations
 
 All text lives in `public/i18n/{en,de,ar}.json`. Every key in `en.json` must also exist in `de.json` and `ar.json`.
@@ -136,7 +172,7 @@ Generated into `libs/ui/<name>/` and mapped in `tsconfig.json` paths. Import the
 import { HlmButton } from '@spartan-ng/helm/button';
 ```
 
-Available: `button`, `card`, `badge`, `dropdown-menu`, `popover`, `progress`, `tooltip`, `separator` (plus `utils`).
+Available: `button`, `card`, `badge`, `dialog`, `dropdown-menu`, `popover`, `progress`, `tooltip`, `separator` (plus `utils`).
 Config is in `components.json` (written by hand, because the generator only offers it interactively).
 Add more with `npx ng g @spartan-ng/cli:ui <name> --interactive=false --defaults`.
 
