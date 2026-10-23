@@ -34,10 +34,48 @@
       "label": "Sent",
       "de": "Ausgangsbeleg",
       "explain": "An invoice you issued to a customer."
-    }
-  },
-  "account": {
-    "cash": "Cash box"
+    },
+    "freiberufler": {
+      "label": "Freelance work",
+      "de": "Freiberufler",
+      "explain": "Self-employed work in a profession, such as design, consulting, writing or teaching. Your letter from the tax office says which kind of business you have."
+    },
+    "gewerbe": {
+      "label": "A trade",
+      "de": "Gewerbe",
+      "explain": "A business that sells goods or services and is registered as a trade, such as a shop, a café or a craft business. Your letter from the tax office says which kind you have."
+    },
+    "dauerfristverlaengerung": {
+      "label": "Permanent extension",
+      "de": "Dauerfristverlängerung",
+      "explain": "An approval from the tax office that gives you one more month to file and pay your VAT return."
+    },
+    "istVersteuerung": {
+      "label": "When my customer pays",
+      "de": "Ist-Versteuerung",
+      "explain": "You owe the VAT for a sale once your customer has paid you, not when you send the invoice."
+    },
+    "sollVersteuerung": {
+      "label": "When I send the invoice",
+      "de": "Soll-Versteuerung",
+      "explain": "You owe the VAT for a sale in the month you send the invoice, even if your customer pays later."
+    },
+    "steuernummer": {
+      "label": "Tax number",
+      "de": "Steuernummer",
+      "explain": "The number your tax office gave your business. You find it at the top of its letters."
+    },
+    "ustIdNr": {
+      "label": "VAT ID",
+      "de": "USt-IdNr.",
+      "explain": "The EU ID number for VAT. It starts with DE and has nine digits. You only have one if you applied for it, so you can leave it empty."
+    },
+    "finanzamt": {
+      "label": "Tax office",
+      "de": "Finanzamt",
+      "explain": "The local office that handles your taxes. Its name is on its letters."
+    },
+    "whatIs": "What is {{term}}?"
   },
   "menu": {
     "home": "Home",
@@ -57,20 +95,17 @@
     "invoices": "Invoices",
     "taxes": "Taxes",
     "reports": "Reports",
-    "settings": "Settings",
     "help": "Help",
     "more": "More",
     "terms": "Bank connection terms",
-    "bankExpiry": "Bank connection",
     "unreadable": "Unreadable receipts",
     "revenueLimit": "Revenue limit",
-    "bank": "Connect your bank",
-    "tax": "Your tax details",
     "receipt": "Upload your first receipt",
     "account": "Account",
     "photo": "Take a photo",
     "selfReceipt": "Self-issued receipt",
     "cashPayment": "Paid in cash or privately",
+    "statementImport": "Import a bank statement",
     "default": "This page"
   },
   "comingSoon": {
@@ -103,7 +138,13 @@
     },
     "bankExpiry": {
       "text": "Your {{bank}} connection expires in {{days}} days",
+      "textOne": "Your {{bank}} connection expires in 1 day",
+      "textToday": "Your {{bank}} connection expires today",
       "action": "Renew"
+    },
+    "bankEnded": {
+      "text": "Your {{bank}} connection has ended",
+      "action": "Sign in again"
     },
     "unreadable": {
       "text": "Receipts that could not be read: {{count}}",
@@ -157,7 +198,11 @@
     "receiptLinked": "You linked the document {{name}}",
     "receiptLinkedAuto": "The document {{name}} was linked automatically",
     "receiptUnlinked": "You unlinked the document {{name}}",
-    "bookedByRule": "Booked as {{category}} by your rule"
+    "bookedByRule": "Booked as {{category}} by your rule",
+    "taxChanged": "You changed your tax details",
+    "bankConnected": "You connected {{account}} at {{bank}}",
+    "bankRenewed": "You renewed the connection to {{bank}}",
+    "cashAdded": "You added a cash box"
   },
   "payments": {
     "title": "Payments",
@@ -475,6 +520,8 @@
       "title": "Taxes",
       "vatDue": "Due {{date}}",
       "vatAmount": "Estimated to pay",
+      "amountUnknown": "Amount not known yet",
+      "yearlyOnly": "Yearly VAT return only",
       "of": "of",
       "thisYear": "this year",
       "percentUsed": "{{percent}}% of your limit used",
@@ -554,6 +601,186 @@
       },
       "vatDue": "next due {{date}}",
       "back": "Back"
+    }
+  },
+  "taxDetails": {
+    "back": {
+      "home": "Back to home",
+      "settings": "Back to Settings"
+    },
+    "title": "Your tax details",
+    "intro": "So we book and file the right way. You'll find most answers in your letter from the tax office.",
+    "hint": {
+      "text": "Not sure? It's in your letter from the tax office",
+      "form": "Fragebogen zur steuerlichen Erfassung"
+    },
+    "kind": {
+      "title": "What kind of business is it?",
+      "error": "Choose what kind of business it is."
+    },
+    "vat": {
+      "title": "Do you charge VAT?",
+      "yes": "Yes, I charge VAT",
+      "no": "No",
+      "limits": "Revenue under {{last}} last year and under {{current}} this year.",
+      "error": "Answer whether you charge VAT."
+    },
+    "period": {
+      "titleBefore": "How often do you file your ",
+      "titleAfter": "?",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Only once a year",
+      "error": "Choose how often you file it."
+    },
+    "extension": {
+      "hint": "Tick this if the tax office has allowed you one more month to file."
+    },
+    "basis": {
+      "title": "When is VAT due?",
+      "error": "Choose when VAT is due."
+    },
+    "number": {
+      "state": "Federal state",
+      "statePlaceholder": "Choose your federal state",
+      "number": "Number",
+      "hint": "Type it as written in the letter, with its slashes or spaces.",
+      "errorState": "Choose your federal state.",
+      "errorEmpty": "Enter your tax number.",
+      "errorUnknown": "We couldn't find a tax office for this number. Please check it.",
+        "demoNote": "In this demo, tax offices are only known for {{states}}."
+    },
+    "vatId": {
+      "optional": "Optional",
+      "hint": "Only if you have one: DE followed by nine digits.",
+      "error": "A VAT ID is DE followed by nine digits, for example DE123456789."
+    },
+    "year": {
+      "title": "Financial year",
+      "calendar": "Calendar year",
+      "calendarRange": "1 January to 31 December",
+      "different": "Mine is different",
+      "startsOn": "My financial year starts on",
+      "day": "Day",
+      "month": "Month",
+      "useCalendar": "Use the calendar year",
+      "error": "Enter a real day and month, for example day 1 and month 7 for 1 July."
+    },
+    "save": "Save"
+  },
+  "bankConnect": {
+    "back": {
+      "home": "Back to home",
+      "payments": "Back to Payments",
+      "settings": "Back to Settings"
+    },
+    "pick": {
+      "title": "Connect your bank",
+      "intro": "Your payments then come in by themselves.",
+      "search": "Search for your bank",
+      "banks": "Banks",
+      "noMatch": "We couldn't find a bank called “{{search}}”.",
+      "notListed": {
+        "title": "My bank isn't listed",
+        "body": "Import a statement from your bank instead. Coming soon."
+      },
+      "cash": {
+        "title": "I also take cash",
+        "body": "Add a cash box for the money you take in cash."
+      }
+    },
+    "see": {
+      "title": "Connect {{bank}}",
+      "can": "We can",
+      "canPayments": "See your payments and balance",
+      "canFetch": "Fetch new payments every day",
+      "cannot": "We can't",
+      "cannotMove": "Move money or make transfers",
+      "cannotPassword": "See your bank password",
+      "signIn": "You sign in on {{bank}}'s own page. Your bank asks you to renew this every 180 days; we remind you in time.",
+      "continue": "Continue to {{bank}}",
+      "other": "Choose another bank"
+    },
+    "approval": {
+      "title": "Sign in at {{bank}}",
+      "demo": "DEMO · no real bank, no password",
+      "sentence": "Bookkeeping app wants to read your payments and balance.",
+      "approve": "Approve",
+      "cancel": "Cancel",
+      "note": "Demo: this business banks with {{sample}}, so {{sample}}'s accounts are shown."
+    },
+    "choose": {
+      "title": "Which accounts are for the business?",
+      "hint": "Private accounts stay out: leave them unticked.",
+      "accounts": "Accounts at {{bank}}",
+      "already": "Already connected",
+      "ended": "Connection ended — sign in again in Settings",
+      "fetchFrom": "Fetch payments from",
+      "thisYear": "1 January this year",
+      "lastYear": "1 January last year",
+      "today": "Today",
+      "connectOne": "Connect 1 account",
+      "connectMany": "Connect {{count}} accounts",
+      "connectNone": "Connect accounts",
+      "tickOne": "Tick at least one account to connect.",
+      "allConnected": "These accounts are connected already.",
+      "other": "Choose another bank"
+    },
+    "fetching": {
+      "title": "Fetching payments…",
+      "body": "This takes a moment."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tax": {
+      "title": "Business and tax",
+      "edit": "Edit",
+      "editLabel": "Edit your tax details",
+      "empty": "You haven't added your tax details yet. They help us book and file the right way.",
+      "add": "Add your tax details",
+      "kind": "Kind of business",
+      "vat": "VAT",
+      "vatYes": "Yes, I charge VAT",
+      "vatNo": "No",
+      "basis": "VAT is due",
+      "notGiven": "Not given",
+      "yearFrom": "Starts on {{date}}"
+    },
+    "bank": {
+      "title": "Bank accounts",
+      "connect": "Connect a bank",
+      "connectFirst": "Connect your bank",
+      "before": "Connect your bank and your accounts show up here, with their payments.",
+      "cashLine": "Payments come from your receipts",
+      "statementLine": "Payments come from imported statements",
+      "lastFetchedToday": "last fetched today, {{time}}",
+      "lastFetched": "last fetched {{date}}, {{time}}",
+      "status": {
+        "connected": "Connected",
+        "renewIn": "Renew in {{days}} days",
+        "renewInOne": "Renew in 1 day",
+        "renewToday": "Renew today",
+        "signInAgain": "Sign in again",
+        "statement": "Statement import",
+        "cash": "Cash"
+      },
+      "action": {
+        "renew": "Renew",
+        "signIn": "Sign in again",
+        "import": "Import statement"
+      },
+      "product": {
+        "business": "Business account",
+        "savings": "Savings",
+        "card": "Credit card",
+        "cash": "Cash box"
+      }
+    },
+    "inbox": {
+      "title": "Documents inbox",
+      "text": "Forward receipts and invoices to",
+      "sorted": "We work out whether each one is received or sent."
     }
   }
 }

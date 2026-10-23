@@ -1,37 +1,70 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { DEMO_TODAY } from '../data/demo-date';
+import type { Business } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { editDocument } from '../domain/document-actions';
+import { ALL_DONE } from '../domain/home-cards';
 import { DemoStateService } from './demo-state.service';
 import { NoticeService } from './notice.service';
 
 const weber = BUSINESSES.find((b) => b.id === 'weber-design')!;
-const cafe = BUSINESSES.find((b) => b.id === 'cafe-linde')!;
-const [terms, bankExpiry, unreadable] = weber.notices;
+const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
+const terms = weber.notices.find((n) => n.kind === 'terms')!;
+const unreadable = weber.notices.find((n) => n.kind === 'unreadable')!;
+const revenueLimit = sara.notices.find((n) => n.kind === 'revenueLimit')!;
+// The bank notices are calculated from the accounts, so their ids are not in the sample data.
+const bankExpiryId = 'bank-expiry-wd-qonto';
+const bankEndedId = 'bank-ended-sy-qonto';
+
+/** Every open notice id, shown or in the overflow, in the order they come. */
+const openIds = (service: NoticeService) => [...service.shown(), ...service.overflow()].map((n) => n.id);
+
+/** A stand-in for the demo state with a business the test can change, every step done. */
+function provideBusiness(business: () => Business, businesses: Business[]) {
+  return {
+    provide: DemoStateService,
+    useValue: { business, setup: () => ALL_DONE, documents: () => [], businesses, person: { id: 'p1' } },
+  };
+}
 
 describe('NoticeService', () => {
   beforeEach(() => localStorage.clear());
 
-  it('shows the two most urgent notices of the current business', () => {
+  it('shows the two most urgent notices of the current business and overflows the third', () => {
     const service = TestBed.inject(NoticeService);
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    // Weber Design: the terms (urgency 1), the calculated bank notice (2) and the unreadable receipts (3).
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiryId]);
     expect(service.overflow().map((n) => n.id)).toEqual([unreadable.id]);
     expect(service.unreadCount()).toBe(3);
   });
 
-  it('dismiss moves a notice to history', () => {
+  it('dismiss moves a notice to history and the overflow moves up', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    expect(service.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
-    expect(service.history()[0].id).toBe(bankExpiry.id);
+    service.dismiss(bankExpiryId);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, unreadable.id]);
+    expect(service.overflow()).toEqual([]);
+    expect(service.history()[0].id).toBe(bankExpiryId);
+    expect(service.unreadCount()).toBe(2);
+  });
+
+  it('dismissing a notice in the overflow leaves what is shown as it is', () => {
+    const service = TestBed.inject(NoticeService);
+    service.dismiss(unreadable.id);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiryId]);
+    expect(service.overflow()).toEqual([]);
+    expect(service.history()[0].id).toBe(unreadable.id);
     expect(service.unreadCount()).toBe(2);
   });
 
   it('history is newest first and keeps the earlier history entries', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
+    service.dismiss(unreadable.id);
+    service.dismiss(bankExpiryId);
     const ids = service.history().map((n) => n.id);
-    expect(ids).toEqual([bankExpiry.id, ...weber.noticeHistory.map((n) => n.id)]);
+    // The bank notice is dated today, the unreadable one 18 Oct, then the stored history.
+    expect(ids).toEqual([bankExpiryId, unreadable.id, ...weber.noticeHistory.map((n) => n.id)]);
   });
 
   it('ignores dismissing a blocking notice', () => {
@@ -43,22 +76,22 @@ describe('NoticeService', () => {
   });
 
   it('stores dismissed ids as a JSON array under the person and business key', () => {
-    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).dismiss(bankExpiryId);
     const raw = TestBed.inject(SafeStorage).get('mockup.dismissed.p1.weber-design');
-    expect(JSON.parse(raw!)).toEqual([bankExpiry.id]);
+    expect(JSON.parse(raw!)).toEqual([bankExpiryId]);
   });
 
   it('dismissal is remembered by a new NoticeService', () => {
-    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).dismiss(bankExpiryId);
     const second = TestBed.runInInjectionContext(() => new NoticeService());
-    expect(second.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
-    expect(second.history()[0].id).toBe(bankExpiry.id);
+    expect(second.shown().map((n) => n.id)).toEqual([terms.id, unreadable.id]);
+    expect(second.history()[0].id).toBe(bankExpiryId);
   });
 
   it('treats a corrupt stored value as nothing dismissed', () => {
     TestBed.inject(SafeStorage).set('mockup.dismissed.p1.weber-design', '{not json');
     const service = TestBed.inject(NoticeService);
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiryId]);
   });
 
   it('treats a stored non-array as nothing dismissed', () => {
@@ -68,42 +101,144 @@ describe('NoticeService', () => {
 
   it('dismissal does not leak to another business', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
+    service.dismiss(bankExpiryId);
+    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
+    expect(service.shown().map((n) => n.id)).toEqual([bankEndedId, revenueLimit.id]);
+    expect(service.history().map((n) => n.id)).toEqual(sara.noticeHistory.map((n) => n.id));
+  });
+});
+
+describe('NoticeService and the bank connections', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('adds the bank notice that Weber Design needs: its Qonto connection expires in 5 days', () => {
+    const service = TestBed.inject(NoticeService);
+    const notice = service.shown().find((n) => n.kind === 'bankExpiry');
+    expect(notice).toMatchObject({ id: bankExpiryId, params: { bank: 'Qonto', days: 5 }, blocking: false });
+  });
+
+  it('adds the "ended" notice that Sara Weber Yoga needs, above its revenue-limit notice', () => {
+    const service = TestBed.inject(NoticeService);
+    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
+    expect(service.shown().map((n) => n.kind)).toEqual(['bankEnded', 'revenueLimit']);
+    expect(service.shown()[0]).toMatchObject({ id: bankEndedId, params: { bank: 'Qonto' } });
+    expect(service.unreadCount()).toBe(2);
+  });
+
+  it('Café Linde needs no bank notice: nothing of its connections ends soon', () => {
+    const service = TestBed.inject(NoticeService);
     TestBed.inject(DemoStateService).setBusiness('cafe-linde');
-    expect(service.shown().map((n) => n.id)).toEqual([cafe.notices[0].id]);
-    expect(service.history().map((n) => n.id)).toEqual(cafe.noticeHistory.map((n) => n.id));
+    expect(openIds(service)).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+  });
+
+  it('a dismissed bank notice goes to the history, dated today, and stays dismissed', () => {
+    const service = TestBed.inject(NoticeService);
+    service.dismiss(bankExpiryId);
+    expect(openIds(service)).not.toContain(bankExpiryId);
+    expect(service.history()[0]).toMatchObject({ id: bankExpiryId, kind: 'bankExpiry', date: DEMO_TODAY });
+    const second = TestBed.runInInjectionContext(() => new NoticeService());
+    expect(openIds(second)).not.toContain(bankExpiryId);
+  });
+
+  it('the bank notice goes when the connection is renewed, and it does not come to the history', () => {
+    const renewed: Business = {
+      ...weber,
+      accounts: weber.accounts.map((a) =>
+        a.id === 'wd-qonto' ? { ...a, connection: { ...a.connection, consentUntil: '2027-04-20', lastFetched: '2026-10-22T09:00' } } : a,
+      ),
+    };
+    const business = signal<Business>(weber);
+    TestBed.configureTestingModule({ providers: [provideBusiness(business, [weber])] });
+    const service = TestBed.inject(NoticeService);
+    expect(openIds(service)).toEqual([terms.id, bankExpiryId]);
+    business.set(renewed);
+    expect(openIds(service)).toEqual([terms.id]);
+    expect(service.unreadCount()).toBe(1);
+    expect(service.history().map((n) => n.id)).toEqual(weber.noticeHistory.map((n) => n.id));
+  });
+
+  it('the "ended" notice goes once the person has signed in again', () => {
+    // Charging VAT, so the revenue-limit notice does not take part.
+    const taxProfile = { ...sara.taxProfile, kleinunternehmer: false };
+    const business = signal<Business>({ ...sara, taxProfile });
+    TestBed.configureTestingModule({ providers: [provideBusiness(business, [sara])] });
+    const service = TestBed.inject(NoticeService);
+    expect(openIds(service)).toEqual([bankEndedId]);
+    business.set({
+      ...sara,
+      taxProfile,
+      accounts: sara.accounts.map((a) => ({ ...a, connection: { ...a.connection, consentUntil: '2027-04-20', broken: false } })),
+    });
+    expect(openIds(service)).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+  });
+
+  it('a connection the bank reports as broken gets the "ended" notice even with months of consent left', () => {
+    const broken: Business = {
+      ...weber,
+      accounts: weber.accounts.map((a) =>
+        a.id === 'wd-qonto' ? { ...a, connection: { ...a.connection, consentUntil: '2027-04-20', broken: true } } : a,
+      ),
+    };
+    TestBed.configureTestingModule({ providers: [provideBusiness(() => broken, [broken])] });
+    expect(openIds(TestBed.inject(NoticeService))).toEqual([terms.id, 'bank-ended-wd-qonto']);
   });
 });
 
 describe('NoticeService and the setup state', () => {
   beforeEach(() => localStorage.clear());
 
-  it('shows no bank notice and a zero badge for Café Linde while setup is new', () => {
+  it('shows no notices and a zero badge for Weber Design while setup is new', () => {
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
-    demo.setBusiness('cafe-linde');
+    // Weber Design has open notices and earlier ones, so it is the setup that hides them.
+    expect(service.unreadCount()).toBe(3);
+    expect(service.history()).not.toEqual([]);
     demo.setSetup('new');
     expect(service.shown()).toEqual([]);
+    expect(service.overflow()).toEqual([]);
     expect(service.unreadCount()).toBe(0);
     expect(service.history()).toEqual([]);
   });
 
-  it('shows the bank notices but not the receipt notice for weber-design when halfway', () => {
+  it('hides the earlier notices of Café Linde while setup is new', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setBusiness('cafe-linde');
+    expect(service.history().map((n) => n.id)).toEqual(['cl-h1']);
+    demo.setSetup('new');
+    expect(service.history()).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+  });
+
+  it('shows the terms and the bank notice but not the receipt notice for Weber Design when halfway', () => {
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
     demo.setSetup('halfway');
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiryId]);
     expect(service.overflow()).toEqual([]);
     expect(service.unreadCount()).toBe(2);
     expect(service.history().map((n) => n.kind)).toEqual(['bankExpiry']);
   });
 
-  it('hides the revenue limit notice for sara-yoga when halfway', () => {
+  it('shows no bank notice before the bank step is done, whatever the connections say', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const service = TestBed.inject(NoticeService);
+    demo.setBusiness('sara-yoga');
+    expect(openIds(service)).toContain(bankEndedId);
+    demo.setSetup('new');
+    expect(openIds(service)).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+  });
+
+  it('hides the revenue limit notice for sara-yoga when halfway, but not the bank notice', () => {
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
     demo.setBusiness('sara-yoga');
     demo.setSetup('halfway');
-    expect(service.unreadCount()).toBe(0);
+    expect(service.shown().map((n) => n.kind)).toEqual(['bankEnded']);
+    expect(service.unreadCount()).toBe(1);
     expect(service.history()).toEqual([]);
   });
 
@@ -113,6 +248,22 @@ describe('NoticeService and the setup state', () => {
     demo.setSetup('active');
     expect(service.unreadCount()).toBe(3);
   });
+
+  it('hides the revenue limit notice, open and earlier, once the business charges VAT', () => {
+    const open = TestBed.inject(NoticeService);
+    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
+    expect(open.shown().map((n) => n.kind)).toEqual(['bankEnded', 'revenueLimit']);
+    expect(open.history().map((n) => n.kind)).toEqual(['revenueLimit']);
+
+    TestBed.resetTestingModule();
+    // No accounts either, so the bank notice cannot make up for a revenue-limit notice that is wrongly still there.
+    const business = { ...sara, accounts: [], taxProfile: { ...sara.taxProfile, kleinunternehmer: false } };
+    TestBed.configureTestingModule({ providers: [provideBusiness(() => business, [business])] });
+    const service = TestBed.inject(NoticeService);
+    expect(service.shown()).toEqual([]);
+    expect(service.unreadCount()).toBe(0);
+    expect(service.history()).toEqual([]);
+  });
 });
 
 describe('NoticeService.resetDismissals', () => {
@@ -120,10 +271,11 @@ describe('NoticeService.resetDismissals', () => {
 
   it('brings a dismissed notice back and empties the history entry', () => {
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    expect(service.shown().map((n) => n.id)).not.toContain(bankExpiry.id);
+    service.dismiss(bankExpiryId);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, unreadable.id]);
     service.resetDismissals();
-    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(service.shown().map((n) => n.id)).toEqual([terms.id, bankExpiryId]);
+    expect(service.overflow().map((n) => n.id)).toEqual([unreadable.id]);
     expect(service.unreadCount()).toBe(3);
     expect(service.history().map((n) => n.id)).toEqual(weber.noticeHistory.map((n) => n.id));
   });
@@ -132,17 +284,17 @@ describe('NoticeService.resetDismissals', () => {
     const storage = TestBed.inject(SafeStorage);
     const demo = TestBed.inject(DemoStateService);
     const service = TestBed.inject(NoticeService);
-    service.dismiss(bankExpiry.id);
-    demo.setBusiness('cafe-linde');
-    service.dismiss(cafe.notices[0].id);
+    service.dismiss(bankExpiryId);
+    demo.setBusiness('sara-yoga');
+    service.dismiss(revenueLimit.id);
     service.resetDismissals();
     expect(JSON.parse(storage.get('mockup.dismissed.p1.weber-design')!)).toEqual([]);
-    expect(JSON.parse(storage.get('mockup.dismissed.p1.cafe-linde')!)).toEqual([]);
-    expect(service.shown().map((n) => n.id)).toEqual([cafe.notices[0].id]);
+    expect(JSON.parse(storage.get('mockup.dismissed.p1.sara-yoga')!)).toEqual([]);
+    expect(service.shown().map((n) => n.id)).toEqual([bankEndedId, revenueLimit.id]);
   });
 
   it('a new NoticeService sees nothing dismissed after a reset', () => {
-    TestBed.inject(NoticeService).dismiss(bankExpiry.id);
+    TestBed.inject(NoticeService).dismiss(bankExpiryId);
     TestBed.inject(NoticeService).resetDismissals();
     const second = TestBed.runInInjectionContext(() => new NoticeService());
     expect(second.unreadCount()).toBe(3);
@@ -163,7 +315,7 @@ describe('NoticeService and the unreadable receipts', () => {
     expect(service.unreadCount()).toBe(3);
 
     demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
-    expect([...service.shown(), ...service.overflow()].map((n) => n.id)).toEqual([terms.id, bankExpiry.id]);
+    expect(openIds(service)).toEqual([terms.id, bankExpiryId]);
     expect(service.unreadCount()).toBe(2);
   });
 

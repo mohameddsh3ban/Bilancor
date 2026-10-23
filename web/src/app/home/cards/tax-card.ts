@@ -1,14 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
+import { vatReturnDue } from '../../domain/tax-details';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
-/** VAT return (VAT businesses) or the revenue-limit tracker (Kleinunternehmer), plus income tax to set aside. */
+/**
+ * VAT return (VAT businesses) or the revenue-limit tracker (Kleinunternehmer), plus income tax to set aside. The VAT
+ * return's date follows the tax answers; its amount is the business's sample amount, when it has one.
+ */
 @Component({
   selector: 'app-tax-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,16 +41,28 @@ import { RevenueTracker } from './revenue-tracker';
       <div hlmCardContent class="flex flex-col gap-4">
         @if (business().taxProfile.kleinunternehmer) {
           <app-revenue-tracker />
-        } @else if (business().vatDue; as vat) {
+        } @else if (vat(); as due) {
           <div class="flex flex-col gap-1" data-testid="tax-vat">
             <p class="text-sm font-medium"><app-term key="ustva" /></p>
-            <p class="text-muted-foreground text-xs">
-              {{ 'home.tax.vatDue' | transloco: { date: (vat.dueDate | appDate) } }}
-            </p>
-            <p class="flex items-baseline justify-between gap-3 text-sm">
-              <span>{{ 'home.tax.vatAmount' | transloco }}</span>
-              <bdi dir="ltr" class="font-medium">{{ vat.amountCents | money }}</bdi>
-            </p>
+            @if (due.kind === 'date') {
+              <p class="text-muted-foreground text-xs">
+                {{ 'home.tax.vatDue' | transloco: { date: (due.date | appDate) } }}
+              </p>
+              @if (business().vatDue; as amount) {
+                <p class="flex items-baseline justify-between gap-3 text-sm">
+                  <span>{{ 'home.tax.vatAmount' | transloco }}</span>
+                  <bdi dir="ltr" class="font-medium">{{ amount.amountCents | money }}</bdi>
+                </p>
+              } @else {
+                <p class="text-muted-foreground text-sm">
+                  {{ 'home.tax.amountUnknown' | transloco }}
+                </p>
+              }
+            } @else {
+              <p class="text-muted-foreground text-xs">
+                {{ 'home.tax.yearlyOnly' | transloco }}
+              </p>
+            }
           </div>
         }
         <div class="border-border flex items-baseline justify-between gap-3 border-t pt-3 text-sm">
@@ -61,4 +77,6 @@ export class TaxCard {
   private readonly demo = inject(DemoStateService);
 
   protected readonly business = this.demo.business;
+  /** When the VAT return is due, from the open business's tax answers. */
+  protected readonly vat = computed(() => vatReturnDue(this.business().taxProfile));
 }

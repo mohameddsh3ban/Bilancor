@@ -6,6 +6,7 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmPopoverImports } from '@spartan-ng/helm/popover';
 import { formatDate } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
+import { noticeTextKey } from '../domain/notices';
 import { NoticeService } from '../state/notice.service';
 import { SHELL_ICONS } from './menu';
 
@@ -57,7 +58,7 @@ import { SHELL_ICONS } from './menu';
                 @for (notice of open(); track notice.id) {
                   <li class="flex flex-col gap-0.5">
                     <span class="text-muted-foreground text-xs">{{ date(notice.date) }}</span>
-                    <span>{{ 'notice.' + notice.kind + '.text' | transloco: notice.params }}</span>
+                    <span>{{ textKey(notice) | transloco: notice.params }}</span>
                   </li>
                 }
               </ul>
@@ -72,7 +73,7 @@ import { SHELL_ICONS } from './menu';
                 @for (notice of notices.history(); track notice.id) {
                   <li class="flex flex-col gap-0.5">
                     <span class="text-muted-foreground text-xs">{{ date(notice.date) }}</span>
-                    <span>{{ 'notice.' + notice.kind + '.text' | transloco: notice.params }}</span>
+                    <span>{{ textKey(notice) | transloco: notice.params }}</span>
                   </li>
                 }
               </ul>
@@ -89,6 +90,8 @@ export class BellPanel {
 
   /** Notices that still need action: the ones on the homepage, then the collapsed "+N more". */
   protected readonly open = computed(() => [...this.notices.shown(), ...this.notices.overflow()]);
+
+  protected readonly textKey = noticeTextKey;
 
   protected date(iso: string): string {
     return formatDate(iso, this.language.lang());

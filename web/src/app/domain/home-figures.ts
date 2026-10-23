@@ -1,4 +1,4 @@
-import type { Account, Business, SetupState, Transaction } from '../data/models';
+import type { Account, Business, SetupSteps, Transaction } from '../data/models';
 import { reviewItems } from './review-queue';
 
 /** Sum of every account balance, in cents. */
@@ -7,8 +7,8 @@ export function totalAvailableCents(accounts: readonly Account[]): number {
 }
 
 /** How many things wait for the person's decision: the length of the review queue, the one source of every such count. */
-export function decisionCount(business: Business, setup: SetupState): number {
-  return reviewItems(business, setup).length;
+export function decisionCount(business: Business, steps: SetupSteps): number {
+  return reviewItems(business, steps).length;
 }
 
 /** About one minute per decision, never less than one. */

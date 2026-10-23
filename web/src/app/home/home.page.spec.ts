@@ -69,9 +69,8 @@ describe('HomePage', () => {
     const step = (id: string) => el.querySelector<HTMLElement>(`[data-testid="step-${id}"]`)!;
     expect(step('bank').getAttribute('data-done')).toBe('true');
     expect(step('tax').getAttribute('data-done')).toBe('false');
-    for (const id of ['bank', 'tax']) {
-      expect(step(id).querySelector('a')?.getAttribute('href')).toBe(`/soon/${id}`);
-    }
+    expect(step('bank').querySelector('a')?.getAttribute('href')).toBe('/settings#bank-accounts');
+    expect(step('tax').querySelector('a')?.getAttribute('href')).toBe('/settings/tax?from=home');
     expect(step('receipt').querySelector('a')?.getAttribute('href')).toBe('/documents?add=1');
   });
 

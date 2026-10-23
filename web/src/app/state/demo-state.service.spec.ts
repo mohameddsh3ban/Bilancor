@@ -1,20 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 import { OFFICE, SOFTWARE, TRAVEL } from '../data/categories';
-import type { Booking, Doc } from '../data/models';
+import { FOUND_ACCOUNTS } from '../data/banks';
+import { DEMO_TODAY } from '../data/demo-date';
+import type { Account, Booking, Doc, TaxProfile } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docsNeedingYouCount } from '../domain/document-status';
+import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
 import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
+import { withConnection as setConnection } from './demo-state.testing';
 
 describe('DemoStateService', () => {
-  it('starts with weber-design and an active setup', () => {
+  it('starts with weber-design and every setup step done', () => {
     const state = TestBed.inject(DemoStateService);
     expect(state.person).toBe(PERSON);
     expect(state.businesses.map((b) => b.id)).toEqual(PERSON.businessIds);
     expect(state.business().id).toBe('weber-design');
-    expect(state.setup()).toBe('active');
+    expect(state.setup()).toEqual(ALL_DONE);
   });
 
   it('setBusiness switches data', () => {
@@ -29,10 +33,76 @@ describe('DemoStateService', () => {
     expect(state.business().id).toBe('weber-design');
   });
 
-  it('setSetup changes the setup state', () => {
+  it('setSetup changes the steps of the open business', () => {
     const state = TestBed.inject(DemoStateService);
     state.setSetup('new');
-    expect(state.setup()).toBe('new');
+    expect(state.setup()).toEqual(presetSteps('new'));
+    expect(presetOf(state.setup())).toBe('new');
+  });
+
+  it("a shortcut only sets the open business's steps", () => {
+    const state = TestBed.inject(DemoStateService);
+    const accounts = state.business().accounts;
+    const taxProfile = state.business().taxProfile;
+    state.setSetup('new');
+    expect(state.setup()).toEqual(presetSteps('new'));
+    state.setBusiness('cafe-linde');
+    expect(state.setup()).toEqual(ALL_DONE);
+    state.setBusiness('weber-design');
+    expect(state.setup().bank).toBe(false);
+    state.setSetup('active');
+    expect(state.setup()).toEqual(ALL_DONE);
+    expect(state.business().accounts).toBe(accounts);
+    expect(state.business().taxProfile).toBe(taxProfile);
+  });
+
+  it('stepsOf reads the steps of any business: all done when it was never touched', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('new');
+    expect(state.stepsOf('weber-design')).toEqual(presetSteps('new'));
+    expect(state.stepsOf('cafe-linde')).toBe(ALL_DONE);
+    state.setBusiness('cafe-linde');
+    expect(state.stepsOf('weber-design')).toEqual(presetSteps('new'));
+    expect(state.setup()).toBe(state.stepsOf('cafe-linde'));
+  });
+
+  it('completeStep ticks one step of one business', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('new');
+    state.completeStep('tax');
+    expect(state.setup()).toEqual({ bank: false, tax: true, receipt: false });
+    state.setSetup('new');
+    state.completeStep('receipt', 'weber-design');
+    expect(state.setup()).toEqual({ bank: false, tax: false, receipt: true });
+    state.setBusiness('sara-yoga');
+    state.setSetup('halfway');
+    state.completeStep('tax', 'weber-design');
+    expect(state.setup()).toEqual(presetSteps('halfway'));
+    state.setBusiness('weber-design');
+    expect(state.setup()).toEqual({ bank: false, tax: true, receipt: true });
+  });
+
+  it('completeStep on a step that is done changes nothing', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('halfway');
+    const steps = state.setup();
+    state.completeStep('bank');
+    expect(state.setup()).toBe(steps);
+    state.completeStep('tax', 'cafe-linde'); // never touched, so all done already
+    state.completeStep('tax', 'nope');
+    state.setBusiness('cafe-linde');
+    expect(state.setup()).toBe(ALL_DONE);
+  });
+
+  it('resetData sets every business back to all done', () => {
+    const state = TestBed.inject(DemoStateService);
+    state.setSetup('new');
+    state.setBusiness('sara-yoga');
+    state.setSetup('halfway');
+    state.resetData();
+    expect(state.setup()).toEqual(ALL_DONE);
+    state.setBusiness('weber-design');
+    expect(state.setup()).toEqual(ALL_DONE);
   });
 
   it('bankConnected follows the setup state: no bank yet in "new", connected in "halfway" and "active"', () => {
@@ -385,6 +455,37 @@ describe('DemoStateService', () => {
       expect(state.dataGeneration()).toBe(generation);
     });
 
+    it('restore puts back payments, documents and rules only: tax answers, accounts and history stay as they are now', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+
+      answerAmazon(state, OFFICE);
+      const answers: TaxProfile = { ...state.business().taxProfile, vatPeriod: 'quarterly', taxNumber: '27/123/45679' };
+      state.saveTaxProfile(answers);
+      state.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+      const accounts = state.business().accounts;
+      const history = state.business().history;
+      expect(accounts.map((a) => a.id)).toContain('wd-savings');
+      expect(history.map((line) => line.key)).toEqual(['bankConnected', 'bankConnected', 'taxChanged']);
+
+      state.restore(snapshot);
+
+      expect(state.business().taxProfile).toEqual(answers);
+      expect(state.business().accounts).toBe(accounts);
+      expect(state.business().history).toBe(history);
+      // What the snapshot holds does come back.
+      expect(state.business().categoryRules).toEqual([]);
+      expect(paymentStatus(payment(state, 'wd-t18'))).toBe('unclear');
+    });
+
+    it('restore keeps the businesses other fields as the snapshot found them too', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+      state.restore({ ...snapshot, name: 'Not my name', vatDue: null });
+      expect(state.business().name).toBe(snapshot.name);
+      expect(state.business().vatDue).toEqual(snapshot.vatDue);
+    });
+
     it('a snapshot is a deep copy: later edits do not change it, and restoring brings back a new object', () => {
       const state = TestBed.inject(DemoStateService);
       const open = state.business();
@@ -423,6 +524,459 @@ describe('DemoStateService', () => {
       state.resetData();
       expect(state.business().categoryRules).toEqual([]);
       expect(paymentStatus(payment(state, 'wd-t18'))).toBe('unclear');
+    });
+  });
+
+  describe('saveTaxProfile', () => {
+    const quarterly = (state: DemoStateService): TaxProfile => ({
+      ...state.business().taxProfile,
+      vatPeriod: 'quarterly',
+    });
+
+    it('sets the profile of the open business, adds one history line and ticks the tax step', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const profile = quarterly(state);
+      state.saveTaxProfile(profile);
+      expect(state.business().taxProfile).toEqual(profile);
+      expect(state.business().history).toEqual([{ date: DEMO_TODAY, key: 'taxChanged', params: {} }]);
+      expect(state.setup()).toEqual({ bank: false, tax: true, receipt: false });
+    });
+
+    it('a save with the same answers changes nothing: no second line, the very same business', () => {
+      const state = TestBed.inject(DemoStateService);
+      const profile = quarterly(state);
+      state.saveTaxProfile(profile);
+      const business = state.business();
+      state.saveTaxProfile({ ...profile });
+      expect(state.business()).toBe(business);
+      expect(state.business().history).toHaveLength(1);
+    });
+
+    it('a save with the answers the business already has writes no line, but still ticks the tax step', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const business = state.business();
+      state.saveTaxProfile({ ...business.taxProfile });
+      expect(state.business()).toBe(business);
+      expect(state.setup().tax).toBe(true);
+    });
+
+    it('every field counts as a change: one different answer writes a line', () => {
+      const state = TestBed.inject(DemoStateService);
+      const base = state.business().taxProfile;
+      const variants: TaxProfile[] = [
+        { ...base, businessKind: 'trade' },
+        { ...base, kleinunternehmer: true, vatPeriod: null, vatBasis: null },
+        { ...base, vatPeriod: 'yearly' },
+        { ...base, permanentExtension: true },
+        { ...base, vatBasis: 'soll' },
+        { ...base, taxState: 'hamburg' },
+        { ...base, taxNumber: '21/456/78901' },
+        { ...base, vatId: 'DE123456789' },
+        { ...base, fiscalYearStart: '07-01' },
+      ];
+      for (const [index, variant] of variants.entries()) {
+        state.resetData();
+        state.saveTaxProfile(variant);
+        expect(state.business().taxProfile, 'variant ' + index).toEqual(variant);
+        expect(state.business().history, 'variant ' + index).toHaveLength(1);
+      }
+    });
+
+    it('changes only the open business, and a second change puts its line in front', () => {
+      const state = TestBed.inject(DemoStateService);
+      const other = state.businesses.find((b) => b.id === 'cafe-linde')!;
+      state.saveTaxProfile(quarterly(state));
+      state.saveTaxProfile({ ...quarterly(state), vatPeriod: 'yearly' });
+      expect(state.business().history.map((entry) => entry.key)).toEqual(['taxChanged', 'taxChanged']);
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')).toBe(other);
+      expect(other.history).toEqual([]);
+    });
+
+    it('keeps its own copy of the profile it was given', () => {
+      const state = TestBed.inject(DemoStateService);
+      const profile = quarterly(state);
+      state.saveTaxProfile(profile);
+      profile.vatPeriod = 'yearly';
+      expect(state.business().taxProfile.vatPeriod).toBe('quarterly');
+    });
+
+    it('resetData brings the sample answers back and clears the line', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sample = state.business().taxProfile;
+      state.saveTaxProfile(quarterly(state));
+      state.resetData();
+      expect(state.business().taxProfile).toEqual(sample);
+      expect(state.business().history).toEqual([]);
+    });
+  });
+
+  describe('connectAccounts', () => {
+    const foundAt = (businessId: string, bankId: string): Account[] => FOUND_ACCOUNTS[businessId][bankId];
+    const pick = (accounts: Account[], ...ids: string[]): Account[] => accounts.filter((a) => ids.includes(a.id));
+    const accountIds = (state: DemoStateService): string[] => state.business().accounts.map((a) => a.id);
+    const accountOf = (state: DemoStateService, id: string): Account =>
+      state.business().accounts.find((a) => a.id === id)!;
+    const lineKeys = (state: DemoStateService): string[] => state.business().history.map((entry) => entry.key);
+
+    it('adds the chosen accounts that are new, before the cash box, with a consent of 180 days from the demo day', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-qonto', 'wd-savings'), '2026-01-01');
+      expect(accountIds(state)).toEqual(['wd-qonto', 'wd-savings', 'wd-cash']);
+      expect(accountOf(state, 'wd-savings')).toMatchObject({
+        product: 'savings',
+        iban: 'DE07100101010482913668',
+        connection: {
+          kind: 'connected',
+          consentUntil: '2027-04-20',
+          lastFetched: `${DEMO_TODAY}T12:00`,
+          fetchFrom: '2026-01-01',
+          broken: false,
+        },
+      });
+    });
+
+    it('a sample account that is chosen in the new-client state gets the new connection too', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      expect(accountOf(state, 'wd-qonto').connection.consentUntil).toBe('2026-10-27');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-qonto'), '2025-01-01');
+      expect(accountOf(state, 'wd-qonto').connection).toEqual({
+        kind: 'connected',
+        consentUntil: '2027-04-20',
+        lastFetched: `${DEMO_TODAY}T12:00`,
+        fetchFrom: '2025-01-01',
+        broken: false,
+      });
+      expect(accountIds(state)).toEqual(['wd-qonto', 'wd-cash']);
+    });
+
+    it('ticks the bank step and no other', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-qonto'), '2026-01-01');
+      expect(state.setup()).toEqual({ bank: true, tax: false, receipt: false });
+      expect(state.bankConnected()).toBe(true);
+    });
+
+    it('writes one bankConnected line for each account it connects, with the bank and the account', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-qonto', 'wd-card'), '2026-01-01');
+      const lines = state.business().history;
+      expect(lines).toHaveLength(2);
+      expect(lines.map((line) => line.key)).toEqual(['bankConnected', 'bankConnected']);
+      expect(lines.map((line) => line.date)).toEqual([DEMO_TODAY, DEMO_TODAY]);
+      expect(lines.map((line) => line.params).sort((a, b) => a['account'].localeCompare(b['account']))).toEqual([
+        { bank: 'Qonto', account: 'Qonto' },
+        { bank: 'Qonto', account: 'Qonto Credit card' },
+      ]);
+    });
+
+    it('connecting twice adds the accounts once and writes the lines once', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const chosen = pick(foundAt('weber-design', 'qonto'), 'wd-qonto', 'wd-savings');
+      state.connectAccounts('qonto', chosen, '2026-01-01');
+      const business = state.business();
+      state.connectAccounts('qonto', chosen, '2026-01-01');
+      expect(state.business()).toBe(business);
+      expect(accountIds(state)).toEqual(['wd-qonto', 'wd-savings', 'wd-cash']);
+      expect(lineKeys(state)).toEqual(['bankConnected', 'bankConnected']);
+    });
+
+    it('connecting an account again with another date does not renew it or write a line', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const chosen = pick(foundAt('weber-design', 'qonto'), 'wd-savings');
+      state.connectAccounts('qonto', chosen, '2026-01-01');
+      state.connectAccounts('qonto', chosen, '2025-01-01');
+      expect(accountOf(state, 'wd-savings').connection.fetchFrom).toBe('2026-01-01');
+      expect(lineKeys(state)).toEqual(['bankConnected']);
+    });
+
+    it('an account that is connected already, with the bank step done, stays as it is: no renewal, no line', () => {
+      const state = TestBed.inject(DemoStateService);
+      const before = accountOf(state, 'wd-qonto');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-qonto', 'wd-savings'), '2025-01-01');
+      expect(accountOf(state, 'wd-qonto')).toBe(before);
+      expect(accountOf(state, 'wd-qonto').connection.consentUntil).toBe('2026-10-27');
+      expect(accountOf(state, 'wd-savings')).toBeDefined();
+      expect(lineKeys(state)).toEqual(['bankConnected']);
+    });
+
+    it('a sample business account of the bank that is left out becomes a statement account, and keeps its payments', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const payments = state.business().transactions;
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-savings'), '2026-01-01');
+      expect(accountOf(state, 'wd-qonto').connection).toEqual({
+        kind: 'statement',
+        consentUntil: null,
+        lastFetched: null,
+        fetchFrom: null,
+        broken: false,
+      });
+      expect(accountOf(state, 'wd-qonto').iban).toBe('DE08100101010482913650');
+      expect(state.business().transactions).toBe(payments);
+      expect(lineKeys(state)).toEqual(['bankConnected']);
+      expect(state.setup().bank).toBe(true);
+    });
+
+    it("leaving Café Linde's Sparkasse out keeps it a statement account, untouched", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      state.setSetup('new');
+      const sparkasse = accountOf(state, 'cl-sparkasse');
+      expect(sparkasse.connection.kind).toBe('statement');
+      state.connectAccounts('qonto', pick(foundAt('cafe-linde', 'qonto'), 'cl-qonto', 'cl-savings'), '2026-01-01');
+      expect(accountOf(state, 'cl-sparkasse')).toBe(sparkasse);
+      expect(accountOf(state, 'cl-qonto').connection.kind).toBe('connected');
+      expect(accountIds(state)).toEqual(['cl-qonto', 'cl-sparkasse', 'cl-savings', 'cl-cash']);
+    });
+
+    it("choosing Café Linde's Sparkasse connects the account it already has, without adding it a second time", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      state.connectAccounts('sparkasse', foundAt('cafe-linde', 'sparkasse'), '2026-01-01');
+      expect(accountIds(state)).toEqual(['cl-qonto', 'cl-sparkasse', 'cl-cash']);
+      expect(accountOf(state, 'cl-sparkasse').connection).toMatchObject({ kind: 'connected', consentUntil: '2027-04-20' });
+      expect(state.business().history.map((line) => line.params)).toEqual([{ bank: 'Sparkasse', account: 'Sparkasse' }]);
+    });
+
+    it('an account the bank step already connected is not turned into a statement account when left out', () => {
+      const state = TestBed.inject(DemoStateService);
+      const before = accountOf(state, 'wd-qonto');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-savings'), '2026-01-01');
+      expect(accountOf(state, 'wd-qonto')).toBe(before);
+    });
+
+    it('never changes the shared found accounts or the sample businesses', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const foundBefore = structuredClone(FOUND_ACCOUNTS);
+      const samplesBefore = structuredClone(BUSINESSES.map((b) => b.accounts));
+      const found = foundAt('weber-design', 'qonto');
+      state.connectAccounts('qonto', pick(found, 'wd-savings', 'wd-card'), '2026-01-01');
+      expect(FOUND_ACCOUNTS).toEqual(foundBefore);
+      expect(BUSINESSES.map((b) => b.accounts)).toEqual(samplesBefore);
+      expect(accountOf(state, 'wd-savings')).not.toBe(found.find((a) => a.id === 'wd-savings'));
+      expect(accountOf(state, 'wd-qonto')).not.toBe(found.find((a) => a.id === 'wd-qonto'));
+      expect(found.find((a) => a.id === 'wd-savings')!.connection.kind).toBe('statement');
+    });
+
+    it('changes only the open business', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      const other = state.businesses.find((b) => b.id === 'cafe-linde')!;
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-savings'), '2026-01-01');
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')).toBe(other);
+      expect(state.stepsOf('cafe-linde')).toEqual(ALL_DONE);
+    });
+
+    it('names a bank it does not know by its id', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.connectAccounts('nowhere', pick(foundAt('weber-design', 'qonto'), 'wd-savings'), '2026-01-01');
+      expect(state.business().history[0].params['bank']).toBe('nowhere');
+    });
+
+    it('resetData takes the connected accounts, the lines and the bank step back', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-savings'), '2026-01-01');
+      state.resetData();
+      expect(accountIds(state)).toEqual(['wd-qonto', 'wd-cash']);
+      expect(accountOf(state, 'wd-qonto').connection.kind).toBe('connected');
+      expect(state.business().history).toEqual([]);
+      expect(state.setup()).toEqual(ALL_DONE);
+    });
+
+    it('a toolbar shortcut keeps the connected accounts', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.connectAccounts('qonto', pick(foundAt('weber-design', 'qonto'), 'wd-savings'), '2026-01-01');
+      state.setSetup('new');
+      state.setSetup('active');
+      expect(accountIds(state)).toEqual(['wd-qonto', 'wd-savings', 'wd-cash']);
+      expect(accountOf(state, 'wd-savings').connection.kind).toBe('connected');
+    });
+  });
+
+  describe('renewConnection', () => {
+    const accountOf = (state: DemoStateService, id: string): Account =>
+      state.business().accounts.find((a) => a.id === id)!;
+    const lines = (state: DemoStateService) => state.business().history;
+    /** Puts the open business's account back with another connection, as the bank would report it. */
+    const withConnection = (state: DemoStateService, id: string, change: Partial<Account['connection']>): void =>
+      setConnection(state, id, change);
+
+    it('gives a connection that ends soon a consent of 180 days from the demo day, fetched just now', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection).toEqual({
+        kind: 'connected',
+        consentUntil: '2027-04-20',
+        lastFetched: `${DEMO_TODAY}T12:00`,
+        fetchFrom: '2026-01-01',
+        broken: false,
+      });
+    });
+
+    it('writes one bankRenewed line with the bank, dated the demo day', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.renewConnection('wd-qonto');
+      expect(lines(state)).toEqual([{ date: DEMO_TODAY, key: 'bankRenewed', params: { bank: 'Qonto' } }]);
+    });
+
+    it('renewing twice writes one history line and changes nothing the second time', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.renewConnection('wd-qonto');
+      const business = state.business();
+      state.renewConnection('wd-qonto');
+      expect(state.business()).toBe(business);
+      expect(lines(state).map((line) => line.key)).toEqual(['bankRenewed']);
+    });
+
+    it('a connection that ended is renewed too, and the bank step stays as it is', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      expect(accountOf(state, 'sy-qonto').connection.consentUntil).toBe('2026-10-20');
+      state.renewConnection('sy-qonto');
+      expect(accountOf(state, 'sy-qonto').connection.consentUntil).toBe('2027-04-20');
+      expect(state.setup()).toEqual(ALL_DONE);
+    });
+
+    it('a connection the bank reports as broken is repaired, however long its consent still runs', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-04-20', broken: true });
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection.broken).toBe(false);
+      expect(lines(state).map((line) => line.key)).toEqual(['bankRenewed']);
+    });
+
+    it('a consent that already ends 180 days ahead or later, and works, is not renewed: no change, no line', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-04-20' });
+      const business = state.business();
+      state.renewConnection('wd-qonto');
+      expect(state.business()).toBe(business);
+
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-06-01' });
+      const later = state.business();
+      state.renewConnection('wd-qonto');
+      expect(state.business()).toBe(later);
+      expect(lines(state)).toEqual([]);
+    });
+
+    it('a consent one day short of 180 days is renewed', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { consentUntil: '2027-04-19' });
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection.consentUntil).toBe('2027-04-20');
+      expect(lines(state)).toHaveLength(1);
+    });
+
+    it('names the bank, not the stored English name of a savings account', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'].filter((a) => a.id === 'wd-savings'), '2026-01-01');
+      withConnection(state, 'wd-savings', { consentUntil: '2026-10-25' });
+      state.renewConnection('wd-savings');
+      expect(lines(state)[0]).toEqual({ date: DEMO_TODAY, key: 'bankRenewed', params: { bank: 'Qonto' } });
+    });
+
+    it('is ignored for an account that is not connected: a statement account, the cash box, an unknown id', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      const business = state.business();
+      state.renewConnection('cl-sparkasse');
+      state.renewConnection('cl-cash');
+      state.renewConnection('nope');
+      expect(state.business()).toBe(business);
+    });
+
+    it('changes only the open business, and an account of another business is ignored', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sara = state.businesses.find((b) => b.id === 'sara-yoga')!;
+      const weber = state.businesses.find((b) => b.id === 'weber-design')!;
+      state.renewConnection('sy-qonto');
+      expect(state.businesses.find((b) => b.id === 'sara-yoga')).toBe(sara);
+      expect(state.businesses.find((b) => b.id === 'weber-design')).toBe(weber);
+    });
+
+    it('never changes the shared sample data, and resetData brings the old connection back', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sample = BUSINESSES.find((b) => b.id === 'weber-design')!.accounts[0];
+      state.renewConnection('wd-qonto');
+      expect(sample.connection.consentUntil).toBe('2026-10-27');
+      state.resetData();
+      expect(accountOf(state, 'wd-qonto').connection.consentUntil).toBe('2026-10-27');
+      expect(lines(state)).toEqual([]);
+    });
+
+    it('keeps the date the payments were asked for from, and the other accounts', () => {
+      const state = TestBed.inject(DemoStateService);
+      withConnection(state, 'wd-qonto', { fetchFrom: '2025-01-01' });
+      const cash = accountOf(state, 'wd-cash');
+      state.renewConnection('wd-qonto');
+      expect(accountOf(state, 'wd-qonto').connection.fetchFrom).toBe('2025-01-01');
+      expect(accountOf(state, 'wd-cash')).toBe(cash);
+    });
+  });
+
+  describe('addCashBox', () => {
+    it('adds a cash box named Cash box to a business that has none, with one cashAdded line', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      expect(state.business().accounts.some((a) => a.kind === 'cash')).toBe(false);
+      state.addCashBox();
+      const cash = state.business().accounts.filter((a) => a.kind === 'cash');
+      expect(cash).toHaveLength(1);
+      expect(cash[0]).toEqual({
+        id: 'sara-yoga-cash',
+        kind: 'cash',
+        name: 'Cash box',
+        balanceCents: 0,
+        lastUpdate: DEMO_TODAY,
+        connection: { kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+        product: 'cash',
+        iban: null,
+      });
+      expect(state.business().history).toEqual([{ date: DEMO_TODAY, key: 'cashAdded', params: {} }]);
+    });
+
+    it('is ignored when the business has a cash box already: nothing changes and no line is written', () => {
+      const state = TestBed.inject(DemoStateService);
+      const business = state.business();
+      state.addCashBox();
+      expect(state.business()).toBe(business);
+    });
+
+    it('twice adds one cash box and one line', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      state.addCashBox();
+      state.addCashBox();
+      expect(state.business().accounts.filter((a) => a.kind === 'cash')).toHaveLength(1);
+      expect(state.business().history).toHaveLength(1);
+    });
+
+    it('does not count as the bank step, and changes no other business', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      state.setSetup('new');
+      const other = state.businesses.find((b) => b.id === 'weber-design')!;
+      state.addCashBox();
+      expect(state.setup()).toEqual(presetSteps('new'));
+      expect(state.businesses.find((b) => b.id === 'weber-design')).toBe(other);
+    });
+
+    it('resetData takes the cash box back', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      state.addCashBox();
+      state.resetData();
+      expect(state.business().accounts.some((a) => a.kind === 'cash')).toBe(false);
     });
   });
 });

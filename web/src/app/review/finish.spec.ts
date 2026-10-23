@@ -4,6 +4,8 @@ import { provideRouter } from '@angular/router';
 import { formatDate } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import type { TaxProfile } from '../data/models';
+import { BUSINESSES } from '../data/sample-data';
 import type { ReviewItem } from '../domain/review-queue';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService, type ReviewAnswerResult } from '../state/review.service';
@@ -117,7 +119,6 @@ describe('ReviewFinish', () => {
       answerAll();
       render();
 
-      expect(demo.business().vatDue!.dueDate).toBe('2026-11-10');
       expect(text(q('finish-vat'))).toBe(
         `VAT return (UStVA) · next due ${formatDate('2026-11-10', 'en')}`,
       );
@@ -144,11 +145,59 @@ describe('ReviewFinish', () => {
       expect(q('finish-vat')).toBeNull();
     });
 
+    /** Shows the finish screen of a sample business whose tax answers were changed (the review itself is not needed). */
+    function renderWithTax(businessId: string, taxPatch: Partial<TaxProfile>): void {
+      const business = BUSINESSES.find((b) => b.id === businessId)!;
+      const changed = { ...business, taxProfile: { ...business.taxProfile, ...taxPatch } };
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideTranslocoTesting(),
+          provideRouter([]),
+          { provide: DemoStateService, useValue: { business: () => changed } },
+          {
+            provide: ReviewService,
+            useValue: { summary: () => ({ decisions: 0, receiptsAdded: 0, duplicatesRemoved: 0 }) },
+          },
+        ],
+      });
+      render();
+    }
+
+    it('follows the VAT return date of the answers', () => {
+      renderWithTax('weber-design', {});
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+      renderWithTax('weber-design', { permanentExtension: true });
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+      // Weber Design stores 10 Nov, but a quarterly answer moves the date.
+      renderWithTax('weber-design', { vatPeriod: 'quarterly' });
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 11 Jan');
+      renderWithTax('cafe-linde', { permanentExtension: true });
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+    });
+
+    it('names a date for a business switched to VAT that has no sample amount', () => {
+      renderWithTax('sara-yoga', { kleinunternehmer: false, vatPeriod: 'monthly', vatBasis: 'ist' });
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+    });
+
+    it('is left out for a yearly return', () => {
+      renderWithTax('weber-design', { vatPeriod: 'yearly' });
+      expect(q('finish-title')).not.toBeNull();
+      expect(q('finish-vat')).toBeNull();
+    });
+
+    it('is left out for a business that turns into a Kleinunternehmer, whatever amount it stores', () => {
+      renderWithTax('weber-design', { kleinunternehmer: true, vatPeriod: null, vatBasis: null });
+      expect(q('finish-title')).not.toBeNull();
+      expect(q('finish-vat')).toBeNull();
+    });
+
     it('follows the business that is open', () => {
       demo.setBusiness('cafe-linde');
       render();
       expect(text(q('finish-vat'))).toBe(
-        `VAT return (UStVA) · next due ${formatDate('2027-01-10', 'en')}`,
+        `VAT return (UStVA) · next due ${formatDate('2027-01-11', 'en')}`,
       );
 
       demo.setBusiness('sara-yoga');

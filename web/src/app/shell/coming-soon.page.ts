@@ -12,20 +12,17 @@ const FEATURES: readonly string[] = [
   'invoices',
   'taxes',
   'reports',
-  'settings',
   'help',
   'more',
   'terms',
-  'bankExpiry',
   'unreadable',
   'revenueLimit',
-  'bank',
-  'tax',
   'receipt',
   'account',
   'photo',
   'selfReceipt',
   'cashPayment',
+  'statementImport',
 ];
 
 /** Where every link to a page that is not designed yet lands. */

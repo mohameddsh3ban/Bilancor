@@ -3,7 +3,9 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { presetOf } from '../domain/home-cards';
 import { DemoStateService } from '../state/demo-state.service';
+import { withConnection } from '../state/demo-state.testing';
 import { NoticeService } from '../state/notice.service';
 import { AppShell } from './app-shell';
 import { ComingSoonPage } from './coming-soon.page';
@@ -83,6 +85,7 @@ describe('AppShell', () => {
   });
 
   it('bell shows unread count', () => {
+    // Weber Design: the terms, its calculated bank notice and the unreadable receipts.
     expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
   });
 
@@ -94,15 +97,15 @@ describe('AppShell', () => {
     expect(document.body.textContent).toContain('Your Qonto connection expires in 30 days');
   });
 
-  it('bell panel lists all three open notices, then the earlier history', async () => {
+  it('bell panel lists the open notices, then the earlier history', async () => {
     TestBed.inject(NoticeService).bellOpen.set(true);
     await settle();
     const text = (id: string) => document.body.querySelector(`[data-testid="${id}"]`)?.textContent ?? '';
     const open = text('bell-open');
     expect(open).toContain('Needs action');
     expect(open).toContain('New terms from our bank-connection provider need your review');
-    expect(open).toContain('Your Qonto connection expires in 5 days');
     expect(open).toContain('Receipts that could not be read: 1');
+    expect(open).toContain('Your Qonto connection expires in 5 days');
     const history = text('bell-history');
     expect(history).toContain('Earlier');
     expect(history).toContain('Your Qonto connection expires in 30 days');
@@ -110,11 +113,38 @@ describe('AppShell', () => {
     expect(history).not.toContain('in 5 days');
   });
 
+  it('bell panel says "in 1 day" and "today", never "in 1 days" or "in 0 days"', async () => {
+    const demo = TestBed.inject(DemoStateService);
+    const consentEnds = (date: string): void => {
+      withConnection(demo, 'wd-qonto', { consentUntil: date });
+    };
+    TestBed.inject(NoticeService).bellOpen.set(true);
+    consentEnds('2026-10-23');
+    await settle();
+    const open = () => document.body.querySelector('[data-testid="bell-open"]')?.textContent ?? '';
+    expect(open()).toContain('Your Qonto connection expires in 1 day');
+    expect(open()).not.toContain('1 days');
+    consentEnds('2026-10-22');
+    await settle();
+    expect(open()).toContain('Your Qonto connection expires today');
+    expect(open()).not.toContain('0 days');
+  });
+
+  it('a dismissed bank notice moves from "Needs action" to "Earlier"', async () => {
+    const notices = TestBed.inject(NoticeService);
+    notices.dismiss('bank-expiry-wd-qonto');
+    notices.bellOpen.set(true);
+    await settle();
+    const text = (id: string) => document.body.querySelector(`[data-testid="${id}"]`)?.textContent ?? '';
+    expect(text('bell-open')).not.toContain('in 5 days');
+    expect(text('bell-history')).toContain('Your Qonto connection expires in 5 days');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
+  });
+
   it('bell panel omits the open section when nothing is open', async () => {
     const demo = TestBed.inject(DemoStateService);
     const notices = TestBed.inject(NoticeService);
     demo.setBusiness('cafe-linde');
-    notices.dismiss('cl-n1');
     notices.bellOpen.set(true);
     await settle();
     expect(document.body.querySelector('[data-testid="bell-open"]')).toBeNull();
@@ -163,14 +193,34 @@ describe('AppShell', () => {
     const demo = TestBed.inject(DemoStateService);
     const halfway = qa('[data-testid="demo-toolbar"] button').find((b) => b.textContent?.includes('Halfway'));
     halfway!.click();
-    expect(demo.setup()).toBe('halfway');
+    expect(presetOf(demo.setup())).toBe('halfway');
+  });
+
+  it('the demo switch presses the choice that matches the open business', () => {
+    const demo = TestBed.inject(DemoStateService);
+    const pressed = () =>
+      qa('[data-testid="demo-toolbar"] [aria-pressed="true"]').map((b) => b.textContent?.trim());
+    expect(pressed()).toEqual(['Active client']);
+    demo.setSetup('halfway');
+    harness.detectChanges();
+    expect(pressed()).toEqual(['Halfway']);
+  });
+
+  it('no choice is pressed for a mixed set', () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setSetup('halfway');
+    demo.completeStep('tax');
+    harness.detectChanges();
+    expect(qa('[data-testid="demo-toolbar"] [aria-pressed="true"]')).toEqual([]);
+    expect(qa('[data-testid="demo-toolbar"] [aria-pressed="false"]')).toHaveLength(3);
   });
 
   it('reset demo brings dismissed notices back', () => {
     const notices = TestBed.inject(NoticeService);
-    notices.dismiss('wd-n2');
+    notices.dismiss('wd-n3');
+    notices.dismiss('bank-expiry-wd-qonto');
     harness.detectChanges();
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('1');
     q('[data-testid="demo-reset"]').click();
     harness.detectChanges();
     expect(q('[data-testid="demo-reset"]').textContent).toContain('Reset demo');

@@ -8,8 +8,10 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
+import { accountName } from '../../domain/bank-connection';
 import { homeCards } from '../../domain/home-cards';
 import { decisionCount, decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
+import { vatReturnDue } from '../../domain/tax-details';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
 
@@ -78,7 +80,7 @@ import { RevenueTracker } from './revenue-tracker';
             @for (account of business().accounts; track account.id) {
               <li class="flex items-baseline justify-between gap-3 py-1.5 text-sm">
                 <span class="min-w-0 truncate">{{
-                  account.kind === 'cash' ? ('account.cash' | transloco) : account.name
+                  nameOf(account, 'settings.bank.product.' + account.product | transloco)
                 }}</span>
                 <bdi dir="ltr" class="shrink-0 font-medium">{{ account.balanceCents | money }}</bdi>
               </li>
@@ -102,16 +104,28 @@ import { RevenueTracker } from './revenue-tracker';
         <div hlmCardContent class="flex flex-col gap-3">
           @if (business().taxProfile.kleinunternehmer) {
             <app-revenue-tracker />
-          } @else if (business().vatDue; as vat) {
+          } @else if (vat(); as due) {
             <div class="flex flex-col gap-1">
               <p class="text-sm font-medium"><app-term key="ustva" /></p>
-              <p class="text-muted-foreground text-xs">{{ 'home.tax.vatAmount' | transloco }}</p>
-              <p class="text-3xl font-semibold">
-                <bdi dir="ltr">{{ vat.amountCents | money }}</bdi>
-              </p>
-              <p class="text-muted-foreground text-xs">
-                {{ 'home.tax.vatDue' | transloco: { date: (vat.dueDate | appDate) } }}
-              </p>
+              @if (due.kind === 'date') {
+                @if (business().vatDue; as amount) {
+                  <p class="text-muted-foreground text-xs">{{ 'home.tax.vatAmount' | transloco }}</p>
+                  <p class="text-3xl font-semibold">
+                    <bdi dir="ltr">{{ amount.amountCents | money }}</bdi>
+                  </p>
+                } @else {
+                  <p class="text-muted-foreground text-sm">
+                    {{ 'home.tax.amountUnknown' | transloco }}
+                  </p>
+                }
+                <p class="text-muted-foreground text-xs">
+                  {{ 'home.tax.vatDue' | transloco: { date: (due.date | appDate) } }}
+                </p>
+              } @else {
+                <p class="text-muted-foreground text-xs">
+                  {{ 'home.tax.yearlyOnly' | transloco }}
+                </p>
+              }
             </div>
           }
           <div
@@ -129,8 +143,11 @@ export class KeyNumbers {
   private readonly demo = inject(DemoStateService);
 
   protected readonly business = this.demo.business;
+  protected readonly nameOf = accountName;
   protected readonly cards = computed(() => homeCards(this.demo.setup()));
   protected readonly decisions = computed(() => decisionCount(this.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.decisions()));
   protected readonly total = computed(() => totalAvailableCents(this.business().accounts));
+  /** When the VAT return is due, from the open business's tax answers (the same as the phone's tax card). */
+  protected readonly vat = computed(() => vatReturnDue(this.business().taxProfile));
 }

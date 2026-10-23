@@ -1,6 +1,5 @@
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Doc, DocField, DocStatus, SetupState } from '../data/models';
-import { setupSteps } from './home-cards';
+import type { Doc, DocField, DocStatus, SetupSteps } from '../data/models';
 
 /** The first of amount, date and name that reading could not find, or null when all three are there. */
 export function missingField(doc: Doc): DocField | null {
@@ -48,8 +47,8 @@ export function docsToCheckCount(docs: readonly Doc[]): number {
 }
 
 /** The documents the open business shows: everything once a bank is connected, before that only what was added in the demo. */
-export function visibleDocuments(docs: readonly Doc[], setup: SetupState): Doc[] {
-  return setupSteps(setup).bank ? [...docs] : docs.filter((doc) => doc.fromUpload);
+export function visibleDocuments(docs: readonly Doc[], steps: SetupSteps): Doc[] {
+  return steps.bank ? [...docs] : docs.filter((doc) => doc.fromUpload);
 }
 
 /** What to call a document: its name, or its file name while the name is not known. */

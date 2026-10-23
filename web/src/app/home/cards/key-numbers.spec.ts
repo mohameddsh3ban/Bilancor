@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { formatMoney } from '../../core/format/format';
+import { LanguageService } from '../../core/i18n/language.service';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../../data/banks';
+import type { Business, TaxProfile } from '../../data/models';
+import { BUSINESSES } from '../../data/sample-data';
+import { ALL_DONE } from '../../domain/home-cards';
 import { decisionCount } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 import { KeyNumbers } from './key-numbers';
@@ -14,6 +19,8 @@ describe('KeyNumbers', () => {
     TestBed.configureTestingModule({ providers: [provideTranslocoTesting(), provideRouter([])] });
     demo = TestBed.inject(DemoStateService);
   });
+
+  afterEach(() => TestBed.inject(LanguageService).setLang('en'));
 
   function render(businessId = 'weber-design'): HTMLElement {
     demo.setBusiness(businessId);
@@ -61,6 +68,19 @@ describe('KeyNumbers', () => {
     expect(t.textContent).toContain(formatMoney(15000, 'en'));
   });
 
+  it('names a connected savings account by the bank and the product in the language of the page', () => {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    const t = tile(render(), 'balances')!;
+    expect(t.textContent).toContain('Qonto · Savings');
+    expect(t.textContent).toContain('Qonto · Credit card');
+    expect(t.textContent).not.toContain('Qonto Savings');
+    TestBed.inject(LanguageService).setLang('de');
+    const german = tile(render(), 'balances')!;
+    expect(german.textContent).toContain('Qonto · Sparkonto');
+    expect(german.textContent).toContain('Qonto · Kreditkarte');
+    expect(german.textContent).toContain('Kasse');
+  });
+
   it('third tile is VAT for a VAT business', () => {
     const t = tile(render('weber-design'), 'tax')!;
     expect(t.textContent).toContain(formatMoney(184200, 'en'));
@@ -94,5 +114,49 @@ describe('KeyNumbers', () => {
     demo.setSetup('new');
     const empty = render();
     expect(empty.querySelectorAll('[data-testid^="tile-"]')).toHaveLength(0);
+  });
+
+  /** Renders the tiles for a sample business whose tax answers (and, optionally, other fields) were changed. */
+  function renderChanged(businessId: string, taxPatch: Partial<TaxProfile>, businessPatch: Partial<Business> = {}): HTMLElement {
+    const business = BUSINESSES.find((b) => b.id === businessId)!;
+    const changed = { ...business, ...businessPatch, taxProfile: { ...business.taxProfile, ...taxPatch } };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideTranslocoTesting(),
+        provideRouter([]),
+        { provide: DemoStateService, useValue: { business: () => changed, setup: () => ALL_DONE } },
+      ],
+    });
+    const fixture = TestBed.createComponent(KeyNumbers);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  const SWITCHED_TO_VAT: Partial<TaxProfile> = { kleinunternehmer: false, vatPeriod: 'monthly', vatBasis: 'ist' };
+
+  it('third tile follows the answers for the due date and keeps the stored amount', () => {
+    const t = tile(renderChanged('weber-design', { permanentExtension: true }), 'tax')!;
+    expect(t.textContent).toContain('Due 10 Nov');
+    expect(t.textContent).toContain(formatMoney(184200, 'en'));
+    expect(tile(renderChanged('cafe-linde', {}), 'tax')!.textContent).toContain('Due 11 Jan');
+    expect(tile(renderChanged('weber-design', { vatPeriod: 'quarterly' }), 'tax')!.textContent).toContain('Due 11 Jan');
+  });
+
+  it('third tile shows Yearly VAT return only, with no date and no amount, for a yearly profile', () => {
+    const t = tile(renderChanged('weber-design', { vatPeriod: 'yearly' }), 'tax')!;
+    expect(t.textContent).toContain('Yearly VAT return only');
+    expect(t.textContent).not.toContain('Due ');
+    expect(t.textContent).not.toContain('Estimated to pay');
+    expect(t.textContent).not.toContain(formatMoney(184200, 'en'));
+    expect(t.textContent).toContain(formatMoney(320000, 'en'));
+  });
+
+  it('third tile shows Amount not known yet for a business switched to VAT that has no amount', () => {
+    const t = tile(renderChanged('sara-yoga', SWITCHED_TO_VAT), 'tax')!;
+    expect(t.textContent).toContain('Amount not known yet');
+    expect(t.textContent).toContain('Due 10 Nov');
+    expect(t.textContent).not.toContain('Estimated to pay');
+    expect(t.querySelector('[role="progressbar"]')).toBeNull();
   });
 });

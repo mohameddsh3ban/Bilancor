@@ -8,6 +8,7 @@ import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppMonthPipe } from '../core/format/month.pipe';
 import { Account, Transaction } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import { EMPTY_FILTER, MonthGroup, filterPayments, groupByMonth } from '../domain/payment-filters';
 import { paymentStatus } from '../domain/payment-status';
 import { BookingLabel } from '../payments/booking-label';
@@ -60,7 +61,7 @@ import { printOnceRendered } from './print-once';
               {{
                 'print.account'
                   | transloco
-                    : { name: shown.kind === 'cash' ? ('account.cash' | transloco) : shown.name }
+                    : { name: nameOf(shown, 'settings.bank.product.' + shown.product | transloco) }
               }}
             </p>
           }
@@ -104,9 +105,9 @@ import { printOnceRendered } from './print-once';
                 </td>
                 <td class="py-2 pe-2 sm:pe-3 max-sm:hidden" data-testid="print-account">
                   {{
-                    paymentAccount?.kind === 'cash'
-                      ? ('account.cash' | transloco)
-                      : paymentAccount?.name
+                    paymentAccount
+                      ? nameOf(paymentAccount, 'settings.bank.product.' + paymentAccount.product | transloco)
+                      : ''
                   }}
                 </td>
                 <td
@@ -169,6 +170,8 @@ import { printOnceRendered } from './print-once';
   `,
 })
 export class MonthPrintPage {
+  protected readonly nameOf = accountName;
+
   private readonly demo = inject(DemoStateService);
   private readonly route = inject(ActivatedRoute);
 

@@ -11,8 +11,28 @@ import {
 import type { TaxProfile } from '../data/models';
 import { categoriesFor, vatRateShown } from './tax-rules';
 
-const vat: TaxProfile = { kleinunternehmer: false, vatPeriod: 'monthly' };
-const small: TaxProfile = { kleinunternehmer: true, vatPeriod: null };
+const vat: TaxProfile = {
+  businessKind: 'freelance',
+  kleinunternehmer: false,
+  vatPeriod: 'monthly',
+  permanentExtension: false,
+  vatBasis: 'ist',
+  taxState: 'berlin',
+  taxNumber: '27/123/45678',
+  vatId: null,
+  fiscalYearStart: '01-01',
+};
+const small: TaxProfile = {
+  businessKind: 'freelance',
+  kleinunternehmer: true,
+  vatPeriod: null,
+  permanentExtension: false,
+  vatBasis: null,
+  taxState: 'berlin',
+  taxNumber: '21/456/78901',
+  vatId: null,
+  fiscalYearStart: '01-01',
+};
 
 describe('categoriesFor', () => {
   it('offers a business that charges VAT the VAT revenue accounts, not the small-business one', () => {

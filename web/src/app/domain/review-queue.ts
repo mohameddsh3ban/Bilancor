@@ -1,6 +1,5 @@
-import type { Business, Doc, SetupState } from '../data/models';
+import type { Business, Doc, SetupSteps } from '../data/models';
 import { docNeedsYou, docStatus, visibleDocuments } from './document-status';
-import { setupSteps } from './home-cards';
 import { paymentStatus } from './payment-status';
 
 /** Why a payment is in the queue: its booking waits for a confirmation, its receipt is missing, or the system could not sort it. */
@@ -29,14 +28,14 @@ function documentItem(doc: Doc): ReviewItem {
  * Everything the person has to decide, oldest first: the payments that are not booked (once a bank is connected)
  * and the documents they must look at. Every count of "things that need you" in the app is the length of this list.
  */
-export function reviewItems(business: Business, setup: SetupState): ReviewItem[] {
+export function reviewItems(business: Business, steps: SetupSteps): ReviewItem[] {
   const payments: ReviewItem[] = [];
-  if (setupSteps(setup).bank) {
+  if (steps.bank) {
     for (const tx of business.transactions) {
       const problem = paymentStatus(tx);
       if (problem !== 'booked') payments.push({ kind: 'payment', id: tx.id, date: tx.date, problem });
     }
   }
-  const documents = visibleDocuments(business.documents, setup).filter(docNeedsYou).map(documentItem);
+  const documents = visibleDocuments(business.documents, steps).filter(docNeedsYou).map(documentItem);
   return [...payments, ...documents].sort(compareItems);
 }

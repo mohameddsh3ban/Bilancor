@@ -1,8 +1,8 @@
 import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { Notice } from '../data/models';
+import { bankNotices } from '../domain/bank-connection';
 import { docsToCheckCount, visibleDocuments } from '../domain/document-status';
-import { setupSteps } from '../domain/home-cards';
 import { noticesForSetup, splitNotices, withUnreadableCount } from '../domain/notices';
 import { DemoStateService } from './demo-state.service';
 
@@ -20,20 +20,22 @@ export class NoticeService {
     return new Set(this.dismissedByBusiness()[businessId] ?? this.read(businessId));
   });
 
-  private readonly steps = computed(() => setupSteps(this.demo.setup()));
-
   /** How many documents the open business shows that have a field to check; the "unreadable" notice counts them live. */
   private readonly unreadable = computed(() =>
     docsToCheckCount(visibleDocuments(this.demo.documents(), this.demo.setup())),
   );
 
-  /** The business's open notices whose setup step is done, with the live count of unreadable receipts. */
-  private readonly applicable = computed(() =>
-    withUnreadableCount(
-      noticesForSetup(this.demo.business().notices, this.steps()),
+  /**
+   * The business's open notices whose setup step is done, with the live count of unreadable receipts. The bank notices
+   * are calculated from the accounts and join the stored ones, so they are dismissed, ordered and listed the same way.
+   */
+  private readonly applicable = computed(() => {
+    const business = this.demo.business();
+    return withUnreadableCount(
+      noticesForSetup([...business.notices, ...bankNotices(business.accounts)], this.demo.setup(), business.taxProfile),
       this.unreadable(),
-    ),
-  );
+    );
+  });
 
   private readonly split = computed(() => splitNotices(this.applicable(), this.dismissedIds()));
 
@@ -47,7 +49,8 @@ export class NoticeService {
   readonly history = computed<Notice[]>(() => {
     const ids = this.dismissedIds();
     const dismissed = this.applicable().filter((n) => !n.blocking && ids.has(n.id));
-    const earlier = noticesForSetup(this.demo.business().noticeHistory, this.steps());
+    const business = this.demo.business();
+    const earlier = noticesForSetup(business.noticeHistory, this.demo.setup(), business.taxProfile);
     return [...dismissed, ...earlier].sort((a, b) => b.date.localeCompare(a.date));
   });
 

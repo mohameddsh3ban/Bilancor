@@ -288,6 +288,8 @@ The ••• menu with documents selected, Zahlung buchen once a payment is ass
 
 Studied Oct 22, 2026, in the original German, by reading the pages and their structure only. The gear icon next to the user name opens a menu with Unternehmensdaten (company data), Einstellungen (settings), Datenimport (data import), Meine Daten (my data) and Abmelden (log out). Bank connection and tax details are spread over two of these pages.
 
+Our own version of the setup steps and Settings is described in `docs/specs/2026-10-22-setup-and-settings-mockup-design.md`.
+
 ### Einstellungen: one long page
 
 Twelve sections on one page, with a contents list at the top: Banken und Zahlungsdienstleister, Überweisungskonten, Kontenverwaltung, Belegübertragung, Schnittstellen und API-Zugang, Kostenstellen / Projektverwaltung, Steuerliche Einstellungen, Automatisierungsregeln, Rechnungseinstellungen, Rechnungsfreigabe, Layout-Einstellungen, Zahlungserinnerungen.

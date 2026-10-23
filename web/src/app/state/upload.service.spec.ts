@@ -276,6 +276,45 @@ describe('UploadService', () => {
     expect(upload.summary()).toEqual({ added: 1, needsYou: 0, refused: [] });
   });
 
+  it('adding a document ticks the receipt step of its business', () => {
+    demo.setSetup('new');
+    demo.setBusiness('sara-yoga');
+    demo.setSetup('new');
+    demo.setBusiness('weber-design');
+    upload.add([file('ticket.pdf')], 'file');
+    expect(demo.setup()).toEqual({ bank: false, tax: false, receipt: true });
+    demo.setBusiness('sara-yoga');
+    expect(demo.setup()).toEqual({ bank: false, tax: false, receipt: false });
+  });
+
+  it('a document links itself by the steps of its own business, not the one open when it is read', () => {
+    const weberPayment = () => demo.businesses.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t3')!;
+    upload.add([file('ticket.pdf')], 'file'); // weber-design has its bank connected
+    demo.setBusiness('sara-yoga');
+    demo.setSetup('new');
+    vi.advanceTimersByTime(READING_MS);
+
+    expect(docsOf('weber-design').find((d) => d.id === 'up-1')!.paymentId).toBe('wd-t3');
+    expect(weberPayment().receipt).toBe('attached');
+  });
+
+  it('a document of a business with no bank yet stays unlinked when an active business is open when it is read', () => {
+    const weberPayment = () => demo.businesses.find((b) => b.id === 'weber-design')!.transactions.find((t) => t.id === 'wd-t3')!;
+    demo.setSetup('new');
+    upload.add([file('ticket.pdf')], 'file');
+    demo.setBusiness('sara-yoga'); // all steps done
+    vi.advanceTimersByTime(READING_MS);
+
+    expect(docsOf('weber-design').find((d) => d.id === 'up-1')!.paymentId).toBeNull();
+    expect(weberPayment().receipt).toBe('missing');
+  });
+
+  it('a drop with no accepted file ticks nothing', () => {
+    demo.setSetup('new');
+    upload.add([file('notes.docx')], 'file');
+    expect(demo.setup().receipt).toBe(false);
+  });
+
   it('a new drop replaces the summary, and the batch before it does not bring its own back', () => {
     upload.add([file('a.pdf'), file('b.pdf')], 'file');
     vi.advanceTimersByTime(1000);
@@ -516,6 +555,25 @@ describe('UploadService', () => {
       await expect(upload.addPhotoFor('nope')).resolves.toBe('dropped');
       expect(uploadsOf('weber-design')).toEqual([]);
       expect(upload.readingFor()).toBeNull();
+    });
+
+    it('a photo for a payment ticks the receipt step of its business', async () => {
+      demo.setSetup('halfway');
+      demo.setBusiness('sara-yoga');
+      demo.setSetup('halfway');
+      demo.setBusiness('weber-design');
+      const outcome = upload.addPhotoFor('wd-t3');
+      expect(demo.setup()).toEqual({ bank: true, tax: false, receipt: true });
+      demo.setBusiness('sara-yoga');
+      expect(demo.setup()).toEqual({ bank: true, tax: false, receipt: false });
+      vi.advanceTimersByTime(READING_MS);
+      await outcome;
+    });
+
+    it('a photo that is not taken ticks nothing', async () => {
+      demo.setSetup('halfway');
+      await expect(upload.addPhotoFor('wd-t2')).resolves.toBe('dropped');
+      expect(demo.setup()).toEqual({ bank: true, tax: false, receipt: false });
     });
 
     it('two payments can be read at the same time', async () => {

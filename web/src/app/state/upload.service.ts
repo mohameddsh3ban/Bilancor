@@ -117,6 +117,7 @@ export class UploadService {
     const summaryVersion = ++this.summaryVersion;
     this.latest.set({ summary: { added: 0, needsYou: 0, refused }, generation, businessId });
     if (reading.length === 0) return;
+    this.demo.completeStep('receipt', businessId);
     setTimeout(
       () => this.finish({ businessId, generation, reading, refused, summaryVersion }),
       READING_MS,
@@ -148,6 +149,7 @@ export class UploadService {
     const id = `up-${++this.idCounter}`;
     const fileName = `photo-${DEMO_TODAY}-${++this.photoCounter}.jpg`;
     this.demo.addDocument(businessId, newReadingDoc(id, fileName, 'photo'));
+    this.demo.completeStep('receipt', businessId);
     const result = photoReceiptFor(payment);
     const outcome = new Promise<PhotoOutcome>((resolve) => {
       setTimeout(() => {
@@ -202,7 +204,7 @@ export class UploadService {
     const business = this.businessOf(businessId);
     const doc = business?.documents.find((d) => d.id === id);
     if (!business || !doc) return undefined; // it was taken out while it was being read
-    const payment = this.demo.bankConnected() ? certainMatch(doc, business.transactions) : null;
+    const payment = this.demo.stepsOf(businessId).bank ? certainMatch(doc, business.transactions) : null;
     if (payment) this.demo.link(id, payment.id, true, businessId);
     return this.businessOf(businessId)?.documents.find((d) => d.id === id);
   }

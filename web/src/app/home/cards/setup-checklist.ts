@@ -5,15 +5,15 @@ import { Params, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { setupSteps } from '../../domain/home-cards';
 import { DemoStateService } from '../../state/demo-state.service';
 
 type StepId = 'bank' | 'tax' | 'receipt';
 const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
 
 /**
- * The three setup steps with a tick on the finished ones. Uploading the first receipt opens Documents with the
- * Add choices open; the other steps link to their (coming soon) pages.
+ * The three setup steps with a tick on the finished ones. A step to do opens its flow, which comes back here: the bank
+ * flow, the tax details page, or Documents with the Add choices open for the first receipt. A finished bank step
+ * opens the Bank accounts card of Settings, a finished tax step Settings, a finished receipt step Documents.
  */
 @Component({
   selector: 'app-setup-checklist',
@@ -50,6 +50,7 @@ const STEP_IDS: readonly StepId[] = ['bank', 'tax', 'receipt'];
               [variant]="step.done ? 'ghost' : 'outline'"
               [routerLink]="step.link"
               [queryParams]="step.queryParams"
+              [fragment]="step.fragment"
               [attr.data-testid]="'step-action-' + step.id"
             >
               {{ (step.done ? 'home.checklist.view' : 'home.checklist.start') | transloco }}
@@ -64,13 +65,26 @@ export class SetupChecklist {
   private readonly demo = inject(DemoStateService);
 
   protected readonly steps = computed(() => {
-    const done = setupSteps(this.demo.setup());
+    const done = this.demo.setup();
     return STEP_IDS.map((id) => ({ id, done: done[id], ...this.target(id, done[id]) }));
   });
 
-  /** Where a step leads: the Add menu for a receipt that is still to do, Documents once it is done, else its coming-soon page. */
-  private target(id: StepId, done: boolean): { link: string[]; queryParams: Params | undefined } {
-    if (id !== 'receipt') return { link: ['/soon', id], queryParams: undefined };
-    return { link: ['/documents'], queryParams: done ? undefined : { add: '1' } };
+  /** Where a step leads, as a link, its query and the place on the page: its flow while it is to do, its place once it is done. */
+  private target(
+    id: StepId,
+    done: boolean,
+  ): { link: string[]; queryParams: Params | undefined; fragment: string | undefined } {
+    switch (id) {
+      case 'bank':
+        return done
+          ? { link: ['/settings'], queryParams: undefined, fragment: 'bank-accounts' }
+          : { link: ['/settings/bank/connect'], queryParams: { from: 'home' }, fragment: undefined };
+      case 'tax':
+        return done
+          ? { link: ['/settings'], queryParams: undefined, fragment: undefined }
+          : { link: ['/settings/tax'], queryParams: { from: 'home' }, fragment: undefined };
+      case 'receipt':
+        return { link: ['/documents'], queryParams: done ? undefined : { add: '1' }, fragment: undefined };
+    }
   }
 }

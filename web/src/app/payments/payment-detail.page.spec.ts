@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../data/banks';
 import { READING_MS } from '../domain/document-upload';
 import { DocumentDetailPage } from '../documents/document-detail.page';
 import { DocumentsPage } from '../documents/documents.page';
@@ -46,6 +47,12 @@ describe('PaymentDetailPage', () => {
     document.documentElement.lang = '';
     document.documentElement.dir = '';
   });
+
+  /** Connects the savings account of Weber Design and puts a payment on it, as the bank flow and a bank fetch would. */
+  function onSavings(paymentId: string): void {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    demo.updateTransaction(paymentId, (t) => ({ ...t, accountId: 'wd-savings' }));
+  }
 
   async function render(url: string): Promise<void> {
     harness = await RouterTestingHarness.create(url);
@@ -106,6 +113,18 @@ describe('PaymentDetailPage', () => {
       TestBed.inject(LanguageService).setLang('de');
       await settle();
       expect(text(d('detail-meta'))).toBe(`${formatDate('2026-08-14', 'de')} · Kasse`);
+    });
+
+    it('names a payment of a savings account by its bank and product, in every language', async () => {
+      onSavings('wd-t1');
+      await render('/payments/wd-t1');
+      expect(text(d('detail-meta'))).toBe('20 Oct · Qonto · Savings');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('detail-meta'))).toBe(`${formatDate('2026-10-20', 'de')} · Qonto · Sparkonto`);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('detail-meta'))).toContain(`Qonto · ${ar.settings.bank.product.savings}`);
     });
 
     it('opens as a panel on computers and a full page on phones, each with a way back to the list', async () => {

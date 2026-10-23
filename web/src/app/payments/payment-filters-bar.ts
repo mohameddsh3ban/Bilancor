@@ -7,6 +7,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { AppMonthPipe } from '../core/format/month.pipe';
 import { Account } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import {
   EMPTY_FILTER,
   PaymentFilter,
@@ -43,7 +44,7 @@ type ChipId = 'quick' | 'account' | 'month' | 'search';
             [ngTemplateOutlet]="chip"
             [ngTemplateOutletContext]="{
               id: 'account',
-              label: acc.kind === 'cash' ? ('account.cash' | transloco) : acc.name,
+              label: nameOf(acc, 'settings.bank.product.' + acc.product | transloco),
             }"
           />
         }
@@ -94,6 +95,7 @@ type ChipId = 'quick' | 'account' | 'month' | 'search';
   `,
 })
 export class PaymentFilterChips {
+  protected readonly nameOf = accountName;
   readonly filter = model.required<PaymentFilter>();
   readonly accounts = input.required<readonly Account[]>();
   readonly includeQuick = input(false);
@@ -227,7 +229,7 @@ const QUICK_FILTERS: readonly QuickFilter[] = ['all', 'needsYou', 'in', 'out'];
         </option>
         @for (account of accounts(); track account.id) {
           <option [value]="account.id" [selected]="filter().accountId === account.id">
-            {{ account.kind === 'cash' ? ('account.cash' | transloco) : account.name }}
+            {{ nameOf(account, 'settings.bank.product.' + account.product | transloco) }}
           </option>
         }
       </select>
@@ -254,6 +256,7 @@ const QUICK_FILTERS: readonly QuickFilter[] = ['all', 'needsYou', 'in', 'out'];
   `,
 })
 export class PaymentFiltersBar {
+  protected readonly nameOf = accountName;
   readonly filter = model.required<PaymentFilter>();
   readonly accounts = input.required<readonly Account[]>();
   /** Months with payments, newest first. */

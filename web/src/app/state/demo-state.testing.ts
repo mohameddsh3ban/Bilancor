@@ -1,0 +1,31 @@
+import type { WritableSignal } from '@angular/core';
+import type { AccountConnection, Business } from '../data/models';
+import type { DemoStateService } from './demo-state.service';
+
+/**
+ * For tests: puts an account of the open business back with another connection, as the bank would report it (a consent
+ * that ends on a given day, or a broken connection). No screen can set that, so this reaches into the service's working
+ * copy of the data; `DemoStateService.restore` puts back payments, documents and rules only.
+ */
+export function withConnection(
+  demo: DemoStateService,
+  accountId: string,
+  change: Partial<AccountConnection>,
+): void {
+  const data = (demo as unknown as { data: WritableSignal<Business[]> }).data;
+  const openId = demo.business().id;
+  data.update((all) =>
+    all.map((business) =>
+      business.id !== openId
+        ? business
+        : {
+            ...business,
+            accounts: business.accounts.map((account) =>
+              account.id === accountId
+                ? { ...account, connection: { ...account.connection, ...change } }
+                : account,
+            ),
+          },
+    ),
+  );
+}

@@ -6,8 +6,36 @@ import { PaymentHistory } from './payment-history';
 import ar from '../../../public/i18n/ar.json';
 
 const ACCOUNTS: Account[] = [
-  { id: 'bank', kind: 'bank', name: 'Qonto', balanceCents: 0, lastUpdate: '2026-10-21' },
-  { id: 'cash', kind: 'cash', name: 'Cash box', balanceCents: 0, lastUpdate: '2026-10-21' },
+  {
+    id: 'bank',
+    kind: 'bank',
+    name: 'Qonto',
+    balanceCents: 0,
+    lastUpdate: '2026-10-21',
+    connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+    product: 'business',
+    iban: null,
+  },
+  {
+    id: 'savings',
+    kind: 'bank',
+    name: 'Qonto Savings',
+    balanceCents: 0,
+    lastUpdate: '2026-10-21',
+    connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+    product: 'savings',
+    iban: null,
+  },
+  {
+    id: 'cash',
+    kind: 'cash',
+    name: 'Cash box',
+    balanceCents: 0,
+    lastUpdate: '2026-10-21',
+    connection: { kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+    product: 'cash',
+    iban: null,
+  },
 ];
 
 const FIRST_STRONG_ISOLATE = String.fromCodePoint(0x2068);
@@ -32,6 +60,21 @@ describe('PaymentHistory', () => {
   }
 
   const entry = (key: HistoryEntry['key'], params: Record<string, string> = {}): HistoryEntry => ({ date: '2026-10-22', key, params });
+
+  it('names a savings account by its bank and product in the language of the page, like everywhere else', () => {
+    const imported = [entry('imported', { account: 'Qonto Savings' }), entry('imported', { account: 'Qonto' })];
+    expect(lines(imported)).toEqual(['Imported from Qonto · Savings', 'Imported from Qonto']);
+    TestBed.inject(LanguageService).setLang('de');
+    expect(lines(imported)).toEqual(['Importiert von Qonto · Sparkonto', 'Importiert von Qonto']);
+    TestBed.inject(LanguageService).setLang('ar');
+    expect(lines(imported)[0]).toContain(`Qonto · ${ar.settings.bank.product.savings}`);
+  });
+
+  it('names the cash box with the product name of the cash box in every language', () => {
+    expect(lines([entry('imported', { account: 'Cash box' })])).toEqual(['Imported from Cash box']);
+    TestBed.inject(LanguageService).setLang('ar');
+    expect(lines([entry('imported', { account: 'Cash box' })])[0]).toContain(ar.settings.bank.product.cash);
+  });
 
   it('a receiptLinked line shows the document name', () => {
     expect(lines([entry('receiptLinked', { name: 'Böttcher Bürobedarf' })])).toEqual(['You linked the document Böttcher Bürobedarf']);

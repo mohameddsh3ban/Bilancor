@@ -1,5 +1,6 @@
 import type { Account, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { presetSteps } from './home-cards';
 import { decisionCount, decisionMinutes, newestTransactions, totalAvailableCents } from './home-figures';
 
 const account = (balanceCents: number): Account => ({
@@ -8,6 +9,9 @@ const account = (balanceCents: number): Account => ({
   name: 'Bank',
   balanceCents,
   lastUpdate: '2026-10-21',
+  connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+  product: 'business',
+  iban: null,
 });
 
 const tx = (id: string, date: string): Transaction => ({
@@ -50,13 +54,13 @@ describe('home figures', () => {
     const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
 
     it('adds the documents that need the person to the payments that need them', () => {
-      expect(decisionCount(business('weber-design'), 'active')).toBe(6);
-      expect(decisionCount(business('sara-yoga'), 'active')).toBe(3);
-      expect(decisionCount(business('cafe-linde'), 'active')).toBe(0);
+      expect(decisionCount(business('weber-design'), presetSteps('active'))).toBe(6);
+      expect(decisionCount(business('sara-yoga'), presetSteps('active'))).toBe(3);
+      expect(decisionCount(business('cafe-linde'), presetSteps('active'))).toBe(0);
     });
 
     it('counts nothing before a bank is connected: the payments are not there yet and the sample documents were not added in the demo', () => {
-      expect(decisionCount(business('weber-design'), 'new')).toBe(0);
+      expect(decisionCount(business('weber-design'), presetSteps('new'))).toBe(0);
     });
   });
 });

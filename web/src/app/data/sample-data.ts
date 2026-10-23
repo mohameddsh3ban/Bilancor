@@ -15,7 +15,7 @@ import {
   TRAVEL,
   UTILITIES,
 } from './categories';
-import { Account, Booking, Business, HistoryEntry, Person, ReceiptState, Transaction } from './models';
+import { Account, AccountConnection, Booking, Business, HistoryEntry, Person, ReceiptState, Transaction } from './models';
 import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
@@ -78,12 +78,26 @@ function withDocuments(b: BusinessSpec): Business {
 /** What the system would offer for an Amazon order it cannot sort: office supplies, software or other costs. */
 const AMAZON_SUGGESTIONS = [OFFICE.labelKey, SOFTWARE.labelKey, OTHER_COSTS.labelKey];
 
-const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21' };
-const WD_CASH: Account = { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14' };
-const SY_QONTO: Account = { id: 'sy-qonto', kind: 'bank', name: 'Qonto', balanceCents: 642075, lastUpdate: '2026-10-21' };
-const CL_QONTO: Account = { id: 'cl-qonto', kind: 'bank', name: 'Qonto', balanceCents: 2315040, lastUpdate: '2026-10-21' };
-const CL_SPARKASSE: Account = { id: 'cl-sparkasse', kind: 'bank', name: 'Sparkasse', balanceCents: 874512, lastUpdate: '2026-10-20' };
-const CL_CASH: Account = { id: 'cl-cash', kind: 'cash', name: 'Cash box', balanceCents: 41230, lastUpdate: '2026-10-21' };
+/** A bank connection: the account's payments come in through it until the consent ends. */
+const connected = (consentUntil: string, lastFetched: string): AccountConnection => ({
+  kind: 'connected',
+  consentUntil,
+  lastFetched,
+  fetchFrom: '2026-01-01',
+  broken: false,
+});
+/** No bank connection: the account's payments came in from imported statements. */
+const statement = (): AccountConnection => ({ kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false });
+/** The cash box has no bank: its payments come from receipts. */
+const cashBox = (): AccountConnection => ({ kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false });
+
+// The demo date is 2026-10-22: Weber Design's Qonto consent ends in 5 days, Sara's ended 2 days ago, Café Linde's runs about 4 more months.
+const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21', connection: connected('2026-10-27', '2026-10-22T06:12'), product: 'business', iban: 'DE08100101010482913650' };
+const WD_CASH: Account = { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14', connection: cashBox(), product: 'cash', iban: null };
+const SY_QONTO: Account = { id: 'sy-qonto', kind: 'bank', name: 'Qonto', balanceCents: 642075, lastUpdate: '2026-10-21', connection: connected('2026-10-20', '2026-10-20T06:10'), product: 'business', iban: 'DE98100101010561742087' };
+const CL_QONTO: Account = { id: 'cl-qonto', kind: 'bank', name: 'Qonto', balanceCents: 2315040, lastUpdate: '2026-10-21', connection: connected('2027-02-18', '2026-10-22T06:15'), product: 'business', iban: 'DE44100101010637185294' };
+const CL_SPARKASSE: Account = { id: 'cl-sparkasse', kind: 'bank', name: 'Sparkasse', balanceCents: 874512, lastUpdate: '2026-10-20', connection: statement(), product: 'business', iban: 'DE23200505500847319256' };
+const CL_CASH: Account = { id: 'cl-cash', kind: 'cash', name: 'Cash box', balanceCents: 41230, lastUpdate: '2026-10-21', connection: cashBox(), product: 'cash', iban: null };
 
 export const PERSON: Person = {
   id: 'p1',
@@ -97,7 +111,17 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     id: 'weber-design',
     name: 'Weber Design',
     inboxEmail: 'weber-design@inbox.example',
-    taxProfile: { kleinunternehmer: false, vatPeriod: 'monthly' },
+    taxProfile: {
+      businessKind: 'freelance',
+      kleinunternehmer: false,
+      vatPeriod: 'monthly',
+      permanentExtension: false,
+      vatBasis: 'ist',
+      taxState: 'berlin',
+      taxNumber: '27/123/45678',
+      vatId: null,
+      fiscalYearStart: '01-01',
+    },
     accounts: [WD_QONTO, WD_CASH],
     transactions: [
       pay({ id: 'wd-t1', date: '2026-10-20', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, confirmed: false, iban: 'DE68210501700012345678', ref: 'RE-2026-041' }),
@@ -124,7 +148,6 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     revenueThisYearCents: 4860000,
     notices: [
       { id: 'wd-n1', kind: 'terms', urgency: 1, blocking: true, params: {}, date: '2026-10-20' },
-      { id: 'wd-n2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 5 }, date: '2026-10-19' },
       { id: 'wd-n3', kind: 'unreadable', urgency: 3, blocking: false, params: { count: 2 }, date: '2026-10-18' },
     ],
     noticeHistory: [
@@ -132,12 +155,23 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'wd-h2', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Qonto', days: 30 }, date: '2026-09-21' },
     ],
     categoryRules: [],
+    history: [],
   },
   {
     id: 'sara-yoga',
     name: 'Sara Weber Yoga',
     inboxEmail: 'sara-yoga@inbox.example',
-    taxProfile: { kleinunternehmer: true, vatPeriod: null },
+    taxProfile: {
+      businessKind: 'freelance',
+      kleinunternehmer: true,
+      vatPeriod: null,
+      permanentExtension: false,
+      vatBasis: null,
+      taxState: 'berlin',
+      taxNumber: '21/456/78901',
+      vatId: null,
+      fiscalYearStart: '01-01',
+    },
     accounts: [SY_QONTO],
     transactions: [
       pay({ id: 'sy-t1', date: '2026-10-19', who: 'Studio Mitte, Kursgebühren Oktober', acct: SY_QONTO, cents: 96000, booking: REVENUE_KU, iban: 'DE55100700240123456780', ref: 'RE-2026-019' }),
@@ -165,12 +199,23 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'sy-h1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 80, limit: 25000 }, date: '2026-09-24' },
     ],
     categoryRules: [],
+    history: [],
   },
   {
     id: 'cafe-linde',
     name: 'Café Linde GbR',
     inboxEmail: 'cafe-linde@inbox.example',
-    taxProfile: { kleinunternehmer: false, vatPeriod: 'quarterly' },
+    taxProfile: {
+      businessKind: 'trade',
+      kleinunternehmer: false,
+      vatPeriod: 'quarterly',
+      permanentExtension: false,
+      vatBasis: 'soll',
+      taxState: 'hamburg',
+      taxNumber: '41/234/56789',
+      vatId: null,
+      fiscalYearStart: '01-01',
+    },
     accounts: [CL_QONTO, CL_SPARKASSE, CL_CASH],
     transactions: [
       pay({ id: 'cl-t1', date: '2026-10-20', who: 'Tagesumsatz Kasse', acct: CL_CASH, cents: 68450, booking: REVENUE_7, iban: 'DE41200300001000200030', ref: 'Kassenabschluss 20.10.' }),
@@ -192,13 +237,12 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     vatDue: { dueDate: '2027-01-10', amountCents: 412000 },
     incomeTaxReserveCents: 580000,
     revenueThisYearCents: 11240000,
-    notices: [
-      { id: 'cl-n1', kind: 'bankExpiry', urgency: 2, blocking: false, params: { bank: 'Sparkasse', days: 5 }, date: '2026-10-19' },
-    ],
+    notices: [],
     noticeHistory: [
       { id: 'cl-h1', kind: 'terms', urgency: 1, blocking: false, params: {}, date: '2026-09-15' },
     ],
     categoryRules: [],
+    history: [],
   },
 ];
 

@@ -5,6 +5,7 @@ import { MockInstance } from 'vitest';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../data/banks';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentPrintPage } from './payment-print.page';
 
@@ -114,6 +115,16 @@ describe('PaymentPrintPage', () => {
     await render('/print/payment/sy-t3');
     expect(text(q('print-booking'))).toBe('Rent · 4210 Miete (unbewegliche Wirtschaftsgüter)');
     expect(text(q('print-vat'))).toBe('No VAT');
+  });
+
+  it('names a savings account by its bank and product, in every language', async () => {
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    demo.updateTransaction('wd-t1', (t) => ({ ...t, accountId: 'wd-savings' }));
+    await render('/print/payment/wd-t1');
+    expect(text(q('print-meta'))).toBe('20 Oct 2026 · Qonto · Savings');
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(text(q('print-meta'))).toContain('Qonto · Sparkonto');
   });
 
   it('names the cash box and leaves out the IBAN, but keeps the reference', async () => {

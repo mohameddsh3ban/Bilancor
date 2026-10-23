@@ -34,10 +34,48 @@
       "label": "Ausgangsbeleg",
       "de": "Ausgangsbeleg",
       "explain": "Eine Rechnung, die du selbst an einen Kunden gestellt hast."
-    }
-  },
-  "account": {
-    "cash": "Kasse"
+    },
+    "freiberufler": {
+      "label": "Freiberufler",
+      "de": "Freiberufler",
+      "explain": "Selbstständige Arbeit in einem freien Beruf, zum Beispiel Design, Beratung, Texten oder Unterricht. Welche Art Unternehmen du hast, steht in deinem Brief vom Finanzamt."
+    },
+    "gewerbe": {
+      "label": "Gewerbe",
+      "de": "Gewerbe",
+      "explain": "Ein Betrieb, der Waren oder Leistungen verkauft und als Gewerbe angemeldet ist, zum Beispiel ein Laden, ein Café oder ein Handwerksbetrieb. Welche Art du hast, steht in deinem Brief vom Finanzamt."
+    },
+    "dauerfristverlaengerung": {
+      "label": "Dauerfristverlängerung",
+      "de": "Dauerfristverlängerung",
+      "explain": "Eine Genehmigung des Finanzamts, die dir einen Monat mehr Zeit gibt, die Umsatzsteuer-Voranmeldung abzugeben und zu zahlen."
+    },
+    "istVersteuerung": {
+      "label": "Wenn mein Kunde zahlt (Ist-Versteuerung)",
+      "de": "Ist-Versteuerung",
+      "explain": "Du schuldest die Umsatzsteuer für einen Verkauf, sobald dein Kunde dich bezahlt hat, nicht schon bei der Rechnung."
+    },
+    "sollVersteuerung": {
+      "label": "Wenn ich die Rechnung schicke (Soll-Versteuerung)",
+      "de": "Soll-Versteuerung",
+      "explain": "Du schuldest die Umsatzsteuer für einen Verkauf in dem Monat, in dem du die Rechnung schickst, auch wenn dein Kunde später zahlt."
+    },
+    "steuernummer": {
+      "label": "Steuernummer",
+      "de": "Steuernummer",
+      "explain": "Die Nummer, die dein Finanzamt deinem Unternehmen gegeben hat. Du findest sie oben auf seinen Briefen."
+    },
+    "ustIdNr": {
+      "label": "USt-IdNr.",
+      "de": "USt-IdNr.",
+      "explain": "Die EU-Nummer für die Umsatzsteuer. Sie beginnt mit DE und hat neun Ziffern. Du hast sie nur, wenn du sie beantragt hast, sonst lass das Feld leer."
+    },
+    "finanzamt": {
+      "label": "Finanzamt",
+      "de": "Finanzamt",
+      "explain": "Das örtliche Amt, das deine Steuern bearbeitet. Sein Name steht auf seinen Briefen."
+    },
+    "whatIs": "Was ist {{term}}?"
   },
   "menu": {
     "home": "Start",
@@ -57,20 +95,17 @@
     "invoices": "Rechnungen",
     "taxes": "Steuern",
     "reports": "Auswertungen",
-    "settings": "Einstellungen",
     "help": "Hilfe",
     "more": "Mehr",
     "terms": "Bedingungen der Bankanbindung",
-    "bankExpiry": "Bankanbindung",
     "unreadable": "Nicht lesbare Belege",
     "revenueLimit": "Umsatzgrenze",
-    "bank": "Bank verbinden",
-    "tax": "Deine Steuerangaben",
     "receipt": "Ersten Beleg hochladen",
     "account": "Konto",
     "photo": "Foto aufnehmen",
     "selfReceipt": "Eigenbeleg",
     "cashPayment": "Bar oder privat bezahlt",
+    "statementImport": "Kontoauszug importieren",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -103,7 +138,13 @@
     },
     "bankExpiry": {
       "text": "Deine Verbindung zu {{bank}} läuft in {{days}} Tagen ab",
+      "textOne": "Deine Verbindung zu {{bank}} läuft in 1 Tag ab",
+      "textToday": "Deine Verbindung zu {{bank}} läuft heute ab",
       "action": "Erneuern"
+    },
+    "bankEnded": {
+      "text": "Deine Verbindung zu {{bank}} ist beendet",
+      "action": "Erneut anmelden"
     },
     "unreadable": {
       "text": "Nicht lesbare Belege: {{count}}",
@@ -157,7 +198,11 @@
     "receiptLinked": "Du hast den Beleg {{name}} verknüpft",
     "receiptLinkedAuto": "Der Beleg {{name}} wurde automatisch verknüpft",
     "receiptUnlinked": "Du hast die Verknüpfung mit dem Beleg {{name}} gelöst",
-    "bookedByRule": "Nach deiner Regel als {{category}} gebucht"
+    "bookedByRule": "Nach deiner Regel als {{category}} gebucht",
+    "taxChanged": "Du hast deine Steuerangaben geändert",
+    "bankConnected": "Du hast {{account}} bei {{bank}} verbunden",
+    "bankRenewed": "Du hast die Verbindung zu {{bank}} erneuert",
+    "cashAdded": "Du hast eine Kasse hinzugefügt"
   },
   "payments": {
     "title": "Zahlungen",
@@ -475,6 +520,8 @@
       "title": "Steuern",
       "vatDue": "Fällig am {{date}}",
       "vatAmount": "Voraussichtlich zu zahlen",
+      "amountUnknown": "Betrag noch nicht bekannt",
+      "yearlyOnly": "Nur Umsatzsteuer-Jahreserklärung",
       "of": "von",
       "thisYear": "in diesem Jahr",
       "percentUsed": "{{percent}} % deiner Grenze erreicht",
@@ -554,6 +601,186 @@
       },
       "vatDue": "als Nächstes fällig am {{date}}",
       "back": "Zurück"
+    }
+  },
+  "taxDetails": {
+    "back": {
+      "home": "Zurück zur Startseite",
+      "settings": "Zurück zu den Einstellungen"
+    },
+    "title": "Deine Steuerangaben",
+    "intro": "Damit wir richtig buchen und melden. Die meisten Antworten findest du im Brief vom Finanzamt.",
+    "hint": {
+      "text": "Nicht sicher? Es steht in deinem Brief vom Finanzamt",
+      "form": "Fragebogen zur steuerlichen Erfassung"
+    },
+    "kind": {
+      "title": "Was für ein Unternehmen ist es?",
+      "error": "Wähle, was für ein Unternehmen es ist."
+    },
+    "vat": {
+      "title": "Berechnest du Umsatzsteuer?",
+      "yes": "Ja, ich berechne Umsatzsteuer",
+      "no": "Nein",
+      "limits": "Umsatz unter {{last}} im letzten Jahr und unter {{current}} in diesem Jahr.",
+      "error": "Beantworte, ob du Umsatzsteuer berechnest."
+    },
+    "period": {
+      "titleBefore": "Wie oft gibst du deine ",
+      "titleAfter": " ab?",
+      "monthly": "Monatlich",
+      "quarterly": "Vierteljährlich",
+      "yearly": "Nur einmal im Jahr",
+      "error": "Wähle, wie oft du sie abgibst."
+    },
+    "extension": {
+      "hint": "Setze den Haken, wenn das Finanzamt dir einen Monat mehr Zeit gegeben hat."
+    },
+    "basis": {
+      "title": "Wann ist die Umsatzsteuer fällig?",
+      "error": "Wähle, wann die Umsatzsteuer fällig ist."
+    },
+    "number": {
+      "state": "Bundesland",
+      "statePlaceholder": "Wähle dein Bundesland",
+      "number": "Nummer",
+      "hint": "Schreibe sie so, wie sie im Brief steht, mit Schrägstrichen oder Leerzeichen.",
+      "errorState": "Wähle dein Bundesland.",
+      "errorEmpty": "Gib deine Steuernummer ein.",
+      "errorUnknown": "Wir haben für diese Nummer kein Finanzamt gefunden. Bitte prüfe sie.",
+        "demoNote": "In dieser Demo sind Finanzämter nur für {{states}} bekannt."
+    },
+    "vatId": {
+      "optional": "Optional",
+      "hint": "Nur wenn du eine hast: DE und neun Ziffern.",
+      "error": "Eine USt-IdNr. besteht aus DE und neun Ziffern, zum Beispiel DE123456789."
+    },
+    "year": {
+      "title": "Geschäftsjahr",
+      "calendar": "Kalenderjahr",
+      "calendarRange": "1. Januar bis 31. Dezember",
+      "different": "Meins ist anders",
+      "startsOn": "Mein Geschäftsjahr beginnt am",
+      "day": "Tag",
+      "month": "Monat",
+      "useCalendar": "Kalenderjahr verwenden",
+      "error": "Gib einen echten Tag und Monat ein, zum Beispiel Tag 1 und Monat 7 für den 1. Juli."
+    },
+    "save": "Speichern"
+  },
+  "bankConnect": {
+    "back": {
+      "home": "Zurück zur Startseite",
+      "payments": "Zurück zu den Zahlungen",
+      "settings": "Zurück zu den Einstellungen"
+    },
+    "pick": {
+      "title": "Verbinde deine Bank",
+      "intro": "Danach kommen deine Zahlungen von selbst.",
+      "search": "Suche nach deiner Bank",
+      "banks": "Banken",
+      "noMatch": "Wir haben keine Bank namens „{{search}}“ gefunden.",
+      "notListed": {
+        "title": "Meine Bank steht nicht in der Liste",
+        "body": "Importiere stattdessen einen Kontoauszug deiner Bank. Kommt bald."
+      },
+      "cash": {
+        "title": "Ich nehme auch Bargeld ein",
+        "body": "Füge eine Kasse für das Geld hinzu, das du bar einnimmst."
+      }
+    },
+    "see": {
+      "title": "{{bank}} verbinden",
+      "can": "Das können wir",
+      "canPayments": "Deine Zahlungen und deinen Kontostand sehen",
+      "canFetch": "Jeden Tag neue Zahlungen abrufen",
+      "cannot": "Das können wir nicht",
+      "cannotMove": "Geld bewegen oder Überweisungen machen",
+      "cannotPassword": "Dein Bankpasswort sehen",
+      "signIn": "Du meldest dich auf der eigenen Seite von {{bank}} an. Deine Bank verlangt, dass du das alle 180 Tage erneuerst; wir erinnern dich rechtzeitig.",
+      "continue": "Weiter zu {{bank}}",
+      "other": "Andere Bank wählen"
+    },
+    "approval": {
+      "title": "Bei {{bank}} anmelden",
+      "demo": "DEMO · keine echte Bank, kein Passwort",
+      "sentence": "Die Buchhaltungs-App möchte deine Zahlungen und deinen Kontostand lesen.",
+      "approve": "Zustimmen",
+      "cancel": "Abbrechen",
+      "note": "Demo: Dieses Unternehmen hat sein Konto bei {{sample}}, deshalb zeigen wir die Konten von {{sample}}."
+    },
+    "choose": {
+      "title": "Welche Konten gehören zum Unternehmen?",
+      "hint": "Private Konten bleiben draußen: lass sie unmarkiert.",
+      "accounts": "Konten bei {{bank}}",
+      "already": "Schon verbunden",
+      "ended": "Verbindung beendet — melde dich in den Einstellungen neu an",
+      "fetchFrom": "Zahlungen abrufen ab",
+      "thisYear": "1. Januar dieses Jahres",
+      "lastYear": "1. Januar letzten Jahres",
+      "today": "Heute",
+      "connectOne": "1 Konto verbinden",
+      "connectMany": "{{count}} Konten verbinden",
+      "connectNone": "Konten verbinden",
+      "tickOne": "Markiere mindestens ein Konto zum Verbinden.",
+      "allConnected": "Diese Konten sind schon verbunden.",
+      "other": "Andere Bank wählen"
+    },
+    "fetching": {
+      "title": "Zahlungen werden abgerufen…",
+      "body": "Das dauert einen Moment."
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "tax": {
+      "title": "Unternehmen und Steuern",
+      "edit": "Bearbeiten",
+      "editLabel": "Deine Steuerangaben bearbeiten",
+      "empty": "Du hast deine Steuerangaben noch nicht eingetragen. Sie helfen uns, richtig zu buchen und zu melden.",
+      "add": "Steuerangaben ergänzen",
+      "kind": "Art des Unternehmens",
+      "vat": "Umsatzsteuer",
+      "vatYes": "Ja, ich berechne Umsatzsteuer",
+      "vatNo": "Nein",
+      "basis": "Umsatzsteuer ist fällig",
+      "notGiven": "Nicht angegeben",
+      "yearFrom": "Beginnt am {{date}}"
+    },
+    "bank": {
+      "title": "Bankkonten",
+      "connect": "Bank verbinden",
+      "connectFirst": "Verbinde deine Bank",
+      "before": "Verbinde deine Bank, dann erscheinen hier deine Konten mit ihren Zahlungen.",
+      "cashLine": "Die Zahlungen kommen aus deinen Belegen",
+      "statementLine": "Die Zahlungen kommen aus importierten Kontoauszügen",
+      "lastFetchedToday": "zuletzt abgerufen heute, {{time}}",
+      "lastFetched": "zuletzt abgerufen am {{date}}, {{time}}",
+      "status": {
+        "connected": "Verbunden",
+        "renewIn": "Erneuern in {{days}} Tagen",
+        "renewInOne": "Erneuern in 1 Tag",
+        "renewToday": "Heute erneuern",
+        "signInAgain": "Erneut anmelden",
+        "statement": "Kontoauszug-Import",
+        "cash": "Kasse"
+      },
+      "action": {
+        "renew": "Erneuern",
+        "signIn": "Erneut anmelden",
+        "import": "Kontoauszug importieren"
+      },
+      "product": {
+        "business": "Geschäftskonto",
+        "savings": "Sparkonto",
+        "card": "Kreditkarte",
+        "cash": "Kasse"
+      }
+    },
+    "inbox": {
+      "title": "Beleg-Postfach",
+      "text": "Schicke Belege und Rechnungen an",
+      "sorted": "Wir finden selbst heraus, ob sie erhalten oder gesendet wurden."
     }
   }
 }

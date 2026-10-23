@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { LanguageService } from '../../core/i18n/language.service';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
+import { FOUND_ACCOUNTS } from '../../data/banks';
 import { DemoStateService } from '../../state/demo-state.service';
 import { BalancesCard } from './balances-card';
 
@@ -40,5 +41,29 @@ describe('BalancesCard', () => {
     expect(text('wd-cash')).toContain('Kasse');
     expect(text('wd-cash')).not.toContain('Cash box');
     expect(text('wd-qonto')).toContain('Qonto');
+  });
+
+  it('names a connected savings account and credit card by the bank and the product in the language of the page', () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setBusiness('weber-design');
+    demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
+    const language = TestBed.inject(LanguageService);
+    const fixture = TestBed.createComponent(BalancesCard);
+    const name = (id: string) =>
+      (fixture.nativeElement as HTMLElement)
+        .querySelector(`[data-testid="account-${id}"] .truncate`)
+        ?.textContent?.replace(/\s+/g, ' ')
+        .trim();
+    fixture.detectChanges();
+    expect(name('wd-qonto')).toBe('Qonto');
+    expect(name('wd-savings')).toBe('Qonto · Savings');
+    expect(name('wd-card')).toBe('Qonto · Credit card');
+    language.setLang('de');
+    fixture.detectChanges();
+    expect(name('wd-qonto')).toBe('Qonto');
+    expect(name('wd-savings')).toBe('Qonto · Sparkonto');
+    expect(name('wd-card')).toBe('Qonto · Kreditkarte');
+    expect(name('wd-cash')).toBe('Kasse');
+    language.setLang('en');
   });
 });

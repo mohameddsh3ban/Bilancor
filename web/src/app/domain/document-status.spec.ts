@@ -10,6 +10,7 @@ import {
   missingField,
   visibleDocuments,
 } from './document-status';
+import { presetSteps } from './home-cards';
 
 const base: Doc = {
   id: 'd',
@@ -148,18 +149,18 @@ describe('visibleDocuments', () => {
   const docs = [doc({ id: 'a', fromUpload: false }), doc({ id: 'b', fromUpload: true })];
 
   it('shows only the documents added in the demo until a bank is connected', () => {
-    expect(visibleDocuments(docs, 'new').map((d) => d.id)).toEqual(['b']);
+    expect(visibleDocuments(docs, presetSteps('new')).map((d) => d.id)).toEqual(['b']);
   });
 
   it('shows every document once a bank is connected', () => {
-    expect(visibleDocuments(docs, 'halfway').map((d) => d.id)).toEqual(['a', 'b']);
-    expect(visibleDocuments(docs, 'active').map((d) => d.id)).toEqual(['a', 'b']);
+    expect(visibleDocuments(docs, presetSteps('halfway')).map((d) => d.id)).toEqual(['a', 'b']);
+    expect(visibleDocuments(docs, presetSteps('active')).map((d) => d.id)).toEqual(['a', 'b']);
   });
 
   it('does not change the input array', () => {
     const copy = [...docs];
-    visibleDocuments(docs, 'new');
-    visibleDocuments(docs, 'halfway');
+    visibleDocuments(docs, presetSteps('new'));
+    visibleDocuments(docs, presetSteps('halfway'));
     expect(docs).toEqual(copy);
   });
 });

@@ -6,6 +6,7 @@ import { MoneyPipe } from '../core/format/money.pipe';
 import { AppMonthPipe } from '../core/format/month.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Account } from '../data/models';
+import { accountName } from '../domain/bank-connection';
 import { MonthGroup } from '../domain/payment-filters';
 import { paymentStatus } from '../domain/payment-status';
 import { BookingLabel, showsBookingLabel, skr03Text } from './booking-label';
@@ -121,7 +122,7 @@ import { PaymentStatusChip } from './payment-status-chip';
                 </td>
                 <td class="py-2.5 pe-3">
                   <span class="block truncate">
-                    {{ account?.kind === 'cash' ? ('account.cash' | transloco) : account?.name }}
+                    {{ account ? nameOf(account, 'settings.bank.product.' + account.product | transloco) : '' }}
                   </span>
                 </td>
                 <td class="py-2.5 pe-3">
@@ -155,6 +156,8 @@ import { PaymentStatusChip } from './payment-status-chip';
   `,
 })
 export class PaymentTable {
+  protected readonly nameOf = accountName;
+
   private readonly language = inject(LanguageService);
 
   readonly groups = input.required<readonly MonthGroup[]>();

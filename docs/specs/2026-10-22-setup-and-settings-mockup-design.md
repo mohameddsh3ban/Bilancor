@@ -60,7 +60,7 @@ Today `SetupState` is one value (`new` · `halfway` · `active`) shared by all b
 
 Route `/settings/tax`. Phone: a page of its own with a back link; computer: the same page in the main area. Reached from the setup step, from Settings › Business and tax › **Edit**, and from nowhere else.
 
-**The page:** title "Your tax details", one line "So we book and file the right way. You'll find most answers in your letter from the tax office.", then the questions as cards, then **Save**. German terms next to the translations, each explained on hover or tap.
+**The page:** title "Your tax details", one line "So we book and file the right way. You'll find most answers in your letter from the tax office.", then the questions as cards, then **Save**. German terms next to the translations, each explained on hover or tap. Inside an answer card the term is plain text, so tapping its words chooses the answer; its explanation sits behind a small info button at the end of the card.
 
 | Question | Answers | Notes |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ Route `/settings/tax`. Phone: a page of its own with a back link; computer: the 
 
 **What the answers change** *(my calls on the details)*:
 - *Kleinunternehmer*: VAT shows "no VAT" everywhere (`vatRateShown`), the category picker offers revenue without VAT (`categoriesFor`), and the homepage VAT return card shows the Kleinunternehmer line instead of a due date. Switching back restores it. Existing bookings stay as they are. The stored revenue-limit notice (Sara Weber Yoga) shows only while the business is a Kleinunternehmer; no new revenue-limit notice is calculated, and the revenue tracker shows whatever share the sample revenue gives, above 100 % included *(my call)*.
-- *VAT return period and extension*: the homepage VAT return card's due date follows them from the demo date — monthly: 10 Nov 2026 (10 Dec with the extension); quarterly: 10 Jan 2027 (10 Feb with the extension); once a year: no monthly or quarterly date, a line "Yearly VAT return only" and no amount. The amount is the business's sample amount; a business with none (Sara Weber Yoga switched to VAT) shows the date with "Amount not known yet" *(my call)*.
+- *VAT return period and extension*: the homepage VAT return card's due date follows them from the demo date. A period's deadline is the 10th of the month after it ends (one month later with the extension), moved to the Monday after when that day is a Saturday or Sunday (public holidays are not modelled); the date shown is the previous period's deadline while it is today or later, otherwise the current period's. On 22 Oct 2026: monthly 10 Nov 2026 (also with the extension, as September's return is still open); quarterly 11 Jan 2027 (10 Jan is a Sunday; with the extension, Q3's return: 10 Nov 2026); once a year: no monthly or quarterly date, a line "Yearly VAT return only" and no amount. The amount is the business's sample amount; a business with none (Sara Weber Yoga switched to VAT) shows the date with "Amount not known yet" *(my call)*.
 - The other answers are shown in Settings but change nothing else in the mockup.
 
 ## Connect your bank
