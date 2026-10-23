@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { SentVatReturn } from '../data/models';
+import { profileTaxOffice } from '../domain/tax-details';
 import { currentVatReturn, type VatReturnView } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
 
@@ -19,18 +20,27 @@ function ticketFor(businessId: string, periodStart: string, sentOn: string): str
   return `ET-${sentOn.slice(0, 4)}-${sentOn.slice(5, 7)}${sentOn.slice(8, 10)}-${fiveDigits(`${businessId}:${periodStart}`)}`;
 }
 
+/** A return on its way: the business it is for, and the data generation it started in (a reset ends it). */
+interface OnItsWay {
+  businessId: string;
+  generation: number;
+}
+
 /** Simulates sending the current VAT return of the open business to the tax office: it takes `SEND_MS`, then the return counts as sent. */
 @Injectable({ providedIn: 'root' })
 export class TaxService {
   private readonly demo = inject(DemoStateService);
 
-  private readonly sendingForSignal = signal<string | null>(null);
-  /** The business whose return is on its way to the tax office, or null. It stays set until the time is up, even when Reset demo came in meanwhile. */
-  readonly sendingFor = this.sendingForSignal.asReadonly();
+  private readonly onItsWay = signal<OnItsWay | null>(null);
+  /** The business whose return is on its way to the tax office, or null. Reset demo drops the send: it is null from then, not only when the time is up. */
+  readonly sendingFor = computed(() => {
+    const way = this.onItsWay();
+    return way !== null && way.generation === this.demo.dataGeneration() ? way.businessId : null;
+  });
   /** A return, of whichever business, is on its way: no other can be sent until it has arrived. */
-  readonly sending = computed(() => this.sendingForSignal() !== null);
+  readonly sending = computed(() => this.sendingFor() !== null);
   /** The return on its way is the open business's, so only its screens say "Sending…". */
-  readonly sendingOpenBusiness = computed(() => this.sendingForSignal() === this.demo.business().id);
+  readonly sendingOpenBusiness = computed(() => this.sendingFor() === this.demo.business().id);
 
   /** A return can be sent once its period is over and every payment in it is booked; one still in progress, or with payments waiting for the person, cannot. */
   canSend(view: VatReturnView): boolean {
@@ -62,11 +72,14 @@ export class TaxService {
       paidCents,
       resultCents,
       ticket: ticketFor(business.id, period.start, DEMO_TODAY),
+      taxOffice: profileTaxOffice(business.taxProfile),
     };
-    this.sendingForSignal.set(business.id);
+    const way: OnItsWay = { businessId: business.id, generation };
+    this.onItsWay.set(way);
     return new Promise((resolve) => {
       setTimeout(() => {
-        this.sendingForSignal.set(null);
+        // Only its own mark: after a reset another send may be on its way by now.
+        if (this.onItsWay() === way) this.onItsWay.set(null);
         if (this.demo.dataGeneration() !== generation) return resolve(null);
         this.demo.recordSentReturn(sent, business.id);
         resolve(sent);

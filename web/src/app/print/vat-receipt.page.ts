@@ -9,7 +9,6 @@ import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppTaxPeriodPipe } from '../core/format/tax-period.pipe';
 import { Term } from '../core/i18n/term';
-import { profileTaxOffice } from '../domain/tax-details';
 import { resultWording, sentPeriod } from '../domain/vat-return';
 import { DemoStateService } from '../state/demo-state.service';
 import { printOnceRendered } from './print-once';
@@ -17,8 +16,8 @@ import { printOnceRendered } from './print-once';
 /**
  * The receipt (Übertragungsprotokoll) of a VAT return the open business sent to the tax office, as a clean page for the
  * browser's print dialog (which can also save a PDF): business, period, the VAT charged and paid, the result, the day
- * it was sent and the transfer ticket. It shows what was stored when the return was sent and never calculates it
- * again. The period comes from the address (`/print/vat-return/2026-09-01`, the first day of the period). It sits
+ * it was sent, the tax office it went to and the transfer ticket. It shows what was stored when the return was sent
+ * (the office too, whatever the tax number is by now) and never calculates it again. The period comes from the address (`/print/vat-return/2026-09-01`, the first day of the period). It sits
  * outside the app shell and opens the print dialog once after it first renders. A period that was not sent says so and
  * does not print.
  */
@@ -69,7 +68,7 @@ import { printOnceRendered } from './print-once';
               }}</bdi>
             </dd>
           </div>
-          @if (office(); as name) {
+          @if (receipt.sent.taxOffice; as name) {
             <div
               class="border-border flex items-baseline justify-between gap-4 border-b py-2"
               data-testid="receipt-office"
@@ -146,9 +145,6 @@ export class VatReceiptPage {
     const sent = this.business().vatReturns.find((r) => r.periodStart === this.periodStart());
     return sent ? { sent, period: sentPeriod(sent), result: resultWording(sent) } : null;
   });
-
-  /** The tax office the business files with, from its tax number; none when the number gives no office. */
-  protected readonly office = computed(() => profileTaxOffice(this.business().taxProfile));
 
   constructor() {
     printOnceRendered(() => this.receipt() !== null);

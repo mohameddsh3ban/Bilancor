@@ -991,6 +991,7 @@ describe('DemoStateService', () => {
       paidCents: 20000,
       resultCents: 80000,
       ticket: 'ET-2026-1022-12345',
+      taxOffice: null,
       ...patch,
     });
 

@@ -5,6 +5,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { confirmBooking } from '../domain/payment-actions';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
 import { DemoStateService } from '../state/demo-state.service';
@@ -190,6 +191,18 @@ describe('TaxesPage', () => {
     expect(q('vat-deadline')).toBeNull();
     expect(text(q('year-total-income'))).toBe(formatMoney(2130000, 'en'));
     expect(q('year-return')).not.toBeNull();
+  });
+
+  it('confirming a payment moves the tracker and the year income together', async () => {
+    await render('sara-yoga');
+    expect(text(q('tax-tracker'))).toContain('€21,300 of €25,000');
+    expect(text(q('year-total-income'))).toBe(formatMoney(2130000, 'en'));
+
+    // Sara's €185 course payment waits for her answer; once confirmed it counts as income in both.
+    demo.updateTransaction('sy-t2', confirmBooking);
+    await settle();
+    expect(text(q('tax-tracker'))).toContain('€21,485 of €25,000');
+    expect(text(q('year-total-income'))).toBe(formatMoney(2148500, 'en'));
   });
 
   it('a Kleinunternehmer ignores ?tab=year: there is nothing else to switch to', async () => {

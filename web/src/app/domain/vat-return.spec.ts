@@ -330,6 +330,7 @@ describe('sentPeriod', () => {
     paidCents: 0,
     resultCents: 0,
     ticket: 'ET-2026-1022-00000',
+    taxOffice: null,
   });
 
   it('a return for one month is a monthly period', () => {

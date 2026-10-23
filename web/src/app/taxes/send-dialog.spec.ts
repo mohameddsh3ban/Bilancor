@@ -160,6 +160,18 @@ describe('send dialog, opened from the VAT tab', () => {
     await expectClosed();
   });
 
+  it('the dialog takes no place among the cards: its element is not displayed, and the dialog shows elsewhere', async () => {
+    await render();
+    const host = (fixture.nativeElement as HTMLElement).querySelector('app-send-dialog')!;
+    // An element left in the column would be a flex item of its own, with a gap of its own.
+    expect(getComputedStyle(host).display).toBe('none');
+
+    await openDialog();
+    expect(getComputedStyle(host).display).toBe('none');
+    expect(host.contains(dialog())).toBe(false);
+    expect(text(q('send-title'))).toBe('Send to the tax office');
+  });
+
   it('cancel sends nothing', async () => {
     await render();
     await openDialog();

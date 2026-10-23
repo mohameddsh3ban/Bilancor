@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { formatMoney } from '../core/format/format';
+import { formatMoney, formatMonthRange } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import type { Business, TaxProfile } from '../data/models';
@@ -83,7 +83,9 @@ describe('VatReturnTab', () => {
   it('weber VAT tab shows October in progress, so far you pay, ready to send from 1 Nov', () => {
     render('weber-design');
     const strip = q('vat-deadline')!;
-    expect(text(strip)).toBe('October 2026 · in progress · due 10 Nov (in 19 days)');
+    expect(text(strip)).toBe(
+      'VAT return (UStVA) · October 2026 · in progress · due 10 Nov (in 19 days)',
+    );
     expect(strip.className).toContain('text-warning');
     expect(strip.className).not.toContain('text-negative');
     expect(text(q('vat-result-line'))).toBe('So far you pay €393.33');
@@ -100,7 +102,9 @@ describe('VatReturnTab', () => {
     demo.saveTaxProfile({ ...demo.business().taxProfile, permanentExtension: true });
     render('weber-design');
     const strip = q('vat-deadline')!;
-    expect(text(strip)).toBe('October 2026 · in progress · due 10 Dec (in 49 days)');
+    expect(text(strip)).toBe(
+      'VAT return (UStVA) · October 2026 · in progress · due 10 Dec (in 49 days)',
+    );
     expect(strip.className).not.toContain('text-warning');
     expect(strip.className).not.toContain('text-negative');
   });
@@ -108,7 +112,7 @@ describe('VatReturnTab', () => {
   it('cafe shows Q3 overdue since 10 Oct with "You pay"', () => {
     render('cafe-linde');
     const strip = q('vat-deadline')!;
-    expect(text(strip)).toBe('Q3 2026 · Overdue since 10 Oct');
+    expect(text(strip)).toBe('VAT return (UStVA) · Q3 2026 · Overdue since 10 Oct');
     expect(strip.className).toContain('text-negative');
     expect(text(q('vat-result-line'))).toBe(`You pay ${formatMoney(78564, 'en')}`);
     expect(text(q('vat-result-to'))).toBe('to the tax office');
@@ -131,6 +135,7 @@ describe('VatReturnTab', () => {
       paidCents: 0,
       resultCents: 0,
       ticket: 'ET-2026-0908-00000',
+      taxOffice: null,
     });
     render('sara-yoga');
     const view = currentVatReturn(demo.business());
@@ -169,9 +174,32 @@ describe('VatReturnTab', () => {
     expect(text(q('vat-see-payments'))).toBe('See the payments');
   });
 
-  it('for a quarter, see the payments opens its first month', () => {
+  it('for a quarter, see the payments opens its first month and says where the other two are', () => {
     render('cafe-linde');
-    expect(q('vat-see-payments')!.getAttribute('href')).toBe('/payments?month=2026-07');
+    const link = q('vat-see-payments')!;
+    expect(link.getAttribute('href')).toBe('/payments?month=2026-07');
+    const hint = q('vat-see-payments-hint')!;
+    expect(text(hint)).toBe('Opens July — choose August or September in the month filter');
+    expect(link.getAttribute('aria-describedby')).toBe(hint.id);
+  });
+
+  it('a monthly return opens its one month, with no hint about the others', () => {
+    render('weber-design');
+    expect(q('vat-see-payments-hint')).toBeNull();
+    expect(q('vat-see-payments')!.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('the quarter hint reads in German and in Arabic, with the months in their language', () => {
+    TestBed.inject(LanguageService).setLang('de');
+    render('cafe-linde');
+    expect(text(q('vat-see-payments-hint'))).toBe('Öffnet Juli — wähle August oder September im Monatsfilter');
+
+    TestBed.inject(LanguageService).setLang('ar');
+    fixture.detectChanges();
+    const month = (m: string) => formatMonthRange(m, m, 'ar');
+    expect(text(q('vat-see-payments-hint'))).toContain(month('2026-07'));
+    expect(text(q('vat-see-payments-hint'))).toContain(month('2026-08'));
+    expect(text(q('vat-see-payments-hint'))).toContain(month('2026-09'));
   });
 
   it('needs-you card starts the review', () => {
@@ -274,6 +302,7 @@ describe('VatReturnTab', () => {
       paidCents: 21436,
       resultCents: 78564,
       ticket: 'ET-2026-1022-00001',
+      taxOffice: null,
     });
     render('cafe-linde');
     expect(text(q('vat-deadline'))).toContain('Q4 2026 · in progress · due 10 Jan (in 80 days)');
@@ -298,7 +327,9 @@ describe('VatReturnTab', () => {
     renderChanged('sara-yoga', SWITCHED_TO_VAT, { transactions: [] });
     expect(text(q('vat-result'))).toBe('Amount not known yet');
     expect(q('vat-result-line')).toBeNull();
-    expect(text(q('vat-deadline'))).toBe('October 2026 · in progress · due 10 Nov (in 19 days)');
+    expect(text(q('vat-deadline'))).toBe(
+      'VAT return (UStVA) · October 2026 · in progress · due 10 Nov (in 19 days)',
+    );
     expect(q('vat-charged')).toBeNull();
     expect(q('vat-see-payments')).not.toBeNull();
     expect(q('vat-result')!.textContent ?? '').not.toContain('€');
@@ -308,7 +339,7 @@ describe('VatReturnTab', () => {
     TestBed.inject(LanguageService).setLang('de');
     render('weber-design');
     expect(text(q('vat-deadline'))).toBe(
-      'Oktober 2026 · läuft noch · fällig am 10. Nov. (in 19 Tagen)',
+      'UStVA · Oktober 2026 · läuft noch · fällig am 10. Nov. (in 19 Tagen)',
     );
     expect(text(q('vat-result-line'))).toBe(
       `Bisher zahlst du ${formatMoney(39333, 'de').replace(/\s/g, ' ')}`,
@@ -316,6 +347,18 @@ describe('VatReturnTab', () => {
     expect(text(q('vat-result-to'))).toBe('ans Finanzamt');
     expect(text(q('vat-send-note'))).toBe('Bereit zum Senden ab 1. Nov.');
     expect(text(q('vat-send-via'))).toBe('Geht raus über ELSTER');
+  });
+
+  it('the deadline strip names the VAT return with its German term, explained, in English and German', () => {
+    render('weber-design');
+    const term = () => q('vat-deadline')!.querySelector('app-term')!;
+    expect(text(term())).toBe('VAT return (UStVA)');
+    expect(term().querySelector('button')).not.toBeNull();
+
+    TestBed.inject(LanguageService).setLang('de');
+    fixture.detectChanges();
+    expect(text(term())).toBe('UStVA');
+    expect(term().querySelector('button')).not.toBeNull();
   });
 
   it('says the same in Arabic, with the amounts left to right', () => {

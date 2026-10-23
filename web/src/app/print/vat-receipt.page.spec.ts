@@ -93,6 +93,7 @@ describe('VatReceiptPage', () => {
       paidCents: 0,
       resultCents: 0,
       ticket: 'ET-2026-1022-00002',
+      taxOffice: null,
     });
     await settle();
     await settle();
@@ -106,9 +107,30 @@ describe('VatReceiptPage', () => {
     expect(text(q('receipt-office'))).toBe(`Tax office (Finanzamt) ${office}`);
   });
 
-  it('leaves out the tax office line when the number gives none', async () => {
-    demo.saveTaxProfile({ ...demo.business().taxProfile, taxNumber: null });
+  it('names the office stored when the return was sent, even after the tax number changed', async () => {
+    const office = findTaxOffice('berlin', '27/123/45678')!;
+    // A number of another office (Berlin Mitte): the old receipt still names the office it was sent to.
+    demo.saveTaxProfile({ ...demo.business().taxProfile, taxNumber: '21/456/78901' });
     await render('/print/vat-return/2026-09-01');
+    expect(text(q('receipt-office'))).toBe(`Tax office (Finanzamt) ${office}`);
+
+    demo.saveTaxProfile({ ...demo.business().taxProfile, taxNumber: null });
+    await settle();
+    expect(text(q('receipt-office'))).toBe(`Tax office (Finanzamt) ${office}`);
+  });
+
+  it('leaves out the tax office line when the return stored none', async () => {
+    demo.recordSentReturn({
+      periodStart: '2026-10-01',
+      periodEnd: '2026-10-31',
+      sentOn: '2026-10-22',
+      chargedCents: 1000,
+      paidCents: 500,
+      resultCents: 500,
+      ticket: 'ET-2026-1022-00003',
+      taxOffice: null,
+    });
+    await render('/print/vat-return/2026-10-01');
     expect(q('receipt-office')).toBeNull();
     expect(q('receipt-ticket')).not.toBeNull();
   });
@@ -123,6 +145,7 @@ describe('VatReceiptPage', () => {
       paidCents: 23456,
       resultCents: 100000,
       ticket: 'ET-2026-1022-12345',
+      taxOffice: null,
     });
     // The payments of that quarter change afterwards: the receipt does not.
     demo.updateTransaction('cl-t12', (tx) => ({ ...tx, amountCents: tx.amountCents * 2 }));
@@ -152,6 +175,7 @@ describe('VatReceiptPage', () => {
       paidCents: 7623,
       resultCents: -6623,
       ticket: 'ET-2026-1022-00001',
+      taxOffice: null,
     });
     await render('/print/vat-return/2026-10-01');
     expect(text(q('receipt-result-label'))).toBe('To get back');
@@ -238,6 +262,7 @@ describe('VatReceiptPage', () => {
         paidCents: 21436,
         resultCents: 78564,
         ticket: 'ET-2026-1022-00001',
+        taxOffice: null,
       });
       demo.resetData();
       await render('/print/vat-return/2026-07-01');

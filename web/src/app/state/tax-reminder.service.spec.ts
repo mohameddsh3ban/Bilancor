@@ -17,7 +17,7 @@ const weberKey = 'mockup.taxReminder.p1.weber-design.2026-11-10';
 
 /** A return sent today for a period, as the demo would record it. */
 function sentFor(periodStart: string, periodEnd: string): SentVatReturn {
-  return { periodStart, periodEnd, sentOn: DEMO_TODAY, chargedCents: 0, paidCents: 0, resultCents: 0, ticket: 'ET-TEST' };
+  return { periodStart, periodEnd, sentOn: DEMO_TODAY, chargedCents: 0, paidCents: 0, resultCents: 0, ticket: 'ET-TEST', taxOffice: null };
 }
 
 describe('TaxReminderService', () => {

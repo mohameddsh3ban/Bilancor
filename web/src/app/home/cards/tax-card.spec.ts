@@ -5,6 +5,7 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { provideTranslocoTesting } from '../../core/i18n/transloco-testing';
 import type { Business, Lang, TaxProfile } from '../../data/models';
 import { BUSINESSES } from '../../data/sample-data';
+import { yearSummary } from '../../domain/tax-year';
 import { DemoStateService } from '../../state/demo-state.service';
 import { TaxCard } from './tax-card';
 
@@ -15,6 +16,15 @@ describe('TaxCard', () => {
   });
 
   afterEach(() => TestBed.inject(LanguageService).setLang('en'));
+
+  /** The business with an opening line that makes the year's income exactly `cents`, whatever its booked payments add. */
+  const withYearIncome = (business: Business, cents: number): Business => ({
+    ...business,
+    yearOpening: {
+      ...business.yearOpening,
+      incomeCents: cents - yearSummary(business).paymentsIncomeCents,
+    },
+  });
 
   function render(businessId: string): HTMLElement {
     TestBed.inject(DemoStateService).setBusiness(businessId);
@@ -72,7 +82,7 @@ describe('TaxCard', () => {
       providers: [
         provideTranslocoTesting(),
         provideRouter([]),
-        { provide: DemoStateService, useValue: { business: () => ({ ...sara, revenueThisYearCents: cents }) } },
+        { provide: DemoStateService, useValue: { business: () => (withYearIncome(sara, cents)) } },
       ],
     });
     const fixture = TestBed.createComponent(TaxCard);
@@ -114,7 +124,7 @@ describe('TaxCard', () => {
       providers: [
         provideTranslocoTesting(),
         provideRouter([]),
-        { provide: DemoStateService, useValue: { business: () => ({ ...sara, revenueThisYearCents: 3_000_000 }) } },
+        { provide: DemoStateService, useValue: { business: () => (withYearIncome(sara, 3_000_000)) } },
       ],
     });
     const fixture = TestBed.createComponent(TaxCard);
@@ -155,7 +165,7 @@ describe('TaxCard', () => {
     expect(vat.textContent).toContain('Yearly VAT return only');
     expect(vat.textContent).not.toContain('Due ');
     expect(vat.textContent).not.toContain('Estimated to pay');
-    expect(vat.textContent).not.toContain(formatMoney(184200, 'en'));
+    expect(vat.textContent).not.toContain(formatMoney(39333, 'en'));
     expect(vat.textContent).not.toContain('€');
   });
 

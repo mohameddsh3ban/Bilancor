@@ -4,6 +4,7 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
 import { revenueLimitStatus } from '../../domain/revenue-limit';
+import { yearSummary } from '../../domain/tax-year';
 import { DemoStateService } from '../../state/demo-state.service';
 
 /** The Kleinunternehmer revenue-limit tracker: a bar, the amounts and the percentage used. */
@@ -33,7 +34,8 @@ import { DemoStateService } from '../../state/demo-state.service';
 export class RevenueTracker {
   private readonly demo = inject(DemoStateService);
 
-  protected readonly revenue = computed(() => this.demo.business().revenueThisYearCents);
+  /** The year's income so far: the figure the Taxes page shows for the year (for a Kleinunternehmer, as paid), so the two never disagree. */
+  protected readonly revenue = computed(() => yearSummary(this.demo.business()).incomeCents);
   protected readonly limit = computed(() => revenueLimitStatus(this.revenue()));
   /** The bar only takes 0 to 100; the percentage text still shows the real figure. */
   protected readonly progress = computed(() => Math.min(100, Math.max(0, this.limit().percent)));

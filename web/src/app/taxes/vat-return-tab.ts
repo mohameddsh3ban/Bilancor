@@ -4,8 +4,10 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../core/format/date.pipe';
+import { formatMonthRange } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppTaxPeriodPipe } from '../core/format/tax-period.pipe';
+import { LanguageService } from '../core/i18n/language.service';
 import { pluralKey } from '../core/i18n/plural-key';
 import { Term } from '../core/i18n/term';
 import { yearSummary } from '../domain/tax-year';
@@ -52,7 +54,7 @@ const AMOUNT_MARK = '\u0001';
           data-testid="vat-deadline"
           [class]="stripClass(view)"
         >
-          {{ view.period | appTaxPeriod }}
+          <app-term key="ustva" /> · {{ view.period | appTaxPeriod }}
           @if (view.state === 'inProgress') {
             · {{ 'taxes.deadline.inProgress' | transloco }}
           }
@@ -145,10 +147,20 @@ const AMOUNT_MARK = '\u0001';
                 data-testid="vat-see-payments"
                 [routerLink]="['/payments']"
                 [queryParams]="{ month: view.period.start.slice(0, 7) }"
+                [attr.aria-describedby]="quarterMonths() ? 'vat-see-payments-hint' : null"
               >
                 {{ 'taxes.how.payments' | transloco }}
               </a>
             </div>
+            @if (quarterMonths(); as months) {
+              <p
+                id="vat-see-payments-hint"
+                class="text-muted-foreground text-xs"
+                data-testid="vat-see-payments-hint"
+              >
+                {{ 'taxes.how.paymentsQuarter' | transloco: months }}
+              </p>
+            }
           </div>
         </section>
       } @else if (yearly()) {
@@ -250,6 +262,7 @@ const AMOUNT_MARK = '\u0001';
 })
 export class VatReturnTab {
   private readonly demo = inject(DemoStateService);
+  private readonly language = inject(LanguageService);
 
   protected readonly mark = AMOUNT_MARK;
   protected readonly daysLeftWording = daysLeftWording;
@@ -261,6 +274,22 @@ export class VatReturnTab {
     return current?.kind === 'return' ? current.view : null;
   });
   protected readonly yearly = computed(() => this.current()?.kind === 'yearly');
+  /**
+   * The names of the three months of a quarterly return, for the hint by "See the payments", which opens only the first
+   * month; null for a monthly return.
+   */
+  protected readonly quarterMonths = computed(() => {
+    const period = this.view()?.period;
+    if (period?.kind !== 'quarterly') return null;
+    const lang = this.language.lang();
+    const year = period.start.slice(0, 4);
+    const first = Number(period.start.slice(5, 7));
+    const [one, two, three] = [0, 1, 2].map((offset) => {
+      const month = `${year}-${String(first + offset).padStart(2, '0')}`;
+      return formatMonthRange(month, month, lang); // one month: its name, without the year
+    });
+    return { first: one, second: two, third: three };
+  });
   /** The day the yearly VAT return is due. */
   protected readonly yearlyDue = computed(() => yearSummary(this.demo.business()).dueDate);
 

@@ -29,10 +29,9 @@ const only = (b: Business, ...transactions: Transaction[]): Business => ({
 });
 
 describe('yearSummary', () => {
-  it('year income equals revenueThisYearCents for every sample business', () => {
-    for (const b of BUSINESSES) {
-      expect(yearSummary(b).incomeCents, b.id).toBe(b.revenueThisYearCents);
-    }
+  it('year income is the round figure each sample business is sized for', () => {
+    expect(yearSummary(weber).incomeCents).toBe(4_860_000);
+    expect(yearSummary(cafe).incomeCents).toBe(11_240_000);
     expect(yearSummary(sara).incomeCents).toBe(2_130_000);
   });
 

@@ -65,8 +65,12 @@ export class ReviewFinish {
   /** The person is done and wants to leave. */
   readonly back = output<void>();
 
-  /** The VAT return still to send, the same as on the homepage card; null for a yearly return or a Kleinunternehmer. */
+  /**
+   * The VAT return still to send, the same as on the homepage card; null for a yearly return or a Kleinunternehmer, and
+   * until the tax details are set (the Taxes page and the reminder know no return then either).
+   */
   protected readonly vat = computed(() => {
+    if (!this.demo.setup().tax) return null;
     const current = currentVatReturn(this.demo.business());
     return current?.kind === 'return' ? current.view : null;
   });

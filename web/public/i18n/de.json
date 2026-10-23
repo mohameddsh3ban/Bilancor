@@ -195,7 +195,8 @@
       "refund": "Zurück",
       "basis": "Nach Zahlungsdatum berechnet",
       "none": "In diesem Zeitraum gibt es noch keine gebuchte Zahlung mit Umsatzsteuer.",
-      "payments": "Zu den Zahlungen"
+      "payments": "Zu den Zahlungen",
+      "paymentsQuarter": "Öffnet {{first}} — wähle {{second}} oder {{third}} im Monatsfilter"
     },
     "needs": {
       "one": "1 Zahlung braucht dich noch — kläre sie, damit die Meldung stimmt",

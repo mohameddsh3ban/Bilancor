@@ -195,7 +195,8 @@
       "refund": "To get back",
       "basis": "Based on payment dates",
       "none": "No booked payment with VAT in this period yet.",
-      "payments": "See the payments"
+      "payments": "See the payments",
+      "paymentsQuarter": "Opens {{first}} — choose {{second}} or {{third}} in the month filter"
     },
     "needs": {
       "one": "1 payment still needs you — fix it so the return is right",

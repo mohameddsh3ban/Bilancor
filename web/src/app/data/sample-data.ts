@@ -98,8 +98,8 @@ const cashBox = (): AccountConnection => ({ kind: 'cash', consentUntil: null, la
 const total = (b: Booking, cents: number): CategoryTotal => ({ labelKey: b.labelKey, skr03: b.skr03, nameDe: b.nameDe, cents });
 /**
  * The months of the year before a business's first sample payment: its income, and its costs as the sum of the categories.
- * The income is what makes the year's income equal `revenueThisYearCents` once the booked sample payments are added (a
- * test in tax-year.spec.ts checks it); the costs are plausible, not calculated.
+ * The income is what makes the year's income reach the round figure noted at each business once the booked sample payments
+ * are added (a test in tax-year.spec.ts checks it); the costs are plausible, not calculated.
  */
 const opening = (incomeCents: number, costs: CategoryTotal[]): Business['yearOpening'] => ({
   incomeCents,
@@ -159,13 +159,13 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'wd-t17', date: '2026-10-08', who: 'SCHREIBWAREN BOETTCHER', acct: WD_QONTO, cents: -2380, booking: OFFICE, receipt: 'missing', iban: 'DE45100100100076543210', ref: 'Kartenzahlung 08.10.' }),
       pay({ id: 'wd-t18', date: '2026-10-02', who: 'Amazon', acct: WD_QONTO, cents: -2390, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-4471920-8830', file: 'amazon-bestellung-8830.pdf', suggestions: AMAZON_SUGGESTIONS }),
     ],
-    // Sent returns are stored as the figures the person saw; a sample-data test checks them against the booked payments.
+    // Sent returns are stored as the figures the person saw and the tax office they went to; a sample-data test checks them against the booked payments.
     vatReturns: [
-      { periodStart: '2026-08-01', periodEnd: '2026-08-31', sentOn: '2026-09-08', chargedCents: 23950, paidCents: 6338, resultCents: 17612, ticket: 'ET-2026-0908-41827' },
-      { periodStart: '2026-09-01', periodEnd: '2026-09-30', sentOn: '2026-10-08', chargedCents: 52450, paidCents: 6338, resultCents: 46112, ticket: 'ET-2026-1008-52390' },
+      { periodStart: '2026-08-01', periodEnd: '2026-08-31', sentOn: '2026-09-08', chargedCents: 23950, paidCents: 6338, resultCents: 17612, ticket: 'ET-2026-0908-41827', taxOffice: 'Berlin Friedrichshain-Kreuzberg' },
+      { periodStart: '2026-09-01', periodEnd: '2026-09-30', sentOn: '2026-10-08', chargedCents: 52450, paidCents: 6338, resultCents: 46112, ticket: 'ET-2026-1008-52390', taxOffice: 'Berlin Friedrichshain-Kreuzberg' },
     ],
     legalForm: 'sole',
-    // January to July, net: 42 079,00 € of income, so the year (with the booked payments since August) reaches revenueThisYearCents.
+    // January to July, net: 42 079,00 € of income, so the year (with the booked payments since August) reaches 48 600,00 €.
     yearOpening: opening(4207900, [
       total(RENT, 210000),
       total(TRAVEL, 118000),
@@ -178,7 +178,6 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       total(PHONE, 23500),
     ]),
     incomeTaxReserveCents: 320000,
-    revenueThisYearCents: 4860000,
     notices: [
       { id: 'wd-n1', kind: 'terms', urgency: 1, blocking: true, params: {}, date: '2026-10-20' },
       { id: 'wd-n3', kind: 'unreadable', urgency: 3, blocking: false, params: { count: 2 }, date: '2026-10-18' },
@@ -224,7 +223,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     ],
     vatReturns: [],
     legalForm: 'sole',
-    // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 300,00 € of income, so the year reaches revenueThisYearCents.
+    // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 300,00 € of income, so the year reaches 21 300,00 €.
     yearOpening: opening(1830000, [
       total(RENT, 245000),
       total(INSURANCE, 42000),
@@ -234,7 +233,6 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       total(SOFTWARE, 12000),
     ]),
     incomeTaxReserveCents: 210000,
-    revenueThisYearCents: 2130000,
     notices: [
       { id: 'sy-n1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 85, limit: 25000 }, date: '2026-10-20' },
     ],
@@ -283,10 +281,10 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     ],
     // Q2 was sent; Q3 (July to September) is the current return and is not sent yet, so it shows as overdue.
     vatReturns: [
-      { periodStart: '2026-04-01', periodEnd: '2026-06-30', sentOn: '2026-07-09', chargedCents: 214860, paidCents: 126430, resultCents: 88430, ticket: 'ET-2026-0709-30764' },
+      { periodStart: '2026-04-01', periodEnd: '2026-06-30', sentOn: '2026-07-09', chargedCents: 214860, paidCents: 126430, resultCents: 88430, ticket: 'ET-2026-0709-30764', taxOffice: 'Hamburg-Altona' },
     ],
     legalForm: 'gbr',
-    // January to June, net (the payments here start in July): 101 581,36 € of income, so the year reaches revenueThisYearCents.
+    // January to June, net (the payments here start in July): 101 581,36 € of income, so the year reaches 112 400,00 €.
     yearOpening: opening(10158136, [
       total(GOODS_7, 3100000),
       total(SALARIES, 1830000),
@@ -299,7 +297,6 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       total(CONSULTING, 70000),
     ]),
     incomeTaxReserveCents: 580000,
-    revenueThisYearCents: 11240000,
     notices: [],
     noticeHistory: [
       { id: 'cl-h1', kind: 'terms', urgency: 1, blocking: false, params: {}, date: '2026-09-15' },

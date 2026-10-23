@@ -49,6 +49,7 @@ describe('TaxService', () => {
       paidCents: before.paidCents,
       resultCents: before.resultCents,
       ticket: expect.stringMatching(/^ET-2026-1022-\d{5}$/),
+      taxOffice: 'Hamburg-Altona',
     });
     expect(returnsOf('cafe-linde').at(-1)).toEqual(await result);
     expect(returnsOf('cafe-linde')).toHaveLength(sample('cafe-linde').vatReturns.length + 1);
@@ -57,6 +58,13 @@ describe('TaxService', () => {
       state: 'inProgress',
       dueDate: '2027-01-10',
     });
+  });
+
+  it('records no tax office when the tax number gives none', async () => {
+    demo.saveTaxProfile({ ...demo.business().taxProfile, taxNumber: null });
+    const result = tax.send();
+    await vi.advanceTimersByTimeAsync(SEND_MS);
+    expect((await result)!.taxOffice).toBeNull();
   });
 
   it('records nothing before SEND_MS is over', async () => {
@@ -95,10 +103,17 @@ describe('TaxService', () => {
     expect(tax.sending()).toBe(false);
   });
 
-  it('a send that is dropped by a reset clears sendingFor too', async () => {
-    void tax.send();
+  it('a send that is dropped by a reset stops saying "Sending…" at once, not when its time is up', async () => {
+    const dropped = tax.send();
+    expect(tax.sendingOpenBusiness()).toBe(true);
+
     demo.resetData();
+    expect(tax.sendingFor()).toBeNull();
+    expect(tax.sending()).toBe(false);
+    expect(tax.sendingOpenBusiness()).toBe(false);
+
     await vi.advanceTimersByTimeAsync(SEND_MS);
+    expect(await dropped).toBeNull();
     expect(tax.sendingFor()).toBeNull();
   });
 
@@ -188,15 +203,22 @@ describe('TaxService', () => {
     expect((await second)!.ticket).toBe(firstTicket);
   });
 
-  it('a send dropped by a reset lets the next one go ahead once its time is up', async () => {
+  it('a send dropped by a reset lets the next one go ahead at once, and the dropped one ending does not cut it short', async () => {
     const dropped = tax.send();
+    await vi.advanceTimersByTimeAsync(SEND_MS / 2);
     demo.resetData();
-    await vi.advanceTimersByTimeAsync(SEND_MS);
-    expect(await dropped).toBeNull();
 
     const next = tax.send();
-    await vi.advanceTimersByTimeAsync(SEND_MS);
+    expect(tax.sendingFor()).toBe('cafe-linde');
+
+    // The dropped send's time is up: it records nothing, and the next one is still on its way.
+    await vi.advanceTimersByTimeAsync(SEND_MS / 2);
+    expect(await dropped).toBeNull();
+    expect(tax.sendingFor()).toBe('cafe-linde');
+
+    await vi.advanceTimersByTimeAsync(SEND_MS / 2);
     expect(await next).not.toBeNull();
+    expect(tax.sendingFor()).toBeNull();
   });
 
   it('the ticket has the year and day it was sent and five digits that stay the same for the same business and period', async () => {

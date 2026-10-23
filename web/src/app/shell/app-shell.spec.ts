@@ -8,6 +8,7 @@ import { presetOf } from '../domain/home-cards';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection } from '../state/demo-state.testing';
 import { NoticeService } from '../state/notice.service';
+import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { AppShell } from './app-shell';
 import { ComingSoonPage } from './coming-soon.page';
 
@@ -303,7 +304,9 @@ describe('AppShell', () => {
 describe('AppShell and the review inbox', () => {
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideTranslocoTesting(), provideRouter(routes)] });
+    TestBed.configureTestingModule({
+      providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
+    });
   });
 
   afterEach(() => {

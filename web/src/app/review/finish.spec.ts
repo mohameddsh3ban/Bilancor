@@ -6,6 +6,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import type { TaxProfile } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { ALL_DONE } from '../domain/home-cards';
 import type { ReviewItem } from '../domain/review-queue';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService, type ReviewAnswerResult } from '../state/review.service';
@@ -145,6 +146,17 @@ describe('ReviewFinish', () => {
       expect(q('finish-vat')).toBeNull();
     });
 
+    it('is left out until the tax details are set, as on the Taxes page and the reminder', () => {
+      demo.setSetup('halfway');
+      render();
+      expect(q('finish-title')).not.toBeNull();
+      expect(q('finish-vat')).toBeNull();
+
+      demo.completeStep('tax');
+      fixture.detectChanges();
+      expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
+    });
+
     /** Shows the finish screen of a sample business whose tax answers were changed (the review itself is not needed). */
     function renderWithTax(businessId: string, taxPatch: Partial<TaxProfile>): void {
       const business = BUSINESSES.find((b) => b.id === businessId)!;
@@ -154,7 +166,7 @@ describe('ReviewFinish', () => {
         providers: [
           provideTranslocoTesting(),
           provideRouter([]),
-          { provide: DemoStateService, useValue: { business: () => changed } },
+          { provide: DemoStateService, useValue: { business: () => changed, setup: () => ALL_DONE } },
           {
             provide: ReviewService,
             useValue: { summary: () => ({ decisions: 0, receiptsAdded: 0, duplicatesRemoved: 0 }) },

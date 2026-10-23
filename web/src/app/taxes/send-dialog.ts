@@ -61,7 +61,9 @@ const TITLE_KEY: Record<Step, string> = {
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideLoaderCircle })],
-  host: { class: 'contents' },
+  // Not displayed: the dialog shows through the overlay, so nothing of this element belongs in the card column (an empty
+  // item there would add a gap of its own).
+  host: { hidden: '' },
   template: `
     <hlm-dialog
       [state]="open() ? 'open' : 'closed'"

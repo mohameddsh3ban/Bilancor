@@ -1,5 +1,7 @@
 import { paymentStatus } from '../domain/payment-status';
 import { revenueLimitStatus } from '../domain/revenue-limit';
+import { profileTaxOffice } from '../domain/tax-details';
+import { yearSummary } from '../domain/tax-year';
 import { periodFor, vatReturnFor } from '../domain/vat-return';
 import { GERMAN_STATES, TAX_OFFICES } from './banks';
 import { CATEGORIES, PRIVATE_IN, PRIVATE_OUT } from './categories';
@@ -366,7 +368,7 @@ describe('sample data revenue notice', () => {
   it('shows the same whole percent as the revenue tracker', () => {
     const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
     const notice = sara.notices.find((n) => n.kind === 'revenueLimit')!;
-    expect(notice.params['percent']).toBe(revenueLimitStatus(sara.revenueThisYearCents).percent);
+    expect(notice.params['percent']).toBe(revenueLimitStatus(yearSummary(sara).incomeCents).percent);
   });
 });
 
@@ -559,6 +561,16 @@ describe('sample VAT returns', () => {
         expect(r.sentOn > r.periodEnd, b.id).toBe(true);
         expect(r.ticket, b.id).toMatch(/^ET-2026-\d{4}-\d{5}$/);
         expect(r.ticket.slice(8, 12), b.id).toBe(r.sentOn.slice(5, 7) + r.sentOn.slice(8, 10));
+      }
+    }
+  });
+
+  it('every sent return names the tax office its business files with, as stored (not looked up again)', () => {
+    const offices = { 'weber-design': 'Berlin Friedrichshain-Kreuzberg', 'cafe-linde': 'Hamburg-Altona' };
+    for (const b of BUSINESSES) {
+      for (const r of b.vatReturns) {
+        expect(r.taxOffice, b.id).toBe(offices[b.id as keyof typeof offices]);
+        expect(r.taxOffice, b.id).toBe(profileTaxOffice(b.taxProfile));
       }
     }
   });
