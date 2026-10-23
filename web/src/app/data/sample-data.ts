@@ -1,6 +1,8 @@
 import {
   ADVERTISING,
+  CONSULTING,
   GOODS_7,
+  INSURANCE,
   OFFICE,
   OTHER_COSTS,
   PHONE,
@@ -12,10 +14,11 @@ import {
   SALARIES,
   SOFTWARE,
   SUPPLIES,
+  TRAINING,
   TRAVEL,
   UTILITIES,
 } from './categories';
-import { Account, AccountConnection, Booking, Business, HistoryEntry, Person, ReceiptState, Transaction } from './models';
+import { Account, AccountConnection, Booking, Business, CategoryTotal, HistoryEntry, Person, ReceiptState, Transaction } from './models';
 import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
@@ -91,6 +94,19 @@ const statement = (): AccountConnection => ({ kind: 'statement', consentUntil: n
 /** The cash box has no bank: its payments come from receipts. */
 const cashBox = (): AccountConnection => ({ kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false });
 
+/** One category's amount in a year opening line, labelled and numbered like the booking it comes from. */
+const total = (b: Booking, cents: number): CategoryTotal => ({ labelKey: b.labelKey, skr03: b.skr03, nameDe: b.nameDe, cents });
+/**
+ * The months of the year before a business's first sample payment: its income, and its costs as the sum of the categories.
+ * The income is what makes the year's income reach the round figure noted at each business once the booked sample payments
+ * are added (a test in tax-year.spec.ts checks it); the costs are plausible, not calculated.
+ */
+const opening = (incomeCents: number, costs: CategoryTotal[]): Business['yearOpening'] => ({
+  incomeCents,
+  costsCents: costs.reduce((sum, c) => sum + c.cents, 0),
+  costsByCategory: costs,
+});
+
 // The demo date is 2026-10-22: Weber Design's Qonto consent ends in 5 days, Sara's ended 2 days ago, Café Linde's runs about 4 more months.
 const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21', connection: connected('2026-10-27', '2026-10-22T06:12'), product: 'business', iban: 'DE08100101010482913650' };
 const WD_CASH: Account = { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14', connection: cashBox(), product: 'cash', iban: null };
@@ -143,9 +159,25 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'wd-t17', date: '2026-10-08', who: 'SCHREIBWAREN BOETTCHER', acct: WD_QONTO, cents: -2380, booking: OFFICE, receipt: 'missing', iban: 'DE45100100100076543210', ref: 'Kartenzahlung 08.10.' }),
       pay({ id: 'wd-t18', date: '2026-10-02', who: 'Amazon', acct: WD_QONTO, cents: -2390, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-4471920-8830', file: 'amazon-bestellung-8830.pdf', suggestions: AMAZON_SUGGESTIONS }),
     ],
-    vatDue: { dueDate: '2026-11-10', amountCents: 184200 },
+    // Sent returns are stored as the figures the person saw and the tax office they went to; a sample-data test checks them against the booked payments.
+    vatReturns: [
+      { periodStart: '2026-08-01', periodEnd: '2026-08-31', sentOn: '2026-09-08', chargedCents: 23950, paidCents: 6338, resultCents: 17612, ticket: 'ET-2026-0908-41827', taxOffice: 'Berlin Friedrichshain-Kreuzberg' },
+      { periodStart: '2026-09-01', periodEnd: '2026-09-30', sentOn: '2026-10-08', chargedCents: 52450, paidCents: 6338, resultCents: 46112, ticket: 'ET-2026-1008-52390', taxOffice: 'Berlin Friedrichshain-Kreuzberg' },
+    ],
+    legalForm: 'sole',
+    // January to July, net: 42 079,00 € of income, so the year (with the booked payments since August) reaches 48 600,00 €.
+    yearOpening: opening(4207900, [
+      total(RENT, 210000),
+      total(TRAVEL, 118000),
+      total(SOFTWARE, 96000),
+      total(CONSULTING, 72000),
+      total(ADVERTISING, 62000),
+      total(TRAINING, 49000),
+      total(OTHER_COSTS, 39500),
+      total(OFFICE, 30000),
+      total(PHONE, 23500),
+    ]),
     incomeTaxReserveCents: 320000,
-    revenueThisYearCents: 4860000,
     notices: [
       { id: 'wd-n1', kind: 'terms', urgency: 1, blocking: true, params: {}, date: '2026-10-20' },
       { id: 'wd-n3', kind: 'unreadable', urgency: 3, blocking: false, params: { count: 2 }, date: '2026-10-18' },
@@ -189,9 +221,18 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'sy-t13', date: '2026-08-11', who: 'Raumhaus Berlin', acct: SY_QONTO, cents: -35000, booking: RENT, iban: 'DE86100900009876543210', ref: 'Raummiete August' }),
       pay({ id: 'sy-t14', date: '2026-08-04', who: 'Yogashop Berlin', acct: SY_QONTO, cents: -4120, booking: SUPPLIES, iban: 'DE31100100106655443322', ref: 'Rechnung 22-8814, Gurte und Blöcke' }),
     ],
-    vatDue: null,
+    vatReturns: [],
+    legalForm: 'sole',
+    // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 300,00 € of income, so the year reaches 21 300,00 €.
+    yearOpening: opening(1830000, [
+      total(RENT, 245000),
+      total(INSURANCE, 42000),
+      total(SUPPLIES, 38000),
+      total(TRAINING, 28000),
+      total(ADVERTISING, 15000),
+      total(SOFTWARE, 12000),
+    ]),
     incomeTaxReserveCents: 210000,
-    revenueThisYearCents: 2130000,
     notices: [
       { id: 'sy-n1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 85, limit: 25000 }, date: '2026-10-20' },
     ],
@@ -233,10 +274,29 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'cl-t13', date: '2026-08-27', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -131450, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0405-66390' }),
       pay({ id: 'cl-t14', date: '2026-08-15', who: 'Stadtwerke Hamburg', acct: CL_SPARKASSE, cents: -26980, booking: UTILITIES, iban: 'DE83200505501234567801', ref: 'Abschlag Strom und Wasser August' }),
       pay({ id: 'cl-t15', date: '2026-08-10', who: 'Hausverwaltung Lindenallee', acct: CL_SPARKASSE, cents: -185000, booking: RENT, iban: 'DE19200800000556677889', ref: 'Miete August, Lindenallee 4' }),
+      // July: a few booked payments, so that the third quarter has something to pay.
+      pay({ id: 'cl-t16', date: '2026-07-29', who: 'Tagesumsatz Kasse', acct: CL_CASH, cents: 70230, booking: REVENUE_7, iban: 'DE41200300001000200030', ref: 'Kassenabschluss 29.07.' }),
+      pay({ id: 'cl-t17', date: '2026-07-17', who: 'Catering Firma Dittmar', acct: CL_QONTO, cents: 952000, booking: REVENUE_19, iban: 'DE38210800500012349876', ref: 'RE-2026-044, Sommerfest' }),
+      pay({ id: 'cl-t18', date: '2026-07-10', who: 'Metro Großmarkt', acct: CL_QONTO, cents: -141860, booking: GOODS_7, iban: 'DE57300700100123987654', ref: 'Rechnung 0401-55871' }),
     ],
-    vatDue: { dueDate: '2027-01-10', amountCents: 412000 },
+    // Q2 was sent; Q3 (July to September) is the current return and is not sent yet, so it shows as overdue.
+    vatReturns: [
+      { periodStart: '2026-04-01', periodEnd: '2026-06-30', sentOn: '2026-07-09', chargedCents: 214860, paidCents: 126430, resultCents: 88430, ticket: 'ET-2026-0709-30764', taxOffice: 'Hamburg-Altona' },
+    ],
+    legalForm: 'gbr',
+    // January to June, net (the payments here start in July): 101 581,36 € of income, so the year reaches 112 400,00 €.
+    yearOpening: opening(10158136, [
+      total(GOODS_7, 3100000),
+      total(SALARIES, 1830000),
+      total(RENT, 930000),
+      total(SUPPLIES, 150000),
+      total(UTILITIES, 145000),
+      total(OTHER_COSTS, 95000),
+      total(INSURANCE, 95000),
+      total(ADVERTISING, 85000),
+      total(CONSULTING, 70000),
+    ]),
     incomeTaxReserveCents: 580000,
-    revenueThisYearCents: 11240000,
     notices: [],
     noticeHistory: [
       { id: 'cl-h1', kind: 'terms', urgency: 1, blocking: false, params: {}, date: '2026-09-15' },

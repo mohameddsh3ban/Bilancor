@@ -11,6 +11,7 @@ import { groupDocsByMonth } from '../domain/document-search';
 import { docNeedsYou } from '../domain/document-status';
 import { READING_MS, newReadingDoc } from '../domain/document-upload';
 import { DemoStateService } from '../state/demo-state.service';
+import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { UploadService } from '../state/upload.service';
 import { DocumentDetailPage } from './document-detail.page';
 import { DocumentsPage } from './documents.page';
@@ -140,7 +141,7 @@ describe('DocumentsPage', () => {
     it('menu Documents opens the page', async () => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        providers: [provideTranslocoTesting(), provideRouter(routes)],
+        providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
       });
       harness = await RouterTestingHarness.create('/');
       el = harness.routeNativeElement as HTMLElement;
@@ -780,7 +781,7 @@ describe('DocumentsPage', () => {
     async function renderShell(): Promise<void> {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        providers: [provideTranslocoTesting(), provideRouter(routes)],
+        providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
       });
       harness = await RouterTestingHarness.create('/');
       el = harness.routeNativeElement as HTMLElement;

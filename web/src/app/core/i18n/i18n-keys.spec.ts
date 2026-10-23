@@ -53,6 +53,13 @@ describe('translation files', () => {
       'steuernummer',
       'ustIdNr',
       'finanzamt',
+      'umsatzsteuer',
+      'vorsteuer',
+      'elster',
+      'einkommensteuererklaerung',
+      'feststellungserklaerung',
+      'umsatzsteuererklaerung',
+      'uebertragungsprotokoll',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   linkedSignal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -29,6 +30,9 @@ import { PaymentList } from './payment-list';
 import { PaymentTable } from './payment-table';
 
 type EmptyKind = 'new' | 'allClear' | 'noMatch' | null;
+
+/** Whether the address's `month` is a 'YYYY-MM' month. */
+const isMonth = (value: string): boolean => /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 
 /**
  * Every payment of the open business, newest first, grouped by month, with search and filters.
@@ -165,6 +169,12 @@ export class PaymentsPage {
     computation: () => EMPTY_FILTER,
   });
 
+  /** The `month` in the address (`?month=2026-10`, from the Taxes page), whatever it says; null when there is none. */
+  private readonly monthParam = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('month'))),
+    { initialValue: this.route.snapshot.queryParamMap.get('month') },
+  );
+
   /** The payment open through the child route, if any. */
   protected readonly selectedId = toSignal(
     this.router.events.pipe(
@@ -195,6 +205,19 @@ export class PaymentsPage {
   });
 
   constructor() {
+    // The month opens the list on that month once, and the address is cleaned at once: the filters live here, so a
+    // reload or the back button does not set it again. Something that is not a month is dropped.
+    effect(() => {
+      const month = this.monthParam();
+      if (month === null) return;
+      if (isMonth(month)) untracked(() => this.filter.update((f) => ({ ...f, month })));
+      void this.router.navigate([], {
+        queryParams: { month: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    });
+
     // On a phone a payment is a page of its own: show it from its top, not from where the list or the homepage
     // was scrolled to. From `lg` it is a panel beside the list, which stays where it is (the panel is sticky).
     effect(() => {

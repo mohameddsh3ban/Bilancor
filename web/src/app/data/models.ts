@@ -85,9 +85,25 @@ export interface TaxProfile {
   taxState: string | null; taxNumber: string | null; vatId: string | null; // taxState: a GERMAN_STATES id
   fiscalYearStart: string; // 'MM-DD', '01-01' for the calendar year
 }
+/** A VAT return that was sent to the tax office: its period, when it was sent, the VAT it held and the transfer ticket. */
+export interface SentVatReturn {
+  periodStart: string; periodEnd: string; sentOn: string; // ISO dates; the period's first and last day, and the day it was sent
+  chargedCents: number; paidCents: number; resultCents: number; // VAT charged, VAT paid, and charged minus paid (negative: a refund)
+  ticket: string; // the transfer ticket, e.g. 'ET-2026-0908-41827'
+  taxOffice: string | null; // the tax office it was sent to, as the tax number gave it then (null: it gave none); the receipt shows this, whatever the number is later
+}
+/** What a category adds up to in a year: the category's label, SKR03 account and German name (a `Booking`'s), and the amount. */
+export interface CategoryTotal { labelKey: string; skr03: string; nameDe: string; cents: number }
 export interface Business {
   id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[];
-  vatDue: { dueDate: string; amountCents: number } | null; incomeTaxReserveCents: number; revenueThisYearCents: number;
+  vatReturns: SentVatReturn[]; // the returns sent so far; the next one is calculated (see vat-return.ts), never stored
+  legalForm: 'sole' | 'gbr'; // one person's business, or a partnership under civil law (Gesellschaft bürgerlichen Rechts): decides the tax return at year end
+  /**
+   * The months of this year before the business's first payment here (net for a business that charges VAT, gross for a
+   * Kleinunternehmer), stored because no payments exist for them. The year figures (see tax-year.ts) add the payments to it.
+   */
+  yearOpening: { incomeCents: number; costsCents: number; costsByCategory: CategoryTotal[] };
+  incomeTaxReserveCents: number;
   notices: Notice[]; noticeHistory: Notice[]; categoryRules: CategoryRule[];
   history: HistoryEntry[]; // changes to the tax details and bank accounts, newest first: stored, not shown yet
 }

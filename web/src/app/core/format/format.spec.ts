@@ -1,4 +1,4 @@
-import { formatDate, formatIban, formatMoney } from './format';
+import { formatDate, formatIban, formatMoney, formatMonthRange, formatTaxPeriod } from './format';
 
 describe('formatMoney', () => {
   it('en', () => {
@@ -75,5 +75,52 @@ describe('formatIban', () => {
     expect(formatIban('DE68210501700012345678')).toBe('DE68 2105 0170 0012 3456 78');
     expect(formatIban('DE6821')).toBe('DE68 21');
     expect(formatIban('DE68')).toBe('DE68');
+  });
+});
+
+describe('formatTaxPeriod', () => {
+  const october = { start: '2026-10-01', kind: 'monthly' } as const;
+  const thirdQuarter = { start: '2026-07-01', kind: 'quarterly' } as const;
+
+  it('names a month like formatMonth does', () => {
+    expect(formatTaxPeriod(october, 'en')).toBe('October 2026');
+    expect(formatTaxPeriod(october, 'de')).toBe('Oktober 2026');
+    expect(formatTaxPeriod(october, 'ar')).toMatch(/2026/);
+  });
+
+  it('names a quarter by its number and year', () => {
+    expect(formatTaxPeriod(thirdQuarter, 'en')).toBe('Q3 2026');
+    expect(formatTaxPeriod(thirdQuarter, 'de')).toBe('3. Quartal 2026');
+    expect(formatTaxPeriod(thirdQuarter, 'ar')).toBe('الربع الثالث 2026');
+  });
+
+  it('counts the quarters from January and uses Western digits in Arabic', () => {
+    const firstOfEach = ['2026-01-01', '2026-04-01', '2026-07-01', '2026-10-01'];
+    expect(firstOfEach.map((start) => formatTaxPeriod({ start, kind: 'quarterly' }, 'en'))).toEqual([
+      'Q1 2026',
+      'Q2 2026',
+      'Q3 2026',
+      'Q4 2026',
+    ]);
+    expect(firstOfEach.map((start) => formatTaxPeriod({ start, kind: 'quarterly' }, 'ar'))).toEqual([
+      'الربع الأول 2026',
+      'الربع الثاني 2026',
+      'الربع الثالث 2026',
+      'الربع الرابع 2026',
+    ]);
+    expect(formatTaxPeriod(october, 'ar')).not.toMatch(/[٠-٩]/);
+  });
+});
+
+describe('formatMonthRange', () => {
+  it('names the months of a span, without the year', () => {
+    expect(formatMonthRange('2026-01', '2026-07', 'en')).toBe('January–July');
+    expect(formatMonthRange('2026-01', '2026-06', 'de')).toBe('Januar–Juni');
+    expect(formatMonthRange('2026-01', '2026-07', 'ar')).toBe('يناير–يوليو');
+  });
+
+  it('names a span of one month once', () => {
+    expect(formatMonthRange('2026-01', '2026-01', 'en')).toBe('January');
+    expect(formatMonthRange('2026-03', '2026-03', 'de')).toBe('März');
   });
 });

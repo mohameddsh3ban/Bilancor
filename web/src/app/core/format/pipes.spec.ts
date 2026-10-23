@@ -4,6 +4,7 @@ import { provideTranslocoTesting } from '../i18n/transloco-testing';
 import { AppDatePipe } from './date.pipe';
 import { AppMonthPipe } from './month.pipe';
 import { MoneyPipe } from './money.pipe';
+import { AppTaxPeriodPipe } from './tax-period.pipe';
 
 describe('format pipes', () => {
   beforeEach(() => {
@@ -52,5 +53,18 @@ describe('format pipes', () => {
     TestBed.inject(LanguageService).setLang('ar');
     expect(pipe.transform('2026-10')).toMatch(/2026/);
     expect(pipe.transform('2026-10')).not.toMatch(/[٠-٩]/);
+  });
+
+  it('appTaxPeriod pipe names a month or a quarter in the current language', () => {
+    const pipe = TestBed.runInInjectionContext(() => new AppTaxPeriodPipe());
+    const month = { start: '2026-10-01', end: '2026-10-31', kind: 'monthly' } as const;
+    const quarter = { start: '2026-07-01', end: '2026-09-30', kind: 'quarterly' } as const;
+    expect(pipe.transform(month)).toBe('October 2026');
+    expect(pipe.transform(quarter)).toBe('Q3 2026');
+    TestBed.inject(LanguageService).setLang('de');
+    expect(pipe.transform(month)).toBe('Oktober 2026');
+    expect(pipe.transform(quarter)).toBe('3. Quartal 2026');
+    TestBed.inject(LanguageService).setLang('ar');
+    expect(pipe.transform(quarter)).toBe('الربع الثالث 2026');
   });
 });

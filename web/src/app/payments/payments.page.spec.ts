@@ -394,6 +394,44 @@ describe('PaymentsPage', () => {
     expect(qa('payment-row').length).toBeGreaterThan(0);
   });
 
+  describe('the month in the address', () => {
+    it('?month= starts the list on that month, with its chip, and leaves it out of the address', async () => {
+      await render('/payments?month=2026-09');
+      await settle();
+      expect((q('filter-month') as HTMLSelectElement).value).toBe('2026-09');
+      expect(text(q('chip-month'))).toContain('September 2026');
+      const groups = qa('month-group');
+      expect(groups.map((g) => text(g.querySelector('[data-testid="month-title"]')))).toEqual(['September 2026']);
+      expect(qa('payment-row')).toHaveLength(4);
+      expect(TestBed.inject(Router).url).toBe('/payments');
+    });
+
+    it('keeps the other filters as they are and lets the month go again', async () => {
+      await render('/payments?month=2026-10');
+      await settle();
+      await click('chip-month-remove');
+      expect(q('chip-month')).toBeNull();
+      expect(qa('payment-row')).toHaveLength(demo.business().transactions.length);
+    });
+
+    it('ignores a month that is not a month', async () => {
+      await render('/payments?month=soon');
+      await settle();
+      expect((q('filter-month') as HTMLSelectElement).value).toBe('');
+      expect(q('chip-month')).toBeNull();
+      expect(qa('payment-row')).toHaveLength(demo.business().transactions.length);
+      expect(TestBed.inject(Router).url).toBe('/payments');
+    });
+
+    it('starts over when another business opens', async () => {
+      await render('/payments?month=2026-10');
+      await settle();
+      demo.setBusiness('cafe-linde');
+      await settle();
+      expect(q('chip-month')).toBeNull();
+    });
+  });
+
   describe('opened payment', () => {
     it('highlights the selected row in list and table and hides the list below lg', async () => {
       await render('/payments/wd-t3');

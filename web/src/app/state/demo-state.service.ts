@@ -7,6 +7,7 @@ import {
   Doc,
   HistoryEntry,
   Person,
+  SentVatReturn,
   SetupState,
   SetupSteps,
   TaxProfile,
@@ -199,6 +200,14 @@ export class DemoStateService {
         ],
       };
     });
+  }
+
+  /**
+   * Adds a VAT return that was sent to the tax office to the end of the returns of a business (the open one unless named;
+   * ignored for an unknown business). The business's current return then moves on to the period after it. Reset demo takes it back.
+   */
+  recordSentReturn(sent: SentVatReturn, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) => ({ ...business, vatReturns: [...business.vatReturns, sent] }));
   }
 
   /**

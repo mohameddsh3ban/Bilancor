@@ -6,7 +6,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { Term } from '../core/i18n/term';
 import { DEMO_TODAY } from '../data/demo-date';
-import { findTaxOffice } from '../domain/tax-details';
+import { profileTaxOffice } from '../domain/tax-details';
 import { DemoStateService } from '../state/demo-state.service';
 import { CALENDAR_YEAR } from './tax-form';
 
@@ -158,10 +158,7 @@ export class TaxAnswers {
   protected readonly done = computed(() => this.demo.setup().tax);
   protected readonly profile = computed(() => this.demo.business().taxProfile);
   /** The tax office of the saved number, from the sample table. */
-  protected readonly office = computed(() => {
-    const { taxState, taxNumber } = this.profile();
-    return taxState !== null && taxNumber !== null ? findTaxOffice(taxState, taxNumber) : null;
-  });
+  protected readonly office = computed(() => profileTaxOffice(this.profile()));
   /** The day the financial year starts, as a date of the demo year; null for the calendar year. */
   protected readonly ownYearStart = computed(() => {
     const start = this.profile().fiscalYearStart;

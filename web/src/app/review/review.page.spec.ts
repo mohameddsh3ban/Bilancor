@@ -10,6 +10,7 @@ import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { confirmBooking } from '../domain/payment-actions';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService, UNDO_MS, type ReviewAnswerResult } from '../state/review.service';
+import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ReviewCard, SAVING_MS, TICK_MS } from './review-card';
 import { SLIDE_MS } from './review-stage';
 import { settleItem } from './review-testing';
@@ -30,7 +31,12 @@ describe('ReviewPage', () => {
     localStorage.clear();
     originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
     TestBed.configureTestingModule({
-      providers: [provideTranslocoTesting(), provideRouter(routes)],
+      providers: [
+        provideTranslocoTesting(),
+        provideRouter(routes),
+        // The shell's tax reminder has its own tests; here it must not pop up over the review layer.
+        provideNoTaxReminder(),
+      ],
     });
     demo = TestBed.inject(DemoStateService);
     // The shell's "Needs you" button starts the session early; here the test does.
@@ -279,7 +285,7 @@ describe('ReviewPage', () => {
     it('goes home when there was no page before', async () => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        providers: [provideTranslocoTesting(), provideRouter(routes)],
+        providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
       });
       TestBed.inject(ReviewService);
       await render();

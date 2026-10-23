@@ -7,6 +7,7 @@ import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { READING_MS } from '../domain/document-upload';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService } from '../state/review.service';
+import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { SAVING_MS, TICK_MS, TICK_NOTE_MS } from './review-card';
 import { SLIDE_MS } from './review-stage';
 import { settleItem } from './review-testing';
@@ -24,7 +25,7 @@ describe('the review cards on the page', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideTranslocoTesting(), provideRouter(routes)],
+      providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
     demo = TestBed.inject(DemoStateService);
     review = TestBed.inject(ReviewService);

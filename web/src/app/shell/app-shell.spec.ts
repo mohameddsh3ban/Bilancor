@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -7,8 +8,13 @@ import { presetOf } from '../domain/home-cards';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection } from '../state/demo-state.testing';
 import { NoticeService } from '../state/notice.service';
+import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { AppShell } from './app-shell';
 import { ComingSoonPage } from './coming-soon.page';
+
+/** Stands in for the Taxes page, which the app gets later. */
+@Component({ template: '' })
+class TaxesStub {}
 
 describe('AppShell', () => {
   let el: HTMLElement;
@@ -23,7 +29,10 @@ describe('AppShell', () => {
           {
             path: '',
             component: AppShell,
-            children: [{ path: 'soon/:feature', component: ComingSoonPage }],
+            children: [
+              { path: 'soon/:feature', component: ComingSoonPage },
+              { path: 'taxes', component: TaxesStub },
+            ],
           },
         ]),
       ],
@@ -237,6 +246,40 @@ describe('AppShell', () => {
     expect(find().receipt).toBe('missing');
   });
 
+  describe('tax reminder', () => {
+    const reminder = () => document.body.querySelector<HTMLElement>('[role="dialog"] [data-testid="tax-reminder-list"]');
+    const press = (testId: string) => document.body.querySelector<HTMLElement>(`[data-testid="${testId}"]`)!.click();
+
+    /** The pop-up loads a moment after the first paint, and closes after its exit animation. */
+    async function expectReminder(shown: boolean): Promise<void> {
+      await vi.waitFor(async () => {
+        await settle();
+        expect(reminder() !== null).toBe(shown);
+      });
+    }
+
+    it('pops up when the app opens, over the page that opened', async () => {
+      await expectReminder(true);
+      expect(document.body.querySelector('[role="dialog"] h2')?.textContent?.trim()).toBe('2 tax returns are coming up');
+      expect(q('main').textContent).toContain('Payments');
+    });
+
+    it('Got it keeps it away for the rest of the session, and Reset demo brings it back', async () => {
+      await expectReminder(true);
+      press('tax-reminder-got-it');
+      await expectReminder(false);
+      q('[data-testid="demo-reset"]').click();
+      await expectReminder(true);
+    });
+
+    it('Open taxes in the pop-up switches business and closes it', async () => {
+      await expectReminder(true);
+      press('tax-reminder-open');
+      expect(TestBed.inject(DemoStateService).business().id).toBe('cafe-linde');
+      await expectReminder(false);
+    });
+  });
+
   it('has Upload receipt in the sidebar and the full menu', () => {
     const sidebar = q('aside');
     expect(sidebar.querySelector('a[href="/documents?add=1"]')?.textContent).toContain('Upload receipt');
@@ -261,7 +304,9 @@ describe('AppShell', () => {
 describe('AppShell and the review inbox', () => {
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideTranslocoTesting(), provideRouter(routes)] });
+    TestBed.configureTestingModule({
+      providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
+    });
   });
 
   afterEach(() => {

@@ -39,6 +39,10 @@ export const routes: Routes = [
         loadComponent: () => import('./review/review.page').then((m) => m.ReviewPage),
       },
       {
+        path: 'taxes',
+        loadComponent: () => import('./taxes/taxes.page').then((m) => m.TaxesPage),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./settings/settings.page').then((m) => m.SettingsPage),
       },
@@ -62,5 +66,9 @@ export const routes: Routes = [
   {
     path: 'print/month',
     loadComponent: () => import('./print/month-print.page').then((m) => m.MonthPrintPage),
+  },
+  {
+    path: 'print/vat-return/:periodStart',
+    loadComponent: () => import('./print/vat-receipt.page').then((m) => m.VatReceiptPage),
   },
 ];

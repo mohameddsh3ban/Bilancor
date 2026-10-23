@@ -20,7 +20,14 @@ export type TermKey =
   | 'sollVersteuerung'
   | 'steuernummer'
   | 'ustIdNr'
-  | 'finanzamt';
+  | 'finanzamt'
+  | 'umsatzsteuer'
+  | 'vorsteuer'
+  | 'elster'
+  | 'einkommensteuererklaerung'
+  | 'feststellungserklaerung'
+  | 'umsatzsteuererklaerung'
+  | 'uebertragungsprotokoll';
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({
