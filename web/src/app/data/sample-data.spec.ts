@@ -5,15 +5,13 @@ import { yearSummary } from '../domain/tax-year';
 import { periodFor, vatReturnFor } from '../domain/vat-return';
 import { GERMAN_STATES, TAX_OFFICES } from './banks';
 import { CATEGORIES, PRIVATE_IN, PRIVATE_OUT } from './categories';
-import { BUSINESSES, PERSON } from './sample-data';
+import { BUSINESSES } from './sample-data';
+import { PERSON } from './sample-person';
 import { UPLOAD_POOLS, linkedDocFor } from './sample-documents';
 
 describe('sample data', () => {
-  it('three businesses, all belonging to PERSON', () => {
-    expect(BUSINESSES.length).toBe(3);
-    for (const b of BUSINESSES) {
-      expect(PERSON.businessIds).toContain(b.id);
-    }
+  it('three businesses', () => {
+    expect(BUSINESSES.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
   });
 
   it('exactly one Kleinunternehmer, with no VAT returns', () => {
@@ -630,5 +628,90 @@ describe('sample year figures', () => {
     expect(first('weber-design')).toBe('2026-08-05');
     expect(first('sara-yoga')).toBe('2026-08-04');
     expect(first('cafe-linde')).toBe('2026-07-10');
+  });
+});
+
+describe('sample people', () => {
+  const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
+  const row = (businessId: string, memberId: string) => business(businessId).people.find((m) => m.id === memberId)!;
+
+  it("Sara's login has an email, no language yet, this device and one more, and 6 backup codes left", () => {
+    expect(PERSON).toMatchObject({ id: 'p1', firstName: 'Sara', lastName: 'Weber', email: 'sara@example.com', lang: null, backupCodesLeft: 6 });
+    expect(PERSON.devices.map((d) => [d.id, d.current, d.lastSeen])).toEqual([
+      ['d1', true, null],
+      ['d2', false, '2026-10-21'],
+    ]);
+  });
+
+  it('every business has exactly one owner', () => {
+    for (const b of BUSINESSES) {
+      expect(b.people.filter((m) => m.role === 'owner').map((m) => m.status), b.id).toEqual(['joined']);
+    }
+  });
+
+  it('Sara is a joined member of all three businesses', () => {
+    for (const b of BUSINESSES) {
+      const sara = b.people.find((m) => m.personId === PERSON.id);
+      expect(sara, b.id).toMatchObject({ name: 'Sara Weber', email: PERSON.email, status: 'joined' });
+      expect(sara!.joinedOn, b.id).not.toBeNull();
+    }
+    expect(row('weber-design', 'wd-m1').role).toBe('owner');
+    expect(row('sara-yoga', 'sy-m1').role).toBe('owner');
+    expect(business('sara-yoga').people).toHaveLength(1);
+  });
+
+  it("Café Linde's owner is Jonas Linde and Sara has full access", () => {
+    expect(row('cafe-linde', 'cl-m1')).toMatchObject({ name: 'Jonas Linde', email: 'jonas@cafe-linde.example', role: 'owner', personId: null, status: 'joined' });
+    expect(row('cafe-linde', 'cl-m2')).toMatchObject({ personId: PERSON.id, role: 'full', status: 'joined' });
+  });
+
+  it('Weber Design has a tax advisor who joined on 2 September and Sara as its owner', () => {
+    expect(business('weber-design').people.map((m) => m.id)).toEqual(['wd-m1', 'wd-m2', 'wd-m3']);
+    expect(row('weber-design', 'wd-m1')).toMatchObject({ role: 'owner', joinedOn: '2026-01-02', personId: PERSON.id });
+    expect(row('weber-design', 'wd-m2')).toMatchObject({
+      name: 'Jana Hoffmann',
+      email: 'jana@kanzlei-hoffmann.example',
+      role: 'advisor',
+      status: 'joined',
+      joinedOn: '2026-09-02',
+      personId: null,
+    });
+  });
+
+  it("Mia's invitation runs until 2026-10-27", () => {
+    expect(row('weber-design', 'wd-m3')).toMatchObject({
+      name: null,
+      email: 'mia@example.com',
+      role: 'receipts',
+      status: 'invited',
+      invitedOn: '2026-10-20',
+      expiresOn: '2026-10-27',
+      joinedOn: null,
+      personId: null,
+    });
+  });
+
+  it('a waiting row has an invitation date and an end date; a joined row has a join date and no end date', () => {
+    for (const b of BUSINESSES) {
+      for (const m of b.people) {
+        const waiting = m.status === 'invited';
+        expect(m.expiresOn !== null, `${m.id} expiresOn`).toBe(waiting);
+        expect(m.joinedOn !== null, `${m.id} joinedOn`).toBe(!waiting);
+        if (waiting) expect(m.invitedOn, `${m.id} invitedOn`).not.toBeNull();
+      }
+    }
+  });
+
+  it('member ids and emails are unique, and nobody has an email twice in a business', () => {
+    const ids = BUSINESSES.flatMap((b) => b.people.map((m) => m.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const b of BUSINESSES) {
+      const emails = b.people.map((m) => m.email);
+      expect(new Set(emails).size, b.id).toBe(emails.length);
+    }
+  });
+
+  it('support access is off everywhere', () => {
+    for (const b of BUSINESSES) expect(b.supportUntil, b.id).toBeNull();
   });
 });

@@ -15,7 +15,8 @@ import {
   TaxProfile,
   Transaction,
 } from '../data/models';
-import { BUSINESSES, PERSON } from '../data/sample-data';
+import { BUSINESSES } from '../data/sample-data';
+import { PERSON } from '../data/sample-person';
 import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection } from '../domain/bank-connection';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
@@ -26,7 +27,7 @@ const DEFAULT_BUSINESS_ID = 'weber-design';
 
 /** A fresh copy of the sample businesses, so edits never touch the shared sample data. */
 function freshBusinesses(): Business[] {
-  return structuredClone(BUSINESSES).filter((b) => PERSON.businessIds.includes(b.id));
+  return structuredClone(BUSINESSES);
 }
 
 /** The cash box of a business that has none: no payments, no balance, and no bank behind it. */

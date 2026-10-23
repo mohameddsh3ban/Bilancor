@@ -155,6 +155,26 @@
       "de": "Steuerschuldnerschaft des Leistungsempfängers",
       "explain": "عند التعامل مع عميل تجاري في دولة أخرى من الاتحاد الأوروبي لا تحصّل ضريبة ألمانية. يدفع العميل الضريبة في بلده، وتذكر الفاتورة ذلك."
     },
+    "einzelunternehmen": {
+      "label": "نشاط فردي",
+      "de": "Einzelunternehmen",
+      "explain": "نشاط تجاري يملكه شخص واحد ويديره. أنت والنشاط شخص واحد أمام القانون، لذا تتحمل المسؤولية بكل ما تملك."
+    },
+    "gbr": {
+      "label": "شراكة مدنية",
+      "de": "GbR",
+      "explain": "شراكة بين شخصين أو أكثر يديرون نشاطًا معًا دون تسجيل شركة. يتحمل جميع الشركاء ديونها."
+    },
+    "avv": {
+      "label": "اتفاقية معالجة البيانات",
+      "de": "AVV",
+      "explain": "Auftragsverarbeitungsvertrag: عقد يشترطه قانون حماية البيانات عندما تعالج شركة بيانات شخصية لحساب شركة أخرى. يحدد ما يجوز فعله بالبيانات وكيف تُحمى."
+    },
+    "steuerberater": {
+      "label": "مستشار ضرائب",
+      "de": "Steuerberater:in",
+      "explain": "مختص مرخّص في ألمانيا يقدم الاستشارات الضريبية ويقدم الإقرارات الضريبية نيابة عن الآخرين. هذا التطبيق لا يقدم نصائح ضريبية شخصية، وهذا ما يفعله مستشار الضرائب."
+    },
     "whatIs": "ما معنى {{term}}؟"
   },
   "menu": {
@@ -409,7 +429,16 @@
     "invoiceDuplicated": "نسختها من الفاتورة {{number}}",
     "paidInCash": "حددتها كمدفوعة نقدًا",
     "paysInvoice": "تسدد الفاتورة {{number}}",
-    "bookedByInvoice": "تم الترحيل كـ {{category}} لتطابق الفاتورة"
+    "bookedByInvoice": "تم الترحيل كـ {{category}} لتطابق الفاتورة",
+    "personInvited": "{{by}} دعا {{email}} بصلاحية {{role}}",
+    "invitationCancelled": "{{by}} ألغى الدعوة المرسلة إلى {{email}}",
+    "personJoined": "{{name}} انضم بصلاحية {{role}}",
+    "roleChanged": "{{by}} غيّر صلاحية {{name}} إلى {{role}}",
+    "personRemoved": "{{by}} أزال {{name}}",
+    "personLeft": "{{name}} غادر النشاط",
+    "ownerChanged": "{{by}} نقل ملكية النشاط إلى {{name}}",
+    "supportOn": "{{by}} سمح لفريق الدعم بالاطلاع حتى {{until}}",
+    "supportOff": "{{by}} أوقف وصول فريق الدعم"
   },
   "payments": {
     "title": "المدفوعات",

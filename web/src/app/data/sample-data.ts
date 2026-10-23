@@ -18,9 +18,10 @@ import {
   TRAVEL,
   UTILITIES,
 } from './categories';
-import { Account, AccountConnection, Booking, Business, CategoryTotal, Doc, HistoryEntry, Invoice, Person, ReceiptState, Transaction } from './models';
+import { Account, AccountConnection, Booking, Business, CategoryTotal, Doc, HistoryEntry, Invoice, Member, ReceiptState, Role, Transaction } from './models';
 import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
 import { INVOICE_PROFILES, SAMPLE_INVOICES } from './sample-invoices';
+import { PERSON } from './sample-person';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
 
@@ -151,12 +152,13 @@ const CL_QONTO: Account = { id: 'cl-qonto', kind: 'bank', name: 'Qonto', balance
 const CL_SPARKASSE: Account = { id: 'cl-sparkasse', kind: 'bank', name: 'Sparkasse', balanceCents: 874512, lastUpdate: '2026-10-20', connection: statement(), product: 'business', iban: 'DE23200505500847319256' };
 const CL_CASH: Account = { id: 'cl-cash', kind: 'cash', name: 'Cash box', balanceCents: 41230, lastUpdate: '2026-10-21', connection: cashBox(), product: 'cash', iban: null };
 
-export const PERSON: Person = {
-  id: 'p1',
-  firstName: 'Sara',
-  lastName: 'Weber',
-  businessIds: ['weber-design', 'sara-yoga', 'cafe-linde'],
-};
+/** A joined member of a business: Sara (the sample person, with her login) or someone who is only a row of the demo. */
+const joined = (id: string, personId: string | null, name: string, email: string, role: Role, joinedOn: string): Member => ({
+  id, personId, name, email, role, status: 'joined', invitedOn: null, expiresOn: null, joinedOn,
+});
+/** Sara as a member of a business. */
+const sara = (id: string, role: Role, joinedOn: string): Member =>
+  joined(id, PERSON.id, `${PERSON.firstName} ${PERSON.lastName}`, PERSON.email, role, joinedOn);
 
 const BUSINESS_SPECS: BusinessSpec[] = [
   {
@@ -228,6 +230,13 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     invoices: SAMPLE_INVOICES['weber-design'],
     invoiceProfile: INVOICE_PROFILES['weber-design'],
     history: [],
+    people: [
+      sara('wd-m1', 'owner', '2026-01-02'),
+      joined('wd-m2', null, 'Jana Hoffmann', 'jana@kanzlei-hoffmann.example', 'advisor', '2026-09-02'),
+      // Invited on 20 October, and her link works until 27 October.
+      { id: 'wd-m3', personId: null, name: null, email: 'mia@example.com', role: 'receipts', status: 'invited', invitedOn: '2026-10-20', expiresOn: '2026-10-27', joinedOn: null },
+    ],
+    supportUntil: null,
   },
   {
     id: 'sara-yoga',
@@ -285,6 +294,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     invoices: SAMPLE_INVOICES['sara-yoga'],
     invoiceProfile: INVOICE_PROFILES['sara-yoga'],
     history: [],
+    people: [sara('sy-m1', 'owner', '2026-01-02')],
+    supportUntil: null,
   },
   {
     id: 'cafe-linde',
@@ -349,6 +360,12 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     invoices: SAMPLE_INVOICES['cafe-linde'],
     invoiceProfile: INVOICE_PROFILES['cafe-linde'],
     history: [],
+    // The other partner owns the business and Sara has full access, so both roles show in the demo.
+    people: [
+      joined('cl-m1', null, 'Jonas Linde', 'jonas@cafe-linde.example', 'owner', '2026-01-02'),
+      sara('cl-m2', 'full', '2026-03-16'),
+    ],
+    supportUntil: null,
   },
 ];
 

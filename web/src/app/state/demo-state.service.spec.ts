@@ -3,7 +3,8 @@ import { OFFICE, REVENUE_19, REVENUE_7, REVENUE_EU_RC, SOFTWARE, TRAVEL } from '
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, Booking, Doc, Invoice, SentVatReturn, TaxProfile, Transaction } from '../data/models';
-import { BUSINESSES, PERSON } from '../data/sample-data';
+import { BUSINESSES } from '../data/sample-data';
+import { PERSON } from '../data/sample-person';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docStatus, docsNeedingYouCount } from '../domain/document-status';
 import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
@@ -18,7 +19,7 @@ describe('DemoStateService', () => {
   it('starts with weber-design and every setup step done', () => {
     const state = TestBed.inject(DemoStateService);
     expect(state.person).toBe(PERSON);
-    expect(state.businesses.map((b) => b.id)).toEqual(PERSON.businessIds);
+    expect(state.businesses.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
     expect(state.business().id).toBe('weber-design');
     expect(state.setup()).toEqual(ALL_DONE);
   });

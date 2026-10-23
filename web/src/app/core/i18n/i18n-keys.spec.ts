@@ -36,6 +36,27 @@ describe('translation files', () => {
     expect(en.history.bankRenewed).toContain('{{bank}}');
   });
 
+  it('has a history text for every change to people and support access, naming who did it', () => {
+    const keys = [
+      'personInvited',
+      'invitationCancelled',
+      'personJoined',
+      'roleChanged',
+      'personRemoved',
+      'personLeft',
+      'ownerChanged',
+      'supportOn',
+      'supportOff',
+    ];
+    for (const lang of [en, de, ar]) {
+      const history = lang.history as Record<string, string>;
+      for (const key of keys) expect(history[key], key).toMatch(/\{\{(by|name)\}\}/);
+    }
+    expect(en.history.personInvited).toContain('{{email}}');
+    expect(en.history.personInvited).toContain('{{role}}');
+    expect(en.history.supportOn).toContain('{{until}}');
+  });
+
   it('has the German tax terms with label, de and explain', () => {
     const terms = [
       'ustva',
@@ -47,6 +68,10 @@ describe('translation files', () => {
       'ausgangsbeleg',
       'freiberufler',
       'gewerbe',
+      'einzelunternehmen',
+      'gbr',
+      'avv',
+      'steuerberater',
       'dauerfristverlaengerung',
       'istVersteuerung',
       'sollVersteuerung',

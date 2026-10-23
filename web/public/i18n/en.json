@@ -155,6 +155,26 @@
       "de": "Steuerschuldnerschaft des Leistungsempfängers",
       "explain": "For a business customer in another EU country, you do not charge German VAT. Your customer pays the VAT in their own country, and the invoice says so."
     },
+    "einzelunternehmen": {
+      "label": "Sole trader",
+      "de": "Einzelunternehmen",
+      "explain": "A business owned and run by one person. You and the business are the same in law, so you are liable with everything you own."
+    },
+    "gbr": {
+      "label": "Partnership",
+      "de": "GbR",
+      "explain": "A partnership of two or more people who run a business together without registering a company. All partners are liable for its debts."
+    },
+    "avv": {
+      "label": "Data processing agreement",
+      "de": "AVV",
+      "explain": "The Auftragsverarbeitungsvertrag: a contract that data protection law requires when one company handles personal data for another. It sets out what may be done with the data and how it is kept safe."
+    },
+    "steuerberater": {
+      "label": "Tax advisor",
+      "de": "Steuerberater:in",
+      "explain": "A licensed professional in Germany who advises on taxes and files tax returns for others. This app does not give personal tax advice; a Steuerberater:in does."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -409,7 +429,16 @@
     "invoiceDuplicated": "You copied it from invoice {{number}}",
     "paidInCash": "You marked it as paid in cash",
     "paysInvoice": "Pays invoice {{number}}",
-    "bookedByInvoice": "Booked as {{category}} to match the invoice"
+    "bookedByInvoice": "Booked as {{category}} to match the invoice",
+    "personInvited": "{{by}} invited {{email}} as {{role}}",
+    "invitationCancelled": "{{by}} cancelled the invitation for {{email}}",
+    "personJoined": "{{name}} joined as {{role}}",
+    "roleChanged": "{{by}} changed {{name}} to {{role}}",
+    "personRemoved": "{{by}} removed {{name}}",
+    "personLeft": "{{name}} left the business",
+    "ownerChanged": "{{by}} handed the business over to {{name}}",
+    "supportOn": "{{by}} let support look until {{until}}",
+    "supportOff": "{{by}} stopped support access"
   },
   "payments": {
     "title": "Payments",

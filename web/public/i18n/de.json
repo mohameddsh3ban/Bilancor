@@ -155,6 +155,26 @@
       "de": "Steuerschuldnerschaft des Leistungsempfängers",
       "explain": "Bei einem Geschäftskunden in einem anderen EU-Land berechnest du keine deutsche Umsatzsteuer. Dein Kunde zahlt die Steuer in seinem Land, und die Rechnung sagt das."
     },
+    "einzelunternehmen": {
+      "label": "Einzelunternehmen",
+      "de": "Einzelunternehmen",
+      "explain": "Ein Unternehmen, das einer Person gehört und von ihr geführt wird. Du und das Unternehmen seid rechtlich dieselbe Person, du haftest also mit allem, was du besitzt."
+    },
+    "gbr": {
+      "label": "GbR",
+      "de": "GbR",
+      "explain": "Ein Zusammenschluss von zwei oder mehr Personen, die gemeinsam ein Unternehmen führen, ohne eine Firma einzutragen. Alle Gesellschafter haften für die Schulden."
+    },
+    "avv": {
+      "label": "AVV",
+      "de": "AVV",
+      "explain": "Der Auftragsverarbeitungsvertrag: ein Vertrag, den das Datenschutzrecht verlangt, wenn ein Unternehmen personenbezogene Daten für ein anderes verarbeitet. Er regelt, was mit den Daten geschehen darf und wie sie geschützt werden."
+    },
+    "steuerberater": {
+      "label": "Steuerberater:in",
+      "de": "Steuerberater:in",
+      "explain": "Eine Person mit staatlicher Zulassung, die in Steuerfragen berät und Steuererklärungen für andere abgibt. Diese App gibt keine persönliche Steuerberatung, das tun Steuerberater:innen."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -409,7 +429,16 @@
     "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
     "paidInCash": "Du hast sie als bar bezahlt markiert",
     "paysInvoice": "Bezahlt die Rechnung {{number}}",
-    "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht"
+    "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht",
+    "personInvited": "{{by}} hat {{email}} als {{role}} eingeladen",
+    "invitationCancelled": "{{by}} hat die Einladung an {{email}} zurückgezogen",
+    "personJoined": "{{name}} ist als {{role}} beigetreten",
+    "roleChanged": "{{by}} hat {{name}} auf {{role}} umgestellt",
+    "personRemoved": "{{by}} hat {{name}} entfernt",
+    "personLeft": "{{name}} hat das Unternehmen verlassen",
+    "ownerChanged": "{{by}} hat das Unternehmen an {{name}} übergeben",
+    "supportOn": "{{by}} hat dem Support bis {{until}} Einblick gegeben",
+    "supportOff": "{{by}} hat den Zugriff des Supports beendet"
   },
   "payments": {
     "title": "Zahlungen",
