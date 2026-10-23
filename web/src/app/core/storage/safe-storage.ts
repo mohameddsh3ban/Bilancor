@@ -24,6 +24,16 @@ export class SafeStorage {
     }
   }
 
+  /** Forgets one value, in memory and in browser storage. A key that was never set is fine. */
+  remove(key: string): void {
+    this.memory.delete(key);
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // storage blocked or missing: nothing is stored there that could come back
+    }
+  }
+
   /** Forgets every value whose key starts with `prefix`, in memory and in browser storage (demo reset). */
   removeWithPrefix(prefix: string): void {
     for (const key of [...this.memory.keys()]) {

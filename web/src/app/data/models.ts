@@ -160,7 +160,7 @@ export interface InvoiceProfile {
 }
 /** What a person can do in one business: the owner has everything; the others are Full access, Receipts only and Tax advisor (Steuerberater:in), chosen when inviting. */
 export type Role = 'owner' | 'full' | 'receipts' | 'advisor';
-/** A person with access to a business, or an invitation waiting. Only the sample person has a login; the others are rows of the demo. */
+/** A person with access to a business, or an invitation waiting. A row with a `personId` is a login (Sara, or an account made in the demo); one with null is only a row of the demo. */
 export interface Member {
   id: string; personId: string | null; // the login behind the row; null for people who are only rows in the demo
   name: string | null; email: string; role: Role; status: 'joined' | 'invited'; // name: null while waiting

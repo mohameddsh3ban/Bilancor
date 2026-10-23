@@ -5,6 +5,7 @@ import { SafeStorage } from '../core/storage/safe-storage';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { SentVatReturn } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { AccountService } from './account.service';
 import { DemoStateService } from './demo-state.service';
 import { TaxReminderService } from './tax-reminder.service';
 
@@ -221,6 +222,42 @@ describe('TaxReminderService', () => {
     expect(service.open()).toBe(false);
     demo.resetData();
     TestBed.tick();
+    expect(service.open()).toBe(true);
+  });
+
+  it('the reminder opens again on the next sign-in', () => {
+    const accounts = TestBed.inject(AccountService);
+    const service = TestBed.inject(TaxReminderService);
+    accounts.signIn('p1', false);
+    service.notNow();
+    expect(service.open()).toBe(false);
+    accounts.signOut();
+    expect(service.open()).toBe(false);
+
+    accounts.signIn('p1', false);
+    expect(service.open()).toBe(true);
+    expect(ids(service)).toEqual(['cafe-linde', 'weber-design']);
+  });
+
+  it('a sign-in opens the pop-up only when something is due, and Got it keeps it shut', () => {
+    const accounts = TestBed.inject(AccountService);
+    const service = TestBed.inject(TaxReminderService);
+    service.gotIt();
+    accounts.signIn('p1', false);
+    expect(service.due()).toEqual([]);
+    expect(service.open()).toBe(false);
+  });
+
+  it('the reminder of a person is about their own businesses', () => {
+    const accounts = TestBed.inject(AccountService);
+    const service = TestBed.inject(TaxReminderService);
+    const personId = accounts.createPerson({ firstName: 'Mia', lastName: 'Becker', email: 'mia@becker.example', lang: 'en' });
+    demo.createBusiness({ personId, name: 'Mia Becker', email: 'mia@becker.example' }, { name: 'Atelier', kind: 'freelance', legalForm: 'sole' });
+    accounts.signIn(personId, false);
+    expect(service.due()).toEqual([]);
+    expect(service.open()).toBe(false);
+    accounts.signIn('p1', false);
+    expect(ids(service)).toEqual(['cafe-linde', 'weber-design']);
     expect(service.open()).toBe(true);
   });
 });

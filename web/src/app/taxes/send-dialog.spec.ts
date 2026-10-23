@@ -285,6 +285,7 @@ describe('send dialog, opened from the VAT tab', () => {
       expect(text(q('send-title'))).toBe('Sending…');
 
       demo.resetData();
+      demo.setBusiness('cafe-linde'); // Reset forgets which business was open
       await waitForTaxOffice();
 
       expect(text(q('send-title'))).toBe('Send to the tax office');

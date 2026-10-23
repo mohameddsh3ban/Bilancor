@@ -29,3 +29,8 @@ export function withConnection(
     ),
   );
 }
+
+/** For tests: a business as the service holds it now, whoever is signed in (`businesses` lists only the person's own). */
+export function businessOf(demo: DemoStateService, businessId: string): Business {
+  return (demo as unknown as { data: WritableSignal<Business[]> }).data().find((b) => b.id === businessId)!;
+}

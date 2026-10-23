@@ -67,4 +67,38 @@ describe('SafeStorage', () => {
     expect(() => storage.removeWithPrefix('mockup.a.')).not.toThrow();
     expect(storage.get('mockup.a.1')).toBeNull();
   });
+
+  it('forgets one value, and only that one', () => {
+    localStorage.clear();
+    const storage = TestBed.inject(SafeStorage);
+    storage.set('mockup.a', '1');
+    storage.set('mockup.b', '2');
+    storage.remove('mockup.a');
+    expect(storage.get('mockup.a')).toBeNull();
+    expect(localStorage.getItem('mockup.a')).toBeNull();
+    expect(storage.get('mockup.b')).toBe('2');
+  });
+
+  it('forgets a value an earlier visit left in localStorage, and a missing key is fine', () => {
+    localStorage.clear();
+    localStorage.setItem('mockup.old', 'x');
+    const storage = TestBed.inject(SafeStorage);
+    expect(storage.get('mockup.old')).toBe('x');
+    storage.remove('mockup.old');
+    expect(storage.get('mockup.old')).toBeNull();
+    expect(() => storage.remove('mockup.never-set')).not.toThrow();
+  });
+
+  it('forgets the memory copy when localStorage throws', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    const storage = TestBed.inject(SafeStorage);
+    storage.set('mockup.a', '1');
+    expect(() => storage.remove('mockup.a')).not.toThrow();
+    expect(storage.get('mockup.a')).toBeNull();
+  });
 });

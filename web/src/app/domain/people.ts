@@ -13,7 +13,7 @@ export const INVITE_DAYS = 7;
 export const SUPPORT_DAYS = 7;
 
 /** The roles an invitation or a role change can give: everything but the owner. */
-type GrantedRole = Exclude<Role, 'owner'>;
+export type GrantedRole = Exclude<Role, 'owner'>;
 
 /** Why an email can't be invited: it isn't an address, it already has access, or it is already invited. */
 export type InviteError = 'invalid' | 'hasAccess' | 'invited';

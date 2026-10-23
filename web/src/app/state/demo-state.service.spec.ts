@@ -15,8 +15,9 @@ import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { reviewItems } from '../domain/review-queue';
 import { yearSummary } from '../domain/tax-year';
 import { currentVatReturn, periodFor, vatReturnFor } from '../domain/vat-return';
+import { AccountService } from './account.service';
 import { DemoStateService } from './demo-state.service';
-import { withConnection as setConnection } from './demo-state.testing';
+import { businessOf, withConnection as setConnection } from './demo-state.testing';
 
 describe('DemoStateService', () => {
   it('starts with weber-design and every setup step done', () => {
@@ -1005,6 +1006,8 @@ describe('DemoStateService', () => {
       state.setBusiness('sara-yoga');
       state.addCashBox();
       state.resetData();
+      // Reset forgets which business was open, so it is opened again by name.
+      state.setBusiness('sara-yoga');
       expect(state.business().accounts.some((a) => a.kind === 'cash')).toBe(false);
     });
   });
@@ -1542,7 +1545,10 @@ describe('DemoStateService', () => {
 
     it('the transfer to the private account carries the name of the owner', () => {
       const state = TestBed.inject(DemoStateService);
-      made(state, { personId: 'p9', name: 'Omar Haddad', email: 'omar@example.com' });
+      const accounts = TestBed.inject(AccountService);
+      const personId = accounts.createPerson({ firstName: 'Omar', lastName: 'Haddad', email: 'omar@example.com', lang: 'en' });
+      accounts.signIn(personId, false);
+      made(state, { personId, name: 'Omar Haddad', email: 'omar@example.com' });
       connectAt(state);
       expect(state.business().transactions.at(-1)).toMatchObject({ counterparty: 'Omar Haddad', amountCents: -50000 });
     });
@@ -1678,6 +1684,390 @@ describe('DemoStateService', () => {
       // What is done to the open business reaches the business that is shown, so the open id must name one that exists.
       state.setSetup('new');
       expect(state.stepsOf('weber-design')).toEqual(presetSteps('new'));
+    });
+  });
+
+  describe('who is signed in, and the people of a business', () => {
+    const newPerson = { firstName: 'Mia', lastName: 'Becker', email: 'mia@becker.example', lang: 'en' } as const;
+    const input: NewBusinessInput = { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' };
+
+    /** Makes a new account and a business of its own for it, signs it in, as sign-up does; returns the account's id and the business's. */
+    function signUp(accounts: AccountService, state: DemoStateService): { personId: string; businessId: string } {
+      const personId = accounts.createPerson(newPerson);
+      const businessId = state.createBusiness({ personId, name: 'Mia Becker', email: 'mia@becker.example' }, input);
+      accounts.signIn(personId, false);
+      return { personId, businessId };
+    }
+
+    const idsOf = (state: DemoStateService) => state.businesses.map((b) => b.id);
+
+    it('the person is the signed-in one, and the sample person while nobody is', () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      expect(state.person).toBe(PERSON);
+      const { personId } = signUp(accounts, state);
+      expect(state.person.id).toBe(personId);
+      expect(state.person.firstName).toBe('Mia');
+      accounts.signOut();
+      expect(state.person).toBe(PERSON);
+    });
+
+    it("businesses lists only the person's joined memberships", () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      const { businessId } = signUp(accounts, state);
+      expect(idsOf(state)).toEqual([businessId]);
+      expect(state.business().id).toBe(businessId);
+
+      accounts.signIn('p1', false);
+      expect(idsOf(state)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
+    });
+
+    it("a waiting invitation, or a row with the person's email but no login, is not a membership", () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      // Weber Design has a waiting invitation for mia@example.com, and no login behind it.
+      const personId = accounts.createPerson({ ...newPerson, email: 'mia@example.com' });
+      accounts.signIn(personId, false);
+      expect(idsOf(state)).toEqual([]);
+      expect(state.isMemberEmail('mia@example.com')).toBe(true);
+    });
+
+    it('roleIn and myRole say what the person can do in each business, and a business left is not listed any more', () => {
+      const state = TestBed.inject(DemoStateService);
+      expect(state.myRole()).toBe('owner');
+      expect(state.roleIn('weber-design')).toBe('owner');
+      expect(state.roleIn('cafe-linde')).toBe('full');
+      expect(state.roleIn('nope')).toBeNull();
+      state.setBusiness('cafe-linde');
+      expect(state.myRole()).toBe('full');
+      state.leaveBusiness('cafe-linde');
+      expect(idsOf(state)).toEqual(['weber-design', 'sara-yoga']);
+      expect(state.roleIn('cafe-linde')).toBeNull();
+      expect(state.myRole()).toBe('owner');
+    });
+
+    it('after leaving the open business, another one opens', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      state.leaveBusiness('cafe-linde');
+      expect(state.business().id).toBe('weber-design');
+      expect(state.setup()).toEqual(ALL_DONE);
+      state.setBusiness('cafe-linde');
+      expect(state.business().id).toBe('weber-design');
+    });
+
+    it('leaving leaves a line saying who left, and leaving again changes nothing', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.leaveBusiness('cafe-linde');
+      const cafe = businessOf(state, 'cafe-linde');
+      expect(cafe.people.map((m) => m.id)).toEqual(['cl-m1']);
+      expect(cafe.history[0]).toEqual({ date: DEMO_TODAY, key: 'personLeft', params: { name: 'Sara Weber', by: 'Sara Weber' } });
+      state.leaveBusiness('cafe-linde');
+      expect(businessOf(state, 'cafe-linde')).toBe(cafe);
+    });
+
+    it('an owner cannot leave', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.leaveBusiness('weber-design');
+      state.leaveBusiness('sara-yoga');
+      expect(idsOf(state)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
+    });
+
+    it('a person keeps at least one business: the last one cannot be left', () => {
+      const state = TestBed.inject(DemoStateService);
+      // Sara hands Weber Design and Sara Weber Yoga over to people with full access and leaves them; Café Linde is her last.
+      state.changeRole('wd-m2', 'full');
+      state.makeOwner('wd-m2');
+      state.leaveBusiness('weber-design');
+      state.setBusiness('sara-yoga');
+      state.invite('lena@roth.example', 'full');
+      state.acceptInvite('sara-yoga', 'sara-yoga-m2', 'Lena Roth');
+      state.makeOwner('sara-yoga-m2');
+      state.leaveBusiness('sara-yoga');
+      expect(idsOf(state)).toEqual(['cafe-linde']);
+
+      state.leaveBusiness('cafe-linde');
+      expect(idsOf(state)).toEqual(['cafe-linde']);
+      expect(state.business().id).toBe('cafe-linde');
+      expect(state.roleIn('cafe-linde')).toBe('full');
+    });
+
+    it("a business that is not the person's, or does not exist, is ignored when leaving it", () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      const { businessId } = signUp(accounts, state);
+      accounts.signIn('p1', false);
+      const before = businessOf(state, businessId);
+      state.leaveBusiness(businessId);
+      state.leaveBusiness('nope');
+      expect(businessOf(state, businessId)).toBe(before);
+    });
+
+    it("setBusiness ignores a business that isn't the person's", () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      const { businessId } = signUp(accounts, state);
+      state.setBusiness('weber-design');
+      expect(state.business().id).toBe(businessId);
+      accounts.signIn('p1', false);
+      state.setBusiness(businessId);
+      expect(state.business().id).toBe('weber-design');
+    });
+
+    it('each person reopens the business they had open last', () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      const { personId, businessId } = signUp(accounts, state);
+      expect(state.business().id).toBe(businessId);
+
+      accounts.signIn('p1', false);
+      expect(state.business().id).toBe('cafe-linde');
+      state.setBusiness('sara-yoga');
+      accounts.signIn(personId, false);
+      expect(state.business().id).toBe(businessId);
+      accounts.signIn('p1', false);
+      expect(state.business().id).toBe('sara-yoga');
+    });
+
+    it('a person with none remembered opens their first business', () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      expect(state.business().id).toBe('weber-design');
+      const { businessId } = signUp(accounts, state);
+      expect(state.business().id).toBe(businessId);
+    });
+
+    it('the setup steps of the open business are the ones of whoever is signed in', () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      const { businessId } = signUp(accounts, state);
+      expect(state.setup()).toEqual(presetSteps('new'));
+      state.completeStep('bank');
+      expect(state.stepsOf(businessId).bank).toBe(true);
+      expect(state.stepsOf('weber-design')).toBe(ALL_DONE);
+    });
+
+    describe('the owner changes who has access', () => {
+      const weber = (state: DemoStateService) => businessOf(state, 'weber-design');
+
+      it('invite adds a waiting row with a link until 29 Oct, one history line and the person who did it', () => {
+        const state = TestBed.inject(DemoStateService);
+        expect(state.invite('Lena@Roth.example ', 'full')).toBeNull();
+        const row = weber(state).people.at(-1)!;
+        expect(row).toEqual({
+          id: 'weber-design-m4',
+          personId: null,
+          name: null,
+          email: 'lena@roth.example',
+          role: 'full',
+          status: 'invited',
+          invitedOn: DEMO_TODAY,
+          expiresOn: '2026-10-29',
+          joinedOn: null,
+        });
+        expect(weber(state).history[0]).toEqual({
+          date: DEMO_TODAY,
+          key: 'personInvited',
+          params: { email: 'lena@roth.example', role: 'full', by: 'Sara Weber' },
+        });
+      });
+
+      it('invite says why an email cannot be invited, whatever its case, and changes nothing', () => {
+        const state = TestBed.inject(DemoStateService);
+        const before = weber(state);
+        expect(state.invite('not an email', 'full')).toBe('invalid');
+        expect(state.invite(' SARA@example.com', 'full')).toBe('hasAccess');
+        expect(state.invite('Mia@Example.com', 'advisor')).toBe('invited');
+        expect(weber(state)).toBe(before);
+      });
+
+      it('invitation ids are never used twice, even after one is cancelled', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.invite('a@example.com', 'full');
+        expect(weber(state).people.at(-1)!.id).toBe('weber-design-m4');
+        state.cancelInvite('weber-design-m4');
+        state.invite('b@example.com', 'receipts');
+        expect(weber(state).people.at(-1)!.id).toBe('weber-design-m5');
+      });
+
+      it('resendInvite moves the link to 29 Oct and adds no line', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.resendInvite('wd-m3');
+        const row = weber(state).people.find((m) => m.id === 'wd-m3')!;
+        expect(row.expiresOn).toBe('2026-10-29');
+        expect(weber(state).history).toEqual([]);
+      });
+
+      it('cancelInvite takes the waiting row away with one line', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.cancelInvite('wd-m3');
+        expect(weber(state).people.map((m) => m.id)).toEqual(['wd-m1', 'wd-m2']);
+        expect(weber(state).history[0]).toEqual({
+          date: DEMO_TODAY,
+          key: 'invitationCancelled',
+          params: { email: 'mia@example.com', by: 'Sara Weber' },
+        });
+      });
+
+      it('changeRole and makeOwner follow the rules, with Sara as the one who did it', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.changeRole('wd-m2', 'full');
+        expect(weber(state).people.find((m) => m.id === 'wd-m2')!.role).toBe('full');
+        expect(weber(state).history[0]).toMatchObject({ key: 'roleChanged', params: { name: 'Jana Hoffmann', role: 'full', by: 'Sara Weber' } });
+
+        state.makeOwner('wd-m2');
+        expect(state.myRole()).toBe('full');
+        expect(weber(state).people.find((m) => m.id === 'wd-m2')!.role).toBe('owner');
+        expect(weber(state).history[0]).toMatchObject({ key: 'ownerChanged', params: { name: 'Jana Hoffmann', by: 'Sara Weber' } });
+      });
+
+      it('removeMember takes a joined person out with one line', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.removeMember('wd-m2');
+        expect(weber(state).people.map((m) => m.id)).toEqual(['wd-m1', 'wd-m3']);
+        expect(weber(state).history[0]).toMatchObject({ key: 'personRemoved', params: { name: 'Jana Hoffmann', by: 'Sara Weber' } });
+      });
+
+      it('after handing the business over, the former owner can no longer change anything', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.changeRole('wd-m2', 'full');
+        state.makeOwner('wd-m2');
+        const before = weber(state);
+        expect(state.invite('lena@roth.example', 'full')).toBeNull();
+        state.removeMember('wd-m2');
+        state.setSupportAccess(true);
+        expect(weber(state)).toBe(before);
+      });
+
+      it('setSupportAccess lets support look until 29 Oct, and stops it', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setSupportAccess(true);
+        expect(weber(state).supportUntil).toBe('2026-10-29');
+        expect(weber(state).history[0]).toEqual({ date: DEMO_TODAY, key: 'supportOn', params: { until: '2026-10-29', by: 'Sara Weber' } });
+        state.setSupportAccess(false);
+        expect(weber(state).supportUntil).toBeNull();
+        expect(weber(state).history[0]).toEqual({ date: DEMO_TODAY, key: 'supportOff', params: { by: 'Sara Weber' } });
+      });
+
+      it('in a business the person made themselves, their full name is the one who did it', () => {
+        const accounts = TestBed.inject(AccountService);
+        const state = TestBed.inject(DemoStateService);
+        const { businessId } = signUp(accounts, state);
+        expect(state.invite('lena@roth.example', 'advisor')).toBeNull();
+        const business = businessOf(state, businessId);
+        expect(business.people.at(-1)!.id).toBe(`${businessId}-m2`);
+        expect(business.history[0].params).toMatchObject({ by: 'Mia Becker' });
+      });
+
+      it("at Café Linde Sara's invite, remove and support calls change nothing", () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setBusiness('cafe-linde');
+        const before = businessOf(state, 'cafe-linde');
+        expect(state.invite('lena@roth.example', 'full')).toBeNull();
+        state.resendInvite('cl-m1');
+        state.cancelInvite('cl-m1');
+        state.changeRole('cl-m1', 'advisor');
+        state.removeMember('cl-m1');
+        state.makeOwner('cl-m2');
+        state.setSupportAccess(true);
+        expect(businessOf(state, 'cafe-linde')).toBe(before);
+        expect(before.history).toEqual([]);
+      });
+
+      it('only the open business changes', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setBusiness('sara-yoga');
+        state.setSupportAccess(true);
+        expect(businessOf(state, 'sara-yoga').supportUntil).toBe('2026-10-29');
+        expect(weber(state).supportUntil).toBeNull();
+      });
+    });
+
+    describe('acceptInvite', () => {
+      it('joins the invited person under the name they gave, whichever business is open', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setBusiness('cafe-linde');
+        expect(state.acceptInvite('weber-design', 'wd-m3', 'Mia Becker')).toBe(true);
+        const business = businessOf(state, 'weber-design');
+        expect(business.people.find((m) => m.id === 'wd-m3')).toMatchObject({
+          name: 'Mia Becker',
+          status: 'joined',
+          joinedOn: DEMO_TODAY,
+          expiresOn: null,
+        });
+        expect(business.history[0]).toMatchObject({ key: 'personJoined', params: { name: 'Mia Becker', role: 'receipts', by: 'Mia Becker' } });
+      });
+
+      it('says no for an unknown business or invitation, a joined row, and one that was accepted already', () => {
+        const state = TestBed.inject(DemoStateService);
+        const before = businessOf(state, 'weber-design');
+        expect(state.acceptInvite('nope', 'wd-m3', 'Mia')).toBe(false);
+        expect(state.acceptInvite('weber-design', 'nope', 'Mia')).toBe(false);
+        expect(state.acceptInvite('weber-design', 'wd-m2', 'Mia')).toBe(false);
+        expect(businessOf(state, 'weber-design')).toBe(before);
+        expect(state.acceptInvite('weber-design', 'wd-m3', 'Mia')).toBe(true);
+        expect(state.acceptInvite('weber-design', 'wd-m3', 'Mia')).toBe(false);
+      });
+
+      it('says no for a cancelled invitation', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.cancelInvite('wd-m3');
+        expect(state.acceptInvite('weber-design', 'wd-m3', 'Mia')).toBe(false);
+      });
+    });
+
+    describe('isMemberEmail', () => {
+      it('is true for a row of any business, joined or invited, whatever the case', () => {
+        const state = TestBed.inject(DemoStateService);
+        expect(state.isMemberEmail('jana@kanzlei-hoffmann.example')).toBe(true);
+        expect(state.isMemberEmail(' Mia@Example.COM')).toBe(true);
+        expect(state.isMemberEmail('JONAS@cafe-linde.example')).toBe(true);
+        expect(state.isMemberEmail('nobody@example.com')).toBe(false);
+      });
+
+      it('sees rows of businesses the signed-in person has no access to, and rows added by an invitation', () => {
+        const accounts = TestBed.inject(AccountService);
+        const state = TestBed.inject(DemoStateService);
+        state.invite('lena@roth.example', 'full');
+        signUp(accounts, state);
+        expect(state.isMemberEmail('lena@roth.example')).toBe(true);
+        expect(state.isMemberEmail('mia@becker.example')).toBe(true);
+      });
+    });
+
+    it("resetData brings back Sara's memberships and Weber Design's people", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.invite('lena@roth.example', 'full');
+      state.removeMember('wd-m2');
+      state.setSupportAccess(true);
+      state.setBusiness('cafe-linde');
+      state.leaveBusiness('cafe-linde');
+      expect(idsOf(state)).toEqual(['weber-design', 'sara-yoga']);
+
+      state.resetData();
+      expect(idsOf(state)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
+      const weber = state.businesses[0];
+      expect(weber.people).toEqual(BUSINESSES[0].people);
+      expect(weber.supportUntil).toBeNull();
+      expect(weber.history).toEqual([]);
+      expect(state.businesses[2].people.map((m) => m.id)).toEqual(['cl-m1', 'cl-m2']);
+    });
+
+    it('resetData forgets the businesses people had open, so each opens their first again', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      state.resetData();
+      expect(state.business().id).toBe('weber-design');
+    });
+
+    it("resetData does not sign anybody out: that is the account service's reset", () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      accounts.signIn('p1', false);
+      state.resetData();
+      expect(accounts.signedIn()).toBe(true);
     });
   });
 });

@@ -187,6 +187,7 @@ describe('TaxService', () => {
     expect(viewOf().period.start).toBe('2026-10-01');
 
     demo.resetData();
+    demo.setBusiness('cafe-linde'); // Reset forgets which business was open
     expect(returnsOf('cafe-linde')).toEqual(sample('cafe-linde').vatReturns);
     expect(viewOf()).toEqual(before);
     expect(tax.canSend(viewOf())).toBe(true);
@@ -198,6 +199,7 @@ describe('TaxService', () => {
     const firstTicket = (await first)!.ticket;
 
     demo.resetData();
+    demo.setBusiness('cafe-linde'); // Reset forgets which business was open
     const second = tax.send();
     await vi.advanceTimersByTimeAsync(SEND_MS);
     expect((await second)!.ticket).toBe(firstTicket);
@@ -207,6 +209,7 @@ describe('TaxService', () => {
     const dropped = tax.send();
     await vi.advanceTimersByTimeAsync(SEND_MS / 2);
     demo.resetData();
+    demo.setBusiness('cafe-linde'); // Reset forgets which business was open
 
     const next = tax.send();
     expect(tax.sendingFor()).toBe('cafe-linde');
