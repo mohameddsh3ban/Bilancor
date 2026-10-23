@@ -123,6 +123,20 @@
     "needsAction": "يتطلب إجراءً",
     "earlier": "سابقًا"
   },
+  "taxReminder": {
+    "title": "إقرارات ضريبية قادمة: {{count}}",
+    "titleOne": "إقرار ضريبي قادم",
+    "forPeriod": "عن {{period}}",
+    "due": "مستحق في",
+    "overdueSince": "متأخر منذ",
+    "inDays": "خلال {{days}} أيام",
+    "inOneDay": "خلال يوم واحد",
+    "today": "اليوم",
+    "openTaxes": "فتح الضرائب",
+    "gotIt": "فهمت، لا تذكّرني مرة أخرى",
+    "notNow": "ليس الآن",
+    "close": "إغلاق"
+  },
   "demo": {
     "label": "عرض تجريبي",
     "setup": "حالة الإعداد",

@@ -23,4 +23,21 @@ export class SafeStorage {
       // storage blocked or missing: the memory copy above is enough
     }
   }
+
+  /** Forgets every value whose key starts with `prefix`, in memory and in browser storage (demo reset). */
+  removeWithPrefix(prefix: string): void {
+    for (const key of [...this.memory.keys()]) {
+      if (key.startsWith(prefix)) this.memory.delete(key);
+    }
+    try {
+      const stored: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(prefix)) stored.push(key);
+      }
+      for (const key of stored) localStorage.removeItem(key);
+    } catch {
+      // storage blocked or missing: nothing is stored there that could come back
+    }
+  }
 }

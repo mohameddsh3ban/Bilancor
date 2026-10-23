@@ -123,6 +123,20 @@
     "needsAction": "Needs action",
     "earlier": "Earlier"
   },
+  "taxReminder": {
+    "title": "{{count}} tax returns are coming up",
+    "titleOne": "A tax return is coming up",
+    "forPeriod": "for {{period}}",
+    "due": "Due",
+    "overdueSince": "Overdue since",
+    "inDays": "in {{days}} days",
+    "inOneDay": "in 1 day",
+    "today": "today",
+    "openTaxes": "Open taxes",
+    "gotIt": "Got it, don't remind me again",
+    "notNow": "Not now",
+    "close": "Close"
+  },
   "demo": {
     "label": "Demo",
     "setup": "Setup state",

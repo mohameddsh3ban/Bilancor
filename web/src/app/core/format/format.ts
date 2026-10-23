@@ -45,3 +45,18 @@ export function formatMonth(month: string, lang: Lang): string {
     timeZone: 'UTC',
   }).format(new Date(`${month}-01`));
 }
+
+const QUARTER_WORDS_AR = ['الأول', 'الثاني', 'الثالث', 'الرابع'] as const;
+
+/**
+ * The name of a VAT period: its month and year for a monthly one ("October 2026"), its quarter and year for a quarterly
+ * one ("Q3 2026", "3. Quartal 2026", "الربع الثالث 2026"). Takes any period's start (an ISO date) and kind, such as a `TaxPeriod`.
+ */
+export function formatTaxPeriod(period: { start: string; kind: 'monthly' | 'quarterly' }, lang: Lang): string {
+  if (period.kind === 'monthly') return formatMonth(period.start.slice(0, 7), lang);
+  const year = period.start.slice(0, 4);
+  const quarter = Math.floor((Number(period.start.slice(5, 7)) - 1) / 3);
+  if (lang === 'de') return `${quarter + 1}. Quartal ${year}`;
+  if (lang === 'ar') return `الربع ${QUARTER_WORDS_AR[quarter]} ${year}`;
+  return `Q${quarter + 1} ${year}`;
+}

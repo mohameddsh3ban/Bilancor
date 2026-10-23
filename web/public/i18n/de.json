@@ -123,6 +123,20 @@
     "needsAction": "Zu erledigen",
     "earlier": "Früher"
   },
+  "taxReminder": {
+    "title": "{{count}} Steuererklärungen stehen an",
+    "titleOne": "Eine Steuererklärung steht an",
+    "forPeriod": "für {{period}}",
+    "due": "Fällig am",
+    "overdueSince": "Überfällig seit",
+    "inDays": "in {{days}} Tagen",
+    "inOneDay": "in 1 Tag",
+    "today": "heute",
+    "openTaxes": "Zu den Steuern",
+    "gotIt": "Verstanden, nicht mehr erinnern",
+    "notNow": "Jetzt nicht",
+    "close": "Schließen"
+  },
   "demo": {
     "label": "Demo",
     "setup": "Einrichtungsstand",
