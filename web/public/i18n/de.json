@@ -1067,7 +1067,7 @@
       "amountSaved": "Betrag gespeichert",
       "dateSaved": "Datum gespeichert",
       "nameSaved": "Name gespeichert",
-      "invoicePaid": "Rechnung bezahlt ✓"
+      "invoicePaid": "Rechnung bezahlt"
     },
     "learned": "Alles klar — {{name}} wird ab jetzt automatisch als {{category}} gebucht.",
     "learnedMore": {

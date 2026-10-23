@@ -1067,7 +1067,7 @@
       "amountSaved": "تم حفظ المبلغ",
       "dateSaved": "تم حفظ التاريخ",
       "nameSaved": "تم حفظ الاسم",
-      "invoicePaid": "تم دفع الفاتورة ✓"
+      "invoicePaid": "تم دفع الفاتورة"
     },
     "learned": "تم — سيتم ترحيل {{name}} تلقائيًا كـ {{category}} من الآن فصاعدًا.",
     "learnedMore": {

@@ -1067,7 +1067,7 @@
       "amountSaved": "Amount saved",
       "dateSaved": "Date saved",
       "nameSaved": "Name saved",
-      "invoicePaid": "Invoice paid ✓"
+      "invoicePaid": "Invoice paid"
     },
     "learned": "Got it — {{name}} will be booked as {{category}} automatically from now on.",
     "learnedMore": {

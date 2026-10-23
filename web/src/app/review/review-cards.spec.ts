@@ -135,6 +135,39 @@ describe('the review cards on the page', () => {
     expect(demo.business().invoices.find((i) => i.id === 'inv-wd-044')!.paymentIds).toEqual(['wd-t19']);
   });
 
+  it("the invoice question stays on the card while its answer shows, until the card slides away", async () => {
+    // Settle what is in front of the Kern payment, so it is the card on the page (and the last one).
+    for (
+      let item = review.current();
+      item !== null && item.id !== 'wd-t19';
+      item = review.current()
+    ) {
+      settleItem(demo, item);
+    }
+    await render();
+    vi.useFakeTimers();
+    const question = 'Is this the payment for invoice RE-2026-044 from Studio Kern?';
+    const card = q('review-card-host')!;
+    expect(text(q('card-question'))).toBe(question);
+
+    click('answer-invoice-yes');
+    play(SAVING_MS);
+
+    // The payment is linked to the invoice now, but the card still shows what it was asked and answered.
+    expect(text(q('tick-text'))).toBe('Invoice paid');
+    expect(q('review-card-host')).toBe(card);
+    expect(text(q('card-question'))).toBe(question);
+    expect(text(q('answer-invoice-yes'))).toBe('Yes');
+    expect(text(q('pick-document'))).toBe('Pick another');
+    expect(q('answer-photo')).toBeNull();
+
+    play(TICK_MS); // the card slides out with its tick still up
+    expect(text(q('card-question'))).toBe(question);
+    expect(q('answer-photo')).toBeNull();
+    play(SLIDE_MS);
+    expect(q('review-finish')).not.toBeNull();
+  });
+
   it('learning shows under the tick, the other Amazon payment leaves the queue, and the card slides on', async () => {
     await render();
     vi.useFakeTimers();

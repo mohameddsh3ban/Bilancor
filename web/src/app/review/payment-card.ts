@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  signal,
   viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -230,15 +231,26 @@ export class PaymentCard {
   });
 
   /**
-   * The invoice this payment is probably for, when the system is not certain: money coming in with no receipt, whose
-   * reference names no invoice, and whose amount is what exactly one open invoice still has to be paid. The card asks about it
-   * before it asks for a receipt. Null for every other payment (one that names its invoice is linked, not asked about).
+   * The invoice this payment is probably for, as the data says now: money coming in with no receipt, whose reference
+   * names no invoice, and whose amount is what exactly one open invoice still has to be paid. Null for every other
+   * payment (one that names its invoice is linked, not asked about), and for this one as soon as an answer changes it.
    */
-  protected readonly invoiceGuess = computed<Invoice | null>(() => {
+  private readonly liveGuess = computed<Invoice | null>(() => {
     const tx = this.payment();
     const match = tx ? invoiceMatch(this.demo.business(), tx) : null;
     return match && !match.certain ? match.invoice : null;
   });
+
+  /** The invoice the card was asking about when it was answered; see `invoiceGuess`. */
+  private readonly askedGuess = signal<Invoice | null>(null);
+
+  /**
+   * The invoice the card asks about before it asks for a receipt. Once the card is answered it keeps asking it, as the
+   * result shows, until the card leaves: Yes or a picked document link the payment, which then fits no invoice any more,
+   * and the card must not turn into the plain receipt question (and change its height) under its own tick. Undo brings the
+   * live guess back, and a card that comes back is a new one.
+   */
+  protected readonly invoiceGuess = computed<Invoice | null>(() => this.liveGuess() ?? this.askedGuess());
 
   /** What names this card to the review service, so an answer given here never lands on another card. */
   private readonly key = computed(() => reviewItemKey(this.item()));
@@ -369,6 +381,7 @@ export class PaymentCard {
 
   /** Answers the current decision with `apply`, and ticks in the same breath, as the card frame asks. */
   private answer(apply: () => void, labelKey: string, counts?: ReviewAnswerResult['counts']): void {
+    this.askedGuess.set(this.liveGuess());
     void this.review.answer(apply, { labelKey, counts }, this.key());
     this.frame()?.showTick(labelKey);
   }

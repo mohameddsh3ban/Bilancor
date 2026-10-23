@@ -441,7 +441,60 @@ describe('PaymentCard', () => {
         expect(review.summary().receiptsAdded).toBe(1);
         expect(review.lastAnswer()?.labelKey).toBe('review.result.invoicePaid');
         play(SAVING_MS);
-        expect(text(q('tick-text'))).toBe('Invoice paid ✓');
+        expect(text(q('tick-text'))).toBe('Invoice paid');
+      });
+
+      it("keeps the invoice question and its answers while the result shows, and after Undo they are still there", () => {
+        vi.useFakeTimers();
+        show('wd-t19');
+        const question = 'Is this the payment for invoice RE-2026-044 from Studio Kern?';
+        const stillAsksAboutTheInvoice = () => {
+          expect(text(q('card-question'))).toBe(question);
+          expect(text(q('answer-invoice-yes'))).toBe('Yes');
+          expect(text(q('pick-document'))).toBe('Pick another');
+          expect(text(q('answer-no-receipt'))).toBe('No receipt needed');
+          expect(q('answer-photo')).toBeNull();
+        };
+
+        click(q('answer-invoice-yes'));
+
+        // The payment pays the invoice now, so it fits no open invoice any more: the card must not notice.
+        expect(owedCents()).toBe(119000);
+        stillAsksAboutTheInvoice();
+        play(SAVING_MS);
+        expect(text(q('tick-text'))).toBe('Invoice paid');
+        stillAsksAboutTheInvoice();
+
+        review.undo();
+        fixture.detectChanges();
+
+        expect(owedCents()).toBe(357000);
+        stillAsksAboutTheInvoice();
+      });
+
+      it('keeps the invoice question after the other answers too', async () => {
+        const question = 'Is this the payment for invoice RE-2026-044 from Studio Kern?';
+        show('wd-t19');
+        click(q('pick-document'));
+        await settle();
+        vi.useFakeTimers();
+        inBody('document-picker-option')[0].click();
+        fixture.detectChanges();
+        play(SAVING_MS);
+        expect(invoice().paymentIds).toEqual(['wd-t19']);
+        expect(text(q('card-question'))).toBe(question);
+        expect(text(q('pick-document'))).toBe('Pick another');
+        expect(q('answer-photo')).toBeNull();
+
+        vi.useRealTimers();
+        demo.resetData();
+        show('wd-t19');
+        vi.useFakeTimers();
+        click(q('answer-no-receipt'));
+        play(SAVING_MS);
+        expect(tx('wd-t19').receipt).toBe('notNeeded');
+        expect(text(q('card-question'))).toBe(question);
+        expect(q('answer-photo')).toBeNull();
       });
 
       it('Undo takes the payment off the invoice again', () => {
