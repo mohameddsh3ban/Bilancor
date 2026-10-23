@@ -57,9 +57,12 @@ function compareRanks(a: Rank, b: Rank): number {
   return 0;
 }
 
-/** The payments a document could belong to, best first: receipt missing, not private, money in the document's direction. */
+/**
+ * The payments a document could belong to, best first: receipt missing, not private, money in the document's direction.
+ * None for a cancelled invoice and a cancellation invoice: no payment settles them.
+ */
 export function paymentCandidates(doc: Doc, txs: readonly Transaction[]): Transaction[] {
-  if (doc.direction === null) return [];
+  if (doc.direction === null || isClosedInvoice(doc)) return [];
   return txs
     .filter((tx) => tx.receipt === 'missing' && !tx.isPrivate && directionOfPayment(tx) === doc.direction)
     .map((tx) => ({ tx, rank: rankOf(doc, tx) }))

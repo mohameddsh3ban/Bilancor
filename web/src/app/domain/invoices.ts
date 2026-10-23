@@ -436,6 +436,28 @@ export function invoiceDocFor(invoice: Invoice, business: Business): Doc {
   };
 }
 
+/** What the document of an invoice says about its invoice besides its status: what is still to pay, that it was cancelled, or which invoice it cancels. */
+export type InvoiceDocNote = { kind: 'left'; leftCents: number } | { kind: 'cancelled' } | { kind: 'cancellation'; number: string };
+
+/**
+ * The note the document of an invoice written here carries, as Documents shows it next to the document's own status:
+ * Waiting with what is left (a partly paid invoice), Done with Cancelled, a cancellation invoice with the number it cancels.
+ * Null for a document that is not an invoice's, for an invoice nothing special happened to (open, overdue, paid), and when the
+ * invoice (or the invoice a cancellation invoice cancels) is not there.
+ */
+export function invoiceDocNote(doc: Doc, business: Business): InvoiceDocNote | null {
+  const ref = doc.invoice;
+  if (ref === null) return null;
+  const invoice = business.invoices.find((i) => i.id === ref.id);
+  if (!invoice) return null;
+  if (ref.role === 'cancellation') {
+    const original = business.invoices.find((i) => i.id === invoice.cancels);
+    return original?.number ? { kind: 'cancellation', number: original.number } : null;
+  }
+  if (ref.cancelled) return { kind: 'cancelled' };
+  return invoiceStatus(invoice, business) === 'partlyPaid' ? { kind: 'left', leftCents: leftCents(invoice, business) } : null;
+}
+
 /** The business's invoices, the most recent first (by invoice date, then number). */
 function newestFirst(invoices: readonly Invoice[]): Invoice[] {
   return [...invoices].sort((a, b) => b.issueDate.localeCompare(a.issueDate) || (b.number ?? '').localeCompare(a.number ?? ''));

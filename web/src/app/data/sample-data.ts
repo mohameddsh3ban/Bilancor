@@ -78,12 +78,29 @@ type BusinessSpec = Omit<Business, 'documents'>;
 const paysPartOfInvoice = (b: BusinessSpec, tx: Transaction): boolean =>
   b.invoices.some((invoice) => invoice.paymentIds.includes(tx.id) && invoice.docId !== `doc-${tx.id}`);
 
-/** The document of an invoice written in the app is marked as one, and carries the invoice's number. */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The day an invoice is due: its date plus the payment term. This is `dueDateOf` (domain/invoices.ts), which this file cannot import (a cycle through the banks); sample-invoices.spec.ts checks they agree. */
+const dueOn = (invoice: Invoice): string => new Date(Date.parse(invoice.issueDate) + invoice.paymentTermDays * DAY_MS).toISOString().slice(0, 10);
+
+/**
+ * The document of an invoice written in the app is marked as one, and shows the invoice: its number, its customer, the day it
+ * was issued (also the day it was added) and the day it is due (a cancellation invoice has none), so Documents reads like Invoices.
+ * The payment that paid it may have another name and date.
+ */
 function markedAsInvoice(doc: Doc, invoices: readonly Invoice[]): Doc {
   const invoice = invoices.find((candidate) => candidate.docId === doc.id);
   if (!invoice) return doc;
   const role = invoice.cancels !== null ? 'cancellation' : 'invoice';
-  return { ...doc, invoiceNo: invoice.number ?? doc.invoiceNo, invoice: { id: invoice.id, role, cancelled: invoice.cancelledBy !== null } };
+  return {
+    ...doc,
+    name: invoice.customer.name,
+    invoiceNo: invoice.number ?? doc.invoiceNo,
+    date: invoice.issueDate,
+    addedOn: invoice.issueDate,
+    dueDate: role === 'cancellation' ? null : dueOn(invoice),
+    invoice: { id: invoice.id, role, cancelled: invoice.cancelledBy !== null },
+  };
 }
 
 /**

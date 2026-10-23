@@ -1,4 +1,4 @@
-import { docStatus } from '../domain/document-status';
+import { docStatus, visibleDocuments } from '../domain/document-status';
 import { documentCandidates } from '../domain/document-matching';
 import { presetSteps } from '../domain/home-cards';
 import { decisionCount } from '../domain/home-figures';
@@ -17,6 +17,7 @@ import {
 } from '../domain/invoices';
 import { paymentStatus } from '../domain/payment-status';
 import { yearSummary } from '../domain/tax-year';
+import { DEMO_TODAY } from './demo-date';
 import type { Business, Invoice } from './models';
 import { BUSINESSES } from './sample-data';
 import { INVOICE_PROFILES, SAMPLE_INVOICES } from './sample-invoices';
@@ -299,6 +300,34 @@ describe('sample invoices', () => {
     expect(docStatus(wd.documents.find((d) => d.id === 'wd-d3')!)).toBe('overdue');
     expect(docStatus(business('cafe-linde').documents.find((d) => d.id === 'cl-d1')!)).toBe('overdue');
     expect(docStatus(business('sara-yoga').documents.find((d) => d.id === 'sy-d2')!)).toBe('waiting');
+  });
+
+  it("an invoice's document shows the invoice: its customer, its dates and its due date, so Documents reads like Invoices", () => {
+    for (const b of BUSINESSES) {
+      for (const inv of b.invoices.filter((i) => i.sentOn !== null)) {
+        const doc = b.documents.find((d) => d.id === inv.docId)!;
+        const label = `${b.id} ${inv.number}`;
+        expect(doc.name, label).toBe(inv.customer.name);
+        expect(doc.date, label).toBe(inv.issueDate);
+        expect(doc.addedOn, label).toBe(inv.issueDate);
+        expect(doc.dueDate, label).toBe(inv.cancels !== null ? null : dueDateOf(inv));
+      }
+    }
+  });
+
+  it('Documents and Invoices agree on every sent sample invoice: its status, its due date and what is owed', () => {
+    for (const b of BUSINESSES) {
+      for (const inv of b.invoices.filter((i) => i.sentOn !== null)) {
+        const doc = b.documents.find((d) => d.id === inv.docId)!;
+        const label = `${b.id} ${inv.number}`;
+        const status = invoiceStatus(inv, b);
+        const closed = status === 'paid' || status === 'cancelled' || status === 'cancellation';
+        expect(docStatus(doc), label).toBe(closed ? 'done' : dueDateOf(inv) < DEMO_TODAY ? 'overdue' : 'waiting');
+        if (inv.cancels === null) expect(doc.dueDate, label).toBe(dueDateOf(inv));
+      }
+      const owedDocs = visibleDocuments(b.documents, steps).filter((d) => d.direction === 'sent' && ['waiting', 'overdue'].includes(docStatus(d)));
+      expect(owedSummary(b, steps).owedCount, b.id).toBe(owedDocs.length);
+    }
   });
 
   it('decision counts become weber 7 / sara 3 / café 0', () => {

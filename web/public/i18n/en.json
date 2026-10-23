@@ -451,6 +451,7 @@
     "detail": {
       "back": "Payments",
       "close": "Close",
+      "paysInvoice": "Pays invoice {{number}}",
       "receipt": {
         "title": "Receipt",
         "notNeeded": "No receipt needed",
@@ -565,7 +566,11 @@
       "waiting": "Waiting for payment",
       "waitingDue": "Waiting for payment · due {{date}}",
       "overdue": "Overdue since {{date}}",
-      "done": "Done"
+      "done": "Done",
+      "waitingLeft": "Waiting for payment · {{left}} left",
+      "overdueLeft": "Overdue since {{date}} · {{left}} left",
+      "doneCancelled": "Done · Cancelled",
+      "cancellationOf": "Cancellation of {{number}}"
     },
     "needsYou": {
       "title": "Needs you · {{count}}",
@@ -624,6 +629,7 @@
         "confirm": "Confirm",
         "paid": "Paid",
         "waiting": "Waiting for payment",
+        "closed": "Closed",
         "done": "done",
         "current": "current step"
       },
@@ -657,14 +663,21 @@
         "thisOne": "This one",
         "searchAll": "Search all payments",
         "cash": "Paid in cash or privately",
-        "notThis": "Not this payment"
+        "notThis": "Not this payment",
+        "closedCancelled": "This invoice was cancelled, so no payment is needed.",
+        "closedCancellation": "A cancellation invoice needs no payment."
       },
       "picker": {
         "search": "Search payments",
         "placeholder": "Name or amount",
         "empty": "No payments match"
       },
-      "remove": "Remove"
+      "remove": "Remove",
+      "written": {
+        "title": "Written in Invoices",
+        "hint": "This document can't be changed or removed here. Open the invoice to see it or cancel it.",
+        "open": "Open invoice"
+      }
     }
   },
   "invoices": {

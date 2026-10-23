@@ -6,6 +6,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { READING_MS } from '../domain/document-upload';
+import { invoiceStatus } from '../domain/invoices';
 import { DocumentDetailPage } from '../documents/document-detail.page';
 import { DocumentsPage } from '../documents/documents.page';
 import { DemoStateService } from '../state/demo-state.service';
@@ -260,7 +261,9 @@ describe('PaymentDetailPage', () => {
     });
 
     it('a private payment offers no Change, Confirm or receipt actions', async () => {
-      // Its document has to go first: a payment with a document can't be marked private.
+      // Its document has to go first: a payment with a document can't be marked private. The document of an invoice written
+      // in Invoices can't be unlinked, so here it stands for a document that was added from a file.
+      demo.updateDocument('doc-wd-t1', (x) => ({ ...x, invoice: null }));
       demo.unlink('doc-wd-t1');
       await render('/payments/wd-t1');
       expect(d('confirm-booking')).not.toBeNull();
@@ -505,6 +508,66 @@ describe('PaymentDetailPage', () => {
       expect(historyTexts().filter((t) => t.startsWith('You linked the document'))).toHaveLength(
         1,
       );
+    });
+
+    it('payment shows Pays invoice RE-2026-041', async () => {
+      await render('/payments/wd-t1');
+      const pays = d('pays-invoice')!;
+      expect(plain(pays)).toBe('Pays invoice RE-2026-041');
+      expect(pays.getAttribute('href')).toBe('/invoices/inv-wd-041');
+      // a payment that pays no invoice says nothing of the kind
+      await harness.navigateByUrl('/payments/wd-t2');
+      await settle();
+      expect(d('pays-invoice')).toBeNull();
+    });
+
+    it('a part payment of an invoice shows Pays invoice too, though the invoice document is not linked to it', async () => {
+      demo.setBusiness('sara-yoga');
+      await render('/payments/sy-t15');
+      expect(d('open-document')).toBeNull();
+      expect(plain(d('pays-invoice'))).toBe('Pays invoice RE-2026-021');
+      expect(d('pays-invoice')!.getAttribute('href')).toBe('/invoices/inv-sy-021');
+    });
+
+    it('Pays invoice follows the language, and keeps the number left-to-right', async () => {
+      await render('/payments/wd-t1');
+      expect(text(d('pays-invoice'))).toContain(String.fromCodePoint(0x2068) + 'RE-2026-041' + String.fromCodePoint(0x2069));
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(plain(d('pays-invoice'))).toBe('Bezahlt die Rechnung RE-2026-041');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(plain(d('pays-invoice'))).toBe(ar.payments.detail.paysInvoice.replace('{{number}}', 'RE-2026-041'));
+    });
+
+    it("picking Studio Kern's document for the Kern payment pays the invoice", async () => {
+      await render('/payments/wd-t19');
+      expect(status()).toBe('Receipt missing');
+      expect(d('pays-invoice')).toBeNull();
+      await pick('Studio Kern');
+      expect(status()).toBe('Booked');
+      expect(text(d('receipt-state'))).toBe('RE-2026-044.pdf');
+      expect(plain(d('pays-invoice'))).toBe('Pays invoice RE-2026-044');
+      expect(d('pick-document')).toBeNull();
+      expect(doc('wd-d2').paymentId).toBe('wd-t19');
+      const invoice = demo.business().invoices.find((i) => i.id === 'inv-wd-044')!;
+      expect(invoice.paymentIds).toEqual(['wd-t19']);
+      expect(invoiceStatus(invoice, demo.business())).toBe('paid');
+      expect(historyTexts()[0]).toBe('Pays invoice RE-2026-044');
+      expect(d('open-document')!.getAttribute('href')).toBe('/documents/wd-d2');
+    });
+
+    it("picking the document of a partly paid invoice adds the payment to what was paid", async () => {
+      demo.setBusiness('sara-yoga');
+      const part = demo.business().transactions.find((t) => t.id === 'sy-t15')!;
+      demo.addTransaction({ ...part, id: 'sy-t90', date: '2026-10-22', receipt: 'missing', receiptFile: null, reference: 'Rest', history: [] });
+      await render('/payments/sy-t90');
+      await pick('Physio');
+      const invoice = demo.business().invoices.find((i) => i.id === 'inv-sy-021')!;
+      expect(invoice.paymentIds).toEqual(['sy-t15', 'sy-t90']);
+      expect(invoiceStatus(invoice, demo.business())).toBe('paid');
+      expect(doc('sy-d2').paymentId).toBe('sy-t90');
+      expect(plain(d('pays-invoice'))).toBe('Pays invoice RE-2026-021');
     });
 
     it('Open document goes to the linked document', async () => {

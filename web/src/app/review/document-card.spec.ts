@@ -69,9 +69,12 @@ describe('DocumentCard', () => {
     fixture.detectChanges();
   }
 
-  /** `wd-d3` as a possible duplicate of `wd-d2`, which is the oldest decision then. */
+  /**
+   * `wd-d3` as a possible duplicate of `wd-d2`, which is the oldest decision then. A duplicate is a file that was added, so it is
+   * not the document of an invoice written in Invoices (that one cannot be removed).
+   */
   function makeDuplicate(extra: Partial<Doc> = {}): void {
-    demo.updateDocument('wd-d3', (d) => ({ ...d, duplicateOf: 'wd-d2', ...extra }));
+    demo.updateDocument('wd-d3', (d) => ({ ...d, duplicateOf: 'wd-d2', invoice: null, ...extra }));
   }
 
   it('shows the paper with the unclear spot marked', () => {

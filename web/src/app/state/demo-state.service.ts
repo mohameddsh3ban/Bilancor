@@ -247,10 +247,13 @@ export class DemoStateService {
     );
   }
 
-  /** Removes a document of the open business; a document linked to a payment stays (unlink it first). */
+  /**
+   * Removes a document of the open business; a document linked to a payment stays (unlink it first), and so does the
+   * document of an invoice written in Invoices: the invoice is on record, and it keeps its document.
+   */
   removeDocument(id: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) =>
-      business.documents.some((d) => d.id === id && d.paymentId === null)
+      business.documents.some((d) => d.id === id && d.paymentId === null && d.invoice === null)
         ? { ...business, documents: business.documents.filter((d) => d.id !== id) }
         : business,
     );
@@ -259,8 +262,18 @@ export class DemoStateService {
   /**
    * Links a document to a payment of a business (the open one unless named): one change to both, one history line each.
    * Ignored when the document is linked already or the payment's receipt is not missing, so a repeated call does nothing.
+   *
+   * The document of an invoice written in Invoices is linked by paying its invoice (see `linkInvoicePayment`): the payment
+   * must be money coming in, and only the payment that completes the invoice is linked to the document, so part payments
+   * add up. A cancelled invoice, a cancellation invoice and one that is paid already take no payment.
    */
   link(docId: string, txId: string, auto = false, businessId: string = this.businessIdSignal()): void {
+    const own = this.data().find((b) => b.id === businessId);
+    const written = own?.documents.find((d) => d.id === docId)?.invoice;
+    if (written) {
+      if (own?.transactions.some((t) => t.id === txId && t.receipt === 'missing')) this.linkInvoicePayment(written.id, txId, auto, businessId);
+      return;
+    }
     this.updateBusiness(businessId, (business) => {
       const doc = business.documents.find((d) => d.id === docId);
       const tx = business.transactions.find((t) => t.id === txId);
@@ -274,12 +287,15 @@ export class DemoStateService {
     });
   }
 
-  /** Takes a document of the open business off its payment, putting the payment back as it was. Ignored when it is not linked. */
+  /**
+   * Takes a document of the open business off its payment, putting the payment back as it was. Ignored when it is not linked,
+   * and for the document of an invoice written in Invoices: the payment stays the invoice's payment.
+   */
   unlink(docId: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) => {
       const doc = business.documents.find((d) => d.id === docId);
       const tx = doc?.paymentId ? business.transactions.find((t) => t.id === doc.paymentId) : undefined;
-      if (!doc || !tx) return business;
+      if (!doc || !tx || doc.invoice !== null) return business;
       const unlinked = unlinkDocument(doc, tx);
       return {
         ...business,

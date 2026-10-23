@@ -376,6 +376,25 @@ describe('PaymentCard', () => {
       expect(text(q('tick-text'))).toBe('Receipt added');
     });
 
+    it("picking Studio Kern's document for the Kern payment pays the invoice", async () => {
+      show('wd-t19');
+      click(q('pick-document'));
+      await settle();
+
+      const options = inBody('document-picker-option');
+      expect(text(options[0])).toContain('Studio Kern');
+      vi.useFakeTimers();
+      options[0].click();
+      fixture.detectChanges();
+
+      const invoice = demo.business().invoices.find((i) => i.id === 'inv-wd-044')!;
+      expect(invoice.paymentIds).toEqual(['wd-t19']);
+      expect(tx('wd-t19')).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf' });
+      expect(tx('wd-t19').history[0].key).toBe('paysInvoice');
+      expect(demo.documents().find((d) => d.id === 'wd-d2')!.paymentId).toBe('wd-t19');
+      expect(review.summary().receiptsAdded).toBe(1);
+    });
+
     it('does not offer to add a document when none fits: that would leave the review', async () => {
       demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));

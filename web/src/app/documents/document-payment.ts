@@ -9,6 +9,7 @@ import { MoneyPipe } from '../core/format/money.pipe';
 import { Account, Doc, Transaction } from '../data/models';
 import { accountName } from '../domain/bank-connection';
 import { paymentCandidates } from '../domain/document-matching';
+import { isClosedInvoice } from '../domain/document-status';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentPicker } from './payment-picker';
 
@@ -19,7 +20,9 @@ const SUGGESTIONS = 3;
  * The payment of a document. Not linked yet: the payments it might be (best first, at most three) each with "This
  * one", a search over all of them, and the way out for a payment that has no bank line. Linked: the payment, which
  * opens in Payments, and "Not this payment" to take the link away. While the document is still being read there is
- * nothing to link yet, so only "No payment yet." shows. Each action does something only while it still applies, so a
+ * nothing to link yet, so only "No payment yet." shows. For a cancelled invoice and a cancellation invoice no payment is
+ * looked for: it says none is needed. The document of an invoice written in Invoices cannot be unlinked ("Not this
+ * payment" is not there): the payment is the invoice's. Each action does something only while it still applies, so a
  * double tap writes one history line on each side.
  */
 @Component({
@@ -66,21 +69,27 @@ const SUGGESTIONS = 3;
             aria-hidden="true"
           />
         </a>
-        <div class="flex flex-wrap gap-2">
-          <button
-            hlmBtn
-            variant="outline"
-            size="lg"
-            type="button"
-            data-testid="unlink-payment"
-            (click)="unlink()"
-          >
-            {{ 'documents.detail.payment.notThis' | transloco }}
-          </button>
-        </div>
+        @if (doc().invoice === null) {
+          <div class="flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              variant="outline"
+              size="lg"
+              type="button"
+              data-testid="unlink-payment"
+              (click)="unlink()"
+            >
+              {{ 'documents.detail.payment.notThis' | transloco }}
+            </button>
+          </div>
+        }
       } @else if (doc().reading) {
         <p class="text-sm" data-testid="payment-intro">
           {{ 'documents.detail.payment.none' | transloco }}
+        </p>
+      } @else if (closedKey(); as closed) {
+        <p class="text-sm" data-testid="payment-closed">
+          {{ 'documents.detail.payment.' + closed | transloco }}
         </p>
       } @else {
         @if (suggestions().length > 0) {
@@ -175,6 +184,12 @@ export class DocumentPayment {
       : [],
   );
   protected readonly suggestions = computed(() => this.candidates().slice(0, SUGGESTIONS));
+  /** For a cancelled invoice and a cancellation invoice, the text that says no payment is needed (no payment is looked for); otherwise null. */
+  protected readonly closedKey = computed(() => {
+    const doc = this.doc();
+    if (!isClosedInvoice(doc)) return null;
+    return doc.invoice?.role === 'cancellation' ? 'closedCancellation' : 'closedCancelled';
+  });
 
   protected accountOf(payment: Transaction): Account | undefined {
     return this.demo.business().accounts.find((account) => account.id === payment.accountId);

@@ -23,6 +23,7 @@ import {
   effectiveVatRate,
   invoiceChecklist,
   invoiceDocFor,
+  invoiceDocNote,
   invoiceFileFormat,
   invoiceFormat,
   invoiceMatch,
@@ -1186,6 +1187,52 @@ describe('invoiceDocFor', () => {
     const d = invoiceDocFor(cancellation, business({ invoices: [original, cancellation] }));
     expect(d).toMatchObject({ amountCents: 59500, dueDate: null, invoiceNo: 'RE-2026-042', invoice: { id: 'c', role: 'cancellation', cancelled: false } });
     expect(invoiceDocFor(original, business({ invoices: [original, cancellation] })).invoice).toEqual({ id: 'o', role: 'invoice', cancelled: true });
+  });
+});
+
+describe('invoiceDocNote', () => {
+  // 500,00 net, 595,00 gross.
+  const kern = (patch: Partial<Invoice> = {}) => sent('kern', 'RE-2026-044', '2026-10-16', 50000, patch);
+  const noteOf = (b: Business, id: string) => invoiceDocNote(b.documents.find((d) => d.id === id)!, b);
+
+  it('is nothing for a document that is not an invoice written here', () => {
+    const b = business({ documents: [doc('file-doc')] });
+    expect(invoiceDocNote(b.documents[0], b)).toBeNull();
+  });
+
+  it('is nothing for an invoice that is open, overdue or paid', () => {
+    const open = kern();
+    const overdue = sent('late', 'RE-2026-039', '2026-09-01', 50000);
+    const paid = sent('paid', 'RE-2026-031', '2026-08-01', 50000, { paymentIds: ['p'] });
+    const b = businessOf([open, overdue, paid], [payment('p', 59500)]);
+    expect([noteOf(b, 'doc-kern'), noteOf(b, 'doc-late'), noteOf(b, 'doc-paid')]).toEqual([null, null, null]);
+  });
+
+  it('says what is left on a partly paid invoice, also past its due date', () => {
+    const part = kern({ paymentIds: ['p'] });
+    const late = sent('late', 'RE-2026-039', '2026-09-01', 50000, { paymentIds: ['q'] });
+    const b = businessOf([part, late], [payment('p', 30000), payment('q', 10000)]);
+    expect(noteOf(b, 'doc-kern')).toEqual({ kind: 'left', leftCents: 29500 });
+    expect(noteOf(b, 'doc-late')).toEqual({ kind: 'left', leftCents: 49500 });
+  });
+
+  it('says a cancelled invoice is cancelled', () => {
+    const original = kern({ cancelledBy: 'storno' });
+    const cancellation = sent('storno', 'RE-2026-045', '2026-10-17', -50000, { cancels: 'kern' });
+    const b = businessOf([original, cancellation]);
+    expect(noteOf(b, 'doc-kern')).toEqual({ kind: 'cancelled' });
+  });
+
+  it('names the invoice a cancellation invoice cancels', () => {
+    const original = kern({ cancelledBy: 'storno' });
+    const cancellation = sent('storno', 'RE-2026-045', '2026-10-17', -50000, { cancels: 'kern' });
+    const b = businessOf([original, cancellation]);
+    expect(noteOf(b, 'doc-storno')).toEqual({ kind: 'cancellation', number: 'RE-2026-044' });
+  });
+
+  it('is nothing when the invoice of the document is not there', () => {
+    const b = business({ documents: [invoiceDoc(kern())] });
+    expect(invoiceDocNote(b.documents[0], b)).toBeNull();
   });
 });
 

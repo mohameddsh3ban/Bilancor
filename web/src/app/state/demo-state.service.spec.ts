@@ -317,6 +317,28 @@ describe('DemoStateService', () => {
       expect(state.business()).toBe(business);
     });
 
+    it("unlink refuses the document of an invoice, so the invoice never loses the payment that paid it", () => {
+      const state = TestBed.inject(DemoStateService);
+      expect(doc(state, 'doc-wd-t1').invoice).not.toBeNull();
+      const business = state.business();
+      state.unlink('doc-wd-t1'); // a paid invoice: its document is linked to the payment
+      expect(state.business()).toBe(business);
+      expect(doc(state, 'doc-wd-t1').paymentId).toBe('wd-t1');
+      expect(payment(state, 'wd-t1').receipt).toBe('attached');
+      expect(state.business().invoices.find((i) => i.id === 'inv-wd-041')!.paymentIds).toEqual(['wd-t1']);
+    });
+
+    it("removeDocument refuses the document of an invoice, whether it is linked or still waiting", () => {
+      const state = TestBed.inject(DemoStateService);
+      const business = state.business();
+      for (const id of ['wd-d2', 'wd-d3', 'wd-d5', 'wd-d6', 'doc-wd-t1']) {
+        expect(doc(state, id).invoice, id).not.toBeNull();
+        state.removeDocument(id);
+      }
+      expect(state.business()).toBe(business);
+      expect(state.documents().some((d) => d.id === 'wd-d2')).toBe(true);
+    });
+
     it('editing documents never changes the shared sample data', () => {
       const state = TestBed.inject(DemoStateService);
       state.link('wd-d4', 'wd-t17');
@@ -1170,6 +1192,66 @@ describe('DemoStateService', () => {
       expect(invoice(state, 'inv-wd-044').history[0]).toMatchObject({ key: 'invoicePaid', params: { paymentId: 'wd-t91' } });
       expect(doc(state, 'wd-d2').paymentId).toBe('wd-t91'); // only the payment that completes it
       expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
+    });
+
+    it("link of an invoice's document pays the invoice, as linkInvoicePayment does", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.link('wd-d2', 'wd-t19');
+
+      const paid = invoice(state, 'inv-wd-044');
+      expect(paid.paymentIds).toEqual(['wd-t19']);
+      expect(invoiceStatus(paid, state.business())).toBe('paid');
+      expect(paid.history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: { paymentId: 'wd-t19' } });
+      expect(payment(state, 'wd-t19').history[0]).toEqual({ date: DEMO_TODAY, key: 'paysInvoice', params: { number: 'RE-2026-044' } });
+      expect(payment(state, 'wd-t19')).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf' });
+      expect(doc(state, 'wd-d2').paymentId).toBe('wd-t19');
+      expect(doc(state, 'wd-d2').history[0].key).toBe('linked');
+    });
+
+    it("link of an invoice's document with auto writes the automatic line on the document", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.link('wd-d2', 'wd-t19', true);
+      expect(doc(state, 'wd-d2').history[0].key).toBe('linkedAuto');
+    });
+
+    it("part payments picked for an invoice's document add up, and the payment that completes it links the document", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 100000));
+      state.addTransaction(incoming('wd-t91', 138000));
+
+      state.link('wd-d2', 'wd-t90');
+      expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('partlyPaid');
+      expect(leftCents(invoice(state, 'inv-wd-044'), state.business())).toBe(138000);
+      expect(doc(state, 'wd-d2').paymentId).toBeNull();
+      expect(docStatus(doc(state, 'wd-d2'))).toBe('waiting');
+      expect(payment(state, 'wd-t90').receipt).toBe('attached');
+
+      state.link('wd-d2', 'wd-t91');
+      expect(invoice(state, 'inv-wd-044').paymentIds).toEqual(['wd-t90', 'wd-t91']);
+      expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('paid');
+      expect(doc(state, 'wd-d2').paymentId).toBe('wd-t91');
+    });
+
+    it("link of an invoice's document needs a payment in with its receipt missing, and an invoice that still has something to pay", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 5000, { receipt: 'notNeeded' }));
+      const business = state.business();
+      state.link('wd-d2', 'wd-t3'); // money going out
+      state.link('wd-d2', 'wd-t90'); // the payment needs no receipt
+      state.link('wd-d2', 'wd-t1'); // a payment that has its receipt
+      state.link('wd-d5', 'wd-t19'); // cancelled
+      state.link('wd-d6', 'wd-t19'); // a cancellation invoice
+      state.link('doc-wd-t1', 'wd-t19'); // paid already
+      expect(state.business()).toBe(business);
+    });
+
+    it("link still links any other document the usual way: a received one, and a sent one that was added from a file", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.updateDocument('wd-d2', (d) => ({ ...d, invoice: null })); // as if it came from a file
+      state.link('wd-d2', 'wd-t19');
+      expect(doc(state, 'wd-d2').paymentId).toBe('wd-t19');
+      expect(invoice(state, 'inv-wd-044').paymentIds).toEqual([]);
+      expect(payment(state, 'wd-t19').history[0].key).toBe('receiptLinked');
     });
 
     it('a payment without a booking takes the invoice revenue booking and is confirmed', () => {

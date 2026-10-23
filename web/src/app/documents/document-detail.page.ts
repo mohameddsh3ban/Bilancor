@@ -36,7 +36,9 @@ import { DocumentSteps } from './document-steps';
 /**
  * One document of the open business, top to bottom: the scan (a drawn page), a box to type in what could not be
  * read, the header, the three steps, what was read with Edit, the booking, the payment, the history and Remove.
- * Typing in a field, booking and linking really change the sample data, and each change adds a history line. Below `lg`
+ * Typing in a field, booking and linking really change the sample data, and each change adds a history line. The document
+ * of an invoice written in Invoices is locked: it says so, opens the invoice, and has no Edit, no category change and no
+ * Remove (and no "Not this payment" once the invoice is paid), so a sent invoice can't change silently. Below `lg`
  * it is a page of its own; from `lg` it is the panel beside the list. When the document is not there (another
  * business opened, an unknown id, not shown in this setup state) it goes back to the list.
  */
@@ -164,6 +166,28 @@ import { DocumentSteps } from './document-steps';
           </span>
         </header>
 
+        @if (doc.invoice; as written) {
+          <section
+            class="bg-muted/50 border-border flex flex-col gap-2 rounded-lg border p-3"
+            data-testid="written-in-invoices"
+          >
+            <h2 class="text-sm font-medium">{{ 'documents.detail.written.title' | transloco }}</h2>
+            <p class="text-muted-foreground text-sm">
+              {{ 'documents.detail.written.hint' | transloco }}
+            </p>
+            <a
+              hlmBtn
+              variant="outline"
+              size="lg"
+              class="self-start"
+              data-testid="open-invoice"
+              [routerLink]="['/invoices', written.id]"
+            >
+              {{ 'documents.detail.written.open' | transloco }}
+            </a>
+          </section>
+        }
+
         <app-document-steps [doc]="doc" [payment]="payment()" />
 
         <app-document-fields [doc]="doc" [payment]="payment()" />
@@ -185,7 +209,7 @@ import { DocumentSteps } from './document-steps';
             </p>
           }
           <div class="flex flex-wrap items-center gap-2">
-            @if (!doc.reading) {
+            @if (!doc.reading && doc.invoice === null) {
               <app-category-picker [current]="booking()" (picked)="pick($event)" />
             }
             @if (needsConfirm()) {
@@ -211,7 +235,7 @@ import { DocumentSteps } from './document-steps';
           <app-payment-history [entries]="doc.history" [accounts]="accounts()" />
         </section>
 
-        @if (doc.paymentId === null && !doc.reading) {
+        @if (doc.paymentId === null && !doc.reading && doc.invoice === null) {
           <button
             hlmBtn
             variant="destructive"
@@ -359,10 +383,10 @@ export class DocumentDetailPage {
     }
   }
 
-  /** Takes a document that has no payment out of the list and goes back to it. */
+  /** Takes a document that has no payment out of the list and goes back to it. The document of an invoice written in Invoices stays. */
   protected remove(): void {
     const doc = this.doc();
-    if (doc === null || doc.paymentId !== null) return;
+    if (doc === null || doc.paymentId !== null || doc.invoice !== null) return;
     this.demo.removeDocument(doc.id);
     void this.router.navigateByUrl('/documents', { replaceUrl: true });
   }

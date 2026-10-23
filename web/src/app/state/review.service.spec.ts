@@ -327,7 +327,8 @@ describe('ReviewService', () => {
   });
 
   it('undo reverts the duplicate count', () => {
-    demo.updateDocument('wd-d2', (d) => ({ ...d, duplicateOf: 'wd-d3' }));
+    // A duplicate is a file that was added, not the document of an invoice written in Invoices (that one cannot be removed).
+    demo.updateDocument('wd-d2', (d) => ({ ...d, duplicateOf: 'wd-d3', invoice: null }));
     expect(review.total()).toBe(8);
     answerFirstThree();
     expect(review.current()).toMatchObject({ id: 'wd-d2', problem: 'duplicate' });

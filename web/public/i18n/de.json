@@ -451,6 +451,7 @@
     "detail": {
       "back": "Zahlungen",
       "close": "Schließen",
+      "paysInvoice": "Bezahlt die Rechnung {{number}}",
       "receipt": {
         "title": "Beleg",
         "notNeeded": "Kein Beleg nötig",
@@ -565,7 +566,11 @@
       "waiting": "Wartet auf Zahlung",
       "waitingDue": "Wartet auf Zahlung · fällig {{date}}",
       "overdue": "Überfällig seit {{date}}",
-      "done": "Erledigt"
+      "done": "Erledigt",
+      "waitingLeft": "Wartet auf Zahlung · {{left}} offen",
+      "overdueLeft": "Überfällig seit {{date}} · {{left}} offen",
+      "doneCancelled": "Erledigt · Storniert",
+      "cancellationOf": "Stornorechnung zu {{number}}"
     },
     "needsYou": {
       "title": "Braucht dich · {{count}}",
@@ -624,6 +629,7 @@
         "confirm": "Bestätigen",
         "paid": "Bezahlt",
         "waiting": "Wartet auf Zahlung",
+        "closed": "Abgeschlossen",
         "done": "erledigt",
         "current": "aktueller Schritt"
       },
@@ -657,14 +663,21 @@
         "thisOne": "Diese",
         "searchAll": "Alle Zahlungen durchsuchen",
         "cash": "Bar oder privat bezahlt",
-        "notThis": "Nicht diese Zahlung"
+        "notThis": "Nicht diese Zahlung",
+        "closedCancelled": "Diese Rechnung wurde storniert, deshalb ist keine Zahlung nötig.",
+        "closedCancellation": "Eine Stornorechnung braucht keine Zahlung."
       },
       "picker": {
         "search": "Zahlungen durchsuchen",
         "placeholder": "Name oder Betrag",
         "empty": "Keine Zahlung passt"
       },
-      "remove": "Entfernen"
+      "remove": "Entfernen",
+      "written": {
+        "title": "In Rechnungen geschrieben",
+        "hint": "Dieses Dokument lässt sich hier nicht ändern oder entfernen. Öffne die Rechnung, um sie anzusehen oder zu stornieren.",
+        "open": "Rechnung öffnen"
+      }
     }
   },
   "invoices": {
