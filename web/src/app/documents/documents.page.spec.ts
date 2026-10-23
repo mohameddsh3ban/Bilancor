@@ -601,13 +601,14 @@ describe('DocumentsPage', () => {
       expect(qa('document-row').length).toBeGreaterThan(0);
     });
 
-    it('Café Linde has everything Done and no Needs-you box', async () => {
+    it('Café Linde has no Needs-you box, and everything is Done but the invoice to Kanzlei Hoffmann, overdue', async () => {
       demo.setBusiness('cafe-linde');
       await render();
       expect(q('needs-you-box')).toBeNull();
       const statuses = qa('document-row').map((r) => text(inside(r, 'doc-status')));
       expect(statuses.length).toBeGreaterThan(0);
-      expect(new Set(statuses)).toEqual(new Set(['Done']));
+      expect(new Set(statuses)).toEqual(new Set(['Done', 'Overdue since 9 Oct']));
+      expect(statuses.filter((status) => status !== 'Done')).toEqual(['Overdue since 9 Oct']);
     });
   });
 

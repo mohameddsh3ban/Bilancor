@@ -987,7 +987,17 @@ describe('DocumentDetailPage', () => {
       expect(options('payment-picker-option')).toHaveLength(5);
     });
 
+    it("suggests Kern Studio Berlin's payment, which has no receipt yet, for Studio Kern's invoice", async () => {
+      await render('/documents/wd-d2');
+      expect(text(d('payment-intro'))).toBe('No payment yet. These might be it:');
+      const suggestions = da('payment-suggestion');
+      expect(suggestions).toHaveLength(1);
+      expect(text(inside(suggestions[0], 'suggestion-name'))).toBe('Kern Studio Berlin');
+    });
+
     it('says so when there is no matching payment, and keeps the other ways', async () => {
+      // Kern Studio Berlin's payment (wd-t19) is the match for this invoice; with its receipt not needed, no payment is left.
+      demo.updateTransaction('wd-t19', (t) => ({ ...t, receipt: 'notNeeded' }));
       await render('/documents/wd-d2');
       expect(text(d('payment-intro'))).toBe('No payment yet.');
       expect(text(d('payment-none'))).toBe('No matching payments yet');

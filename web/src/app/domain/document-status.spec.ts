@@ -72,6 +72,21 @@ describe('docStatus', () => {
     expect(docStatus(doc({ paymentId: 'wd-t3', dueDate: '2026-09-30' }))).toBe('done');
   });
 
+  it('a cancelled invoice and a cancellation invoice are done from the start, with no payment and even past their due date', () => {
+    expect(docStatus(doc({ direction: 'sent', dueDate: '2026-09-30', invoice: { id: 'i', role: 'invoice', cancelled: true } }))).toBe('done');
+    expect(docStatus(doc({ direction: 'sent', dueDate: null, invoice: { id: 'c', role: 'cancellation', cancelled: false } }))).toBe('done');
+  });
+
+  it('an invoice that is not cancelled waits or is overdue like any unlinked sent document', () => {
+    const invoice = { id: 'i', role: 'invoice', cancelled: false } as const;
+    expect(docStatus(doc({ direction: 'sent', dueDate: '2026-10-30', invoice }))).toBe('waiting');
+    expect(docStatus(doc({ direction: 'sent', dueDate: '2026-09-30', invoice }))).toBe('overdue');
+  });
+
+  it('a missing field still comes before an invoice being done', () => {
+    expect(docStatus(doc({ amountCents: null, invoice: { id: 'c', role: 'cancellation', cancelled: false } }))).toBe('checkAmount');
+  });
+
   it('an unlinked document is overdue after its due date, otherwise waiting', () => {
     expect(docStatus(doc({ dueDate: '2026-09-30' }))).toBe('overdue');
     expect(docStatus(doc({ dueDate: '2026-10-30' }))).toBe('waiting');

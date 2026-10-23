@@ -63,6 +63,7 @@ describe('MonthPrintPage', () => {
     expect(q('print-account-filter')).toBeNull();
 
     expect(rows().map((row) => cell(row, 'print-counterparty'))).toEqual([
+      'Kern Studio Berlin',
       'Müller GmbH',
       'Telekom',
       'Deutsche Bahn',
@@ -74,7 +75,7 @@ describe('MonthPrintPage', () => {
       'Coworking Mitte',
       'Amazon',
     ]);
-    expect(text(q('print-total-in'))).toBe(formatMoney(447500, 'en', { signed: true }));
+    expect(text(q('print-total-in'))).toBe(formatMoney(685500, 'en', { signed: true }));
     expect(text(q('print-total-out'))).toBe(formatMoney(-72822, 'en', { signed: true }));
     expect(q('print-total-in')!.closest('bdi[dir="ltr"]')).not.toBeNull();
     expect(q('print-total-out')!.closest('bdi[dir="ltr"]')).not.toBeNull();
@@ -82,7 +83,10 @@ describe('MonthPrintPage', () => {
 
   it('shows date, account, booking, status and signed amount in each row', async () => {
     await render('/print/month?month=2026-10');
-    const [first, , third, fourth] = rows();
+    const [kern, first, , third, fourth] = rows();
+    expect(cell(kern, 'print-date')).toBe('21 Oct');
+    expect(cell(kern, 'tx-status')).toBe('Receipt missing');
+    expect(cell(kern, 'print-amount')).toBe(formatMoney(238000, 'en', { signed: true }));
     expect(cell(first, 'print-date')).toBe('20 Oct');
     expect(cell(first, 'print-account')).toBe('Qonto');
     expect(cell(first, 'print-booking')).toBe('Revenue (19% VAT) · 8400 Erlöse 19 % USt');
@@ -134,13 +138,13 @@ describe('MonthPrintPage', () => {
 
   it('ignores the quick filter and the search, so it is always the whole month', async () => {
     await render('/print/month?month=2026-10&quick=needsYou&search=Telekom');
-    expect(rows()).toHaveLength(10);
+    expect(rows()).toHaveLength(11);
   });
 
   it('prints the edits made in the app, since the business is the one the demo state holds', async () => {
     demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
     await render('/print/month?month=2026-10');
-    expect(cell(rows()[2], 'tx-status')).toBe('Booked');
+    expect(cell(rows()[3], 'tx-status')).toBe('Booked');
   });
 
   it('prints the month of the business that is open', async () => {
@@ -156,10 +160,10 @@ describe('MonthPrintPage', () => {
     await render('/print/month?month=2026-10');
     expect(text(q('print-month'))).toBe(formatMonth('2026-10', 'de'));
     expect(text(q('print-total-in'))).toBe(
-      formatMoney(447500, 'de', { signed: true }).replace(/\s+/g, ' '),
+      formatMoney(685500, 'de', { signed: true }).replace(/\s+/g, ' '),
     );
-    expect(cell(rows()[0], 'tx-status')).toBe('Bitte bestätigen');
-    expect(cell(rows()[0], 'print-booking')).toBe('8400 Erlöse 19 % USt');
+    expect(cell(rows()[1], 'tx-status')).toBe('Bitte bestätigen');
+    expect(cell(rows()[1], 'print-booking')).toBe('8400 Erlöse 19 % USt');
     TestBed.inject(LanguageService).setLang('ar');
     await settle();
     expect(document.documentElement.dir).toBe('rtl');
@@ -226,7 +230,7 @@ describe('MonthPrintPage', () => {
     demo.updateTransaction('wd-t1', (tx) => ({ ...tx, confirmed: true }));
     await settle();
     await settle();
-    expect(cell(rows()[0], 'tx-status')).toBe('Booked');
+    expect(cell(rows()[1], 'tx-status')).toBe('Booked');
     expect(print).toHaveBeenCalledTimes(1);
   });
 });

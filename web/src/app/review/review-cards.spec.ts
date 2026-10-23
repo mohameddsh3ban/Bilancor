@@ -118,16 +118,22 @@ describe('the review cards on the page', () => {
     nextCard();
     seen.push(url());
 
-    expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review']);
+    // wd-t19: Kern Studio Berlin's payment, which has no receipt
+    expect(name()).toBe('Kern Studio Berlin');
+    click('answer-no-receipt');
+    nextCard();
+    seen.push(url());
+
+    expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review', '/review']);
     expect(url()).toBe('/review');
     expect(q('review-card')).toBeNull();
-    expect(text(q('finish-summary'))).toBe('5 decisions · 1 receipt added');
+    expect(text(q('finish-summary'))).toBe('6 decisions · 1 receipt added');
   });
 
   it('learning shows under the tick, the other Amazon payment leaves the queue, and the card slides on', async () => {
     await render();
     vi.useFakeTimers();
-    expect(text(q('review-meta'))).toBe('1 of 6 · about 6 min left');
+    expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
 
     click('answer-suggestion');
     play(SAVING_MS);
@@ -137,7 +143,7 @@ describe('the review cards on the page', () => {
     );
     expect(text(q('card-tick'))).toContain('…and 1 more Amazon payment booked.');
     // The other Amazon payment (wd-t4) was booked by the rule, so it is not a decision any more.
-    expect(review.total()).toBe(5);
+    expect(review.total()).toBe(6);
     expect(review.current()!.id).toBe('wd-t17');
     expect(name()).toBe('Amazon'); // the card is held for the tick, then slides away
     play(TICK_NOTE_MS - TICK_MS + TICK_MS); // the tick has time to be read
@@ -152,7 +158,7 @@ describe('the review cards on the page', () => {
     const card = q('review-card-host')!;
     expect(name()).toBe('Amazon');
     expect(text(q('card-question'))).toBe('What was this for?');
-    expect(text(q('review-meta'))).toBe('1 of 6 · about 6 min left');
+    expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
 
     click('answer-suggestion');
     play(SAVING_MS + TICK_NOTE_MS);
@@ -174,7 +180,7 @@ describe('the review cards on the page', () => {
 
   it('a document with two problems stays on one card too, and what was typed is not carried over', async () => {
     demo.updateDocument('wd-d1', (d) => ({ ...d, direction: null })); // no direction, and no amount
-    // Settle the payments in front of it, so the document is the one decision.
+    // Settle the payments in front of it, and the one behind it (Kern Studio Berlin's), so the document is the one decision.
     for (
       let item = review.current();
       item !== null && item.id !== 'wd-d1';
@@ -182,6 +188,7 @@ describe('the review cards on the page', () => {
     ) {
       settleItem(demo, item);
     }
+    settleItem(demo, { kind: 'payment', id: 'wd-t19', date: '2026-10-21', problem: 'noReceipt' });
     await render();
     vi.useFakeTimers();
     const card = q('review-card-host')!;

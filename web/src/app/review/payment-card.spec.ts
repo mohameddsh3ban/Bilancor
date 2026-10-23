@@ -97,7 +97,7 @@ describe('PaymentCard', () => {
     it('unclear Amazon: choosing a suggestion books it, learns, and books wd-t18 too', () => {
       vi.useFakeTimers();
       show('wd-t4'); // wd-t18, the older Amazon payment, is skipped
-      expect(queueLength()).toBe(6);
+      expect(queueLength()).toBe(7);
 
       click(all('answer-suggestion')[0]);
 
@@ -113,7 +113,7 @@ describe('PaymentCard', () => {
         { counterpartyKey: 'amazon', booking: OFFICE },
       ]);
       // Both leave the queue: one answer, two fewer decisions.
-      expect(queueLength()).toBe(4);
+      expect(queueLength()).toBe(5);
       expect(review.answered()).toBe(1);
       expect(review.lastAnswer()).toMatchObject({
         labelKey: 'review.result.booked',
@@ -270,7 +270,7 @@ describe('PaymentCard', () => {
       expect(tx('wd-t4')).toEqual(before);
       expect(review.answered()).toBe(0);
       expect(review.canUndo()).toBe(false);
-      expect(queueLength()).toBe(6);
+      expect(queueLength()).toBe(7);
     });
   });
 

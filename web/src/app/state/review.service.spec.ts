@@ -11,7 +11,7 @@ import { ReviewService, UNDO_MS, reviewItemKey } from './review.service';
 import { UploadService } from './upload.service';
 
 const ANSWER = { labelKey: 'review.answered.booked' };
-const WEBER_ORDER = ['wd-t18', 'wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1'];
+const WEBER_ORDER = ['wd-t18', 'wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t19'];
 
 describe('ReviewService', () => {
   let demo: DemoStateService;
@@ -75,9 +75,9 @@ describe('ReviewService', () => {
       problem: 'unclear',
     });
     expect(review.position()).toBe(1);
-    expect(review.total()).toBe(6);
+    expect(review.total()).toBe(7);
     expect(review.answered()).toBe(0);
-    expect(review.minutesLeft()).toBe(6);
+    expect(review.minutesLeft()).toBe(7);
     expect(review.lastAnswer()).toBeNull();
     expect(review.canUndo()).toBe(false);
     expect(review.summary()).toEqual({ decisions: 0, receiptsAdded: 0, duplicatesRemoved: 0 });
@@ -93,8 +93,8 @@ describe('ReviewService', () => {
     expect(currentId()).toBe('wd-t17');
     expect(review.answered()).toBe(1);
     expect(review.position()).toBe(2);
-    expect(review.total()).toBe(6);
-    expect(review.minutesLeft()).toBe(5);
+    expect(review.total()).toBe(7);
+    expect(review.minutesLeft()).toBe(6);
     expect(review.summary().decisions).toBe(1);
     expect(review.canUndo()).toBe(true);
     expect(review.lastAnswer()).toEqual({
@@ -107,10 +107,10 @@ describe('ReviewService', () => {
     expect(answerAll()).toEqual(WEBER_ORDER);
 
     expect(review.current()).toBeNull();
-    expect(review.answered()).toBe(6);
-    expect(review.position()).toBe(6);
-    expect(review.total()).toBe(6);
-    expect(review.summary().decisions).toBe(6);
+    expect(review.answered()).toBe(7);
+    expect(review.position()).toBe(7);
+    expect(review.total()).toBe(7);
+    expect(review.summary().decisions).toBe(7);
   });
 
   it('an item with a second problem stays current', () => {
@@ -124,7 +124,7 @@ describe('ReviewService', () => {
     expect(review.current()).toMatchObject({ id: 'wd-t3', problem: 'noReceipt' });
     expect(review.answered()).toBe(3);
     expect(review.position()).toBe(4);
-    expect(review.total()).toBe(6);
+    expect(review.total()).toBe(7);
     expect(review.canUndo()).toBe(true);
     expect(review.lastAnswer()).toEqual(ANSWER);
 
@@ -151,9 +151,9 @@ describe('ReviewService', () => {
     expect(currentId()).toBe('wd-t17');
     expect(review.answered()).toBe(0);
     expect(review.position()).toBe(1);
-    expect(review.total()).toBe(6);
+    expect(review.total()).toBe(7);
 
-    expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t18']);
+    expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t19', 'wd-t18']);
   });
 
   it('skipped items come back in the order they were skipped', () => {
@@ -161,18 +161,18 @@ describe('ReviewService', () => {
     review.skip(); // wd-t17
     review.skip(); // wd-t4
 
-    expect(answerAll()).toEqual(['wd-t3', 'wd-t1', 'wd-d1', 'wd-t18', 'wd-t17', 'wd-t4']);
+    expect(answerAll()).toEqual(['wd-t3', 'wd-t1', 'wd-d1', 'wd-t19', 'wd-t18', 'wd-t17', 'wd-t4']);
   });
 
   it('when everything is skipped, skipping goes on round the queue', () => {
-    for (let i = 0; i < 6; i++) review.skip();
+    for (let i = 0; i < 7; i++) review.skip();
     expect(currentId()).toBe('wd-t18'); // all skipped: the first skipped one comes first
 
     review.skip(); // wd-t18 goes behind the others
     expect(currentId()).toBe('wd-t17');
     expect(review.answered()).toBe(0);
-    expect(review.total()).toBe(6);
-    expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t18']);
+    expect(review.total()).toBe(7);
+    expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t19', 'wd-t18']);
   });
 
   it('skipping the only card keeps it', () => {
@@ -194,9 +194,9 @@ describe('ReviewService', () => {
     review.skip(); // wd-t18
     demo.updateTransaction('wd-t18', (tx) => changeCategory(tx, OFFICE));
 
-    expect(review.total()).toBe(5);
+    expect(review.total()).toBe(6);
     expect(review.answered()).toBe(0);
-    expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1']);
+    expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t19']);
   });
 
   it('answering with nothing to review does nothing', () => {
@@ -328,7 +328,7 @@ describe('ReviewService', () => {
 
   it('undo reverts the duplicate count', () => {
     demo.updateDocument('wd-d2', (d) => ({ ...d, duplicateOf: 'wd-d3' }));
-    expect(review.total()).toBe(7);
+    expect(review.total()).toBe(8);
     answerFirstThree();
     expect(review.current()).toMatchObject({ id: 'wd-d2', problem: 'duplicate' });
 
@@ -374,7 +374,7 @@ describe('ReviewService', () => {
     expect(paymentStatus(payment('wd-t4'))).toBe('booked');
     // The rule took wd-t4 out of the queue too, and only the card that was answered counts.
     expect(review.answered()).toBe(1);
-    expect(review.total()).toBe(5);
+    expect(review.total()).toBe(6);
     expect(currentId()).toBe('wd-t17');
     expect(review.lastAnswer()).toEqual({ ...ANSWER, learnedBookedCount: 1 });
 
@@ -382,7 +382,7 @@ describe('ReviewService', () => {
 
     expect(demo.business()).toEqual(before);
     expect(review.answered()).toBe(0);
-    expect(review.total()).toBe(6);
+    expect(review.total()).toBe(7);
     expect(currentId()).toBe('wd-t18');
   });
 
@@ -460,7 +460,7 @@ describe('ReviewService', () => {
       expect(review.answered()).toBe(0);
       expect(review.canUndo()).toBe(false);
       expect(review.lastAnswer()).toBeNull();
-      expect(review.total()).toBe(6);
+      expect(review.total()).toBe(7);
       expect(currentId()).toBe('wd-t18');
     });
 
@@ -648,8 +648,8 @@ describe('ReviewService', () => {
       expect(review.current()).toMatchObject({ id: 'wd-t18', problem: 'unclear' });
       expect(review.answered()).toBe(0);
       expect(review.position()).toBe(1);
-      expect(review.total()).toBe(6);
-      expect(review.minutesLeft()).toBe(6);
+      expect(review.total()).toBe(7);
+      expect(review.minutesLeft()).toBe(7);
       expect(review.summary()).toEqual({ decisions: 0, receiptsAdded: 0, duplicatesRemoved: 0 });
       expect(review.lastAnswer()).toBeNull();
       expect(review.canUndo()).toBe(false);
@@ -666,7 +666,7 @@ describe('ReviewService', () => {
       expect(paymentStatus(payment('wd-t18'))).toBe('unclear');
       expect(payment('wd-t17').receipt).toBe('missing');
       expect(review.answered()).toBe(0);
-      expect(review.total()).toBe(6);
+      expect(review.total()).toBe(7);
     });
 
     it('an answer after a reset can be undone', () => {
@@ -717,7 +717,7 @@ describe('ReviewService', () => {
 
       expect(review.answered()).toBe(0);
       expect(review.canUndo()).toBe(false);
-      expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1']); // wd-t17 is not skipped any more
+      expect(answerAll()).toEqual(['wd-t17', 'wd-t4', 'wd-t3', 'wd-t1', 'wd-d1', 'wd-t19']); // wd-t17 is not skipped any more
     });
   });
 });

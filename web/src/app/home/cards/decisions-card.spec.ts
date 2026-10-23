@@ -23,8 +23,8 @@ describe('DecisionsCard', () => {
 
   it('shows the count, the minutes and a Start link to the review inbox', () => {
     const el = render('weber-design');
-    expect(el.textContent).toContain('6 things need your decision');
-    expect(el.textContent).toContain('about 6 minutes');
+    expect(el.textContent).toContain('7 things need your decision');
+    expect(el.textContent).toContain('about 7 minutes');
     expect(el.querySelector('a')?.getAttribute('href')).toBe('/review');
     expect(el.querySelector('a')?.textContent).toContain('Start');
   });
@@ -37,18 +37,18 @@ describe('DecisionsCard', () => {
     expect(el.textContent).toContain(`${count} things need your decision`);
   });
 
-  it('decisions count is 6 for weber-design and drops to 5 after typing the amount', () => {
+  it('decisions count is 7 for weber-design and drops to 6 after typing the amount', () => {
     const demo = TestBed.inject(DemoStateService);
     demo.setBusiness('weber-design');
     const fixture = TestBed.createComponent(DecisionsCard);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent).toContain('6 things need your decision');
-    // Five payments need the person; the sixth thing is the receipt whose amount could not be read.
+    expect(el.textContent).toContain('7 things need your decision');
+    // Six payments need the person; the seventh thing is the receipt whose amount could not be read.
     demo.updateDocument('wd-d1', (doc) => editDocument(doc, { amountCents: 4200 }));
     fixture.detectChanges();
-    expect(el.textContent).toContain('5 things need your decision');
-    expect(el.textContent).toContain('about 5 minutes');
+    expect(el.textContent).toContain('6 things need your decision');
+    expect(el.textContent).toContain('about 6 minutes');
   });
 
   it('counts payments and documents once a bank is connected, and nothing before', () => {
@@ -57,7 +57,7 @@ describe('DecisionsCard', () => {
     demo.setSetup('halfway');
     const fixture = TestBed.createComponent(DecisionsCard);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('6 things need your decision');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('7 things need your decision');
     demo.setSetup('new');
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('All clear');

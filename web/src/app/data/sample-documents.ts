@@ -6,6 +6,7 @@ import {
   PHONE,
   RENT,
   REVENUE_19,
+  REVENUE_KU,
   SUPPLIES,
   TRAVEL,
 } from './categories';
@@ -13,6 +14,7 @@ import type { Booking, Doc, DocDirection, DocSource, HistoryEntry, PoolResult, T
 
 // All documents below are invented. Amounts are integer cents, always gross and positive.
 // This file must not import sample-data.ts: sample-data.ts imports it to attach the documents to the businesses.
+// A sent document that is an invoice written in the app is marked as one (`invoice`, and its number) by sample-data.ts, from sample-invoices.ts.
 
 /**
  * The document behind a payment that has a receipt attached, as it was read when the payment was imported:
@@ -104,10 +106,19 @@ export const EXTRA_DOCUMENTS: Record<string, Doc[]> = {
     extra({ id: 'wd-d3', file: 'RE-2026-039.pdf', source: 'file', name: 'Bäckerei Lange', direction: 'sent', invoiceNo: 'RE-2026-039', date: '2026-09-16', dueDate: '2026-09-30', cents: 119000, booking: REVENUE_19, confirmed: true }),
     // The receipt for the payment wd-t17.
     extra({ id: 'wd-d4', file: 'boettcher-quittung.pdf', source: 'file', name: 'Böttcher Bürobedarf', direction: 'received', invoiceNo: 'Q-8812', date: '2026-10-08', cents: 2380, booking: OFFICE, confirmed: false }),
+    // An invoice that was cancelled, and the cancellation invoice that cancels it: both stay on record, and no payment will settle either.
+    extra({ id: 'wd-d5', file: 'RE-2026-040.pdf', source: 'file', name: 'Agentur Nord', direction: 'sent', invoiceNo: 'RE-2026-040', date: '2026-10-01', dueDate: '2026-10-15', cents: 59500, booking: REVENUE_19, confirmed: true }),
+    extra({ id: 'wd-d6', file: 'RE-2026-042.pdf', source: 'file', name: 'Agentur Nord', direction: 'sent', invoiceNo: 'RE-2026-042', date: '2026-10-07', cents: 59500, booking: REVENUE_19, confirmed: true }),
   ],
   'sara-yoga': [
     // The invoice for the payment sy-t8.
     extra({ id: 'sy-d1', file: 'flyer-rechnung.pdf', source: 'file', name: 'Kiezdruck Druckerei', direction: 'received', invoiceNo: 'KD-3391', date: '2026-10-04', cents: 4500, booking: ADVERTISING, confirmed: false }),
+    // An invoice to a customer that is paid in part (the payment sy-t15 covers half of it), so it is not linked to a payment yet.
+    extra({ id: 'sy-d2', file: 'RE-2026-021.pdf', source: 'file', name: 'Physio Zentrum Mitte', direction: 'sent', invoiceNo: 'RE-2026-021', date: '2026-10-14', dueDate: '2026-11-13', cents: 60000, booking: REVENUE_KU, confirmed: true }),
+  ],
+  'cafe-linde': [
+    // An invoice to a customer who has not paid and was reminded once: overdue since 9 October.
+    extra({ id: 'cl-d1', file: 'RE-2026-053.pdf', source: 'file', name: 'Kanzlei Hoffmann', direction: 'sent', invoiceNo: 'RE-2026-053', date: '2026-09-25', dueDate: '2026-10-09', cents: 128520, booking: REVENUE_19, confirmed: true }),
   ],
 };
 
