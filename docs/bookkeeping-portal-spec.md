@@ -434,15 +434,58 @@ The gear menu has two groups: Unternehmen verwalten (Unternehmensdaten, Einstell
 
 The Nutzerverwaltung and Rechteverwaltung screens, and the invitation email: none exist in this account. The login and registration pages were not opened, so the account stays signed in.
 
+## Year-end and exports (Abschluss)
+
+Studied Oct 23, 2026, in the original German: the account's page by reading it only, without opening a report (opening one may generate it), and BuchhaltungsButler's public help pages on reports and exports (see Sources).
+
+Our own version, the Reports page with closing a month and the export for the tax advisor, is described in `docs/specs/2026-10-23-reports-mockup-design.md`.
+
+### What the client sees
+
+The page `/reports/` ("Diploma" in the browser translation) is short: a title with a period dropdown, **Abschluss für** each year (Gesamtes Jahr), quarter and month back to 2024, and one list, **Auswerten & Exportieren**, with six links that load a report into the page:
+
+| Report | German original | What it is |
+| --- | --- | --- |
+| Business report | Betriebswirtschaftliche Auswertung (BWA) | Monthly results, the figures on the homepage chart |
+| VAT return | Umsatzsteuer-Voranmeldung | The UStVA for the chosen period |
+| EU sales list | Zusammenfassende Meldung | Sales to businesses in other EU countries |
+| Trial balance / account sheets | SuSa-Liste / Kontenblätter | Totals and balance per account, and each account's bookings |
+| Audit export | Prüfungsexport nach GDPdU | Files for a tax audit |
+| Check a balance | Kontostand berechnen | An account's balance on a chosen day |
+
+BuchhaltungsButler's help names more under Abschluss that this account doesn't show: the EÜR, the **export of bookings and documents** (DATEV), **Festschreiben** (locking bookings), the month-end checklist (Abschluss-Cockpit, beta), the balance sheet and the asset schedule. Bilancor most likely keeps them for its own bookkeepers (likely).
+
+### How BuchhaltungsButler works (from its help pages)
+
+- **Reports are generated, not live:** choose a period, **Generieren**, wait; a long one arrives by email. Only confirmed bookings count, and unconfirmed ones only bring a warning. Each account opens its bookings and their documents, and the report downloads as CSV or PDF. The BWA has a fixed classic layout and leaves VAT out, so it differs from the EÜR, which counts VAT received and paid.
+- **EÜR:** shown only when the profit method is EÜR *and* supplier and customer accounts are switched off. The official form (Anlage EÜR, AVEÜR, SZ) is an add-on at €5.90 a month, for the years 2023–2025 only: accounts are mapped to the form's lines (suggested from SKR03/SKR04) and the return is sent to the tax office with a transfer receipt.
+- **Export for the tax advisor:** Abschluss › **Buchungssätze und Belege exportieren**: period, format **DATEV** or "BB Standardformat", "Belege anhängen", all, locked or unlocked bookings, and which accounts; **Export starten**, a download link (or an email when slow). With unconfirmed bookings it asks how to export them: as suggested plus a placeholder account for unbooked ones, all on a placeholder account, or leave them out. The DATEV export carries an XML file that links each document to its booking in the advisor's DATEV software.
+- **Locking (Festschreiben):** choose a period and confirm; locked bookings can't be changed (GoBD). The help advises locking right after each export, so later changes go out as an export of unlocked bookings only.
+- **Month-end steps:** check duplicates, unbooked payments, unbooked documents, bank balances (with "Kontostand berechnen"), the accounts in the SuSa, then lock, then the VAT return. The new checklist (beta, for Admin, tax advisor and standard user) walks through these: sections of tasks, own tasks, a save per section, **Monat abschließen** and **Monat öffnen**. Closing a month there does *not* lock its bookings, which the help warns about in a red box.
+- **Audit export (GDPdU):** a ZIP in the Audicon description standard (company sheet, journal, account sheets, chart of accounts, VAT, index.xml and its DTD). The help advises asking the tax advisor first.
+
+### What it shows
+
+- **No way to hand the books to a tax advisor:** the DATEV export isn't in this account, though a client with an advisor (or a GmbH at year end) needs exactly that.
+- **Generate and wait:** reports are made on request, sometimes by email, and the homepage figures read "Example" until a BWA has been made once.
+- **Unconfirmed bookings drop out quietly:** only confirmed bookings count, with a warning. Without a bookkeeper, every unconfirmed suggestion leaves a report short.
+- **Two kinds of "closing" that look alike:** closing a month in the checklist and locking its bookings are separate, and the help has to warn about it.
+- **The EÜR hides behind two technical settings**, and the official form costs extra and stops at 2025.
+- **Technical names with no explanation:** BWA, SuSa, ZM, GDPdU and Kontenblätter sit side by side, and the everyday reports share one list with the audit export.
+
+### Still to see
+
+Each report's own screen, whether the VAT return can be sent from here, and the locking screen: each needs a click that may create or change something in this account.
+
 ## Screens still to explore
 
-7 items are still unopened. Explore by reading and hovering only, with no button that changes data.
+6 items are still unopened. Explore by reading and hovering only, with no button that changes data.
 
 - [x] Document management: folders, list, filters, upload window, menus, document detail with its four steps, and ways to upload (Oct 22, 2026)
 - [ ] Invoicing: steps to create an invoice, templates, and e-invoice support
 - [x] Evidence: the same list as Alle Eingangsbelege (Oct 22, 2026)
 - [ ] Plant management: adding an asset and how depreciation is shown
-- [ ] Diploma: what the client sees of the year-end statements
+- [x] Diploma: the Abschluss page's period and six reports, and from the public help the EÜR, the DATEV export, locking and the month-end checklist (Oct 23, 2026)
 - [ ] Controlling (beta): which KPIs are shown
 - [ ] Notifications: types of notifications
 - [ ] Help & Contact: available support channels
@@ -607,4 +650,5 @@ The key decision is made: software only. What remains is mostly who we sell to, 
 - Accountable prices: [Norman — accounting software in Germany 2026](https://norman.finance/de/en/blog/accounting-software-comparison-germany), [Fastlancer — Accountable review](https://www.fastlancer.org/en/fastlancer-blog/accountable-review/)
 - Screenshots of the portal, October 21, 2026
 - BuchhaltungsButler help on users, October 23, 2026: [Nutzerverwaltung und Rechtevergabe](https://wissen.buchhaltungsbutler.de/hc/de/articles/11453993512733-Nutzerverwaltung-und-Rechtevergabe-nutzen), [rights of the standard roles](https://wissen.buchhaltungsbutler.de/hc/de/articles/13110056377245-%C3%9Cbersicht-Einzelne-Rechte-der-Standard-Nutzerrollen), [custom roles](https://wissen.buchhaltungsbutler.de/hc/de/articles/13124377471133-Individuelle-Nutzerrolle-erstellen), [tax-advisor access](https://wissen.buchhaltungsbutler.de/hc/de/articles/11446168108957-Steuerberater-Zugang-einrichten), [several companies](https://wissen.buchhaltungsbutler.de/hc/de/articles/11453965304349-Mehrmandantenf%C3%A4higkeit-verstehen-und-nutzen)
+- BuchhaltungsButler help on reports and exports, October 23, 2026: [BWA](https://wissen.buchhaltungsbutler.de/hc/de/articles/11473653935005-Eine-Betriebswirtschaftliche-Auswertung-BWA-erstellen-und-exportieren), [EÜR](https://wissen.buchhaltungsbutler.de/hc/de/articles/11474039285405-Eine-Einnahmen%C3%BCberschussrechnung-E%C3%9CR-erstellen-und-exportieren), [official EÜR form](https://wissen.buchhaltungsbutler.de/hc/de/articles/29104969813277-Das-amtliche-Formular-Anlage-E%C3%9CR-erstellen), [export of bookings and documents](https://wissen.buchhaltungsbutler.de/hc/de/articles/11445407988637-Buchungss%C3%A4tze-und-Belegbilder-in-unterschiedlichen-Formaten-exportieren), [GDPdU export](https://wissen.buchhaltungsbutler.de/hc/de/articles/11445774450973-GDPdU-Export-f%C3%BCr-Betriebspr%C3%BCfungen-erstellen), [check a balance](https://wissen.buchhaltungsbutler.de/hc/de/articles/11474253173021-Zahlungskonten-%C3%BCber-Kontostand-berechnen-plausibilisieren), [month-end steps](https://wissen.buchhaltungsbutler.de/hc/de/articles/11421107352989-Schritte-um-die-Buchhaltung-am-Monatsende-fertigzustellen), [month-end checklist](https://wissen.buchhaltungsbutler.de/hc/de/articles/38676182512029-Monatsabschluss-Checkliste-Beta)
 - BuchhaltungsButler per-user prices and language (third-party, not confirmed): [quasa — Lexware Office or BuchhaltungsButler](https://quasa.io/de/media/lexware-office-oder-buchhaltungsbutler-bilanzierung-kostet-deutlich-mehr), [trusted.de — BuchhaltungsButler vs billomat](https://trusted.de/buchhaltungsbutler-vs-billomat-buchhaltung)
