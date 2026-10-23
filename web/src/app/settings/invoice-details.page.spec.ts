@@ -275,8 +275,8 @@ describe('InvoiceDetailsPage', () => {
       await render('/settings/invoice');
       await type('pattern', 'R{YYYY}/{NNN}.x');
       expect(text(q('next-number'))).toBe('Next number: R2026/001.x');
-      await type('pattern', 'R{NNN}');
-      expect(text(q('next-number'))).toBe('Next number: R001');
+      await type('pattern', 'X-{NNN}/{YYYY}');
+      expect(text(q('next-number'))).toBe('Next number: X-001/2026');
     });
 
     it("a pattern without {NNN} can't be saved", async () => {
@@ -291,6 +291,25 @@ describe('InvoiceDetailsPage', () => {
       expect(q('q-numbering')!.contains(q('error-pattern'))).toBe(true);
       expect(field('pattern').getAttribute('aria-invalid')).toBe('true');
       expect(field('pattern').getAttribute('aria-describedby')).toContain('error-pattern');
+      expect(document.activeElement).toBe(field('pattern'));
+
+      await type('pattern', 'RE-{YYYY}-{NNN}');
+      expect(q('error-pattern')).toBeNull();
+      await click('save');
+      expect(router.url).toBe('/settings');
+    });
+
+    it("a pattern without {YYYY} can't be saved", async () => {
+      await render('/settings/invoice');
+      const before = profile();
+      await type('pattern', 'RE-{NNN}');
+      expect(text(q('next-number'))).toBe('');
+      await click('save');
+      expect(router.url).toBe('/settings/invoice');
+      expect(profile()).toBe(before);
+      expect(text(q('error-pattern'))).toBe(en.invoiceDetails.pattern.errorYear);
+      expect(q('q-numbering')!.contains(q('error-pattern'))).toBe(true);
+      expect(field('pattern').getAttribute('aria-invalid')).toBe('true');
       expect(document.activeElement).toBe(field('pattern'));
 
       await type('pattern', 'RE-{YYYY}-{NNN}');

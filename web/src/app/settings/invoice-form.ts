@@ -54,15 +54,16 @@ export function isIban(text: string): boolean {
 
 /**
  * The translation key of what is wrong with a number pattern, or null when it can be used: the running number `{NNN}`
- * must be in it (without it every invoice would get the same number), and `{YYYY}`, the year, is the only other thing
- * that may sit in curly brackets.
+ * must be in it (without it every invoice would get the same number), and so must the year `{YYYY}` (the numbers run
+ * per year, so a pattern without it would carry on counting into the next one). Nothing else may sit in curly brackets.
  */
 export function patternError(pattern: string): string | null {
   const text = pattern.trim();
   if (!text.includes('{NNN}')) return 'invoiceDetails.pattern.errorNumber';
-  return /[{}]/.test(text.replaceAll('{NNN}', '').replaceAll('{YYYY}', ''))
-    ? 'invoiceDetails.pattern.errorBraces'
-    : null;
+  if (/[{}]/.test(text.replaceAll('{NNN}', '').replaceAll('{YYYY}', ''))) {
+    return 'invoiceDetails.pattern.errorBraces';
+  }
+  return text.includes('{YYYY}') ? null : 'invoiceDetails.pattern.errorYear';
 }
 
 /** The words for a payment term: its own key for the terms of the choice, a general one for any other. */

@@ -63,11 +63,11 @@ describe('isIban', () => {
 });
 
 describe('patternError', () => {
-  it('needs the running number {NNN}; the year {YYYY} is up to you', () => {
+  it('needs the year {YYYY} and the running number {NNN}, wherever they sit', () => {
     expect(patternError('RE-{YYYY}-{NNN}')).toBeNull();
     expect(patternError('R{YYYY}/{NNN}.x')).toBeNull();
-    expect(patternError('{NNN}')).toBeNull();
-    expect(patternError('RE-{NNN}')).toBeNull();
+    expect(patternError('{YYYY}{NNN}')).toBeNull();
+    expect(patternError('X-{NNN}/{YYYY}')).toBeNull();
   });
 
   it('says the number is missing when there is no {NNN}, and for an empty pattern', () => {
@@ -76,6 +76,17 @@ describe('patternError', () => {
     expect(patternError('RE-{YYYY}-{NNN')).toBe('invoiceDetails.pattern.errorNumber');
     expect(patternError('')).toBe('invoiceDetails.pattern.errorNumber');
     expect(patternError('   ')).toBe('invoiceDetails.pattern.errorNumber');
+  });
+
+  it('says the year is missing when there is a {NNN} but no {YYYY}: the numbers run per year', () => {
+    expect(patternError('RE-{NNN}')).toBe('invoiceDetails.pattern.errorYear');
+    expect(patternError('{NNN}')).toBe('invoiceDetails.pattern.errorYear');
+    expect(patternError('RE-2026-{NNN}')).toBe('invoiceDetails.pattern.errorYear');
+    expect(patternError(' RE-{NNN} ')).toBe('invoiceDetails.pattern.errorYear');
+  });
+
+  it('asks for the running number first when both are missing', () => {
+    expect(patternError('RE-2026')).toBe('invoiceDetails.pattern.errorNumber');
   });
 
   it('says so when something else sits in curly brackets', () => {
@@ -161,6 +172,11 @@ describe('validateDraft', () => {
   it('refuses a pattern without {NNN}', () => {
     const result = validateDraft({ ...draftOf(PROFILE), numberPattern: 'RE-{YYYY}' }, PROFILE);
     expect(result).toEqual({ errors: { pattern: 'invoiceDetails.pattern.errorNumber' } });
+  });
+
+  it('refuses a pattern without {YYYY}', () => {
+    const result = validateDraft({ ...draftOf(PROFILE), numberPattern: 'RE-{NNN}' }, PROFILE);
+    expect(result).toEqual({ errors: { pattern: 'invoiceDetails.pattern.errorYear' } });
   });
 
   it('names every problem at once', () => {

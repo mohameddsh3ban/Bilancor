@@ -921,9 +921,10 @@
     "pattern": {
       "title": "Invoice numbers",
       "label": "Pattern",
-      "hint": "{YYYY} becomes the year and {NNN} the running number, for example RE-{YYYY}-{NNN}.",
+      "hint": "It needs {YYYY}, which becomes the year, and {NNN}, the running number, for example RE-{YYYY}-{NNN}.",
       "next": "Next number:",
       "errorNumber": "The pattern needs {NNN}, the running number. Without it every invoice would get the same number.",
+      "errorYear": "The pattern needs {YYYY}, the year. Invoice numbers start again each year.",
       "errorBraces": "Only {YYYY} and {NNN} can go in curly brackets."
     },
     "term": {

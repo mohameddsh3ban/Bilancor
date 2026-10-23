@@ -48,11 +48,11 @@ type AccountWithIban = Account & { iban: string };
  * "Invoice details" (`/settings/invoice`): what the business prints on its invoices, as cards, then Save. It shows the
  * saved details: the name and address, the bank account (taken from the connected accounts, or typed), the sender email
  * (shown only), the number pattern with the number the next invoice gets, the payment term and the invoice language.
- * Save checks the IBAN (when there is one, it must be shaped like one) and the pattern (it must have the running number
- * `{NNN}`), names each problem next to its field and keeps all that was typed; when all is well it stores the details
- * and goes back to where the page was opened from (`?from=settings`, the default, or `?from=invoice`, with
- * `&invoice=<id>` for the invoice that was open). What is typed belongs to the business that is open: another business
- * or a reset starts the form over.
+ * Save checks the IBAN (when there is one, it must be shaped like one) and the pattern (it must have the year `{YYYY}`
+ * and the running number `{NNN}`), names each problem next to its field and keeps all that was typed; when all is well
+ * it stores the details and goes back to where the page was opened from (`?from=settings`, the default, or
+ * `?from=invoice`, with `&invoice=<id>` for the invoice that was open). What is typed belongs to the business that is
+ * open: another business or a reset starts the form over.
  */
 @Component({
   selector: 'app-invoice-details-page',

@@ -921,9 +921,10 @@
     "pattern": {
       "title": "Rechnungsnummern",
       "label": "Muster",
-      "hint": "{YYYY} wird zum Jahr und {NNN} zur laufenden Nummer, zum Beispiel RE-{YYYY}-{NNN}.",
+      "hint": "Es braucht {YYYY}, das zum Jahr wird, und {NNN}, die laufende Nummer, zum Beispiel RE-{YYYY}-{NNN}.",
       "next": "Nächste Nummer:",
       "errorNumber": "Das Muster braucht {NNN}, die laufende Nummer. Ohne sie bekäme jede Rechnung dieselbe Nummer.",
+      "errorYear": "Das Muster braucht {YYYY}, das Jahr. Die Rechnungsnummern beginnen jedes Jahr neu.",
       "errorBraces": "In geschweiften Klammern dürfen nur {YYYY} und {NNN} stehen."
     },
     "term": {
