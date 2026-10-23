@@ -13,6 +13,7 @@ import {
   owedSummary,
   paidCents,
   reminderState,
+  sellerOf,
 } from '../domain/invoices';
 import { paymentStatus } from '../domain/payment-status';
 import { yearSummary } from '../domain/tax-year';
@@ -43,6 +44,15 @@ describe('sample invoices', () => {
 
   it("the profile's IBAN is the business's first bank account", () => {
     for (const b of BUSINESSES) expect(b.invoiceProfile.iban, b.id).toBe(b.accounts.find((a) => a.iban !== null)!.iban);
+  });
+
+  it("every sent invoice carries the seller's details of its business as they are in the sample; a draft has none", () => {
+    for (const b of BUSINESSES) {
+      for (const inv of b.invoices) {
+        if (inv.sentOn === null) expect(inv.seller, `${b.id} ${inv.id}`).toBeNull();
+        else expect(inv.seller, `${b.id} ${inv.number}`).toEqual(sellerOf(b));
+      }
+    }
   });
 
   it('the profile addresses are the ones in the plan', () => {

@@ -121,8 +121,13 @@ export interface InvoiceLine { description: string; quantity: number; unit: Invo
 export type ServicePeriod = { kind: 'date'; date: string } | { kind: 'month'; month: string };
 /** The note an invoice carries instead of VAT: § 19 UStG, reverse charge (a business in another EU country), or not taxable in Germany (a business outside the EU). */
 export type TaxNote = 'kleinunternehmer' | 'reverseCharge' | 'notTaxable';
+/** The seller as an invoice prints it: the business's address, email and bank account from its invoice details, and its tax number and VAT ID from its tax details. */
+export interface InvoiceSeller {
+  name: string; street: string; postcode: string; city: string; email: string;
+  iban: string | null; taxNumber: string | null; vatId: string | null;
+}
 /**
- * An invoice written in the app. A draft has no number and no `sentOn`; sending gives it both and freezes `vatRate` and `taxNote`.
+ * An invoice written in the app. A draft has no number and no `sentOn`; sending gives it both and freezes `vatRate`, `taxNote` and `seller`.
  * The status is calculated by invoiceStatus(), never stored.
  */
 export interface Invoice {
@@ -131,6 +136,7 @@ export interface Invoice {
   vatRate: 0 | 7 | 19; taxNote: TaxNote | null; // the chosen rate for a draft; the frozen effective rate and note once sent
   language: 'de' | 'en'; issueDate: string; servicePeriod: ServicePeriod; paymentTermDays: number;
   sentOn: string | null; docId: string | null; paymentIds: string[]; // docId: the sent document on Documents
+  seller: InvoiceSeller | null; // the seller as the invoice was sent with it (frozen then); null on a draft, which follows the business's details until it is sent
   reminders: { level: 1 | 2; sentOn: string }[];
   cancelledBy: string | null; cancels: string | null; // ids of the cancellation invoice, and of the invoice a cancellation invoice cancels
   history: HistoryEntry[]; // newest first

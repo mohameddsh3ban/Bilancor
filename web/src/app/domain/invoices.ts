@@ -8,6 +8,7 @@ import type {
   Invoice,
   InvoiceCustomer,
   InvoiceLine,
+  InvoiceSeller,
   SetupSteps,
   TaxNote,
   TaxProfile,
@@ -35,6 +36,18 @@ const isDraft = (invoice: Invoice): boolean => invoice.sentOn === null;
 function roundCents(value: number): number {
   // The tiny add keeps a product such as 100.49999999999999 (a half cent lost to floating point) on the half cent it should be.
   return value < 0 ? -Math.round(-value + 1e-9) : Math.round(value + 1e-9);
+}
+
+/** The seller's details as they are now: the address, email and bank account of the invoice details, and the tax number and VAT ID of the tax details. A sent invoice keeps a copy of them (see `invoiceSeller`). */
+export function sellerOf(business: Business): InvoiceSeller {
+  const { name, street, postcode, city, email, iban } = business.invoiceProfile;
+  const { taxNumber, vatId } = business.taxProfile;
+  return { name, street, postcode, city, email, iban, taxNumber, vatId };
+}
+
+/** The seller's details an invoice shows: a sent invoice keeps the ones it was sent with, a draft follows the business's details as they are now. */
+export function invoiceSeller(invoice: Invoice, business: Business): InvoiceSeller {
+  return invoice.seller ?? sellerOf(business);
 }
 
 /** The note an invoice to this customer carries instead of VAT: a Kleinunternehmer's § 19 note; reverse charge for a business in another EU country; "not taxable" for a business outside the EU; otherwise none. */

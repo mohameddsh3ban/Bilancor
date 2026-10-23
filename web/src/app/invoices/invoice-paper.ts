@@ -14,6 +14,7 @@ import {
   effectiveTaxNote,
   effectiveVatRate,
   invoiceFileFormat,
+  invoiceSeller,
   invoiceTotals,
 } from '../domain/invoices';
 
@@ -47,8 +48,8 @@ interface Sum {
  *
  * Everything on it is the invoice's own: the words come from `invoiceText` in the invoice's language (German or English),
  * and so do the amounts, dates and the name of the customer's country. It is always laid out left to right, also in the
- * Arabic app, and says what language it is in (`lang`). A sent invoice shows the VAT and note it was sent with, not what
- * the tax details say today.
+ * Arabic app, and says what language it is in (`lang`). A sent invoice shows the VAT, note and seller details it was sent
+ * with, not what the tax and invoice details say today; a draft follows them.
  */
 @Component({
   selector: 'app-invoice-paper',
@@ -169,7 +170,7 @@ interface Sum {
 export class InvoicePaper {
   /** The invoice to show: a draft, a sent invoice, or a cancellation invoice. */
   readonly invoice = input.required<Invoice>();
-  /** The business that wrote it: its address, bank account and tax details, and the invoice a cancellation invoice cancels. */
+  /** The business that wrote it: its details for a draft (a sent invoice has its own copy), its tax details for the VAT, and the invoice a cancellation invoice cancels. */
   readonly business = input.required<Business>();
 
   /** Every word and figure on the sheet, already in the language of the invoice. */
@@ -182,7 +183,7 @@ export class InvoicePaper {
     const money = (cents: number) => formatMoney(cents, lang);
     const date = (iso: string) => formatDate(iso, lang, { year: true });
 
-    const seller = business.invoiceProfile;
+    const seller = invoiceSeller(invoice, business);
     const tax = business.taxProfile;
     const customer = invoice.customer;
     const totals = invoiceTotals(invoice, tax);
@@ -263,8 +264,8 @@ export class InvoicePaper {
       thanks: t('thanks'),
       taxIds:
         [
-          filled(tax.taxNumber) ? `${t('taxNumber')} ${tax.taxNumber}` : null,
-          filled(tax.vatId) ? `${t('vatId')} ${tax.vatId}` : null,
+          filled(seller.taxNumber) ? `${t('taxNumber')} ${seller.taxNumber}` : null,
+          filled(seller.vatId) ? `${t('vatId')} ${seller.vatId}` : null,
         ]
           .filter((part) => part !== null)
           .join(' · ') || null,

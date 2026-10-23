@@ -12,6 +12,7 @@ import {
   nextInvoiceNumber,
   reminderState,
   revenueBookingFor,
+  sellerOf,
 } from '../domain/invoices';
 import { DemoStateService } from './demo-state.service';
 
@@ -54,6 +55,7 @@ function blankDraft(business: Business): Invoice {
     lines: [],
     vatRate: 19,
     taxNote: null,
+    seller: null,
     language: profile.language,
     issueDate: DEMO_TODAY,
     servicePeriod: { kind: 'month', month: DEMO_TODAY.slice(0, 7) },
@@ -127,7 +129,7 @@ export class InvoiceService {
 
   /**
    * Sends a draft of the open business by email: after `SEND_MS` it becomes a sent invoice with the next number, today as the
-   * day it was sent, the VAT rate and note it has then (kept from there on), and its document on Documents. Resolves true when
+   * day it was sent, the VAT rate, note and seller details it has then (kept from there on), and its document on Documents. Resolves true when
    * it was sent.
    *
    * Resolves false, and sends nothing, when the invoice is not a draft that has everything it needs (see `canSendInvoice`),
@@ -159,7 +161,7 @@ export class InvoiceService {
 
   /**
    * Cancels a sent invoice of the open business that nothing was paid on (open or overdue) with a cancellation invoice
-   * (Stornorechnung): the next number, the same customer and lines with the amounts negated, sent today, and its own
+   * (Stornorechnung): the next number, the same customer, lines and seller details with the amounts negated, sent today, and its own
    * document. The original stays on record as cancelled, and so does its document. Returns the id of the cancellation
    * invoice, or null (and changes nothing) for a draft, a paid or partly paid invoice, one that is cancelled already, a
    * cancellation invoice, and an unknown id.
@@ -184,6 +186,7 @@ export class InvoiceService {
       docId: `doc-${cancellationId}`,
       paymentIds: [],
       reminders: [],
+      seller: original.seller,
       cancelledBy: null,
       cancels: original.id,
       history: [{ date: DEMO_TODAY, key: 'invoiceCancellation', params: { number: original.number ?? '' } }],
@@ -299,7 +302,7 @@ export class InvoiceService {
     return business && invoice ? { business, invoice } : null;
   }
 
-  /** The draft is sent now: it gets its number, keeps the rate and note it has now, and its document appears. */
+  /** The draft is sent now: it gets its number, keeps the rate, note and seller details it has now, and its document appears. */
   private recordSent(businessId: string, id: string, email: InvoiceEmail): boolean {
     const found = this.invoiceOf(businessId, id);
     if (!found || !canSendInvoice(found.invoice, found.business, this.demo.stepsOf(businessId))) return false;
@@ -310,6 +313,7 @@ export class InvoiceService {
       number: nextInvoiceNumber(business, DEMO_TODAY.slice(0, 4)),
       vatRate: effectiveVatRate(draft, business.taxProfile),
       taxNote: effectiveTaxNote(draft, business.taxProfile),
+      seller: sellerOf(business),
       sentOn: DEMO_TODAY,
       docId: `doc-${draft.id}`,
       history: [sentLine, ...draft.history],

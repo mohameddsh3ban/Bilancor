@@ -1,4 +1,4 @@
-import type { CustomerKind, HistoryEntry, Invoice, InvoiceCustomer, InvoiceLine, InvoiceProfile, InvoiceUnit } from './models';
+import type { CustomerKind, HistoryEntry, Invoice, InvoiceCustomer, InvoiceLine, InvoiceProfile, InvoiceSeller, InvoiceUnit } from './models';
 
 // All customers, addresses and amounts below are invented. Amounts are integer cents, net for a business that charges VAT
 // and as charged for a Kleinunternehmer. The invoices are the ones behind payments and sent documents elsewhere in the
@@ -58,6 +58,7 @@ function sent(s: SentSpec): Invoice {
     lines: s.lines,
     vatRate: s.kleinunternehmer ? 0 : 19,
     taxNote: s.kleinunternehmer ? 'kleinunternehmer' : null,
+    seller: null, // the business's own details are put on by sentBy() below
     language: 'de',
     issueDate: s.issued,
     servicePeriod: { kind: 'month', month: s.month },
@@ -139,6 +140,7 @@ const WEBER_INVOICES: Invoice[] = [
     lines: [line('Gestaltung und Satz Jahresbericht 2026', 1, 'flat', 350000)], // net 3.500,00 €, gross 4.165,00 €
     vatRate: 19,
     taxNote: null,
+    seller: null,
     language: 'de',
     issueDate: '2026-10-22',
     servicePeriod: { kind: 'month', month: '2026-10' },
@@ -221,13 +223,6 @@ const SARA_INVOICES: Invoice[] = [
   }),
 ];
 
-/** The invoices each business has written in the app, by business id; the sent ones are those behind its sample payments and sent documents. */
-export const SAMPLE_INVOICES: Record<string, Invoice[]> = {
-  'weber-design': WEBER_INVOICES,
-  'sara-yoga': SARA_INVOICES,
-  'cafe-linde': CAFE_INVOICES,
-};
-
 /** What each business prints on its invoices: its address, its first bank account (as in sample-data.ts), the usual numbering, 14 days, German. */
 export const INVOICE_PROFILES: Record<string, InvoiceProfile> = {
   'weber-design': {
@@ -263,4 +258,28 @@ export const INVOICE_PROFILES: Record<string, InvoiceProfile> = {
     paymentTermDays: 14,
     language: 'de',
   },
+};
+
+/**
+ * The tax number and VAT ID of each business's sample tax details (see sample-data.ts, which this file must not import);
+ * sample-invoices.spec.ts checks they are the same. An invoice that was sent carries them with the rest of its seller's details.
+ */
+const TAX_IDS: Record<string, Pick<InvoiceSeller, 'taxNumber' | 'vatId'>> = {
+  'weber-design': { taxNumber: '27/123/45678', vatId: null },
+  'sara-yoga': { taxNumber: '21/456/78901', vatId: null },
+  'cafe-linde': { taxNumber: '41/234/56789', vatId: null },
+};
+
+/** The invoices of a business, the sent ones with the seller's details they were sent with: the business's invoice details and tax numbers of the sample (a draft has none yet). */
+function sentBy(businessId: string, invoices: Invoice[]): Invoice[] {
+  const { name, street, postcode, city, email, iban } = INVOICE_PROFILES[businessId];
+  const seller: InvoiceSeller = { name, street, postcode, city, email, iban, ...TAX_IDS[businessId] };
+  return invoices.map((invoice) => (invoice.sentOn === null ? invoice : { ...invoice, seller: { ...seller } }));
+}
+
+/** The invoices each business has written in the app, by business id; the sent ones are those behind its sample payments and sent documents. */
+export const SAMPLE_INVOICES: Record<string, Invoice[]> = {
+  'weber-design': sentBy('weber-design', WEBER_INVOICES),
+  'sara-yoga': sentBy('sara-yoga', SARA_INVOICES),
+  'cafe-linde': sentBy('cafe-linde', CAFE_INVOICES),
 };

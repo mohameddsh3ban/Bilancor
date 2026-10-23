@@ -12,6 +12,7 @@ import {
   nextInvoiceNumber,
   owedSummary,
   reminderState,
+  sellerOf,
 } from '../domain/invoices';
 import { paymentStatus } from '../domain/payment-status';
 import { DemoStateService } from './demo-state.service';
@@ -68,6 +69,7 @@ describe('InvoiceService', () => {
         lines: [],
         vatRate: 19,
         taxNote: null,
+        seller: null,
         language: 'de',
         issueDate: DEMO_TODAY,
         servicePeriod: { kind: 'month', month: '2026-10' },
@@ -158,6 +160,38 @@ describe('InvoiceService', () => {
       demo.saveTaxProfile({ ...businessOf().taxProfile, kleinunternehmer: true, vatPeriod: null, vatBasis: null });
       expect(effectiveVatRate(invoiceOf('inv-wd-draft'), businessOf().taxProfile)).toBe(19);
       expect(invoiceTotals(invoiceOf('inv-wd-draft'), businessOf().taxProfile).grossCents).toBe(416500);
+    });
+
+    it("send freezes the seller's details with the invoice, and a draft has none until then", async () => {
+      expect(invoiceOf('inv-wd-draft').seller).toBeNull();
+      const atSending = sellerOf(businessOf());
+      expect(atSending).toEqual({
+        name: 'Weber Design',
+        street: 'Lindenstr. 5',
+        postcode: '10969',
+        city: 'Berlin',
+        email: 'weber-design@invoices.example',
+        iban: 'DE08100101010482913650',
+        taxNumber: '27/123/45678',
+        vatId: null,
+      });
+
+      expect(await sendAndWait()).toBe(true);
+      expect(invoiceOf('inv-wd-draft').seller).toEqual(atSending);
+
+      // Changing Settings later leaves the sent invoice as it was sent.
+      demo.saveInvoiceProfile({ ...businessOf().invoiceProfile, street: 'Neue Str. 9', iban: 'DE02120300000000202051' });
+      demo.saveTaxProfile({ ...businessOf().taxProfile, taxNumber: '11/222/33333' });
+      expect(invoiceOf('inv-wd-draft').seller).toEqual(atSending);
+      expect(sellerOf(businessOf())).not.toEqual(atSending);
+    });
+
+    it("the seller's details are the ones of the moment the invoice is sent, as its number is", async () => {
+      const result = invoices.send('inv-wd-draft', EMAIL);
+      demo.saveInvoiceProfile({ ...businessOf().invoiceProfile, street: 'Neue Str. 9' });
+      await vi.advanceTimersByTimeAsync(SEND_MS);
+      expect(await result).toBe(true);
+      expect(invoiceOf('inv-wd-draft').seller?.street).toBe('Neue Str. 9');
     });
 
     it('send freezes 0 % and the note for a business in another EU country', async () => {
@@ -403,6 +437,16 @@ describe('InvoiceService', () => {
       expect(owedSummary(businessOf(), demo.setup()).owedCents).toBe(119000);
     });
 
+    it("a cancellation invoice has the seller's details of the original, also after Settings changed", () => {
+      const original = invoiceOf('inv-wd-044');
+      expect(original.seller).toEqual(sellerOf(businessOf()));
+      demo.saveInvoiceProfile({ ...businessOf().invoiceProfile, street: 'Neue Str. 9' });
+
+      const id = invoices.cancel('inv-wd-044')!;
+      expect(invoiceOf(id).seller).toEqual(original.seller);
+      expect(invoiceOf(id).seller?.street).toBe('Lindenstr. 5');
+    });
+
     it('cancel works on an overdue invoice too', () => {
       expect(statusOf('inv-wd-039')).toBe('overdue');
       expect(invoices.cancel('inv-wd-039')).not.toBeNull();
@@ -453,6 +497,7 @@ describe('InvoiceService', () => {
         lines: original.lines,
         vatRate: 19,
         taxNote: null,
+        seller: null, // a copy is a draft: it follows Settings until it is sent
         language: 'de',
         issueDate: DEMO_TODAY,
         servicePeriod: { kind: 'month', month: '2026-10' },

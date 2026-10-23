@@ -229,24 +229,95 @@ describe('InvoicePaper', () => {
     expect(text(q(el, 'paper-format'))).toBe('E-invoice (ZUGFeRD)');
   });
 
-  it('prints the VAT ID of the seller next to the tax number, when there is one', () => {
-    const business: Business = {
+  describe('the seller block', () => {
+    const draftOf = (): Invoice =>
+      demo.business().invoices.find((invoice) => invoice.id === 'inv-wd-draft')!;
+    /** The business after the person changed the invoice details and the tax details in Settings. */
+    const changed = (): Business => ({
       ...demo.business(),
-      taxProfile: { ...demo.business().taxProfile, vatId: 'DE123456789' },
-    };
-    const el = render(invoiceOf('RE-2026-044'), business);
-    expect(text(q(el, 'paper-tax-ids'))).toBe('Steuernummer 27/123/45678 · USt-IdNr. DE123456789');
-  });
+      invoiceProfile: {
+        ...demo.business().invoiceProfile,
+        name: 'Weber Studio',
+        street: 'Neue Str. 9',
+        postcode: '20095',
+        city: 'Hamburg',
+        email: 'neu@weber-studio.example',
+        iban: 'DE02120300000000202051',
+      },
+      taxProfile: {
+        ...demo.business().taxProfile,
+        taxNumber: '11/222/33333',
+        vatId: 'DE123456789',
+      },
+    });
 
-  it('pays to no account when the business has no IBAN yet', () => {
-    const business: Business = {
-      ...demo.business(),
-      invoiceProfile: { ...demo.business().invoiceProfile, iban: null },
-    };
-    const el = render(invoiceOf('RE-2026-044'), business);
-    expect(text(q(el, 'paper-payment'))).toBe(
-      `Bitte überweisen Sie den Betrag bis zum ${formatDate('2026-10-30', 'de', { year: true })}.`,
-    );
+    it('a sent sample invoice carries its own seller details', () => {
+      expect(invoiceOf('RE-2026-044').seller).toEqual({
+        name: 'Weber Design',
+        street: 'Lindenstr. 5',
+        postcode: '10969',
+        city: 'Berlin',
+        email: 'weber-design@invoices.example',
+        iban: 'DE08100101010482913650',
+        taxNumber: '27/123/45678',
+        vatId: null,
+      });
+    });
+
+    it("changing Settings after sending leaves the sent invoice's seller block unchanged", () => {
+      const sent = invoiceOf('RE-2026-044');
+      const before = render(sent);
+      const after = render(sent, changed());
+
+      for (const id of ['paper-seller', 'paper-payment', 'paper-tax-ids']) {
+        expect(text(q(after, id)), id).toBe(text(q(before, id)));
+      }
+      expect(parts(q(after, 'paper-seller'))).toBe(
+        'Weber Design Lindenstr. 5 10969 Berlin weber-design@invoices.example',
+      );
+      expect(text(q(after, 'paper-payment'))).toContain('DE08 1001 0101 0482 9136 50');
+      expect(text(q(after, 'paper-tax-ids'))).toBe('Steuernummer 27/123/45678');
+    });
+
+    it('a cancellation invoice shows the seller of the invoice it cancels', () => {
+      const el = render(invoiceOf('RE-2026-042'), changed());
+      expect(parts(q(el, 'paper-seller'))).toBe(
+        'Weber Design Lindenstr. 5 10969 Berlin weber-design@invoices.example',
+      );
+      expect(text(q(el, 'paper-tax-ids'))).toBe('Steuernummer 27/123/45678');
+    });
+
+    it('a draft follows Settings', () => {
+      const el = render(draftOf(), changed());
+      expect(parts(q(el, 'paper-seller'))).toBe(
+        'Weber Studio Neue Str. 9 20095 Hamburg neu@weber-studio.example',
+      );
+      expect(text(q(el, 'paper-payment'))).toBe(
+        `Bitte überweisen Sie den Betrag bis zum ${formatDate('2026-11-05', 'de', { year: true })} auf das Konto DE02 1203 0000 0000 2020 51.`,
+      );
+      expect(text(q(el, 'paper-tax-ids'))).toBe(
+        'Steuernummer 11/222/33333 · USt-IdNr. DE123456789',
+      );
+    });
+
+    it('a draft with no IBAN yet says to pay without naming an account', () => {
+      const business: Business = {
+        ...demo.business(),
+        invoiceProfile: { ...demo.business().invoiceProfile, iban: null },
+      };
+      const el = render(draftOf(), business);
+      expect(text(q(el, 'paper-payment'))).toBe(
+        `Bitte überweisen Sie den Betrag bis zum ${formatDate('2026-11-05', 'de', { year: true })}.`,
+      );
+    });
+
+    it('a sent invoice prints the VAT ID it was sent with, next to the tax number', () => {
+      const sent = invoiceOf('RE-2026-044');
+      const el = render({ ...sent, seller: { ...sent.seller!, vatId: 'DE123456789' } });
+      expect(text(q(el, 'paper-tax-ids'))).toBe(
+        'Steuernummer 27/123/45678 · USt-IdNr. DE123456789',
+      );
+    });
   });
 
   describe('a cancellation invoice', () => {

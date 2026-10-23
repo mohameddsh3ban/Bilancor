@@ -28,6 +28,7 @@ import {
   invoiceMatch,
   invoiceRowOf,
   invoiceRows,
+  invoiceSeller,
   invoiceStatus,
   invoiceTotals,
   leftCents,
@@ -37,6 +38,7 @@ import {
   reminderState,
   revenueBookingFor,
   savedCustomers,
+  sellerOf,
   taxNoteFor,
 } from './invoices';
 
@@ -117,6 +119,7 @@ const draft = (patch: Partial<Invoice> = {}): Invoice => ({
   lines: HOURS_AND_FLAT,
   vatRate: 19,
   taxNote: null,
+  seller: null,
   language: 'de',
   issueDate: '2026-10-16',
   servicePeriod: { kind: 'month', month: '2026-10' },
@@ -349,6 +352,36 @@ describe('invoiceFileFormat', () => {
     expect(invoiceFileFormat(sentWithVat, KU)).toBe('zugferd');
     const sentAsKu = sent('b', 'RE-2026-045', '2026-10-16', 100, { vatRate: 0, taxNote: 'kleinunternehmer' });
     expect(invoiceFileFormat(sentAsKu, VAT)).toBe('pdf');
+  });
+});
+
+describe('sellerOf and invoiceSeller', () => {
+  const now = business({ taxProfile: { ...VAT, vatId: 'DE123456789' } });
+
+  it('the seller is the invoice details with the tax number and VAT ID of the tax details', () => {
+    expect(sellerOf(now)).toEqual({
+      name: PROFILE.name,
+      street: PROFILE.street,
+      postcode: PROFILE.postcode,
+      city: PROFILE.city,
+      email: PROFILE.email,
+      iban: PROFILE.iban,
+      taxNumber: '27/123/45678',
+      vatId: 'DE123456789',
+    });
+  });
+
+  it('a draft follows the details of the business as they are now', () => {
+    const changed = business({ invoiceProfile: { ...PROFILE, street: 'Neue Str. 1', iban: null }, taxProfile: { ...VAT, taxNumber: '11/222/33333' } });
+    expect(invoiceSeller(draft(), now)).toEqual(sellerOf(now));
+    expect(invoiceSeller(draft(), changed)).toMatchObject({ street: 'Neue Str. 1', iban: null, taxNumber: '11/222/33333' });
+  });
+
+  it('a sent invoice keeps the details it was sent with, whatever the business says now', () => {
+    const wasSent = sent('a', 'RE-2026-044', '2026-10-16', 100, { seller: sellerOf(now) });
+    const changed = business({ invoiceProfile: { ...PROFILE, name: 'Anderer Name', street: 'Neue Str. 1', iban: 'DE00' }, taxProfile: { ...VAT, taxNumber: null } });
+    expect(invoiceSeller(wasSent, changed)).toEqual(sellerOf(now));
+    expect(invoiceSeller(wasSent, changed)).not.toEqual(sellerOf(changed));
   });
 });
 
