@@ -110,6 +110,31 @@
       "de": "Übertragungsprotokoll",
       "explain": "Der Nachweis, dass deine Erklärung ans Finanzamt gesendet wurde, mit dem Transfer-Ticket als Beleg."
     },
+    "rechnung": {
+      "label": "Rechnung",
+      "de": "Rechnung",
+      "explain": "Die Rechnung, die du an einen Kunden schickst. In Deutschland braucht sie beide Adressen, eine fortlaufende Nummer, das Datum, die Leistung mit Zeitpunkt und den Betrag mit Umsatzsteuer."
+    },
+    "stornorechnung": {
+      "label": "Stornorechnung",
+      "de": "Stornorechnung",
+      "explain": "Eine verschickte Rechnung darf nicht geändert werden. Du stornierst sie mit einer Stornorechnung, die sie mit negativen Beträgen wiederholt. Das Original bleibt erhalten."
+    },
+    "eRechnung": {
+      "label": "E-Rechnung",
+      "de": "E-Rechnung",
+      "explain": "Eine Rechnung, deren Daten ein Computer lesen kann. Unternehmen in Deutschland müssen sie empfangen können, und das Verschicken wird Schritt für Schritt Pflicht."
+    },
+    "zugferd": {
+      "label": "ZUGFeRD",
+      "de": "ZUGFeRD",
+      "explain": "Eine E-Rechnung, die wie ein normales PDF aussieht und sich so öffnen lässt, mit den lesbaren Daten darin. Das übliche Format für Geschäftskunden in Deutschland."
+    },
+    "xrechnung": {
+      "label": "XRechnung",
+      "de": "XRechnung",
+      "explain": "Eine E-Rechnung als reine Datendatei. Behörden in Deutschland verlangen sie, zusammen mit ihrer Leitweg-ID."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -677,6 +702,25 @@
         "paid": "Noch keine bezahlten Rechnungen"
       },
       "showAll": "Alle anzeigen"
+    },
+    "detail": {
+      "back": "Rechnungen",
+      "paper": "Die Rechnung, wie dein Kunde sie sieht",
+      "due": "fällig am {{date}}",
+      "history": {
+        "title": "Was passiert ist"
+      },
+      "next": {
+        "title": "Nächster Schritt"
+      },
+      "edit": "Bearbeiten",
+      "download": "PDF herunterladen",
+      "format": "Format",
+      "notFound": {
+        "title": "Rechnung nicht gefunden",
+        "body": "Sie wurde vielleicht entfernt oder gehört zu einem anderen Unternehmen.",
+        "back": "Zurück zu den Rechnungen"
+      }
     }
   },
   "print": {

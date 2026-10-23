@@ -27,7 +27,12 @@ export type TermKey =
   | 'einkommensteuererklaerung'
   | 'feststellungserklaerung'
   | 'umsatzsteuererklaerung'
-  | 'uebertragungsprotokoll';
+  | 'uebertragungsprotokoll'
+  | 'rechnung'
+  | 'stornorechnung'
+  | 'eRechnung'
+  | 'zugferd'
+  | 'xrechnung';
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({

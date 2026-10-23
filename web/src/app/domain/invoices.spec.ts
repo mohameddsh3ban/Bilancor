@@ -23,8 +23,10 @@ import {
   effectiveVatRate,
   invoiceChecklist,
   invoiceDocFor,
+  invoiceFileFormat,
   invoiceFormat,
   invoiceMatch,
+  invoiceRowOf,
   invoiceRows,
   invoiceStatus,
   invoiceTotals,
@@ -332,6 +334,21 @@ describe('invoiceFormat', () => {
     const office = customer({ kind: 'public', leitwegId: '11001-01234-56' });
     expect(invoiceFormat(office, VAT)).toBe('xrechnung');
     expect(invoiceFormat(office, KU)).toBe('xrechnung');
+  });
+});
+
+describe('invoiceFileFormat', () => {
+  it('follows the tax details for a draft, as invoiceFormat does', () => {
+    expect(invoiceFileFormat(draft(), VAT)).toBe('zugferd');
+    expect(invoiceFileFormat(draft(), KU)).toBe('pdf');
+    expect(invoiceFileFormat(draft({ customer: customer({ kind: 'public', leitwegId: '99-1' }) }), KU)).toBe('xrechnung');
+  });
+
+  it('a sent invoice keeps the format it was sent in, whatever the tax details say now', () => {
+    const sentWithVat = sent('a', 'RE-2026-044', '2026-10-16', 100);
+    expect(invoiceFileFormat(sentWithVat, KU)).toBe('zugferd');
+    const sentAsKu = sent('b', 'RE-2026-045', '2026-10-16', 100, { vatRate: 0, taxNote: 'kleinunternehmer' });
+    expect(invoiceFileFormat(sentAsKu, VAT)).toBe('pdf');
   });
 });
 
@@ -855,6 +872,21 @@ describe('owedSummary and invoiceRows', () => {
     const rows = invoiceRows(business({ invoices: [dra] }), { bank: false, tax: false, receipt: false }, today);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ kind: 'invoice', status: 'draft' });
+  });
+
+  it('finds the row of one invoice by its id, with its status', () => {
+    expect(invoiceRowOf(all, ALL_DONE, 'lange', today)).toEqual({ kind: 'invoice', invoice: lange, status: 'overdue' });
+    expect(invoiceRowOf(all, ALL_DONE, 'cxc', today)).toMatchObject({ status: 'cancellation' });
+    expect(invoiceRowOf(all, ALL_DONE, 'draft-1', today)).toMatchObject({ status: 'draft' });
+  });
+
+  it('finds no row for an unknown id, for the id of a file row, or for an invoice that is not shown', () => {
+    expect(invoiceRowOf(all, ALL_DONE, 'nope', today)).toBeNull();
+    expect(invoiceRowOf(all, ALL_DONE, 'f-wait', today)).toBeNull();
+    const hidden = sent('hidden', 'RE-2026-045', '2026-10-16', 100);
+    const b = business({ invoices: [hidden], documents: [invoiceDoc(hidden, { fromUpload: false })] });
+    expect(invoiceRowOf(b, { ...ALL_DONE, bank: false }, 'hidden', today)).toBeNull();
+    expect(invoiceRowOf(b, ALL_DONE, 'hidden', today)).toMatchObject({ status: 'open' });
   });
 
   it('a sent invoice without a sent document is not shown', () => {

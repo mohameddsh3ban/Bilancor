@@ -60,6 +60,11 @@ describe('translation files', () => {
       'feststellungserklaerung',
       'umsatzsteuererklaerung',
       'uebertragungsprotokoll',
+      'rechnung',
+      'stornorechnung',
+      'eRechnung',
+      'zugferd',
+      'xrechnung',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

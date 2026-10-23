@@ -62,6 +62,11 @@ export function invoiceFormat(customer: InvoiceCustomer, profile: TaxProfile): I
   return customer.kind === 'business' ? 'zugferd' : 'pdf';
 }
 
+/** The format an invoice goes out in: `invoiceFormat`, but a sent invoice keeps the format it was sent in (it follows the tax note the invoice carries, which is frozen when it is sent, not today's tax details). */
+export function invoiceFileFormat(invoice: Invoice, profile: TaxProfile): InvoiceFormat {
+  return invoiceFormat(invoice.customer, { ...profile, kleinunternehmer: effectiveTaxNote(invoice, profile) === 'kleinunternehmer' });
+}
+
 export interface InvoiceTotals { lineNets: number[]; netCents: number; vatCents: number; grossCents: number }
 
 /** The amounts of an invoice: each line rounded to a cent, the VAT on their sum rounded to a cent. A Kleinunternehmer's lines are the gross (VAT is 0). */
@@ -239,6 +244,19 @@ export function invoiceRows(business: Business, steps: SetupSteps, today = DEMO_
     if (status) rows.push({ kind: 'file', doc, status });
   }
   return rows.sort(compareRows);
+}
+
+/** The row of the invoice written here with this id, as the list shows it. None for an unknown id, a document from a file, or an invoice the list does not show in this setup state. */
+export function invoiceRowOf(
+  business: Business,
+  steps: SetupSteps,
+  id: string,
+  today = DEMO_TODAY,
+): Extract<InvoiceRow, { kind: 'invoice' }> | null {
+  for (const row of invoiceRows(business, steps, today)) {
+    if (row.kind === 'invoice' && row.invoice.id === id) return row;
+  }
+  return null;
 }
 
 export interface OwedSummary { owedCents: number; owedCount: number; overdueCents: number; overdueCount: number }

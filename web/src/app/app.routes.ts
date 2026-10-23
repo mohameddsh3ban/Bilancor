@@ -65,6 +65,11 @@ export const routes: Routes = [
         path: 'invoices',
         loadComponent: () => import('./invoices/invoices.page').then((m) => m.InvoicesPage),
       },
+      // A fixed path under invoices (such as invoices/new) must be listed above this one.
+      {
+        path: 'invoices/:id',
+        loadComponent: () => import('./invoices/invoice.page').then((m) => m.InvoicePage),
+      },
       { path: 'soon/:feature', component: ComingSoonPage },
     ],
   },
@@ -79,5 +84,9 @@ export const routes: Routes = [
   {
     path: 'print/vat-return/:periodStart',
     loadComponent: () => import('./print/vat-receipt.page').then((m) => m.VatReceiptPage),
+  },
+  {
+    path: 'print/invoice/:id',
+    loadComponent: () => import('./print/invoice-print.page').then((m) => m.InvoicePrintPage),
   },
 ];

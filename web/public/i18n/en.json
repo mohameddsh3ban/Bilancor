@@ -110,6 +110,31 @@
       "de": "Übertragungsprotokoll",
       "explain": "The record that your return was sent to the tax office, with the transfer ticket as proof."
     },
+    "rechnung": {
+      "label": "Invoice",
+      "de": "Rechnung",
+      "explain": "The bill you send to a customer. In Germany it has to show both addresses, a running number, the date, what you did and when, and the amount with its VAT."
+    },
+    "stornorechnung": {
+      "label": "Cancellation invoice",
+      "de": "Stornorechnung",
+      "explain": "A sent invoice may not be changed. You cancel it with a cancellation invoice that repeats it with negative amounts. The original stays on record."
+    },
+    "eRechnung": {
+      "label": "E-invoice",
+      "de": "E-Rechnung",
+      "explain": "An invoice that carries its data in a form a computer can read. Businesses in Germany must be able to receive one, and sending one becomes required step by step."
+    },
+    "zugferd": {
+      "label": "PDF with data inside",
+      "de": "ZUGFeRD",
+      "explain": "An e-invoice that looks and opens like a normal PDF, with the readable data inside it. It is the usual format for business customers in Germany."
+    },
+    "xrechnung": {
+      "label": "Data file for public offices",
+      "de": "XRechnung",
+      "explain": "An e-invoice as a pure data file. Public offices in Germany require it, together with their routing number (Leitweg-ID)."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -677,6 +702,25 @@
         "paid": "No paid invoices yet"
       },
       "showAll": "Show all"
+    },
+    "detail": {
+      "back": "Invoices",
+      "paper": "The invoice as your customer sees it",
+      "due": "due {{date}}",
+      "history": {
+        "title": "What happened"
+      },
+      "next": {
+        "title": "Next step"
+      },
+      "edit": "Edit",
+      "download": "Download PDF",
+      "format": "Format",
+      "notFound": {
+        "title": "Invoice not found",
+        "body": "It may have been removed, or it belongs to another business.",
+        "back": "Back to invoices"
+      }
     }
   },
   "print": {
