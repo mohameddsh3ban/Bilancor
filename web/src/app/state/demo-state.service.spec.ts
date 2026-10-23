@@ -2,13 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { OFFICE, SOFTWARE, TRAVEL } from '../data/categories';
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Account, Booking, Doc, TaxProfile } from '../data/models';
+import type { Account, Booking, Doc, SentVatReturn, TaxProfile } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docsNeedingYouCount } from '../domain/document-status';
 import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
 import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
+import { currentVatReturn } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
 import { withConnection as setConnection } from './demo-state.testing';
 
@@ -978,6 +979,68 @@ describe('DemoStateService', () => {
       state.addCashBox();
       state.resetData();
       expect(state.business().accounts.some((a) => a.kind === 'cash')).toBe(false);
+    });
+  });
+
+  describe('recordSentReturn', () => {
+    const sent = (patch: Partial<SentVatReturn> = {}): SentVatReturn => ({
+      periodStart: '2026-10-01',
+      periodEnd: '2026-10-31',
+      sentOn: DEMO_TODAY,
+      chargedCents: 100000,
+      paidCents: 20000,
+      resultCents: 80000,
+      ticket: 'ET-2026-1022-12345',
+      ...patch,
+    });
+
+    it('adds the return after the ones sent before, in the open business', () => {
+      const state = TestBed.inject(DemoStateService);
+      const before = state.business().vatReturns;
+      state.recordSentReturn(sent());
+      expect(state.business().vatReturns).toEqual([...before, sent()]);
+    });
+
+    it('moves the current return on to the period after it', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.recordSentReturn(sent());
+      const current = currentVatReturn(state.business());
+      expect(current).toMatchObject({ kind: 'return', view: { period: { start: '2026-11-01', end: '2026-11-30' } } });
+    });
+
+    it('changes no other business', () => {
+      const state = TestBed.inject(DemoStateService);
+      const other = state.businesses.find((b) => b.id === 'cafe-linde')!;
+      state.recordSentReturn(sent());
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')).toBe(other);
+    });
+
+    it('records for a business that is not open when it is named', () => {
+      const state = TestBed.inject(DemoStateService);
+      const weber = state.business();
+      state.recordSentReturn(sent({ periodStart: '2026-07-01', periodEnd: '2026-09-30' }), 'cafe-linde');
+      expect(state.business()).toBe(weber);
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')!.vatReturns.at(-1)).toMatchObject({
+        periodEnd: '2026-09-30',
+      });
+    });
+
+    it('is ignored for an unknown business', () => {
+      const state = TestBed.inject(DemoStateService);
+      const all = [...state.businesses];
+      state.recordSentReturn(sent(), 'nope');
+      expect(state.businesses).toEqual(all);
+    });
+
+    it('never changes the shared sample data, and resetData takes the return back', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sample = BUSINESSES.find((b) => b.id === 'weber-design')!.vatReturns.length;
+      state.recordSentReturn(sent());
+      expect(BUSINESSES.find((b) => b.id === 'weber-design')!.vatReturns).toHaveLength(sample);
+      expect(state.business().vatReturns).toHaveLength(sample + 1);
+
+      state.resetData();
+      expect(state.business().vatReturns).toHaveLength(sample);
     });
   });
 });
