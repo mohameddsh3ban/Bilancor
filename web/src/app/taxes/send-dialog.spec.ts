@@ -165,6 +165,9 @@ describe('send dialog, opened from the VAT tab', () => {
     await openDialog();
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     button('send-cancel').click();
+    // Nothing is on its way, now or when the wait would have been over.
+    expect(tax.sending()).toBe(false);
+    await vi.advanceTimersByTimeAsync(SEND_MS * 2);
     vi.useRealTimers();
     await expectClosed();
 
