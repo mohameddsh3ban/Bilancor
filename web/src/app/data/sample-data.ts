@@ -1,6 +1,8 @@
 import {
   ADVERTISING,
+  CONSULTING,
   GOODS_7,
+  INSURANCE,
   OFFICE,
   OTHER_COSTS,
   PHONE,
@@ -12,10 +14,11 @@ import {
   SALARIES,
   SOFTWARE,
   SUPPLIES,
+  TRAINING,
   TRAVEL,
   UTILITIES,
 } from './categories';
-import { Account, AccountConnection, Booking, Business, HistoryEntry, Person, ReceiptState, Transaction } from './models';
+import { Account, AccountConnection, Booking, Business, CategoryTotal, HistoryEntry, Person, ReceiptState, Transaction } from './models';
 import { EXTRA_DOCUMENTS, linkedDocFor } from './sample-documents';
 
 // All people, businesses, IBANs and amounts below are invented. Amounts are integer cents.
@@ -91,6 +94,19 @@ const statement = (): AccountConnection => ({ kind: 'statement', consentUntil: n
 /** The cash box has no bank: its payments come from receipts. */
 const cashBox = (): AccountConnection => ({ kind: 'cash', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false });
 
+/** One category's amount in a year opening line, labelled and numbered like the booking it comes from. */
+const total = (b: Booking, cents: number): CategoryTotal => ({ labelKey: b.labelKey, skr03: b.skr03, nameDe: b.nameDe, cents });
+/**
+ * The months of the year before a business's first sample payment: its income, and its costs as the sum of the categories.
+ * The income is what makes the year's income equal `revenueThisYearCents` once the booked sample payments are added (a
+ * test in tax-year.spec.ts checks it); the costs are plausible, not calculated.
+ */
+const opening = (incomeCents: number, costs: CategoryTotal[]): Business['yearOpening'] => ({
+  incomeCents,
+  costsCents: costs.reduce((sum, c) => sum + c.cents, 0),
+  costsByCategory: costs,
+});
+
 // The demo date is 2026-10-22: Weber Design's Qonto consent ends in 5 days, Sara's ended 2 days ago, Café Linde's runs about 4 more months.
 const WD_QONTO: Account = { id: 'wd-qonto', kind: 'bank', name: 'Qonto', balanceCents: 1248020, lastUpdate: '2026-10-21', connection: connected('2026-10-27', '2026-10-22T06:12'), product: 'business', iban: 'DE08100101010482913650' };
 const WD_CASH: Account = { id: 'wd-cash', kind: 'cash', name: 'Cash box', balanceCents: 15000, lastUpdate: '2026-10-14', connection: cashBox(), product: 'cash', iban: null };
@@ -148,6 +164,19 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { periodStart: '2026-08-01', periodEnd: '2026-08-31', sentOn: '2026-09-08', chargedCents: 23950, paidCents: 6338, resultCents: 17612, ticket: 'ET-2026-0908-41827' },
       { periodStart: '2026-09-01', periodEnd: '2026-09-30', sentOn: '2026-10-08', chargedCents: 52450, paidCents: 6338, resultCents: 46112, ticket: 'ET-2026-1008-52390' },
     ],
+    legalForm: 'sole',
+    // January to July, net: 42 079,00 € of income, so the year (with the booked payments since August) reaches revenueThisYearCents.
+    yearOpening: opening(4207900, [
+      total(RENT, 210000),
+      total(TRAVEL, 118000),
+      total(SOFTWARE, 96000),
+      total(CONSULTING, 72000),
+      total(ADVERTISING, 62000),
+      total(TRAINING, 49000),
+      total(OTHER_COSTS, 39500),
+      total(OFFICE, 30000),
+      total(PHONE, 23500),
+    ]),
     incomeTaxReserveCents: 320000,
     revenueThisYearCents: 4860000,
     notices: [
@@ -194,6 +223,16 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       pay({ id: 'sy-t14', date: '2026-08-04', who: 'Yogashop Berlin', acct: SY_QONTO, cents: -4120, booking: SUPPLIES, iban: 'DE31100100106655443322', ref: 'Rechnung 22-8814, Gurte und Blöcke' }),
     ],
     vatReturns: [],
+    legalForm: 'sole',
+    // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 300,00 € of income, so the year reaches revenueThisYearCents.
+    yearOpening: opening(1830000, [
+      total(RENT, 245000),
+      total(INSURANCE, 42000),
+      total(SUPPLIES, 38000),
+      total(TRAINING, 28000),
+      total(ADVERTISING, 15000),
+      total(SOFTWARE, 12000),
+    ]),
     incomeTaxReserveCents: 210000,
     revenueThisYearCents: 2130000,
     notices: [
@@ -246,6 +285,19 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     vatReturns: [
       { periodStart: '2026-04-01', periodEnd: '2026-06-30', sentOn: '2026-07-09', chargedCents: 214860, paidCents: 126430, resultCents: 88430, ticket: 'ET-2026-0709-30764' },
     ],
+    legalForm: 'gbr',
+    // January to June, net (the payments here start in July): 101 581,36 € of income, so the year reaches revenueThisYearCents.
+    yearOpening: opening(10158136, [
+      total(GOODS_7, 3100000),
+      total(SALARIES, 1830000),
+      total(RENT, 930000),
+      total(SUPPLIES, 150000),
+      total(UTILITIES, 145000),
+      total(OTHER_COSTS, 95000),
+      total(INSURANCE, 95000),
+      total(ADVERTISING, 85000),
+      total(CONSULTING, 70000),
+    ]),
     incomeTaxReserveCents: 580000,
     revenueThisYearCents: 11240000,
     notices: [],

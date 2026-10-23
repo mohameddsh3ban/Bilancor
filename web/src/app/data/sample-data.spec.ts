@@ -577,3 +577,45 @@ describe('sample VAT returns', () => {
     expect(q3.resultCents).toBeGreaterThan(0);
   });
 });
+
+describe('sample year figures', () => {
+  const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
+
+  it('the Café is a GbR, the other businesses are run by one person', () => {
+    expect(BUSINESSES.map((b) => [b.id, b.legalForm])).toEqual([
+      ['weber-design', 'sole'],
+      ['sara-yoga', 'sole'],
+      ['cafe-linde', 'gbr'],
+    ]);
+  });
+
+  it('every opening line has costs that add up to their categories, below its income', () => {
+    for (const b of BUSINESSES) {
+      const { incomeCents, costsCents, costsByCategory } = b.yearOpening;
+      expect(Number.isInteger(incomeCents) && Number.isInteger(costsCents), b.id).toBe(true);
+      expect(costsByCategory.reduce((sum, c) => sum + c.cents, 0), b.id).toBe(costsCents);
+      expect(costsCents, b.id).toBeGreaterThan(0);
+      expect(costsCents, b.id).toBeLessThan(incomeCents);
+    }
+  });
+
+  it('every opening category is a known one, once, with whole positive cents, so its label resolves', () => {
+    for (const b of BUSINESSES) {
+      const keys = b.yearOpening.costsByCategory.map((c) => c.labelKey);
+      expect(new Set(keys).size, b.id).toBe(keys.length);
+      for (const c of b.yearOpening.costsByCategory) {
+        const known = CATEGORIES.find((x) => x.labelKey === c.labelKey);
+        expect(known, `${b.id} ${c.labelKey}`).toBeDefined();
+        expect({ skr03: c.skr03, nameDe: c.nameDe }, `${b.id} ${c.labelKey}`).toEqual({ skr03: known!.skr03, nameDe: known!.nameDe });
+        expect(Number.isInteger(c.cents) && c.cents > 0, `${b.id} ${c.labelKey}`).toBe(true);
+      }
+    }
+  });
+
+  it('the opening line stops where the first sample payment begins, so no month is counted twice', () => {
+    const first = (id: string) => business(id).transactions.map((t) => t.date).sort()[0];
+    expect(first('weber-design')).toBe('2026-08-05');
+    expect(first('sara-yoga')).toBe('2026-08-04');
+    expect(first('cafe-linde')).toBe('2026-07-10');
+  });
+});
