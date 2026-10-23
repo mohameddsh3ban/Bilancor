@@ -55,7 +55,8 @@ export type HistoryKey =
   | 'invoiceCancellation' // params: number (of the invoice it cancels)
   | 'invoiceDuplicated' // params: number (of the invoice it was copied from)
   | 'paidInCash'
-  | 'paysInvoice'; // on a payment; params: number
+  | 'paysInvoice' // on a payment; params: number
+  | 'bookedByInvoice'; // on a payment that pays an invoice taxed differently from how it was booked; params: category
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey

@@ -36,6 +36,25 @@ describe('parseQuantity', () => {
   it.each(['', ' ', '0', '0,00', '-1', 'abc'])('refuses %j', (typed) => {
     expect(parseQuantity(typed)).toBeNull();
   });
+
+  // A quantity has at most two decimals. Three digits after a lone mark are not read as a thousands separator:
+  // 0,125 would be 125 and 1.333 would be 1333, silently.
+  it.each(['0,125', '0.125', '.125', '1.333', '1,333', '2,5555', '1.500', '10.000'])(
+    'refuses %j: more than two decimals, or a thousands separator it cannot tell from one',
+    (typed) => {
+      expect(parseQuantity(typed)).toBeNull();
+    },
+  );
+
+  it.each([
+    ['2,50', 2.5],
+    ['0.75', 0.75],
+    ['1.500,5', 1500.5],
+    ['1,500.5', 1500.5],
+    ['1500', 1500],
+  ])('still reads %j as %d', (typed, quantity) => {
+    expect(parseQuantity(typed)).toBe(quantity);
+  });
 });
 
 describe('newLine', () => {
@@ -278,7 +297,9 @@ describe('InvoiceLines', () => {
       expect(last()![0].unitPriceCents).toBe(0);
 
       await type('line-quantity-0', '0');
-      expect(text(q('line-error-quantity-0'))).toBe('Enter a number above 0, like 1 or 2.5.');
+      expect(text(q('line-error-quantity-0'))).toBe(
+        'Enter a number above 0 with up to two decimals, like 1 or 2.5.',
+      );
       expect(last()![0].quantity).toBe(0);
 
       await type('line-price-0', '10');
@@ -289,6 +310,23 @@ describe('InvoiceLines', () => {
       expect(last()).toEqual([
         { description: 'x', quantity: 2, unit: 'piece', unitPriceCents: 1000 },
       ]);
+    });
+
+    it('a quantity with three decimals is named, not silently read as a thousand times more', async () => {
+      await render();
+      await type('line-description-0', 'Beratung');
+      await type('line-price-0', '80');
+      for (const typed of ['0,125', '1.333']) {
+        await type('line-quantity-0', typed);
+        expect(text(q('line-error-quantity-0')), typed).toBe(
+          'Enter a number above 0 with up to two decimals, like 1 or 2.5.',
+        );
+        expect(field('line-quantity-0').getAttribute('aria-invalid'), typed).toBe('true');
+        expect(last()![0].quantity, typed).toBe(0);
+      }
+      await type('line-quantity-0', '0,25');
+      expect(q('line-error-quantity-0')).toBeNull();
+      expect(last()![0].quantity).toBe(0.25);
     });
 
     it('an empty field is not an error (the checklist says what is missing)', async () => {

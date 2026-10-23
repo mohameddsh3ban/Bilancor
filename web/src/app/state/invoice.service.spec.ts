@@ -268,6 +268,36 @@ describe('InvoiceService', () => {
       expect(businessOf()).toEqual(before);
     });
 
+    it("the document of an invoice dated earlier this year is dated with the invoice, and added on the day it was sent", async () => {
+      demo.saveInvoice({ ...invoiceOf('inv-wd-draft'), issueDate: '2026-10-01' });
+      expect(await sendAndWait()).toBe(true);
+
+      expect(invoiceOf('inv-wd-draft')).toMatchObject({ issueDate: '2026-10-01', sentOn: DEMO_TODAY, number: 'RE-2026-045' });
+      expect(docOf('doc-inv-wd-draft')).toMatchObject({
+        date: '2026-10-01',
+        addedOn: DEMO_TODAY,
+        dueDate: '2026-10-15',
+      });
+      expect(docOf('doc-inv-wd-draft').history).toEqual([{ date: DEMO_TODAY, key: 'invoiceSent', params: { email: EMAIL.to } }]);
+      expect(statusOf('inv-wd-draft')).toBe('overdue');
+      expect(docStatus(docOf('doc-inv-wd-draft'))).toBe('overdue');
+    });
+
+    it('a draft dated before this year or after today is not sent', async () => {
+      const before = businessOf();
+      for (const issueDate of ['2025-11-03', '2025-12-31', '2026-10-23', '2027-01-05']) {
+        demo.saveInvoice({ ...invoiceOf('inv-wd-draft'), issueDate });
+        expect(await sendAndWait(), issueDate).toBe(false);
+        expect(invoiceOf('inv-wd-draft').sentOn, issueDate).toBeNull();
+      }
+      demo.saveInvoice(before.invoices.find((i) => i.id === 'inv-wd-draft')!);
+      expect(businessOf()).toEqual(before);
+
+      // The first day of the year is fine.
+      demo.saveInvoice({ ...invoiceOf('inv-wd-draft'), issueDate: '2026-01-01' });
+      expect(await sendAndWait()).toBe(true);
+    });
+
     it('a second send while one is on its way returns false and sends nothing twice', async () => {
       const copy = invoices.duplicate('inv-wd-041');
       const first = invoices.send('inv-wd-draft', EMAIL);

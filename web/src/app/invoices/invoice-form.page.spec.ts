@@ -508,6 +508,51 @@ describe('InvoiceFormPage', () => {
       expect(draftOf().issueDate).toBe('2026-10-01');
     });
 
+    it('the invoice date is limited to the days from 1 January of this year up to today', async () => {
+      await render('/invoices/new');
+      expect(field('issue-date').getAttribute('min')).toBe('2026-01-01');
+      expect(field('issue-date').getAttribute('max')).toBe(DEMO_TODAY);
+      expect(q('issue-date-error')).toBeNull();
+      expect(field('issue-date').getAttribute('aria-invalid')).toBeNull();
+    });
+
+    it('a date outside those days is named under the field, blocks sending, and the way out is a day within them', async () => {
+      await render('/invoices/inv-wd-draft/edit');
+      expect(canPress()).toBe(true);
+
+      for (const date of ['2025-11-03', '2025-12-31', '2026-10-23', '2027-01-05']) {
+        await commit('issue-date', date);
+        expect(text(q('issue-date-error')), date).toBe(
+          'Pick a day from 1 January of this year up to today.',
+        );
+        expect(q('issue-date-error')!.getAttribute('role')).toBe('alert');
+        expect(field('issue-date').getAttribute('aria-invalid')).toBe('true');
+        expect(field('issue-date').getAttribute('aria-describedby')).toBe('issue-date-error');
+        expect(missing(), date).toEqual(['issueDate']);
+        expect(text(q('check-issueDate')), date).toBe(
+          'Pick an invoice date from 1 January of this year up to today',
+        );
+        expect(canPress(), date).toBe(false);
+        expect(canSendInvoice(draftOf('inv-wd-draft'), business(), demo.setup()), date).toBe(false);
+      }
+
+      await commit('issue-date', '2026-01-01');
+      expect(q('issue-date-error')).toBeNull();
+      expect(field('issue-date').getAttribute('aria-invalid')).toBeNull();
+      expect(missing()).toEqual([]);
+      expect(text(q('check-issueDate'))).toBe('Invoice date');
+      expect(canPress()).toBe(true);
+    });
+
+    it('a missing invoice date day is a button that puts the cursor in the date field', async () => {
+      await render('/invoices/inv-wd-draft/edit');
+      await commit('issue-date', '2025-11-03');
+      expect(q('check-fix-issueDate')!.tagName).toBe('BUTTON');
+      await press('check-fix-issueDate');
+      tick();
+      expect(document.activeElement).toBe(q('issue-date'));
+    });
+
     it('pay within 7, 14 or 30 days', async () => {
       await render('/invoices/new');
       await choose('term-7');
@@ -574,6 +619,7 @@ describe('InvoiceFormPage', () => {
         customerAddress: false,
         customerEmail: false,
         lines: false,
+        issueDate: true,
         servicePeriod: true,
       });
       expect(text(q('check-sellerAddress'))).toBe('Your name and address');

@@ -408,7 +408,8 @@
     "invoiceCancellation": "You created it to cancel invoice {{number}}",
     "invoiceDuplicated": "You copied it from invoice {{number}}",
     "paidInCash": "You marked it as paid in cash",
-    "paysInvoice": "Pays invoice {{number}}"
+    "paysInvoice": "Pays invoice {{number}}",
+    "bookedByInvoice": "Booked as {{category}} to match the invoice"
   },
   "payments": {
     "title": "Payments",
@@ -669,6 +670,8 @@
         "thisOne": "This one",
         "searchAll": "Search all payments",
         "cash": "Paid in cash or privately",
+        "payInInvoice": "Paid in cash? Mark it in the invoice",
+        "partPaid": "Part paid so far:",
         "notThis": "Not this payment",
         "closedCancelled": "This invoice was cancelled, so no payment is needed.",
         "closedCancellation": "A cancellation invoice needs no payment."
@@ -681,7 +684,7 @@
       "remove": "Remove",
       "written": {
         "title": "Written in Invoices",
-        "hint": "This document can't be changed or removed here. Open the invoice to see it or cancel it.",
+        "hint": "This document can't be changed or removed here. Open the invoice to work with it.",
         "open": "Open invoice"
       }
     }
@@ -807,7 +810,7 @@
       "payDialog": {
         "title": "Mark {{number}} as paid",
         "body": "Paid in cash on",
-        "hint": "The money goes into your cash box and counts like any other payment in your VAT return and year figures.",
+        "hint": "It's recorded as a cash payment and counts like any other payment in your VAT return and year figures.",
         "error": "Pick a day from the invoice date up to today.",
         "confirm": "Mark as paid",
         "cancel": "Cancel",
@@ -854,7 +857,7 @@
       "suggestions": "Earlier lines",
       "hintNet": "Prices are without VAT. The VAT is added below.",
       "hintGross": "Prices are what your customer pays.",
-      "quantityError": "Enter a number above 0, like 1 or 2.5.",
+      "quantityError": "Enter a number above 0 with up to two decimals, like 1 or 2.5.",
       "priceError": "Enter an amount above 0, like 49.90."
     },
     "unit": {
@@ -880,6 +883,7 @@
     "dates": {
       "title": "Dates",
       "issueDate": "Invoice date",
+      "issueDateError": "Pick a day from 1 January of this year up to today.",
       "workDone": "Work done in",
       "month": "A month",
       "day": "One day",
@@ -934,6 +938,10 @@
       "lines": {
         "ok": "What you did, with prices",
         "missing": "Finish your lines: each needs a description, a quantity and a price"
+      },
+      "issueDate": {
+        "ok": "Invoice date",
+        "missing": "Pick an invoice date from 1 January of this year up to today"
       },
       "servicePeriod": {
         "ok": "When the work was done",

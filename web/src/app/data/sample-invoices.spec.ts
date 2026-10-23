@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { docStatus, visibleDocuments } from '../domain/document-status';
 import { documentCandidates } from '../domain/document-matching';
 import { presetSteps } from '../domain/home-cards';
@@ -17,6 +18,8 @@ import {
 } from '../domain/invoices';
 import { paymentStatus } from '../domain/payment-status';
 import { yearSummary } from '../domain/tax-year';
+import { DemoStateService } from '../state/demo-state.service';
+import { InvoiceService, SEND_MS } from '../state/invoice.service';
 import { DEMO_TODAY } from './demo-date';
 import type { Business, Invoice } from './models';
 import { BUSINESSES } from './sample-data';
@@ -302,6 +305,24 @@ describe('sample invoices', () => {
     expect(docStatus(business('sara-yoga').documents.find((d) => d.id === 'sy-d2')!)).toBe('waiting');
   });
 
+  /** What Documents shows of a sent invoice must be what Invoices shows: its customer, its dates (the document is dated with the invoice date and added on the day it was sent), its due date and its status. */
+  function expectSameOnBothPages(b: Business, inv: Invoice, label: string): void {
+    const doc = b.documents.find((d) => d.id === inv.docId)!;
+    expect(doc.name, label).toBe(inv.customer.name);
+    expect(doc.date, label).toBe(inv.issueDate);
+    expect(doc.addedOn, label).toBe(inv.sentOn);
+    expect(doc.dueDate, label).toBe(inv.cancels !== null ? null : dueDateOf(inv));
+    const status = invoiceStatus(inv, b);
+    const closed = status === 'paid' || status === 'cancelled' || status === 'cancellation';
+    expect(docStatus(doc), label).toBe(closed ? 'done' : dueDateOf(inv) < DEMO_TODAY ? 'overdue' : 'waiting');
+  }
+
+  /** The invoices list and Documents count the same sent documents as owed. */
+  function expectSameOwed(b: Business, label: string): void {
+    const owedDocs = visibleDocuments(b.documents, steps).filter((d) => d.direction === 'sent' && ['waiting', 'overdue'].includes(docStatus(d)));
+    expect(owedSummary(b, steps).owedCount, label).toBe(owedDocs.length);
+  }
+
   it("an invoice's document shows the invoice: its customer, its dates and its due date, so Documents reads like Invoices", () => {
     for (const b of BUSINESSES) {
       for (const inv of b.invoices.filter((i) => i.sentOn !== null)) {
@@ -317,17 +338,46 @@ describe('sample invoices', () => {
 
   it('Documents and Invoices agree on every sent sample invoice: its status, its due date and what is owed', () => {
     for (const b of BUSINESSES) {
-      for (const inv of b.invoices.filter((i) => i.sentOn !== null)) {
-        const doc = b.documents.find((d) => d.id === inv.docId)!;
-        const label = `${b.id} ${inv.number}`;
-        const status = invoiceStatus(inv, b);
-        const closed = status === 'paid' || status === 'cancelled' || status === 'cancellation';
-        expect(docStatus(doc), label).toBe(closed ? 'done' : dueDateOf(inv) < DEMO_TODAY ? 'overdue' : 'waiting');
-        if (inv.cancels === null) expect(doc.dueDate, label).toBe(dueDateOf(inv));
-      }
-      const owedDocs = visibleDocuments(b.documents, steps).filter((d) => d.direction === 'sent' && ['waiting', 'overdue'].includes(docStatus(d)));
-      expect(owedSummary(b, steps).owedCount, b.id).toBe(owedDocs.length);
+      for (const inv of b.invoices.filter((i) => i.sentOn !== null)) expectSameOnBothPages(b, inv, `${b.id} ${inv.number}`);
+      expectSameOwed(b, b.id);
     }
+  });
+
+  describe('an invoice sent in the app', () => {
+    const EMAIL = { to: 'buero@studio-kern.example', subject: 'Rechnung', body: 'Guten Tag' };
+
+    beforeEach(() => {
+      localStorage.clear();
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('reads the same on Documents and Invoices, whichever day of the year it is dated: date, due date and status', async () => {
+      const demo = TestBed.inject(DemoStateService);
+      const invoices = TestBed.inject(InvoiceService);
+      const sentWith = async (issueDate: string): Promise<Invoice> => {
+        const copy = invoices.duplicate('inv-wd-044');
+        demo.saveInvoice({ ...demo.business().invoices.find((i) => i.id === copy)!, issueDate });
+        const result = invoices.send(copy, EMAIL);
+        await vi.advanceTimersByTimeAsync(SEND_MS);
+        expect(await result, issueDate).toBe(true);
+        return demo.business().invoices.find((i) => i.id === copy)!;
+      };
+
+      // Dated today: waiting. Dated 1 Oct: due 15 Oct, so overdue. Dated 1 Jan: overdue.
+      const dated = [await sentWith(DEMO_TODAY), await sentWith('2026-10-01'), await sentWith('2026-01-01')];
+      for (const inv of dated) {
+        expect(inv.sentOn, inv.number!).toBe(DEMO_TODAY);
+        expect(inv.number, inv.number!).toMatch(/^RE-2026-04[5-7]$/);
+        expectSameOnBothPages(demo.business(), inv, inv.number!);
+      }
+      expect(demo.business().documents.find((d) => d.id === dated[1].docId)).toMatchObject({ date: '2026-10-01', addedOn: DEMO_TODAY, dueDate: '2026-10-15' });
+      expect(dated.map((inv) => invoiceStatus(inv, demo.business()))).toEqual(['open', 'overdue', 'overdue']);
+      expectSameOwed(demo.business(), 'weber-design');
+    });
   });
 
   it('decision counts become weber 7 / sara 3 / café 0', () => {

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { OFFICE, REVENUE_19, SOFTWARE, TRAVEL } from '../data/categories';
+import { OFFICE, REVENUE_19, REVENUE_7, REVENUE_EU_RC, SOFTWARE, TRAVEL } from '../data/categories';
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, Booking, Doc, Invoice, SentVatReturn, TaxProfile, Transaction } from '../data/models';
@@ -10,7 +10,7 @@ import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
 import { invoiceStatus, leftCents } from '../domain/invoices';
 import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
-import { currentVatReturn } from '../domain/vat-return';
+import { currentVatReturn, periodFor, vatReturnFor } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
 import { withConnection as setConnection } from './demo-state.testing';
 
@@ -1165,6 +1165,86 @@ describe('DemoStateService', () => {
       expect(doc(state, 'wd-d2').paymentId).toBe('wd-t19');
       expect(doc(state, 'wd-d2').history[0]).toEqual({ date: DEMO_TODAY, key: 'linked', params: { name: 'Kern Studio Berlin' } });
       expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
+    });
+
+    describe('the booking of a payment that pays an invoice follows the invoice', () => {
+      /** The invoice of Studio Kern (2,000.00 net) as a sale to a business in France: no German VAT, reverse charge. */
+      function sendReverseCharge(state: DemoStateService): void {
+        const kern = invoice(state, 'inv-wd-044');
+        state.saveInvoice({
+          ...kern,
+          customer: { ...kern.customer, country: 'FR', vatId: 'FR12345678901' },
+          vatRate: 0,
+          taxNote: 'reverseCharge',
+        });
+      }
+      const october = periodFor('2026-10-21', 'monthly');
+
+      it('a payment booked at 19 % that pays a reverse-charge invoice is booked as reverse charge: no VAT in the return, and a line says why', () => {
+        const state = TestBed.inject(DemoStateService);
+        sendReverseCharge(state);
+        const baseline = vatReturnFor(state.business(), october);
+        state.addTransaction(incoming('wd-t90', 200000)); // arrived booked and confirmed at 19 %, but with no receipt yet, so the return leaves it out
+        expect(vatReturnFor(state.business(), october).chargedCents).toBe(baseline.chargedCents);
+
+        state.linkInvoicePayment('inv-wd-044', 'wd-t90', false);
+
+        const tx = payment(state, 'wd-t90');
+        expect(tx.booking).toEqual(REVENUE_EU_RC);
+        expect(tx).toMatchObject({ confirmed: true, receipt: 'attached' });
+        expect(tx.history.slice(0, 3).map((h) => [h.key, h.params])).toEqual([
+          ['bookedByInvoice', { category: REVENUE_EU_RC.labelKey }],
+          ['paysInvoice', { number: 'RE-2026-044' }],
+          ['autoBooked', { category: REVENUE_19.labelKey }],
+        ]);
+        expect(tx.history[0].date).toBe(DEMO_TODAY);
+
+        // Taxes: the payment is in the return now, with no VAT. At 19 % it would have added 319.33 (2,000.00 gross) that was never charged.
+        const after = vatReturnFor(state.business(), october);
+        expect(after.chargedCents).toBe(baseline.chargedCents);
+        expect(after.salesCount).toBe(baseline.salesCount);
+        expect(after.needsYouCount).toBe(baseline.needsYouCount);
+      });
+
+      it('a payment booked at 19 % that pays a 7 % invoice is booked at 7 %', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.saveInvoice({ ...invoice(state, 'inv-wd-044'), vatRate: 7 }); // 2,140.00 gross
+        const baseline = vatReturnFor(state.business(), october);
+        state.addTransaction(incoming('wd-t90', 214000));
+
+        state.linkInvoicePayment('inv-wd-044', 'wd-t90', false);
+
+        expect(payment(state, 'wd-t90').booking).toEqual(REVENUE_7);
+        expect(payment(state, 'wd-t90').history[0]).toEqual({ date: DEMO_TODAY, key: 'bookedByInvoice', params: { category: REVENUE_7.labelKey } });
+        // 140.00 of VAT at 7 % (not 341.68 at 19 %).
+        expect(vatReturnFor(state.business(), october).chargedCents - baseline.chargedCents).toBe(14000);
+      });
+
+      it('a booking that still waits for its confirmation keeps waiting, with the invoice booking', () => {
+        const state = TestBed.inject(DemoStateService);
+        sendReverseCharge(state);
+        state.addTransaction(incoming('wd-t90', 200000, { confirmed: false }));
+
+        state.linkInvoicePayment('inv-wd-044', 'wd-t90', false);
+
+        expect(payment(state, 'wd-t90')).toMatchObject({ booking: REVENUE_EU_RC, confirmed: false });
+        expect(paymentStatus(payment(state, 'wd-t90'))).toBe('confirm');
+      });
+
+      it('a payment that is booked as the invoice is, or has no booking yet, gets no extra line', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.addTransaction(incoming('wd-t90', 100000)); // 19 %, as the invoice
+        state.addTransaction(incoming('wd-t91', 138000, { booking: null, confirmed: false })); // not booked yet
+        state.linkInvoicePayment('inv-wd-044', 'wd-t90', false);
+        state.linkInvoicePayment('inv-wd-044', 'wd-t91', false);
+
+        for (const id of ['wd-t90', 'wd-t91']) {
+          expect(payment(state, id).booking, id).toEqual(REVENUE_19);
+          expect(payment(state, id).history.map((h) => h.key), id).not.toContain('bookedByInvoice');
+          expect(payment(state, id).history[0].key, id).toBe('paysInvoice');
+        }
+        expect(payment(state, 'wd-t91').confirmed).toBe(true);
+      });
     });
 
     it('linkInvoicePayment with auto writes the automatic line on the document', () => {

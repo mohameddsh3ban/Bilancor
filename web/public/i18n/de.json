@@ -407,8 +407,9 @@
     "invoiceCancelled": "Du hast sie mit der Stornorechnung {{number}} storniert",
     "invoiceCancellation": "Du hast sie erstellt, um die Rechnung {{number}} zu stornieren",
     "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
-    "paidInCash": "Du hast es als bar bezahlt markiert",
-    "paysInvoice": "Bezahlt die Rechnung {{number}}"
+    "paidInCash": "Du hast sie als bar bezahlt markiert",
+    "paysInvoice": "Bezahlt die Rechnung {{number}}",
+    "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht"
   },
   "payments": {
     "title": "Zahlungen",
@@ -669,6 +670,8 @@
         "thisOne": "Diese",
         "searchAll": "Alle Zahlungen durchsuchen",
         "cash": "Bar oder privat bezahlt",
+        "payInInvoice": "Bar bezahlt? In der Rechnung markieren",
+        "partPaid": "Bisher teilweise bezahlt:",
         "notThis": "Nicht diese Zahlung",
         "closedCancelled": "Diese Rechnung wurde storniert, deshalb ist keine Zahlung nötig.",
         "closedCancellation": "Eine Stornorechnung braucht keine Zahlung."
@@ -681,7 +684,7 @@
       "remove": "Entfernen",
       "written": {
         "title": "In Rechnungen geschrieben",
-        "hint": "Dieses Dokument lässt sich hier nicht ändern oder entfernen. Öffne die Rechnung, um sie anzusehen oder zu stornieren.",
+        "hint": "Dieses Dokument lässt sich hier nicht ändern oder entfernen. Öffne die Rechnung, um damit zu arbeiten.",
         "open": "Rechnung öffnen"
       }
     }
@@ -807,7 +810,7 @@
       "payDialog": {
         "title": "{{number}} als bezahlt markieren",
         "body": "Bar bezahlt am",
-        "hint": "Das Geld landet in deiner Kasse und zählt wie jede andere Zahlung für deine Umsatzsteuer-Voranmeldung und die Jahreszahlen.",
+        "hint": "Das wird als Barzahlung erfasst und zählt wie jede andere Zahlung für deine Umsatzsteuer-Voranmeldung und die Jahreszahlen.",
         "error": "Wähle einen Tag vom Rechnungsdatum bis heute.",
         "confirm": "Als bezahlt markieren",
         "cancel": "Abbrechen",
@@ -854,7 +857,7 @@
       "suggestions": "Frühere Positionen",
       "hintNet": "Die Preise sind ohne Umsatzsteuer. Die Steuer kommt unten dazu.",
       "hintGross": "Die Preise sind das, was dein Kunde zahlt.",
-      "quantityError": "Gib eine Zahl über 0 ein, zum Beispiel 1 oder 2,5.",
+      "quantityError": "Gib eine Zahl über 0 mit höchstens zwei Nachkommastellen ein, zum Beispiel 1 oder 2,5.",
       "priceError": "Gib einen Betrag über 0 ein, zum Beispiel 49,90."
     },
     "unit": {
@@ -880,6 +883,7 @@
     "dates": {
       "title": "Daten",
       "issueDate": "Rechnungsdatum",
+      "issueDateError": "Wähle einen Tag vom 1. Januar dieses Jahres bis heute.",
       "workDone": "Leistung erbracht im",
       "month": "Ein Monat",
       "day": "Ein Tag",
@@ -934,6 +938,10 @@
       "lines": {
         "ok": "Was du gemacht hast, mit Preisen",
         "missing": "Positionen vervollständigen: Jede braucht Beschreibung, Menge und Preis"
+      },
+      "issueDate": {
+        "ok": "Rechnungsdatum",
+        "missing": "Wähle ein Rechnungsdatum vom 1. Januar dieses Jahres bis heute"
       },
       "servicePeriod": {
         "ok": "Wann die Leistung erbracht wurde",

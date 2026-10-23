@@ -9,6 +9,9 @@ import { invoiceStatus } from '../domain/invoices';
 import { DemoStateService } from '../state/demo-state.service';
 import { InvoiceService } from '../state/invoice.service';
 import { InvoiceActions } from './invoice-actions';
+import ar from '../../../public/i18n/ar.json';
+import de from '../../../public/i18n/de.json';
+import en from '../../../public/i18n/en.json';
 
 @Component({ template: '' })
 class EditStub {}
@@ -189,6 +192,23 @@ describe('InvoiceActions', () => {
       });
       expect(statusOf('inv-wd-044')).toBe('paid');
       expect(invoiceOf('inv-wd-044').history[1]).toMatchObject({ key: 'paidInCash' });
+    });
+
+    it('the hint says how the payment is recorded, not that money goes into the cash box: no balance moves in the demo', async () => {
+      await render('inv-wd-044');
+      q('mark-paid')!.click();
+      await expectDialog(true);
+      expect(text(inDialog('pay-hint'))).toBe(
+        "It's recorded as a cash payment and counts like any other payment in your VAT return and year figures.",
+      );
+
+      expect(de.invoices.actions.payDialog.hint).not.toContain('Kasse');
+      expect(ar.invoices.actions.payDialog.hint).not.toContain('صندوق');
+      expect(en.invoices.actions.payDialog.hint).not.toContain('cash box');
+    });
+
+    it('in German the line "marked as paid in cash" is about the invoice or the payment, both feminine: sie', () => {
+      expect(de.history.paidInCash).toBe('Du hast sie als bar bezahlt markiert');
     });
 
     it('with today as the day, as it starts', async () => {

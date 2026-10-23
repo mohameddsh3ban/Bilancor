@@ -343,7 +343,8 @@ export class DemoStateService {
    * Links an incoming payment to a sent invoice that still has something to pay (open, overdue or partly paid) in a
    * business (the open one unless named): one change to the invoice, its payment and, when this payment completes the
    * invoice, its document. The payment is then booked with the invoice as its receipt (a payment with no category takes
-   * the invoice's revenue booking) and says "Pays invoice …". The invoice says it was paid in full or in part, on the day
+   * the invoice's revenue booking, and so does one booked with another VAT rate than the invoice, with a line that says so;
+   * whether the booking is confirmed stays as it was) and says "Pays invoice …". The invoice says it was paid in full or in part, on the day
    * the money came in, and keeps the id of the payment in that line (`params.paymentId`), so the line can lead to it. Only the payment that completes the invoice is linked to its document, so Documents shows it as
    * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically".
    *
@@ -363,13 +364,21 @@ export class DemoStateService {
 
       const doc = business.documents.find((d) => d.id === invoice.docId);
       const unbooked = tx.booking === null;
+      // The invoice says how the money is taxed. A payment booked with another VAT rate (an auto-booking at 19 % for a 7 %,
+      // reverse-charge or not-taxable invoice) is booked as the invoice says, or the VAT return would count VAT that was never charged.
+      const invoiceBooking = revenueBookingFor(invoice, business.taxProfile);
+      const rebooked = tx.booking !== null && tx.booking.vatRate !== invoiceBooking.vatRate;
       const linkedTx: Transaction = {
         ...tx,
         receipt: 'attached',
         receiptFile: doc?.fileName ?? `${invoice.number}.pdf`,
-        booking: unbooked ? revenueBookingFor(invoice, business.taxProfile) : tx.booking,
+        booking: unbooked || rebooked ? invoiceBooking : tx.booking,
         confirmed: unbooked || tx.confirmed,
-        history: [{ date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '' } }, ...tx.history],
+        history: [
+          ...(rebooked ? [{ date: DEMO_TODAY, key: 'bookedByInvoice' as const, params: { category: invoiceBooking.labelKey } }] : []),
+          { date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '' } },
+          ...tx.history,
+        ],
       };
       const transactions = business.transactions.map((t) => (t.id === txId ? linkedTx : t));
       const withPayment: Invoice = { ...invoice, paymentIds: [...invoice.paymentIds, txId] };

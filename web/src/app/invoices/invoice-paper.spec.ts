@@ -356,6 +356,21 @@ describe('InvoicePaper', () => {
     expect(text(q(el, 'paper-format'))).toBe('E-Rechnung (ZUGFeRD)');
   });
 
+  it('the number columns size to what they hold, so an amount of €100,000 or more never runs into the next column; the description takes the rest and wraps anywhere', () => {
+    const big: Invoice = {
+      ...invoiceOf('RE-2026-044'),
+      lines: [{ description: 'Langer-Beschreibungstext-ohne-Leerzeichen-' + 'x'.repeat(60), quantity: 1.5, unit: 'piece', unitPriceCents: 12345678 }],
+    };
+    const table = q(render(big), 'paper-lines')!;
+    expect(table.classList.contains('table-fixed')).toBe(false);
+    expect(text(table.querySelector('tbody td:last-child'))).toBe(money(18518517, 'de').replace(/\s/g, ' '));
+
+    const numbers = Array.from(table.querySelectorAll('th:not(:first-child), td:not(:first-child)'));
+    expect(numbers).toHaveLength(6); // three in the header, three in the one line
+    for (const cell of numbers) expect(cell.classList.contains('whitespace-nowrap'), text(cell)).toBe(true);
+    for (const cell of table.querySelectorAll('td:first-child')) expect(cell.classList.contains('wrap-anywhere')).toBe(true);
+  });
+
   describe('left to right, in the language of the invoice', () => {
     it('the paper is ltr in Arabic', () => {
       TestBed.inject(LanguageService).setLang('ar');

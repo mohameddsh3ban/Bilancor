@@ -39,8 +39,13 @@ export function newLine(): InvoiceLine {
   return { description: '', quantity: 1, unit: 'piece', unitPriceCents: 0 };
 }
 
-/** The quantity typed in a field, or null unless it is a number above 0. `1,5` and `1.5` read alike. */
+/**
+ * The quantity typed in a field, or null unless it is a number above 0 with at most two decimals. `1,5` and `1.5` read
+ * alike. Three or more digits after a lone `.` or `,` are refused: `parseAmountQuery` would take the mark for a thousands
+ * separator, so `0,125` would become 125 and `1.333` 1333, with no word said.
+ */
 export function parseQuantity(text: string): number | null {
+  if (/^-?\d*[.,]\d{3,}$/.test(text.replace(/\s/g, ''))) return null;
   const amount = parseAmountQuery(text);
   return amount !== null && !amount.negative && amount.cents > 0 ? amount.cents / 100 : null;
 }

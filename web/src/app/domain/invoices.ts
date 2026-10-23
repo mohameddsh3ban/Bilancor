@@ -101,10 +101,15 @@ export function dueDateOf(invoice: Invoice): string {
   return addDays(invoice.issueDate, invoice.paymentTermDays);
 }
 
-/** What the payments linked to the invoice add up to, each counted by its size. A payment id the business does not have is ignored. */
-export function paidCents(invoice: Invoice, business: Business): number {
+/** The payments linked to the invoice, in the order they were linked (the first one first). A payment id the business does not have is ignored. */
+export function invoicePayments(invoice: Invoice, business: Business): Transaction[] {
   const byId = new Map(business.transactions.map((tx) => [tx.id, tx]));
-  return invoice.paymentIds.reduce((sum, id) => sum + Math.abs(byId.get(id)?.amountCents ?? 0), 0);
+  return invoice.paymentIds.flatMap((id) => byId.get(id) ?? []);
+}
+
+/** What the payments linked to the invoice add up to, each counted by its size. */
+export function paidCents(invoice: Invoice, business: Business): number {
+  return invoicePayments(invoice, business).reduce((sum, tx) => sum + Math.abs(tx.amountCents), 0);
 }
 
 /** What is still to be paid: the gross minus the payments, never below nothing (an overpayment leaves 0). */
@@ -151,9 +156,20 @@ export function nextInvoiceNumber(business: Business, year: string): string {
   return pattern.replaceAll('{YYYY}', year).replaceAll('{NNN}', String(highest + 1).padStart(3, '0'));
 }
 
+/** The days an invoice can be dated: from 1 January of the year of `today` up to `today`. The number's year is the year it is sent in, so an earlier year would give a number that does not fit the date; an invoice is not dated ahead either. */
+export function issueDateLimits(today = DEMO_TODAY): { min: string; max: string } {
+  return { min: `${today.slice(0, 4)}-01-01`, max: today };
+}
+
+/** Whether the invoice date is a day within `issueDateLimits`. */
+export function issueDateIsAllowed(date: string, today = DEMO_TODAY): boolean {
+  const { min, max } = issueDateLimits(today);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= min && date <= max;
+}
+
 export type ChecklistKey =
   | 'sellerAddress' | 'taxNumber' | 'sellerVatId' | 'customerName' | 'customerAddress' | 'customerEmail'
-  | 'customerVatId' | 'leitwegId' | 'privateAbroad' | 'lines' | 'servicePeriod';
+  | 'customerVatId' | 'leitwegId' | 'privateAbroad' | 'lines' | 'issueDate' | 'servicePeriod';
 export interface ChecklistItem {
   key: ChecklistKey;
   ok: boolean;
@@ -176,7 +192,7 @@ function servicePeriodIsComplete(period: Invoice['servicePeriod']): boolean {
  * number or a VAT ID. When the customer owes the VAT (reverse charge) the invoice also carries the seller's own VAT ID
  * (§ 14a UStG), and the customer's: `sellerVatId` is ok once the tax step is done and the tax details hold one. A
  * customer abroad who is not a business (a private person or a public office) is never ok: invoices abroad are for
- * businesses only for now.
+ * businesses only for now. The invoice date is ok within `issueDateLimits`.
  */
 export function invoiceChecklist(invoice: Invoice, business: Business, steps: SetupSteps): ChecklistItem[] {
   const seller = business.invoiceProfile;
@@ -198,6 +214,7 @@ export function invoiceChecklist(invoice: Invoice, business: Business, steps: Se
   if (customer.kind !== 'business' && customer.country !== 'DE') items.push({ key: 'privateAbroad', ok: false, fixAt: 'customer' });
   items.push(
     { key: 'lines', ok: invoice.lines.length > 0 && invoice.lines.every(lineIsComplete), fixAt: 'lines' },
+    { key: 'issueDate', ok: issueDateIsAllowed(invoice.issueDate), fixAt: 'dates' },
     { key: 'servicePeriod', ok: servicePeriodIsComplete(invoice.servicePeriod), fixAt: 'dates' },
   );
   return items;
@@ -406,7 +423,8 @@ export function revenueBookingFor(invoice: Invoice, profile: TaxProfile): Bookin
 
 /**
  * The sent document of an invoice, as it appears on Documents when the invoice is sent: a file named after the number, to the
- * customer, with the gross amount (positive, also for a cancellation invoice, which has no due date), booked and confirmed.
+ * customer, dated with the invoice date (added on the day it was sent), with the gross amount (positive, also for a
+ * cancellation invoice, which has no due date), booked and confirmed.
  */
 export function invoiceDocFor(invoice: Invoice, business: Business): Doc {
   const profile = business.taxProfile;
@@ -423,7 +441,7 @@ export function invoiceDocFor(invoice: Invoice, business: Business): Doc {
     name: invoice.customer.name,
     direction: 'sent',
     invoiceNo: number,
-    date: sentOn,
+    date: invoice.issueDate,
     dueDate: role === 'cancellation' ? null : dueDateOf(invoice),
     amountCents: Math.abs(invoiceTotals(invoice, profile).grossCents),
     vatRate: effectiveVatRate(invoice, profile),

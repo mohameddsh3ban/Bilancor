@@ -38,12 +38,14 @@ import {
   invoiceChecklist,
   invoiceFileFormat,
   invoiceTotals,
+  issueDateIsAllowed,
+  issueDateLimits,
   nextInvoiceNumber,
   savedCustomers,
   type ChecklistItem,
 } from '../domain/invoices';
 import { focusAfterRender } from '../settings/form-helpers';
-import { ChoiceCard, INPUT_CLASS } from '../settings/form-parts';
+import { ChoiceCard, FieldError, INPUT_CLASS } from '../settings/form-parts';
 import { PAYMENT_TERMS, termKey } from '../settings/invoice-form';
 import { DemoStateService } from '../state/demo-state.service';
 import { InvoiceService } from '../state/invoice.service';
@@ -96,6 +98,7 @@ function lastMonths(today: string, count: number): string[] {
     ChoiceCard,
     CustomerFields,
     DialogCard,
+    FieldError,
     HlmButton,
     HlmCardImports,
     HlmDialogImports,
@@ -247,19 +250,32 @@ function lastMonths(today: string, count: number): string[] {
                 <h2 hlmCardTitle>{{ 'invoiceForm.dates.title' | transloco }}</h2>
               </header>
               <div hlmCardContent class="flex flex-col gap-4">
-                <label class="flex flex-col gap-1 text-sm">
-                  <span class="text-muted-foreground">{{
-                    'invoiceForm.dates.issueDate' | transloco
-                  }}</span>
-                  <input
-                    type="date"
-                    dir="ltr"
-                    data-testid="issue-date"
-                    [class]="inputClass"
-                    [value]="invoice.issueDate"
-                    (change)="onIssueDate($event)"
-                  />
-                </label>
+                <div class="flex flex-col gap-1 text-sm">
+                  <label class="flex flex-col gap-1">
+                    <span class="text-muted-foreground">{{
+                      'invoiceForm.dates.issueDate' | transloco
+                    }}</span>
+                    <input
+                      type="date"
+                      dir="ltr"
+                      data-testid="issue-date"
+                      [class]="inputClass"
+                      [value]="invoice.issueDate"
+                      [attr.min]="issueLimits.min"
+                      [attr.max]="issueLimits.max"
+                      [attr.aria-invalid]="issueDateOk() ? null : 'true'"
+                      [attr.aria-describedby]="issueDateOk() ? null : 'issue-date-error'"
+                      (change)="onIssueDate($event)"
+                    />
+                  </label>
+                  @if (!issueDateOk()) {
+                    <p
+                      appFieldError="invoiceForm.dates.issueDateError"
+                      id="issue-date-error"
+                      data-testid="issue-date-error"
+                    ></p>
+                  }
+                </div>
 
                 <div class="flex flex-col gap-2">
                   <p class="text-muted-foreground text-sm" id="work-title">
@@ -580,6 +596,8 @@ export class InvoiceFormPage {
   protected readonly inputClass = INPUT_CLASS;
   protected readonly mark = MARK;
   protected readonly vatRates = VAT_RATES;
+  /** The days the invoice date can be: from 1 January of this year up to today. */
+  protected readonly issueLimits = issueDateLimits();
   protected readonly terms = PAYMENT_TERMS;
   protected readonly termKey = termKey;
   protected readonly languages = ['de', 'en'] as const;
@@ -696,6 +714,11 @@ export class InvoiceFormPage {
     return draft === null ? '' : formatDate(dueDateOf(draft), this.language.lang(), { year: true });
   });
 
+  protected readonly issueDateOk = computed(() => {
+    const draft = this.draft();
+    return draft === null || issueDateIsAllowed(draft.issueDate);
+  });
+
   protected readonly servicePeriod = computed<ServicePeriod>(
     () => this.draft()?.servicePeriod ?? { kind: 'month', month: DEMO_TODAY.slice(0, 7) },
   );
@@ -799,7 +822,9 @@ export class InvoiceFormPage {
         focusAfterRender(
           this.injector,
           this.host.nativeElement,
-          '[data-testid="service-month"], [data-testid="service-date"]',
+          item.key === 'issueDate'
+            ? '[data-testid="issue-date"]'
+            : '[data-testid="service-month"], [data-testid="service-date"]',
         );
         break;
     }

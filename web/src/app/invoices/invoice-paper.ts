@@ -106,17 +106,28 @@ interface Sum {
         </dl>
       </section>
 
-      <table class="w-full table-fixed border-collapse" data-testid="paper-lines">
+      <!-- Automatic layout: the number columns are as wide as what they hold (never narrower than the width given, which is
+           the look when it fits), and the description takes what is left and wraps anywhere, so a large amount never runs into the next column. -->
+      <table class="w-full border-collapse" data-testid="paper-lines">
         <thead>
           <tr class="border-b border-neutral-300 text-neutral-500">
             <th scope="col" class="py-1.5 pe-2 text-start font-medium">{{ v.columns[0] }}</th>
-            <th scope="col" class="w-16 px-1 py-1.5 text-end font-medium sm:w-24">
+            <th
+              scope="col"
+              class="w-16 px-1 py-1.5 text-end font-medium whitespace-nowrap sm:w-24"
+            >
               {{ v.columns[1] }}
             </th>
-            <th scope="col" class="w-20 px-1 py-1.5 text-end font-medium sm:w-28">
+            <th
+              scope="col"
+              class="w-20 px-1 py-1.5 text-end font-medium whitespace-nowrap sm:w-28"
+            >
               {{ v.columns[2] }}
             </th>
-            <th scope="col" class="w-20 py-1.5 ps-1 text-end font-medium sm:w-28">
+            <th
+              scope="col"
+              class="w-20 py-1.5 ps-1 text-end font-medium whitespace-nowrap sm:w-28"
+            >
               {{ v.columns[3] }}
             </th>
           </tr>
@@ -124,12 +135,12 @@ interface Sum {
         <tbody>
           @for (line of v.lines; track $index) {
             <tr class="border-b border-neutral-100 align-top" data-testid="paper-line">
-              <td class="py-1.5 pe-2 wrap-break-word">
+              <td class="py-1.5 pe-2 wrap-anywhere">
                 <bdi>{{ line.description }}</bdi>
               </td>
-              <td class="px-1 py-1.5 text-end">{{ line.quantity }}</td>
-              <td class="px-1 py-1.5 text-end">{{ line.unitPrice }}</td>
-              <td class="py-1.5 ps-1 text-end">{{ line.amount }}</td>
+              <td class="px-1 py-1.5 text-end whitespace-nowrap">{{ line.quantity }}</td>
+              <td class="px-1 py-1.5 text-end whitespace-nowrap">{{ line.unitPrice }}</td>
+              <td class="py-1.5 ps-1 text-end whitespace-nowrap">{{ line.amount }}</td>
             </tr>
           }
         </tbody>

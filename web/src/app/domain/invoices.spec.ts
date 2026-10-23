@@ -28,11 +28,14 @@ import {
   invoiceFormat,
   invoiceMatch,
   invoiceOfPayment,
+  invoicePayments,
   invoiceRowOf,
   invoiceRows,
   invoiceSeller,
   invoiceStatus,
   invoiceTotals,
+  issueDateIsAllowed,
+  issueDateLimits,
   leftCents,
   lineNetCents,
   nextInvoiceNumber,
@@ -413,6 +416,15 @@ describe('dueDateOf', () => {
 
 // --- payments and status ---
 
+describe('invoicePayments', () => {
+  it('is the payments linked to the invoice, in the order they were linked, and leaves out an id it cannot find', () => {
+    const linked = sent('i', 'RE-2026-044', '2026-10-16', 50000, { paymentIds: ['t2', 'gone', 't1'] });
+    const b = businessOf([linked], [payment('t1', 20000), payment('t2', 10000), payment('other', 99999)]);
+    expect(invoicePayments(linked, b).map((tx) => tx.id)).toEqual(['t2', 't1']);
+    expect(invoicePayments(sent('n', 'RE-2026-045', '2026-10-16', 50000), b)).toEqual([]);
+  });
+});
+
 describe('paidCents and leftCents', () => {
   const invoice = sent('i', 'RE-2026-044', '2026-10-16', 50000); // gross 59500
 
@@ -575,11 +587,11 @@ describe('invoiceChecklist', () => {
   const keysOf = (items: { key: string }[]): string[] => items.map((i) => i.key);
   const itemOf = (items: ReturnType<typeof invoiceChecklist>, key: string) => items.find((i) => i.key === key);
 
-  it('a complete invoice to a business in Germany: the seven items that apply, all ok, and it can be sent', () => {
+  it('a complete invoice to a business in Germany: the eight items that apply, all ok, and it can be sent', () => {
     const invoice = draft();
     const b = business();
     const items = invoiceChecklist(invoice, b, ALL_DONE);
-    expect(keysOf(items)).toEqual(['sellerAddress', 'taxNumber', 'customerName', 'customerAddress', 'customerEmail', 'lines', 'servicePeriod']);
+    expect(keysOf(items)).toEqual(['sellerAddress', 'taxNumber', 'customerName', 'customerAddress', 'customerEmail', 'lines', 'issueDate', 'servicePeriod']);
     expect(items.every((i) => i.ok)).toBe(true);
     expect(canSendInvoice(invoice, b, ALL_DONE)).toBe(true);
   });
@@ -596,6 +608,7 @@ describe('invoiceChecklist', () => {
       customerEmail: 'customer',
       customerVatId: 'customer',
       lines: 'lines',
+      issueDate: 'dates',
       servicePeriod: 'dates',
     });
   });
@@ -649,6 +662,22 @@ describe('invoiceChecklist', () => {
     expect(lines([{ description: 'x', quantity: 1, unit: 'flat', unitPriceCents: 0 }])).toBe(false);
     expect(lines([...HOURS_AND_FLAT, { description: '', quantity: 1, unit: 'flat', unitPriceCents: 1 }])).toBe(false);
     expect(lines(HOURS_AND_FLAT)).toBe(true);
+  });
+
+  it('the invoice date must be a day from 1 January of this year up to today, or the draft cannot be sent', () => {
+    const b = business();
+    const dated = (issueDate: string) => draft({ issueDate });
+    const ok = (issueDate: string) => itemOf(invoiceChecklist(dated(issueDate), b, ALL_DONE), 'issueDate')?.ok;
+    expect(ok(DEMO_TODAY)).toBe(true);
+    expect(ok('2026-01-01')).toBe(true);
+    expect(ok('2025-12-31')).toBe(false);
+    expect(ok('2025-11-03')).toBe(false);
+    expect(ok('2026-10-23')).toBe(false);
+    expect(ok('')).toBe(false);
+    expect(itemOf(invoiceChecklist(dated('2025-11-03'), b, ALL_DONE), 'issueDate')).toMatchObject({ ok: false, fixAt: 'dates' });
+    expect(canSendInvoice(dated('2025-11-03'), b, ALL_DONE)).toBe(false);
+    expect(canSendInvoice(dated('2026-10-23'), b, ALL_DONE)).toBe(false);
+    expect(canSendInvoice(dated('2026-01-01'), b, ALL_DONE)).toBe(true);
   });
 
   it('the service period needs a date or a month', () => {
@@ -744,7 +773,7 @@ describe('invoiceChecklist', () => {
     const withId = business({ taxProfile: { ...VAT, vatId: 'DE123456789' } });
     const fr = draft({ customer: customer({ country: 'FR', vatId: 'FR12345678901' }) });
     expect(keysOf(invoiceChecklist(fr, withId, ALL_DONE))).toEqual([
-      'sellerAddress', 'taxNumber', 'sellerVatId', 'customerName', 'customerAddress', 'customerEmail', 'customerVatId', 'lines', 'servicePeriod',
+      'sellerAddress', 'taxNumber', 'sellerVatId', 'customerName', 'customerAddress', 'customerEmail', 'customerVatId', 'lines', 'issueDate', 'servicePeriod',
     ]);
     const others: [string, Invoice, Business][] = [
       ['a customer in Germany', draft(), business()],
@@ -1137,6 +1166,31 @@ describe('revenueBookingFor', () => {
   });
 });
 
+describe('issueDateLimits and issueDateIsAllowed', () => {
+  it('an invoice can be dated from 1 January of the year of today up to today', () => {
+    expect(issueDateLimits()).toEqual({ min: '2026-01-01', max: DEMO_TODAY });
+    expect(issueDateLimits('2027-03-09')).toEqual({ min: '2027-01-01', max: '2027-03-09' });
+  });
+
+  it.each([
+    ['2026-01-01', true],
+    ['2026-06-15', true],
+    [DEMO_TODAY, true],
+    ['2025-12-31', false],
+    ['2026-10-23', false],
+    ['2027-01-01', false],
+    ['', false],
+    ['22.10.2026', false],
+  ])('%j is allowed: %s', (date, allowed) => {
+    expect(issueDateIsAllowed(date)).toBe(allowed);
+  });
+
+  it('follows the day it is asked for', () => {
+    expect(issueDateIsAllowed('2026-10-23', '2026-10-23')).toBe(true);
+    expect(issueDateIsAllowed('2026-12-31', '2027-01-05')).toBe(false);
+  });
+});
+
 describe('invoiceDocFor', () => {
   const invoice = sent('kern', 'RE-2026-044', '2026-10-16', 200000, { docId: null });
   const b = business({ invoices: [invoice] });
@@ -1161,6 +1215,13 @@ describe('invoiceDocFor', () => {
       paymentId: null,
       invoice: { id: 'kern', role: 'invoice', cancelled: false },
     });
+  });
+
+  it('is dated with the invoice date, and added on the day the invoice was sent', () => {
+    const backdated = sent('early', 'RE-2026-043', '2026-10-01', 200000, { docId: null, sentOn: DEMO_TODAY });
+    const d = invoiceDocFor(backdated, business({ invoices: [backdated] }));
+    expect(d).toMatchObject({ date: '2026-10-01', addedOn: DEMO_TODAY, dueDate: '2026-10-15' });
+    expect(d.history).toEqual([{ date: DEMO_TODAY, key: 'invoiceSent', params: { email: 'buero@studio-kern.example' } }]);
   });
 
   it('takes the id of its document when the invoice has one, otherwise one made from the invoice id', () => {
