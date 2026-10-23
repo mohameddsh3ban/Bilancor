@@ -128,6 +128,23 @@ describe('AccountService', () => {
       expect(localStorage.getItem('mockup.trusted.p1')).not.toBeNull();
     });
 
+    it('forgetTrust asks for the code again at the next sign-in, for that person only, and keeps the sign-in', () => {
+      const accounts = TestBed.inject(AccountService);
+      const id = accounts.createPerson(newPerson);
+      accounts.signIn('p1', true);
+      accounts.signIn(id, true);
+      accounts.forgetTrust('p1');
+      expect(accounts.isTrusted('p1')).toBe(false);
+      expect(localStorage.getItem('mockup.trusted.p1')).toBeNull();
+      expect(accounts.isTrusted(id)).toBe(true);
+      // The person who is in stays in; only the trusted device is forgotten.
+      expect(accounts.person().id).toBe(id);
+      // A person nobody has, or one with no trusted device, is fine.
+      accounts.forgetTrust('p1');
+      accounts.forgetTrust('nobody');
+      expect(accounts.isTrusted('nobody')).toBe(false);
+    });
+
     it('the sign-in count never goes back, not even after a reset', () => {
       const accounts = TestBed.inject(AccountService);
       accounts.signIn('p1', false);

@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { LanguageService } from '../core/i18n/language.service';
+import type { Lang } from '../data/models';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { DemoEmail } from './demo-email';
 
@@ -12,12 +13,14 @@ import { DemoEmail } from './demo-email';
       body="Choose a new password."
       action="Choose a new password"
       [to]="to()"
+      [mailLang]="mailLang()"
       (act)="acted = acted + 1"
     />
   `,
 })
 class Host {
   readonly to = signal<string | null>('sara@example.com');
+  readonly mailLang = signal<Lang | null>(null);
   acted = 0;
 }
 
@@ -66,6 +69,26 @@ describe('DemoEmail', () => {
     fixture.componentInstance.to.set(null);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="demo-email-to"]')).toBeNull();
+  });
+
+  it('marks the text of the email with its own language and direction when it has one', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const textBox = () => el.querySelector<HTMLElement>('[data-testid="demo-email-text"]')!;
+    expect(textBox().hasAttribute('lang')).toBe(false);
+    expect(textBox().hasAttribute('dir')).toBe(false);
+    fixture.componentInstance.mailLang.set('ar');
+    fixture.detectChanges();
+    expect(textBox().getAttribute('lang')).toBe('ar');
+    expect(textBox().getAttribute('dir')).toBe('rtl');
+    // The box's own label stays the page's: only the email's subject, text and button are marked.
+    expect(textBox().contains(el.querySelector('[data-testid="demo-email-label"]'))).toBe(false);
+    expect(textBox().contains(el.querySelector('[data-testid="demo-email-action"]'))).toBe(true);
+    fixture.componentInstance.mailLang.set('de');
+    fixture.detectChanges();
+    expect(textBox().getAttribute('lang')).toBe('de');
+    expect(textBox().getAttribute('dir')).toBe('ltr');
   });
 
   it('its button says what the email asks and tells the page when it is pressed', () => {

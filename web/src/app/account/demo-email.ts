@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
+import type { Lang } from '../data/models';
 
 /** The look of a demo help box: dashed, in the warning colour. Every demo help in the sign-in pages is one. */
 export const DEMO_BOX =
@@ -10,8 +11,9 @@ let nextEmailId = 0;
 
 /**
  * An email the demo cannot send, shown on the page instead: who it is to, its subject and text, and the button the email
- * would hold. The texts are passed in already translated (the sender's language, which is not always the page's), and
- * the button tells the page it was pressed (`act`).
+ * would hold. The texts are passed in already translated, in the language of the person it is to (which is not always
+ * the page's: `mailLang` then marks them with their own language and direction), and the button tells the page it was
+ * pressed (`act`).
  */
 @Component({
   selector: 'app-demo-email',
@@ -28,17 +30,24 @@ let nextEmailId = 0;
           {{ 'auth.demo.to' | transloco }} <bdi dir="ltr">{{ address }}</bdi>
         </p>
       }
-      <p class="font-medium" data-testid="demo-email-subject">{{ subject() }}</p>
-      <p class="text-muted-foreground" data-testid="demo-email-body">{{ body() }}</p>
-      <button
-        hlmBtn
-        type="button"
-        class="self-start"
-        data-testid="demo-email-action"
-        (click)="act.emit()"
+      <div
+        class="flex flex-col gap-2"
+        data-testid="demo-email-text"
+        [attr.lang]="mailLang()"
+        [attr.dir]="mailDir()"
       >
-        {{ action() }}
-      </button>
+        <p class="font-medium" data-testid="demo-email-subject">{{ subject() }}</p>
+        <p class="text-muted-foreground" data-testid="demo-email-body">{{ body() }}</p>
+        <button
+          hlmBtn
+          type="button"
+          class="self-start"
+          data-testid="demo-email-action"
+          (click)="act.emit()"
+        >
+          {{ action() }}
+        </button>
+      </div>
     </section>
   `,
 })
@@ -49,9 +58,15 @@ export class DemoEmail {
   readonly action = input.required<string>();
   /** The address the email is to, or null for none. */
   readonly to = input<string | null>(null);
+  /** The language the subject, text and button are written in, when it is not the page's: null leaves them as the page's. */
+  readonly mailLang = input<Lang | null>(null);
   /** The button was pressed. */
   readonly act = output<void>();
 
   protected readonly box = DEMO_BOX;
+  protected readonly mailDir = computed(() => {
+    const lang = this.mailLang();
+    return lang === null ? null : lang === 'ar' ? 'rtl' : 'ltr';
+  });
   protected readonly labelId = `demo-email-${nextEmailId++}`;
 }

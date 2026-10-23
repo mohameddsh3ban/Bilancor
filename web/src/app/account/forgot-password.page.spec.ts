@@ -1,7 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, importProvidersFrom } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { TranslocoTestingModule } from '@jsverse/transloco';
+import ar from '../../../public/i18n/ar.json';
+import de from '../../../public/i18n/de.json';
+import en from '../../../public/i18n/en.json';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { AccountService } from '../state/account.service';
@@ -187,5 +191,108 @@ describe('ForgotPasswordPage', () => {
         .devices.map((d) => d.id),
     ).toEqual([`${id}-d1`]);
     expect(devices()).toHaveLength(2);
+  });
+
+  it('a new password makes this device ask for the code again, for that person only', async () => {
+    const id = accounts.createPerson({
+      firstName: 'Mia',
+      lastName: 'Becker',
+      email: 'mia.b@example.com',
+      lang: 'en',
+    });
+    accounts.signIn('p1', true);
+    accounts.signIn(id, true);
+    accounts.signOut();
+    await sendLink('sara@example.com');
+    await click('demo-email-action');
+    expect(accounts.isTrusted('p1')).toBe(true);
+    await type('new-password', 'a long enough password');
+    await submit('new-password-form');
+    expect(accounts.isTrusted('p1')).toBe(false);
+    expect(accounts.isTrusted(id)).toBe(true);
+  });
+
+  describe("the email is in the person's language", () => {
+    const mail = () => ({
+      subject: text(q('demo-email-subject')),
+      body: text(q('demo-email-body')),
+      action: text(q('demo-email-action')),
+    });
+
+    it('a person whose language is German gets the German email from an English page', async () => {
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'de' }));
+      expect(language.lang()).toBe('en');
+      await sendLink('sara@example.com');
+      // The page keeps the language of the browser; only the email follows the person.
+      expect(text(q('sent-title'))).toBe('Check your email');
+      expect(text(q('demo-email-label'))).toBe('Demo: shown here instead of sent');
+      expect(mail()).toEqual({
+        subject: 'Passwort zurücksetzen',
+        body: 'Jemand möchte das Passwort für dein Konto zurücksetzen. Wenn du das warst, wähle mit der Schaltfläche unten ein neues Passwort. Der Link gilt 1 Stunde.',
+        action: 'Neues Passwort wählen',
+      });
+      expect(q('demo-email-text')!.getAttribute('lang')).toBe('de');
+      expect(q('demo-email-text')!.getAttribute('dir')).toBe('ltr');
+    });
+
+    it('an Arabic email reads right to left on an English page', async () => {
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      await sendLink('sara@example.com');
+      expect(mail().action).toBe('اختر كلمة مرور جديدة');
+      expect(q('demo-email-text')!.getAttribute('lang')).toBe('ar');
+      expect(q('demo-email-text')!.getAttribute('dir')).toBe('rtl');
+      expect(text(q('sent-title'))).toBe('Check your email');
+    });
+
+    it("a person with no language yet gets the page's language", async () => {
+      expect(accounts.person().lang).toBeNull();
+      language.setLang('de');
+      await settle();
+      await sendLink('sara@example.com');
+      expect(mail().action).toBe('Neues Passwort wählen');
+      expect(q('demo-email-text')!.getAttribute('lang')).toBe('de');
+    });
+
+    it('loads the translations of the email language when the page has not needed them yet', async () => {
+      // Only the language the page shows is loaded (English), as in the app: German is fetched when the email needs it.
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          importProvidersFrom(
+            TranslocoTestingModule.forRoot({
+              langs: { en, de, ar },
+              preloadLangs: false,
+              translocoConfig: {
+                availableLangs: ['en', 'de', 'ar'],
+                defaultLang: 'en',
+                reRenderOnLangChange: true,
+              },
+            }),
+          ),
+          provideRouter([
+            { path: 'sign-in', component: Stub },
+            { path: 'forgot-password', component: ForgotPasswordPage },
+          ]),
+        ],
+      });
+      accounts = TestBed.inject(AccountService);
+      language = TestBed.inject(LanguageService);
+      harness = await RouterTestingHarness.create('/forgot-password');
+      await settle();
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'de' }));
+      await sendLink('sara@example.com');
+      expect(text(q('sent-title'))).toBe('Check your email');
+      expect(mail().action).toBe('Neues Passwort wählen');
+      expect(mail().subject).toBe('Passwort zurücksetzen');
+    });
+
+    it('an English person gets the English email', async () => {
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'en' }));
+      language.setLang('de');
+      await settle();
+      await sendLink('sara@example.com');
+      expect(mail().action).toBe('Choose a new password');
+      expect(q('demo-email-text')!.getAttribute('lang')).toBe('en');
+    });
   });
 });

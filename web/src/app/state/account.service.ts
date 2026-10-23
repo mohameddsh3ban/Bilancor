@@ -103,6 +103,11 @@ export class AccountService {
     this.signInCount.update((n) => n + 1);
   }
 
+  /** Forgets that this device was trusted for the person (a new password does), so the code is asked at the next sign-in. Nobody is signed out. */
+  forgetTrust(personId: string): void {
+    this.storage.remove(trustedKey(personId));
+  }
+
   /** Signs out and forgets the remembered sign-in. A trusted device stays trusted. */
   signOut(): void {
     this.signedInId.set(null);

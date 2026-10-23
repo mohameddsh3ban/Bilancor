@@ -1,15 +1,19 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
-  computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
+import { take, type Subscription } from 'rxjs';
+import { LanguageService } from '../core/i18n/language.service';
+import type { Lang } from '../data/models';
 import { focusAfterRender } from '../settings/form-helpers';
 import { FieldError, INPUT_CLASS } from '../settings/form-parts';
 import { AccountService } from '../state/account.service';
@@ -21,11 +25,20 @@ const MIN_PASSWORD = 10;
 
 type Step = 'email' | 'sent' | 'choose' | 'done';
 
+/** The reset email as the person gets it: written in their language, not always the page's. */
+interface ResetMail {
+  lang: Lang;
+  subject: string;
+  body: string;
+  action: string;
+}
+
 /**
  * A forgotten password (`/forgot-password`), outside the app shell, in four steps: the email, "Check your email", a new
  * password, "Password changed". The page says a link was sent for any email, so it does not tell an account from a
- * stranger; only an email that has a login gets the demo box with the email (the link, as the demo shows it). The new
- * password signs the person out on the other devices; it does not sign anybody in, and the code is still asked then.
+ * stranger; only an email that has a login gets the demo box with the email (the link, as the demo shows it), written in
+ * the person's language (the page's when they have none yet). The new password signs the person out on the other devices
+ * and forgets this device if it was trusted; it does not sign anybody in, and the code is still asked then.
  */
 @Component({
   selector: 'app-forgot-password-page',
@@ -99,12 +112,13 @@ type Step = 'email' | 'sent' | 'choose' | 'done';
               >{{ 'auth.forgot.sent.after' | transloco }}
             </p>
 
-            @if (known()) {
+            @if (mail(); as m) {
               <app-demo-email
                 [to]="sentTo()"
-                [subject]="'auth.forgot.mail.subject' | transloco"
-                [body]="'auth.forgot.mail.body' | transloco"
-                [action]="'auth.forgot.mail.action' | transloco"
+                [mailLang]="m.lang"
+                [subject]="m.subject"
+                [body]="m.body"
+                [action]="m.action"
                 (act)="step.set('choose')"
               />
             }
@@ -196,6 +210,9 @@ type Step = 'email' | 'sent' | 'choose' | 'done';
 })
 export class ForgotPasswordPage {
   private readonly accounts = inject(AccountService);
+  private readonly language = inject(LanguageService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
@@ -206,12 +223,14 @@ export class ForgotPasswordPage {
   protected readonly emailMissing = signal(false);
   /** The email the link was "sent" to, as typed (without the spaces around it). */
   protected readonly sentTo = signal('');
-  /** Who has the email, when somebody does: only then is there a link to show. */
+  /** Who has the email, when somebody does. */
   private readonly personId = signal<string | null>(null);
+  /** The email to show, once its language is loaded: only a person who has the email gets one. */
+  protected readonly mail = signal<ResetMail | null>(null);
+  /** The language of the email being loaded, so a later send or a change of address drops it. */
+  private loadingMail: Subscription | null = null;
   protected readonly newPassword = signal('');
   protected readonly tooShort = signal(false);
-
-  protected readonly known = computed(() => this.personId() !== null);
 
   protected setEmail(event: Event): void {
     this.email.set((event.target as HTMLInputElement).value);
@@ -231,14 +250,18 @@ export class ForgotPasswordPage {
       focusAfterRender(this.injector, this.host, '[aria-invalid="true"]');
       return;
     }
+    const person = this.accounts.findByEmail(email);
     this.sentTo.set(email);
-    this.personId.set(this.accounts.findByEmail(email)?.id ?? null);
+    this.personId.set(person?.id ?? null);
+    this.dropMail();
+    if (person) this.writeMail(person.lang ?? this.language.lang());
     this.step.set('sent');
   }
 
   /** Back to the email, which keeps what was typed. */
   protected changeEmail(): void {
     this.personId.set(null);
+    this.dropMail();
     this.step.set('email');
     focusAfterRender(this.injector, this.host, '[data-testid="email"]');
   }
@@ -254,6 +277,31 @@ export class ForgotPasswordPage {
       return;
     }
     this.accounts.signOutOtherDevices(id);
+    // A new password asks for the code again, even on a device that was trusted.
+    this.accounts.forgetTrust(id);
     this.step.set('done');
+  }
+
+  private dropMail(): void {
+    this.loadingMail?.unsubscribe();
+    this.loadingMail = null;
+    this.mail.set(null);
+  }
+
+  /** Writes the email in the language (loading its translations first, when the page has not needed them yet). */
+  private writeMail(lang: Lang): void {
+    this.loadingMail = this.transloco
+      .load(lang)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        const text = (part: string) =>
+          this.transloco.translate(`auth.forgot.mail.${part}`, {}, lang);
+        this.mail.set({
+          lang,
+          subject: text('subject'),
+          body: text('body'),
+          action: text('action'),
+        });
+      });
   }
 }

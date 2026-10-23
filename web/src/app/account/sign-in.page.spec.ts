@@ -5,6 +5,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { AccountService } from '../state/account.service';
+import { ForgotPasswordPage } from './forgot-password.page';
 import { SignInPage } from './sign-in.page';
 
 @Component({ template: '' })
@@ -28,7 +29,7 @@ describe('SignInPage', () => {
           { path: 'payments', component: Stub },
           { path: 'sign-in', component: SignInPage },
           { path: 'sign-up', component: Stub },
-          { path: 'forgot-password', component: Stub },
+          { path: 'forgot-password', component: ForgotPasswordPage },
         ]),
       ],
     });
@@ -190,6 +191,28 @@ describe('SignInPage', () => {
     expect(q('code-form')).toBeNull();
     expect(accounts.signedIn()).toBe(true);
     expect(router.url).toBe('/');
+  });
+
+  it('a new password after a forgotten one makes a trusted device ask for the code again', async () => {
+    await render();
+    await giveCredentials();
+    await tick('trust');
+    await giveCode();
+    expect(accounts.isTrusted('p1')).toBe(true);
+
+    accounts.signOut();
+    await render('/forgot-password');
+    await type('email', 'sara@example.com');
+    await submit('forgot-form');
+    await click('demo-email-action');
+    await type('new-password', 'a long enough password');
+    await submit('new-password-form');
+    expect(q('done-title')).not.toBeNull();
+
+    await render('/sign-in');
+    await giveCredentials();
+    expect(q('code-form')).not.toBeNull();
+    expect(accounts.signedIn()).toBe(false);
   });
 
   it('without the tick the device is asked for the code every time', async () => {
