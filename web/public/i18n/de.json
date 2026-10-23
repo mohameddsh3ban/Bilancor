@@ -219,7 +219,25 @@
     "mainMenu": "Hauptmenü",
     "logo": "Dein Logo",
     "needsAction": "Zu erledigen",
-    "earlier": "Früher"
+    "earlier": "Früher",
+    "account": "Konto: {{name}}",
+    "myAccount": "Mein Konto",
+    "signOut": "Abmelden",
+    "addBusiness": "Unternehmen hinzufügen"
+  },
+  "roles": {
+    "owner": {
+      "name": "Inhaber:in"
+    },
+    "full": {
+      "name": "Voller Zugriff"
+    },
+    "receipts": {
+      "name": "Nur Belege"
+    },
+    "advisor": {
+      "name": "Steuerberater:in"
+    }
   },
   "taxes": {
     "title": "Steuern",

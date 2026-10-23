@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
@@ -6,18 +7,30 @@ import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { LanguageService } from '../core/i18n/language.service';
 import { Lang } from '../data/models';
 import { DemoStateService } from '../state/demo-state.service';
+import { PersonLanguageService } from '../state/person-language.service';
 import { BellPanel } from './bell-panel';
 import { SHELL_ICONS } from './menu';
 import { NeedsYouButton } from './needs-you-button';
+import { PersonMenu } from './person-menu';
 
 /**
- * Greeting, the "Needs you" button, notifications bell, business switcher and language switcher.
+ * Greeting, the "Needs you" button, notifications bell, business switcher (with the person's role in each business, and
+ * Add a business), language switcher and the person menu.
  * On a phone it is two rows: what wants the person on top, the settings below. On a computer it is one row.
  */
 @Component({
   selector: 'app-top-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BellPanel, HlmButton, HlmDropdownMenuImports, NeedsYouButton, NgIcon, TranslocoPipe],
+  imports: [
+    BellPanel,
+    HlmButton,
+    HlmDropdownMenuImports,
+    NeedsYouButton,
+    NgIcon,
+    PersonMenu,
+    RouterLink,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons(SHELL_ICONS)],
   template: `
     <header
@@ -47,15 +60,27 @@ import { NeedsYouButton } from './needs-you-button';
           <ng-icon name="lucideChevronDown" aria-hidden="true" />
         </button>
         <ng-template #businessMenu>
-          <div hlmDropdownMenu class="w-56">
+          <div hlmDropdownMenu class="w-64">
             @for (business of demo.businesses; track business.id) {
               <button hlmDropdownMenuItem type="button" (triggered)="demo.setBusiness(business.id)">
-                <span class="flex-1 truncate text-start">{{ business.name }}</span>
-                @if (business.id === demo.business().id) {
-                  <ng-icon name="lucideCheck" aria-hidden="true" />
+                <span class="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span class="truncate text-start">{{ business.name }}</span>
+                  @if (business.id === demo.business().id) {
+                    <ng-icon name="lucideCheck" aria-hidden="true" />
+                  }
+                </span>
+                @if (demo.roleIn(business.id); as role) {
+                  <span class="text-muted-foreground shrink-0 text-xs" data-testid="business-role">
+                    {{ 'roles.' + role + '.name' | transloco }}
+                  </span>
                 }
               </button>
             }
+            <div hlmDropdownMenuSeparator></div>
+            <a hlmDropdownMenuItem routerLink="/businesses/new" data-testid="add-business">
+              <ng-icon name="lucidePlus" aria-hidden="true" />
+              {{ 'shell.addBusiness' | transloco }}
+            </a>
           </div>
         </ng-template>
 
@@ -73,12 +98,14 @@ import { NeedsYouButton } from './needs-you-button';
               [class.bg-primary]="language.lang() === option.lang"
               [class.text-primary-foreground]="language.lang() === option.lang"
               [attr.aria-pressed]="language.lang() === option.lang"
-              (click)="language.setLang(option.lang)"
+              (click)="personLanguage.set(option.lang)"
             >
               {{ option.label }}
             </button>
           }
         </div>
+
+        <app-person-menu />
       </div>
     </header>
   `,
@@ -86,6 +113,7 @@ import { NeedsYouButton } from './needs-you-button';
 export class TopBar {
   protected readonly demo = inject(DemoStateService);
   protected readonly language = inject(LanguageService);
+  protected readonly personLanguage = inject(PersonLanguageService);
   protected readonly languages: { lang: Lang; label: string }[] = [
     { lang: 'en', label: 'EN' },
     { lang: 'de', label: 'DE' },

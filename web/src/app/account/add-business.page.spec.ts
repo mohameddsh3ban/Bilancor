@@ -119,9 +119,9 @@ describe('AddBusinessPage', () => {
     q('business-switcher')!.click();
     await settle();
     const names = body('[hlmDropdownMenuItem]').map((item) => text(item));
-    expect(names).toContain('Studio Becker');
-    expect(names).toContain('Weber Design');
-    expect(names).toContain('Café Linde GbR');
+    expect(names).toContain('Studio Becker Owner');
+    expect(names).toContain('Weber Design Owner');
+    expect(names).toContain('Café Linde GbR Full access');
   });
 
   it('keeps the other businesses and Sara as they were', async () => {

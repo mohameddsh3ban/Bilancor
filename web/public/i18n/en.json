@@ -219,7 +219,25 @@
     "mainMenu": "Main menu",
     "logo": "Your logo",
     "needsAction": "Needs action",
-    "earlier": "Earlier"
+    "earlier": "Earlier",
+    "account": "Account: {{name}}",
+    "myAccount": "My account",
+    "signOut": "Sign out",
+    "addBusiness": "Add a business"
+  },
+  "roles": {
+    "owner": {
+      "name": "Owner"
+    },
+    "full": {
+      "name": "Full access"
+    },
+    "receipts": {
+      "name": "Receipts only"
+    },
+    "advisor": {
+      "name": "Tax advisor"
+    }
   },
   "taxes": {
     "title": "Taxes",

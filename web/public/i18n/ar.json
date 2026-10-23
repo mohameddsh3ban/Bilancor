@@ -219,7 +219,25 @@
     "mainMenu": "القائمة الرئيسية",
     "logo": "شعارك",
     "needsAction": "يتطلب إجراءً",
-    "earlier": "سابقًا"
+    "earlier": "سابقًا",
+    "account": "الحساب: {{name}}",
+    "myAccount": "حسابي",
+    "signOut": "تسجيل الخروج",
+    "addBusiness": "إضافة نشاط"
+  },
+  "roles": {
+    "owner": {
+      "name": "المالك"
+    },
+    "full": {
+      "name": "وصول كامل"
+    },
+    "receipts": {
+      "name": "الإيصالات فقط"
+    },
+    "advisor": {
+      "name": "مستشار ضرائب"
+    }
   },
   "taxes": {
     "title": "الضرائب",
