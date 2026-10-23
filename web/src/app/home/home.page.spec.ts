@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { formatMoney } from '../core/format/format';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { DemoStateService } from '../state/demo-state.service';
+import { InvoiceService } from '../state/invoice.service';
 import { HomePage } from './home.page';
 
 describe('HomePage', () => {
@@ -30,14 +31,16 @@ describe('HomePage', () => {
     expect(has(el, 'balances-card')).toBe(false);
     expect(has(el, 'tax-card')).toBe(false);
     expect(has(el, 'decisions-card')).toBe(false);
+    expect(has(el, 'owed-card')).toBe(false);
   });
 
-  it('halfway shows transactions and balances', () => {
+  it('halfway shows transactions, balances and what customers owe', () => {
     demo.setSetup('halfway');
     const el = render();
     expect(has(el, 'setup-checklist')).toBe(true);
     expect(has(el, 'transactions-card')).toBe(true);
     expect(has(el, 'balances-card')).toBe(true);
+    expect(has(el, 'owed-card')).toBe(true);
     expect(has(el, 'tax-card')).toBe(false);
     expect(has(el, 'decisions-card')).toBe(false);
   });
@@ -45,8 +48,31 @@ describe('HomePage', () => {
   it('active client sees everything except the checklist, in order', () => {
     const el = render();
     const order = Array.from(el.querySelectorAll('[data-testid$="-card"]')).map((c) => c.getAttribute('data-testid'));
-    expect(order).toEqual(['notices-card', 'decisions-card', 'transactions-card', 'balances-card', 'tax-card']);
+    expect(order).toEqual([
+      'notices-card',
+      'decisions-card',
+      'owed-card',
+      'transactions-card',
+      'balances-card',
+      'tax-card',
+    ]);
     expect(has(el, 'setup-checklist')).toBe(false);
+  });
+
+  it('homepage shows Owed to you for weber (€3,570.00) and hides it for a business with nothing owed', () => {
+    const el = render();
+    const card = el.querySelector('[data-testid="owed-card"]')!;
+    expect(card.textContent).toContain('Owed to you');
+    expect(card.querySelector('[data-testid="owed-total"]')!.textContent).toContain(formatMoney(357000, 'en'));
+    expect(card.querySelector('[data-testid="owed-overdue"]')!.textContent).toContain(formatMoney(119000, 'en'));
+    // Shown on every size: it does not give way to a tile on the computer.
+    expect(card.parentElement!.classList).not.toContain('lg:hidden');
+
+    // The customers pay what they owe: the card goes.
+    const invoices = TestBed.inject(InvoiceService);
+    invoices.simulatePayment('inv-wd-044');
+    invoices.simulatePayment('inv-wd-039');
+    expect(has(render(), 'owed-card')).toBe(false);
   });
 
   it('balances total is the sum of the accounts', () => {

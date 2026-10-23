@@ -118,16 +118,21 @@ describe('the review cards on the page', () => {
     nextCard();
     seen.push(url());
 
-    // wd-t19: Kern Studio Berlin's payment, which has no receipt
+    // wd-t19: Kern Studio Berlin's payment has no receipt; is it the payment for RE-2026-044? Yes
     expect(name()).toBe('Kern Studio Berlin');
-    click('answer-no-receipt');
+    expect(text(q('card-question'))).toBe(
+      'Is this the payment for invoice RE-2026-044 from Studio Kern?',
+    );
+    click('answer-invoice-yes');
     nextCard();
     seen.push(url());
 
     expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review', '/review']);
     expect(url()).toBe('/review');
     expect(q('review-card')).toBeNull();
-    expect(text(q('finish-summary'))).toBe('6 decisions · 1 receipt added');
+    // The photo and the invoice are the two receipts added.
+    expect(text(q('finish-summary'))).toBe('6 decisions · 2 receipts added');
+    expect(demo.business().invoices.find((i) => i.id === 'inv-wd-044')!.paymentIds).toEqual(['wd-t19']);
   });
 
   it('learning shows under the tick, the other Amazon payment leaves the queue, and the card slides on', async () => {

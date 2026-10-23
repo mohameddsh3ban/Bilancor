@@ -342,6 +342,11 @@
     "revenueLimit": {
       "text": "Du hast {{percent}} % deiner Umsatzgrenze als Kleinunternehmer erreicht",
       "action": "Details"
+    },
+    "invoiceOverdue": {
+      "text": "{{name}} ist mit {{number}} seit {{days}} Tagen im Rückstand",
+      "textOne": "{{name}} ist mit {{number}} seit 1 Tag im Rückstand",
+      "action": "Zahlungserinnerung senden"
     }
   },
   "booking": {
@@ -1035,7 +1040,8 @@
     "q": {
       "unclear": "Wofür war das?",
       "confirm": "Wir haben das als {{category}} gebucht. Stimmt das?",
-      "noReceipt": "Für diese Zahlung gibt es noch keinen Beleg."
+      "noReceipt": "Für diese Zahlung gibt es noch keinen Beleg.",
+      "invoiceMatch": "Ist das die Zahlung für Rechnung {{number}} an {{name}}?"
     },
     "a": {
       "private": "Privat, nicht fürs Geschäft",
@@ -1043,7 +1049,9 @@
       "confirm": "Ja, stimmt",
       "changeCategory": "Kategorie ändern",
       "takePhoto": "Foto aufnehmen",
-      "removeThis": "Diesen entfernen"
+      "removeThis": "Diesen entfernen",
+      "yes": "Ja",
+      "pickAnother": "Andere wählen"
     },
     "result": {
       "booked": "Gebucht",
@@ -1058,7 +1066,8 @@
       "sent": "Als gesendet markiert",
       "amountSaved": "Betrag gespeichert",
       "dateSaved": "Datum gespeichert",
-      "nameSaved": "Name gespeichert"
+      "nameSaved": "Name gespeichert",
+      "invoicePaid": "Rechnung bezahlt ✓"
     },
     "learned": "Alles klar — {{name}} wird ab jetzt automatisch als {{category}} gebucht.",
     "learnedMore": {

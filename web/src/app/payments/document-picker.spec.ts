@@ -113,6 +113,15 @@ describe('DocumentPicker', () => {
     expect(options().length).toBeGreaterThan(0);
   });
 
+  it('can be named in other words, for a card that has a guess to offer first', async () => {
+    await render('wd-t17');
+    fixture.componentRef.setInput('labelKey', 'review.a.pickAnother');
+    await settle();
+    expect(text((fixture.nativeElement as HTMLElement).querySelector('[data-testid="pick-document"]'))).toBe(
+      'Pick another',
+    );
+  });
+
   it('lists the documents that fit, the one with the same amount first', async () => {
     await render('wd-t17');
     await open();

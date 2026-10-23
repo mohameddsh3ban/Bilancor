@@ -155,7 +155,7 @@ export class KeyNumbers {
 
   protected readonly business = this.demo.business;
   protected readonly nameOf = accountName;
-  protected readonly cards = computed(() => homeCards(this.demo.setup()));
+  protected readonly cards = computed(() => homeCards(this.demo.setup(), this.demo.business()));
   protected readonly decisions = computed(() => decisionCount(this.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.decisions()));
   protected readonly total = computed(() => totalAvailableCents(this.business().accounts));

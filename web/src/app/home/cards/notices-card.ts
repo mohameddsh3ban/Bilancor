@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTriangleAlert, lucideX } from '@ng-icons/lucide';
-import { RouterLink } from '@angular/router';
+import { Params, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { NoticeKind } from '../../data/models';
+import { Notice, NoticeKind } from '../../data/models';
 import { noticeTextKey } from '../../domain/notices';
 import { NoticeService } from '../../state/notice.service';
 
@@ -35,7 +35,8 @@ import { NoticeService } from '../../state/notice.service';
               size="sm"
               variant="outline"
               class="shrink-0"
-              [routerLink]="link(notice.kind)"
+              [routerLink]="link(notice)"
+              [queryParams]="queryParams(notice)"
               [fragment]="fragment(notice.kind)"
               [attr.data-testid]="'notice-action-' + notice.id"
             >
@@ -78,17 +79,27 @@ export class NoticesCard {
   protected readonly notices = inject(NoticeService);
   protected readonly textKey = noticeTextKey;
 
-  /** Fixing unreadable receipts happens in Documents and renewing a bank connection in Settings (at its Bank accounts card); the other actions are not built yet. */
-  protected link(kind: NoticeKind): string[] {
-    switch (kind) {
+  /**
+   * Fixing unreadable receipts happens in Documents, renewing a bank connection in Settings (at its Bank accounts card)
+   * and reminding a customer on the invoice itself (see `queryParams`); the other actions are not built yet.
+   */
+  protected link(notice: Notice): string[] {
+    switch (notice.kind) {
       case 'unreadable':
         return ['/documents'];
       case 'bankExpiry':
       case 'bankEnded':
         return ['/settings'];
+      case 'invoiceOverdue':
+        return ['/invoices', String(notice.params['id'])];
       default:
-        return ['/soon', kind];
+        return ['/soon', notice.kind];
     }
+  }
+
+  /** The invoice of an overdue notice opens its reminder (`?remind=1`), ready to send. */
+  protected queryParams(notice: Notice): Params | undefined {
+    return notice.kind === 'invoiceOverdue' ? { remind: 1 } : undefined;
   }
 
   /** The place on the page a notice's action opens: the Bank accounts card of Settings for the two bank notices. */

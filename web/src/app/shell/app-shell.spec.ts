@@ -94,8 +94,8 @@ describe('AppShell', () => {
   });
 
   it('bell shows unread count', () => {
-    // Weber Design: the terms, its calculated bank notice and the unreadable receipts.
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
+    // Weber Design: the terms, its calculated bank notice, the invoice that is late and the unreadable receipts.
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('4');
   });
 
   it('bell opens the history panel when bellOpen is set', async () => {
@@ -115,6 +115,7 @@ describe('AppShell', () => {
     expect(open).toContain('New terms from our bank-connection provider need your review');
     expect(open).toContain('Receipts that could not be read: 1');
     expect(open).toContain('Your Qonto connection expires in 5 days');
+    expect(open).toContain('Bäckerei Lange is 22 days late with RE-2026-039');
     const history = text('bell-history');
     expect(history).toContain('Earlier');
     expect(history).toContain('Your Qonto connection expires in 30 days');
@@ -147,7 +148,7 @@ describe('AppShell', () => {
     const text = (id: string) => document.body.querySelector(`[data-testid="${id}"]`)?.textContent ?? '';
     expect(text('bell-open')).not.toContain('in 5 days');
     expect(text('bell-history')).toContain('Your Qonto connection expires in 5 days');
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
   });
 
   it('bell panel omits the open section when nothing is open', async () => {
@@ -229,11 +230,11 @@ describe('AppShell', () => {
     notices.dismiss('wd-n3');
     notices.dismiss('bank-expiry-wd-qonto');
     harness.detectChanges();
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('1');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
     q('[data-testid="demo-reset"]').click();
     harness.detectChanges();
     expect(q('[data-testid="demo-reset"]').textContent).toContain('Reset demo');
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('3');
+    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('4');
   });
 
   it('Reset demo restores a changed payment', () => {

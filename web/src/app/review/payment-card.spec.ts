@@ -5,6 +5,7 @@ import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { OFFICE, PRIVATE_OUT, REVENUE_19, SUPPLIES, TRAVEL } from '../data/categories';
 import type { Transaction } from '../data/models';
 import { READING_MS } from '../domain/document-upload';
+import { invoiceStatus, owedSummary } from '../domain/invoices';
 import { reviewItems } from '../domain/review-queue';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService } from '../state/review.service';
@@ -402,6 +403,116 @@ describe('PaymentCard', () => {
       expect(tx('wd-t19').history[0].key).toBe('paysInvoice');
       expect(demo.documents().find((d) => d.id === 'wd-d2')!.paymentId).toBe('wd-t19');
       expect(review.summary().receiptsAdded).toBe(1);
+    });
+
+    describe('Is this the payment for an invoice?', () => {
+      const owedCents = () => owedSummary(demo.business(), demo.setup()).owedCents;
+      const invoice = () => demo.business().invoices.find((i) => i.id === 'inv-wd-044')!;
+
+      it("weber's inbox asks whether the Kern payment pays RE-2026-044; Yes pays it and owed drops to €1,190.00", () => {
+        vi.useFakeTimers();
+        show('wd-t19');
+
+        expect(text(q('card-kind'))).toBe('Payment · receipt missing');
+        expect(text(q('card-question'))).toBe(
+          'Is this the payment for invoice RE-2026-044 from Studio Kern?',
+        );
+        expect(text(q('answer-invoice-yes'))).toBe('Yes');
+        expect(isMain(q('answer-invoice-yes'))).toBe(true);
+        expect(text(q('pick-document'))).toBe('Pick another');
+        expect(isMain(q('pick-document'))).toBe(false);
+        expect(text(q('answer-no-receipt'))).toBe('No receipt needed');
+        expect(isMain(q('answer-no-receipt'))).toBe(false);
+        expect(q('answer-photo')).toBeNull();
+        expect(owedCents()).toBe(357000);
+        expect(invoiceStatus(invoice(), demo.business())).toBe('open');
+        const waiting = queueLength();
+
+        click(q('answer-invoice-yes'));
+
+        expect(invoice().paymentIds).toEqual(['wd-t19']);
+        expect(invoiceStatus(invoice(), demo.business())).toBe('paid');
+        expect(tx('wd-t19')).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf' });
+        expect(tx('wd-t19').history[0].key).toBe('paysInvoice');
+        expect(owedCents()).toBe(119000);
+        // One answer, one decision less; the invoice's document is the payment's receipt.
+        expect(queueLength()).toBe(waiting - 1);
+        expect(review.answered()).toBe(1);
+        expect(review.summary().receiptsAdded).toBe(1);
+        expect(review.lastAnswer()?.labelKey).toBe('review.result.invoicePaid');
+        play(SAVING_MS);
+        expect(text(q('tick-text'))).toBe('Invoice paid ✓');
+      });
+
+      it('Undo takes the payment off the invoice again', () => {
+        vi.useFakeTimers();
+        show('wd-t19');
+        click(q('answer-invoice-yes'));
+        expect(owedCents()).toBe(119000);
+
+        review.undo();
+
+        expect(invoice().paymentIds).toEqual([]);
+        expect(tx('wd-t19').receipt).toBe('missing');
+        expect(owedCents()).toBe(357000);
+      });
+
+      it('pick another and no receipt still work', async () => {
+        show('wd-t19');
+        expect(text(q('pick-document'))).toBe('Pick another');
+        click(q('pick-document'));
+        await settle();
+        const options = inBody('document-picker-option');
+        expect(text(options[0])).toContain('Studio Kern');
+        vi.useFakeTimers();
+        options[0].click(); // the invoice's own document: picking it pays the invoice as well
+        fixture.detectChanges();
+        expect(invoice().paymentIds).toEqual(['wd-t19']);
+        expect(owedCents()).toBe(119000);
+        expect(review.lastAnswer()?.labelKey).toBe('review.result.receiptAdded');
+        expect(review.summary().receiptsAdded).toBe(1);
+
+        // From the start again: No receipt needed leaves the invoice unpaid.
+        demo.resetData();
+        show('wd-t19');
+        click(q('answer-no-receipt'));
+        expect(tx('wd-t19').receipt).toBe('notNeeded');
+        expect(invoice().paymentIds).toEqual([]);
+        expect(owedCents()).toBe(357000);
+        expect(review.lastAnswer()?.labelKey).toBe('review.result.noReceipt');
+      });
+
+      it('asks the ordinary receipt question when the reference names the invoice', () => {
+        // A reference with the number means the system is certain: there is nothing to ask about the invoice.
+        demo.updateTransaction('wd-t19', (t) => ({ ...t, reference: 'RE-2026-044' }));
+        show('wd-t19');
+        expect(text(q('card-question'))).toBe("There's no receipt for this payment yet.");
+        expect(text(q('pick-document'))).toBe('Pick from Documents');
+        expect(q('answer-invoice-yes')).toBeNull();
+        expect(isMain(q('answer-photo'))).toBe(true);
+      });
+
+      it('asks the ordinary receipt question for a payment that fits no invoice', () => {
+        demo.updateTransaction('wd-t19', (t) => ({ ...t, amountCents: 238100 }));
+        show('wd-t19');
+        expect(text(q('card-question'))).toBe("There's no receipt for this payment yet.");
+        expect(q('answer-invoice-yes')).toBeNull();
+      });
+
+      it('the words follow the language', () => {
+        TestBed.inject(LanguageService).setLang('de');
+        show('wd-t19');
+        expect(text(q('card-question'))).toBe('Ist das die Zahlung für Rechnung RE-2026-044 an Studio Kern?');
+        expect(text(q('answer-invoice-yes'))).toBe('Ja');
+        expect(text(q('pick-document'))).toBe('Andere wählen');
+      });
+
+      it('in Arabic the number and the name are set apart in the sentence', () => {
+        TestBed.inject(LanguageService).setLang('ar');
+        show('wd-t19');
+        expect(text(q('card-question'))).toContain('⁨RE-2026-044⁩');
+        expect(text(q('card-question'))).toContain('⁨Studio Kern⁩');
+      });
     });
 
     it('does not offer to add a document when none fits: that would leave the review', async () => {

@@ -342,6 +342,11 @@
     "revenueLimit": {
       "text": "You have reached {{percent}}% of your small-business revenue limit",
       "action": "Details"
+    },
+    "invoiceOverdue": {
+      "text": "{{name}} is {{days}} days late with {{number}}",
+      "textOne": "{{name}} is 1 day late with {{number}}",
+      "action": "Send reminder"
     }
   },
   "booking": {
@@ -1035,7 +1040,8 @@
     "q": {
       "unclear": "What was this for?",
       "confirm": "We booked this as {{category}}. Is that right?",
-      "noReceipt": "There's no receipt for this payment yet."
+      "noReceipt": "There's no receipt for this payment yet.",
+      "invoiceMatch": "Is this the payment for invoice {{number}} from {{name}}?"
     },
     "a": {
       "private": "Private, not for the business",
@@ -1043,7 +1049,9 @@
       "confirm": "Yes, that's right",
       "changeCategory": "Change category",
       "takePhoto": "Take a photo",
-      "removeThis": "Remove this one"
+      "removeThis": "Remove this one",
+      "yes": "Yes",
+      "pickAnother": "Pick another"
     },
     "result": {
       "booked": "Booked",
@@ -1058,7 +1066,8 @@
       "sent": "Marked as sent",
       "amountSaved": "Amount saved",
       "dateSaved": "Date saved",
-      "nameSaved": "Name saved"
+      "nameSaved": "Name saved",
+      "invoicePaid": "Invoice paid ✓"
     },
     "learned": "Got it — {{name}} will be booked as {{category}} automatically from now on.",
     "learnedMore": {
