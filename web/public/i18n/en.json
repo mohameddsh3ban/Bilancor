@@ -127,7 +127,6 @@
   "soon": {
     "home": "Home",
     "payments": "Payments",
-    "invoices": "Invoices",
     "reports": "Reports",
     "help": "Help",
     "more": "More",
@@ -621,6 +620,63 @@
         "empty": "No payments match"
       },
       "remove": "Remove"
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "new": "New invoice",
+    "owed": {
+      "title": "Owed to you",
+      "overdue": "overdue"
+    },
+    "count": {
+      "one": "1 invoice",
+      "many": "{{count}} invoices"
+    },
+    "filter": {
+      "label": "Filter invoices",
+      "all": "All",
+      "open": "Open",
+      "overdue": "Overdue",
+      "drafts": "Drafts",
+      "paid": "Paid"
+    },
+    "status": {
+      "draft": "Draft",
+      "due": "Due {{date}}",
+      "dueToday": "Due today",
+      "open": "Open",
+      "overdueDays": {
+        "one": "Overdue 1 day",
+        "many": "Overdue {{count}} days"
+      },
+      "partlyPaid": "Partly paid · {{left}} left",
+      "paid": "Paid",
+      "paidOn": "Paid {{date}}",
+      "cancelled": "Cancelled",
+      "cancellation": "Cancellation"
+    },
+    "row": {
+      "draft": "Draft",
+      "fromFile": "Added from a file",
+      "noCustomer": "No customer yet",
+      "remind": "Send reminder",
+      "remindFormal": "Send formal reminder",
+      "reminded": "Reminded {{date}}",
+      "remindedLater": "Reminded {{date}} · formal reminder possible from {{from}}"
+    },
+    "empty": {
+      "none": {
+        "title": "No invoices yet",
+        "body": "Write your first invoice. It goes to your customer by email and shows up in your documents."
+      },
+      "filter": {
+        "open": "No open invoices",
+        "overdue": "No overdue invoices",
+        "drafts": "No drafts",
+        "paid": "No paid invoices yet"
+      },
+      "showAll": "Show all"
     }
   },
   "print": {

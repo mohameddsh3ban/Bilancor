@@ -127,7 +127,6 @@
   "soon": {
     "home": "Start",
     "payments": "Zahlungen",
-    "invoices": "Rechnungen",
     "reports": "Auswertungen",
     "help": "Hilfe",
     "more": "Mehr",
@@ -621,6 +620,63 @@
         "empty": "Keine Zahlung passt"
       },
       "remove": "Entfernen"
+    }
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "new": "Neue Rechnung",
+    "owed": {
+      "title": "Das bekommst du noch",
+      "overdue": "überfällig"
+    },
+    "count": {
+      "one": "1 Rechnung",
+      "many": "{{count}} Rechnungen"
+    },
+    "filter": {
+      "label": "Rechnungen filtern",
+      "all": "Alle",
+      "open": "Offen",
+      "overdue": "Überfällig",
+      "drafts": "Entwürfe",
+      "paid": "Bezahlt"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "due": "Fällig am {{date}}",
+      "dueToday": "Heute fällig",
+      "open": "Offen",
+      "overdueDays": {
+        "one": "1 Tag überfällig",
+        "many": "{{count}} Tage überfällig"
+      },
+      "partlyPaid": "Teilweise bezahlt · {{left}} offen",
+      "paid": "Bezahlt",
+      "paidOn": "Bezahlt am {{date}}",
+      "cancelled": "Storniert",
+      "cancellation": "Stornorechnung"
+    },
+    "row": {
+      "draft": "Entwurf",
+      "fromFile": "Aus einer Datei hinzugefügt",
+      "noCustomer": "Noch kein Kunde",
+      "remind": "Zahlungserinnerung senden",
+      "remindFormal": "Mahnung senden",
+      "reminded": "Erinnert am {{date}}",
+      "remindedLater": "Erinnert am {{date}} · Mahnung ab {{from}} möglich"
+    },
+    "empty": {
+      "none": {
+        "title": "Noch keine Rechnungen",
+        "body": "Schreib deine erste Rechnung. Sie geht per E-Mail an deinen Kunden und erscheint bei deinen Dokumenten."
+      },
+      "filter": {
+        "open": "Keine offenen Rechnungen",
+        "overdue": "Keine überfälligen Rechnungen",
+        "drafts": "Keine Entwürfe",
+        "paid": "Noch keine bezahlten Rechnungen"
+      },
+      "showAll": "Alle anzeigen"
     }
   },
   "print": {
