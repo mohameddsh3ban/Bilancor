@@ -20,8 +20,8 @@ import { LanguageService } from '../core/i18n/language.service';
 import { Term, TermText } from '../core/i18n/term';
 import { GERMAN_STATES } from '../data/banks';
 import { DemoStateService } from '../state/demo-state.service';
-import { ChoiceCard, FieldError, NotSureHint } from './form-parts';
-import { BACK_URLS, openedFrom } from './opened-from';
+import { ChoiceCard, FieldError, INPUT_CLASS, NotSureHint } from './form-parts';
+import { backUrlOf, openedFrom, openedInvoiceId } from './opened-from';
 import {
   demoKnowsState,
   demoStateNames,
@@ -34,9 +34,6 @@ import {
   type TaxQuestion,
 } from './tax-form';
 
-const INPUT_CLASS =
-  'border-input bg-background placeholder:text-muted-foreground h-10 w-full rounded-md border px-3 text-sm aria-invalid:border-negative';
-
 /** The revenue limits a Kleinunternehmer stays under, in cents: last year, and this year. */
 const LIMIT_LAST_YEAR_CENTS = 2500000;
 const LIMIT_THIS_YEAR_CENTS = 10000000;
@@ -46,8 +43,9 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
  * and shows the saved answers after. The VAT questions show only after Yes; a No clears them. Save checks every visible
  * question (and the tax number against the sample tax-office table), names each problem next to its field and keeps all
  * answers; when all is well it stores them, ticks the tax step and goes back to where the page was opened from
- * (`?from=home` or `?from=settings`, the default). What is typed belongs to the business that is open: another business,
- * a reset, or the toolbar's setup shortcuts start the form over.
+ * (`?from=home`, `?from=invoice` with `&invoice=<id>` for the invoice that was open, or `?from=settings`, the
+ * default). What is typed belongs to the business that is open: another business, a reset, or the toolbar's setup
+ * shortcuts start the form over.
  */
 @Component({
   selector: 'app-tax-details-page',
@@ -73,7 +71,7 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
       [routerLink]="backUrl()"
     >
       <ng-icon name="lucideArrowLeft" size="16" class="rtl:rotate-180" aria-hidden="true" />
-      {{ (from() === 'home' ? 'taxDetails.back.home' : 'taxDetails.back.settings') | transloco }}
+      {{ 'taxDetails.back.' + from() | transloco }}
     </a>
 
     <header class="flex flex-col gap-1">
@@ -473,9 +471,10 @@ export class TaxDetailsPage {
   protected readonly limitLastYear = LIMIT_LAST_YEAR_CENTS;
   protected readonly limitThisYear = LIMIT_THIS_YEAR_CENTS;
 
-  /** Where the page was opened from: the homepage's setup step, or Settings (also when nothing is said). */
-  protected readonly from = openedFrom(['home', 'settings']);
-  protected readonly backUrl = computed(() => BACK_URLS[this.from()]);
+  /** Where the page was opened from: the homepage's setup step, the invoice being written, or Settings (also when nothing is said). */
+  protected readonly from = openedFrom(['home', 'settings', 'invoice']);
+  private readonly invoiceId = openedInvoiceId();
+  protected readonly backUrl = computed(() => backUrlOf(this.from(), this.invoiceId()));
 
   /**
    * What is typed and chosen, and which questions were refused. Both belong to the open business and its setup: empty

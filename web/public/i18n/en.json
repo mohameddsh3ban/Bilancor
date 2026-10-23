@@ -766,7 +766,8 @@
   "taxDetails": {
     "back": {
       "home": "Back to home",
-      "settings": "Back to Settings"
+      "settings": "Back to Settings",
+      "invoice": "Back to your invoice"
     },
     "title": "Your tax details",
     "intro": "So we book and file the right way. You'll find most answers in your letter from the tax office.",
@@ -891,6 +892,56 @@
       "body": "This takes a moment."
     }
   },
+  "invoiceDetails": {
+    "back": {
+      "settings": "Back to Settings",
+      "invoice": "Back to your invoice"
+    },
+    "title": "Invoice details",
+    "intro": "This is printed on every invoice you send. Your tax number or VAT ID comes from your tax details.",
+    "address": {
+      "title": "Name and address",
+      "name": "Name of your business",
+      "street": "Street and number",
+      "postcode": "Postcode",
+      "city": "Town"
+    },
+    "iban": {
+      "title": "Bank account (IBAN)",
+      "account": "Use one of your accounts",
+      "other": "Another account (type it below)",
+      "label": "IBAN",
+      "hint": "Printed on your invoices, so customers know where to pay. Leave it empty to print no account.",
+      "error": "This doesn't look like an IBAN. Check it and try again."
+    },
+    "email": {
+      "title": "Sender email",
+      "hint": "Your customers get your invoices from this address."
+    },
+    "pattern": {
+      "title": "Invoice numbers",
+      "label": "Pattern",
+      "hint": "{YYYY} becomes the year and {NNN} the running number, for example RE-{YYYY}-{NNN}.",
+      "next": "Next number:",
+      "errorNumber": "The pattern needs {NNN}, the running number. Without it every invoice would get the same number.",
+      "errorBraces": "Only {YYYY} and {NNN} can go in curly brackets."
+    },
+    "term": {
+      "title": "Payment term",
+      "hint": "How long your customers have to pay. You can change it on each invoice.",
+      "d7": "7 days",
+      "d14": "14 days",
+      "d30": "30 days",
+      "other": "{{days}} days"
+    },
+    "language": {
+      "title": "Invoice language",
+      "hint": "The language of the invoice, its email and its reminders. The app stays in your language.",
+      "de": "German",
+      "en": "English"
+    },
+    "save": "Save"
+  },
   "settings": {
     "title": "Settings",
     "tax": {
@@ -906,6 +957,17 @@
       "basis": "VAT is due",
       "notGiven": "Not given",
       "yearFrom": "Starts on {{date}}"
+    },
+    "invoice": {
+      "title": "Invoice details",
+      "edit": "Edit",
+      "editLabel": "Edit your invoice details",
+      "address": "Name and address",
+      "iban": "Bank account (IBAN)",
+      "numbers": "Invoice numbers",
+      "term": "Payment term",
+      "language": "Invoice language",
+      "notGiven": "Not given"
     },
     "bank": {
       "title": "Bank accounts",

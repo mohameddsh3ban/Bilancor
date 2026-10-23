@@ -766,7 +766,8 @@
   "taxDetails": {
     "back": {
       "home": "Zurück zur Startseite",
-      "settings": "Zurück zu den Einstellungen"
+      "settings": "Zurück zu den Einstellungen",
+      "invoice": "Zurück zu deiner Rechnung"
     },
     "title": "Deine Steuerangaben",
     "intro": "Damit wir richtig buchen und melden. Die meisten Antworten findest du im Brief vom Finanzamt.",
@@ -891,6 +892,56 @@
       "body": "Das dauert einen Moment."
     }
   },
+  "invoiceDetails": {
+    "back": {
+      "settings": "Zurück zu den Einstellungen",
+      "invoice": "Zurück zu deiner Rechnung"
+    },
+    "title": "Rechnungsangaben",
+    "intro": "Das steht auf jeder Rechnung, die du verschickst. Deine Steuernummer oder USt-IdNr. kommt aus deinen Steuerangaben.",
+    "address": {
+      "title": "Name und Adresse",
+      "name": "Name deines Unternehmens",
+      "street": "Straße und Hausnummer",
+      "postcode": "Postleitzahl",
+      "city": "Ort"
+    },
+    "iban": {
+      "title": "Bankkonto (IBAN)",
+      "account": "Eines deiner Konten verwenden",
+      "other": "Anderes Konto (unten eintippen)",
+      "label": "IBAN",
+      "hint": "Steht auf deinen Rechnungen, damit deine Kunden wissen, wohin sie zahlen. Leer lassen, wenn kein Konto draufstehen soll.",
+      "error": "Das sieht nicht wie eine IBAN aus. Prüfe sie und versuche es noch einmal."
+    },
+    "email": {
+      "title": "Absender-E-Mail",
+      "hint": "Deine Kunden bekommen deine Rechnungen von dieser Adresse."
+    },
+    "pattern": {
+      "title": "Rechnungsnummern",
+      "label": "Muster",
+      "hint": "{YYYY} wird zum Jahr und {NNN} zur laufenden Nummer, zum Beispiel RE-{YYYY}-{NNN}.",
+      "next": "Nächste Nummer:",
+      "errorNumber": "Das Muster braucht {NNN}, die laufende Nummer. Ohne sie bekäme jede Rechnung dieselbe Nummer.",
+      "errorBraces": "In geschweiften Klammern dürfen nur {YYYY} und {NNN} stehen."
+    },
+    "term": {
+      "title": "Zahlungsziel",
+      "hint": "Wie lange deine Kunden Zeit zum Zahlen haben. Du kannst es bei jeder Rechnung ändern.",
+      "d7": "7 Tage",
+      "d14": "14 Tage",
+      "d30": "30 Tage",
+      "other": "{{days}} Tage"
+    },
+    "language": {
+      "title": "Sprache der Rechnung",
+      "hint": "Die Sprache der Rechnung, ihrer E-Mail und ihrer Erinnerungen. Die App bleibt in deiner Sprache.",
+      "de": "Deutsch",
+      "en": "Englisch"
+    },
+    "save": "Speichern"
+  },
   "settings": {
     "title": "Einstellungen",
     "tax": {
@@ -906,6 +957,17 @@
       "basis": "Umsatzsteuer ist fällig",
       "notGiven": "Nicht angegeben",
       "yearFrom": "Beginnt am {{date}}"
+    },
+    "invoice": {
+      "title": "Rechnungsangaben",
+      "edit": "Bearbeiten",
+      "editLabel": "Deine Rechnungsangaben bearbeiten",
+      "address": "Name und Adresse",
+      "iban": "Bankkonto (IBAN)",
+      "numbers": "Rechnungsnummern",
+      "term": "Zahlungsziel",
+      "language": "Sprache der Rechnung",
+      "notGiven": "Nicht angegeben"
     },
     "bank": {
       "title": "Bankkonten",

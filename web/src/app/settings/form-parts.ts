@@ -6,6 +6,10 @@ import { TermInfo, TermText } from '../core/i18n/term';
 
 let nextChoiceId = 0;
 
+/** The look of a text field or a choice list in a setup form. */
+export const INPUT_CLASS =
+  'border-input bg-background placeholder:text-muted-foreground h-10 w-full rounded-md border px-3 text-sm aria-invalid:border-negative';
+
 /**
  * One answer as a card that can be tapped anywhere: a radio button (one answer of a group `name`) or a checkbox. The
  * text is projected as the label of the invisible input, so tapping its words chooses the answer. A German term in it

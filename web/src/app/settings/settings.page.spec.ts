@@ -5,7 +5,7 @@ import { routes } from '../app.routes';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { FOUND_ACCOUNTS } from '../data/banks';
-import type { AccountConnection, TaxProfile } from '../data/models';
+import type { AccountConnection, InvoiceProfile, TaxProfile } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { maskIban } from '../domain/bank-connection';
 import { HomePage } from '../home/home.page';
@@ -16,6 +16,7 @@ import { DemoStateService } from '../state/demo-state.service';
 import { withConnection as setConnection } from '../state/demo-state.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
+import { InvoiceDetailsPage } from './invoice-details.page';
 import { SettingsPage } from './settings.page';
 import { TaxDetailsPage } from './tax-details.page';
 import ar from '../../../public/i18n/ar.json';
@@ -42,6 +43,7 @@ describe('SettingsPage', () => {
           },
           { path: 'settings', component: SettingsPage },
           { path: 'settings/tax', component: TaxDetailsPage },
+          { path: 'settings/invoice', component: InvoiceDetailsPage },
           { path: 'settings/bank/connect', component: ConnectBankPage },
           { path: 'soon/:feature', component: ComingSoonPage },
         ]),
@@ -103,17 +105,19 @@ describe('SettingsPage', () => {
   }
 
   describe('the page', () => {
-    it('has the title and three cards: Business and tax, Bank accounts, Documents inbox', async () => {
+    it('has the title and four cards: Business and tax, Invoice details, Bank accounts, Documents inbox', async () => {
       await render();
       expect(text(el.querySelector('h1'))).toBe('Settings');
       const cards = Array.from(el.querySelectorAll('section[data-testid^="settings-"]'));
       expect(cards.map((card) => card.getAttribute('data-testid'))).toEqual([
         'settings-tax',
+        'settings-invoice',
         'settings-banks',
         'settings-inbox',
       ]);
       expect(cards.map((card) => text(card.querySelector('h2')))).toEqual([
         'Business and tax',
+        'Invoice details',
         'Bank accounts',
         'Documents inbox',
       ]);
@@ -329,6 +333,152 @@ describe('SettingsPage', () => {
       demo.setBusiness('cafe-linde');
       await settle();
       expect(value('tax-kind')).toBe('A trade (Gewerbe)');
+    });
+  });
+
+  describe('Invoice details', () => {
+    const invoiceRows = () =>
+      Array.from(el.querySelectorAll('[data-testid="settings-invoice"] dl > div')).map((row) =>
+        row.getAttribute('data-testid'),
+      );
+    const lines = () =>
+      Array.from(q('invoice-address')!.querySelectorAll('dd bdi')).map((line) => text(line));
+    const saveProfile = (change: Partial<InvoiceProfile>) =>
+      demo.saveInvoiceProfile({ ...demo.business().invoiceProfile, ...change });
+
+    it('settings shows the invoice details card with the next number', async () => {
+      await render();
+      expect(invoiceRows()).toEqual([
+        'invoice-address',
+        'invoice-iban',
+        'invoice-numbers',
+        'invoice-term',
+        'invoice-language',
+      ]);
+      expect(text(q('settings-invoice')!.querySelector('h2'))).toBe('Invoice details');
+      expect(label('invoice-address')).toBe('Name and address');
+      expect(lines()).toEqual(['Weber Design', 'Lindenstr. 5', '10969 Berlin']);
+      expect(label('invoice-iban')).toBe('Bank account (IBAN)');
+      expect(value('invoice-iban')).toBe('DE08 1001 0101 0482 9136 50');
+      expect(label('invoice-numbers')).toBe('Invoice numbers');
+      expect(text(q('invoice-pattern'))).toBe('RE-{YYYY}-{NNN}');
+      expect(text(q('invoice-next'))).toBe('Next number: RE-2026-045');
+      expect(label('invoice-term')).toBe('Payment term');
+      expect(value('invoice-term')).toBe('14 days');
+      expect(label('invoice-language')).toBe('Invoice language');
+      expect(value('invoice-language')).toBe('German');
+    });
+
+    it('sits right after the tax details', async () => {
+      await render();
+      const tax = q('settings-tax')!;
+      expect(tax.closest('app-tax-answers')!.nextElementSibling).toBe(
+        q('settings-invoice')!.closest('app-invoice-details'),
+      );
+    });
+
+    it('shows the next number of each business, from its own numbers so far', async () => {
+      for (const [businessId, next] of [
+        ['weber-design', 'RE-2026-045'],
+        ['cafe-linde', 'RE-2026-054'],
+        ['sara-yoga', 'RE-2026-022'],
+      ]) {
+        demo.setBusiness(businessId);
+        await render();
+        expect(text(q('invoice-next')), businessId).toBe(`Next number: ${next}`);
+      }
+    });
+
+    it('follows the open business', async () => {
+      await render();
+      demo.setBusiness('cafe-linde');
+      await settle();
+      expect(lines()).toEqual(['Café Linde GbR', 'Lindenallee 4', '20259 Hamburg']);
+      expect(value('invoice-iban')).toBe('DE44 1001 0101 0637 1852 94');
+    });
+
+    it('writes the IBAN, the pattern and the next number left to right, also in an Arabic page', async () => {
+      TestBed.inject(LanguageService).setLang('ar');
+      await render();
+      expect(document.documentElement.dir).toBe('rtl');
+      expect(text(q('settings-invoice')!.querySelector('h2'))).toBe(ar.settings.invoice.title);
+      const iban = q('invoice-iban')!.querySelector('dd bdi')!;
+      expect(iban.getAttribute('dir')).toBe('ltr');
+      expect(text(iban)).toBe('DE08 1001 0101 0482 9136 50');
+      expect(q('invoice-pattern')!.getAttribute('dir')).toBe('ltr');
+      expect(q('invoice-next')!.querySelector('bdi')!.getAttribute('dir')).toBe('ltr');
+    });
+
+    it('speaks German', async () => {
+      TestBed.inject(LanguageService).setLang('de');
+      await render();
+      expect(text(q('settings-invoice')!.querySelector('h2'))).toBe(de.settings.invoice.title);
+      expect(value('invoice-term')).toBe(de.invoiceDetails.term.d14);
+      expect(value('invoice-language')).toBe(de.invoiceDetails.language.de);
+      expect(text(q('invoice-next'))).toBe(`${de.invoiceDetails.pattern.next} RE-2026-045`);
+    });
+
+    it('says what is not given: no IBAN, no address', async () => {
+      saveProfile({ iban: null, name: '', street: '', postcode: '', city: '' });
+      await render();
+      expect(value('invoice-iban')).toBe('Not given');
+      expect(value('invoice-address')).toBe('Not given');
+      expect(lines()).toEqual([]);
+    });
+
+    it('shows only what is given of the address', async () => {
+      saveProfile({ name: 'Weber Design', street: '', postcode: '10969', city: '' });
+      await render();
+      expect(lines()).toEqual(['Weber Design', '10969']);
+    });
+
+    it('says a term of its own in general words', async () => {
+      saveProfile({ paymentTermDays: 21 });
+      await render();
+      expect(value('invoice-term')).toBe('21 days');
+    });
+
+    it('Edit opens the invoice details page and Save comes back to Settings', async () => {
+      await render();
+      expect(text(q('invoice-edit'))).toBe('Edit');
+      expect(q('invoice-edit')!.getAttribute('href')).toBe('/settings/invoice?from=settings');
+      expect(q('invoice-edit')!.getAttribute('aria-label')).toBe('Edit your invoice details');
+      await click('invoice-edit');
+      expect(router.url).toBe('/settings/invoice?from=settings');
+      expect(text(el.querySelector('h1'))).toBe('Invoice details');
+      await click('save');
+      expect(router.url).toBe('/settings');
+      expect(text(el.querySelector('h1'))).toBe('Settings');
+    });
+
+    it('a changed address, term and pattern show on the card it comes back to, with the next number following', async () => {
+      await render('/settings/invoice?from=settings');
+      const type = async (testId: string, typed: string) => {
+        const input = q(testId) as HTMLInputElement;
+        input.value = typed;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+      };
+      await type('street', 'Kastanienallee 12');
+      await type('pattern', 'R{YYYY}/{NNN}');
+      el.querySelector<HTMLInputElement>('[data-testid="term-30"] input')!.click();
+      await settle();
+      el.querySelector<HTMLInputElement>('[data-testid="lang-en"] input')!.click();
+      await settle();
+      await click('save');
+      expect(router.url).toBe('/settings');
+      expect(lines()).toEqual(['Weber Design', 'Kastanienallee 12', '10969 Berlin']);
+      expect(text(q('invoice-pattern'))).toBe('R{YYYY}/{NNN}');
+      expect(text(q('invoice-next'))).toBe('Next number: R2026/001');
+      expect(value('invoice-term')).toBe('30 days');
+      expect(value('invoice-language')).toBe('English');
+    });
+
+    it('the invoice details page goes back to Settings by its back link', async () => {
+      await render('/settings/invoice?from=settings');
+      await click('back-link');
+      expect(router.url).toBe('/settings');
+      expect(text(el.querySelector('h1'))).toBe('Settings');
     });
   });
 
@@ -805,7 +955,7 @@ describe('Settings in the app', () => {
     document.documentElement.dir = '';
   });
 
-  it('menu Settings opens the page with three sections', async () => {
+  it('menu Settings opens the page with four sections', async () => {
     harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
     harness.detectChanges();
@@ -830,6 +980,6 @@ describe('Settings in the app', () => {
       Array.from(main.querySelectorAll('section[data-testid^="settings-"] h2')).map((h) =>
         h.textContent?.trim(),
       ),
-    ).toEqual(['Business and tax', 'Bank accounts', 'Documents inbox']);
+    ).toEqual(['Business and tax', 'Invoice details', 'Bank accounts', 'Documents inbox']);
   });
 });
