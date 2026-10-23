@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Business, Doc, PoolResult } from '../data/models';
+import { NEW_BUSINESS_POOL } from '../data/new-business-sample';
 import { UPLOAD_POOLS } from '../data/sample-documents';
 import { certainMatch } from '../domain/document-matching';
 import { docNeedsYou } from '../domain/document-status';
@@ -49,7 +50,10 @@ interface Batch {
   summaryVersion: number;
 }
 
-/** Simulates adding documents: a document shows Reading… for a moment, then gets the next ready-made result of its business. */
+/**
+ * Simulates adding documents: a document shows Reading… for a moment, then gets the next ready-made result of its
+ * business (one made during the visit has the generic pool).
+ */
 @Injectable({ providedIn: 'root' })
 export class UploadService {
   private readonly demo = inject(DemoStateService);
@@ -174,7 +178,7 @@ export class UploadService {
     const key = `${generation}:${businessId}`;
     const index = this.poolUsed.get(key) ?? 0;
     this.poolUsed.set(key, index + 1);
-    return nextPoolResult(UPLOAD_POOLS[businessId], index);
+    return nextPoolResult(UPLOAD_POOLS[businessId] ?? NEW_BUSINESS_POOL, index);
   }
 
   /** Applies the results of a drop (none when the data was reset since) and, if it is still the latest summary, tells how it went. */

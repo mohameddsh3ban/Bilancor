@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { BANKS, FOUND_ACCOUNTS } from '../data/banks';
+import { BANKS, foundAccountsOf } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import {
   Account,
@@ -15,6 +15,14 @@ import {
   TaxProfile,
   Transaction,
 } from '../data/models';
+import {
+  isVisitBusiness,
+  newBusiness,
+  newBusinessAccountId,
+  newBusinessPayments,
+  type NewBusinessInput,
+  type NewOwner,
+} from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { PERSON } from '../data/sample-person';
 import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection } from '../domain/bank-connection';
@@ -22,6 +30,7 @@ import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
 import { invoiceOfPayment, invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
+import { ownerOf } from '../domain/people';
 
 const DEFAULT_BUSINESS_ID = 'weber-design';
 
@@ -61,6 +70,8 @@ export class DemoStateService {
   /** The setup steps of each business that was ever changed; a business with no entry has every step done. */
   private readonly stepsByBusiness = signal<Record<string, SetupSteps>>({});
   private readonly generationSignal = signal(0);
+  /** Never goes back, so the id of a business made during the visit is never used twice, not even after a reset. */
+  private visitCounter = 0;
 
   readonly business = computed<Business>(() => {
     const all = this.data();
@@ -82,6 +93,17 @@ export class DemoStateService {
 
   setBusiness(id: string): void {
     if (this.data().some((b) => b.id === id)) this.businessIdSignal.set(id);
+  }
+
+  /**
+   * Makes a business for the person, as a new client (all three setup steps open, no bank, documents or tax details), and
+   * returns its id, `new-<n>`. It is not opened: that is the caller's (`setBusiness`). Reset demo drops it.
+   */
+  createBusiness(owner: NewOwner, input: NewBusinessInput): string {
+    const id = `new-${++this.visitCounter}`;
+    this.data.update((all) => [...all, newBusiness(id, input, owner)]);
+    this.stepsByBusiness.update((all) => ({ ...all, [id]: presetSteps('new') }));
+    return id;
   }
 
   /** Sets the open business's steps to one of the demo toolbar's shortcuts; other businesses, accounts and answers stay as they are. */
@@ -129,6 +151,9 @@ export class DemoStateService {
    * An account that is connected already (bank step done) stays as it is, with no line, so a second call with the same
    * accounts changes nothing. The sample business accounts of that bank that are left out are not connected: they
    * become statement accounts and keep their payments. The accounts it is given are never changed (they are shared sample data).
+   *
+   * The first time the business account of a business made during the visit is added, its eight October payments come
+   * in with it (newest first); it has them once, however often it is connected.
    */
   connectAccounts(bankId: string, accounts: readonly Account[], fetchFrom: string): void {
     const bankDone = this.setup().bank;
@@ -136,7 +161,7 @@ export class DemoStateService {
     this.updateBusiness(this.businessIdSignal(), (business) => {
       const chosen = new Set(accounts.map((account) => account.id));
       const sample = new Set(
-        (FOUND_ACCOUNTS[business.id]?.[bankId] ?? [])
+        foundAccountsOf(business.id, bankId)
           .filter((account) => account.product === 'business')
           .map((account) => account.id),
       );
@@ -161,9 +186,15 @@ export class DemoStateService {
       if (added.length === 0 && kept.every((account, i) => account === business.accounts[i])) return business;
 
       const cashAt = kept.findIndex((account) => account.kind === 'cash');
+      const main = isVisitBusiness(business.id)
+        ? added.find((account) => account.id === newBusinessAccountId(business.id))
+        : undefined;
       return {
         ...business,
         accounts: cashAt === -1 ? [...kept, ...added] : [...kept.slice(0, cashAt), ...added, ...kept.slice(cashAt)],
+        transactions: main
+          ? [...newBusinessPayments(business.id, main, ownerOf(business).name ?? business.name), ...business.transactions]
+          : business.transactions,
         history: [...lines.reverse(), ...business.history],
       };
     });
@@ -455,9 +486,14 @@ export class DemoStateService {
     }));
   }
 
-  /** Puts every edited payment and document back to the sample data, and every business back to all steps done (demo only). */
+  /**
+   * Puts every edited payment and document back to the sample data, every business back to all steps done, and takes away
+   * the businesses made during the visit (demo only). When one of those was open, the default business opens instead.
+   */
   resetData(): void {
-    this.data.set(freshBusinesses());
+    const fresh = freshBusinesses();
+    this.data.set(fresh);
+    if (!fresh.some((b) => b.id === this.businessIdSignal())) this.businessIdSignal.set(DEFAULT_BUSINESS_ID);
     this.stepsByBusiness.set({});
     this.generationSignal.update((n) => n + 1);
   }

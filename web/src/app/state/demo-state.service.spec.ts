@@ -1,16 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { OFFICE, REVENUE_19, REVENUE_7, REVENUE_EU_RC, SOFTWARE, TRAVEL } from '../data/categories';
-import { FOUND_ACCOUNTS } from '../data/banks';
+import { BANKS, FOUND_ACCOUNTS, foundAccountsOf } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, Booking, Doc, Invoice, SentVatReturn, TaxProfile, Transaction } from '../data/models';
+import type { NewBusinessInput, NewOwner } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { PERSON } from '../data/sample-person';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
 import { docStatus, docsNeedingYouCount } from '../domain/document-status';
 import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
 import { invoiceStatus, leftCents } from '../domain/invoices';
-import { changeCategory, setPrivate } from '../domain/payment-actions';
+import { changeCategory, confirmBooking, markNoReceiptNeeded, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
+import { reviewItems } from '../domain/review-queue';
+import { yearSummary } from '../domain/tax-year';
 import { currentVatReturn, periodFor, vatReturnFor } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
 import { withConnection as setConnection } from './demo-state.testing';
@@ -1441,6 +1444,240 @@ describe('DemoStateService', () => {
       expect(state.business().invoiceProfile).toEqual(BUSINESSES[0].invoiceProfile);
       expect(state.business().transactions).toEqual(BUSINESSES[0].transactions);
       expect(state.documents()).toEqual(BUSINESSES[0].documents);
+    });
+  });
+
+  describe('a business made during the visit', () => {
+    const sara: NewOwner = { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email };
+    const input: NewBusinessInput = { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' };
+    const paymentIds = (id: string): string[] => ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'].map((t) => `${id}-${t}`);
+
+    /** Makes a business for Sara and opens it, as the sign-up and Add a business do. */
+    function made(state: DemoStateService, owner: NewOwner = sara): string {
+      const id = state.createBusiness(owner, input);
+      state.setBusiness(id);
+      return id;
+    }
+
+    /** Connects the open business at a bank: the accounts the demo finds there, fetched from 1 January. */
+    function connectAt(state: DemoStateService, bankId = 'qonto'): void {
+      state.connectAccounts(bankId, foundAccountsOf(state.business().id, bankId), '2026-01-01');
+    }
+
+    it('a new business starts as a new client with no payments, documents or tax details, owned by the person', () => {
+      const state = TestBed.inject(DemoStateService);
+      const id = made(state);
+
+      expect(id).toBe('new-1');
+      expect(state.businesses.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde', 'new-1']);
+      expect(state.business().id).toBe('new-1');
+      expect(state.setup()).toEqual(presetSteps('new'));
+      expect(presetOf(state.setup())).toBe('new');
+      expect(state.bankConnected()).toBe(false);
+      expect(state.business()).toMatchObject({
+        name: 'Atelier Neu',
+        accounts: [],
+        transactions: [],
+        documents: [],
+        invoices: [],
+        vatReturns: [],
+        notices: [],
+        categoryRules: [],
+        history: [],
+        legalForm: 'sole',
+      });
+      expect(state.documents()).toEqual([]);
+      expect(state.business().taxProfile).toMatchObject({ businessKind: 'freelance', vatPeriod: null, taxNumber: null, taxState: null });
+      expect(state.business().people).toMatchObject([{ personId: PERSON.id, role: 'owner', status: 'joined', name: 'Sara Weber' }]);
+    });
+
+    it('creating a business does not open it, and changes no other business', () => {
+      const state = TestBed.inject(DemoStateService);
+      const before = state.businesses;
+      const id = state.createBusiness(sara, input);
+
+      expect(state.business().id).toBe('weber-design');
+      expect(state.stepsOf(id)).toEqual(presetSteps('new'));
+      expect(state.stepsOf('weber-design')).toEqual(ALL_DONE);
+      expect(state.businesses.slice(0, 3)).toEqual(before);
+      state.setBusiness(id);
+      expect(state.business().id).toBe(id);
+    });
+
+    it('every business gets an id of its own, and an id is never used twice in a visit, not even after Reset demo', () => {
+      const state = TestBed.inject(DemoStateService);
+      expect(state.createBusiness(sara, input)).toBe('new-1');
+      expect(state.createBusiness(sara, { ...input, name: 'Zweites Büro' })).toBe('new-2');
+      state.resetData();
+      expect(state.createBusiness(sara, input)).toBe('new-3');
+      expect(state.businesses.filter((b) => b.id.startsWith('new-')).map((b) => b.id)).toEqual(['new-3']);
+    });
+
+    it('connecting it at any bank adds its account named after that bank and the eight October payments', () => {
+      for (const bank of BANKS) {
+        TestBed.resetTestingModule();
+        const state = TestBed.inject(DemoStateService);
+        const id = made(state);
+        connectAt(state, bank.id);
+
+        const business = state.business();
+        expect(business.accounts, bank.id).toHaveLength(1);
+        expect(business.accounts[0], bank.id).toMatchObject({
+          id: `${id}-main`,
+          name: bank.name,
+          product: 'business',
+          iban: 'DE89370400440532013000',
+          connection: { kind: 'connected', consentUntil: '2027-04-20', lastFetched: `${DEMO_TODAY}T12:00`, fetchFrom: '2026-01-01', broken: false },
+        });
+        expect(business.transactions.map((t) => t.id), bank.id).toEqual(paymentIds(id));
+        expect(business.transactions.every((t) => t.accountId === `${id}-main`), bank.id).toBe(true);
+        expect(business.transactions.every((t) => t.date.startsWith('2026-10')), bank.id).toBe(true);
+        expect(business.transactions[0].history.at(-1), bank.id).toMatchObject({ key: 'imported', params: { account: bank.name } });
+        expect(business.history, bank.id).toEqual([
+          { date: DEMO_TODAY, key: 'bankConnected', params: { bank: bank.name, account: bank.name } },
+        ]);
+        expect(state.setup().bank, bank.id).toBe(true);
+      }
+    });
+
+    it('the transfer to the private account carries the name of the owner', () => {
+      const state = TestBed.inject(DemoStateService);
+      made(state, { personId: 'p9', name: 'Omar Haddad', email: 'omar@example.com' });
+      connectAt(state);
+      expect(state.business().transactions.at(-1)).toMatchObject({ counterparty: 'Omar Haddad', amountCents: -50000 });
+    });
+
+    it('each business gets payments of its own, and the sample businesses keep theirs', () => {
+      const state = TestBed.inject(DemoStateService);
+      const first = made(state);
+      connectAt(state);
+      const second = made(state);
+      connectAt(state, 'ing');
+
+      const [one, two] = [first, second].map((id) => state.businesses.find((b) => b.id === id)!);
+      expect(one.transactions.map((t) => t.id)).toEqual(paymentIds(first));
+      expect(two.transactions.map((t) => t.id)).toEqual(paymentIds(second));
+      expect(one.accounts[0].name).toBe('Qonto');
+      expect(two.accounts[0].name).toBe('ING');
+      expect(state.businesses[0].transactions).toEqual(BUSINESSES[0].transactions);
+    });
+
+    it('connecting twice adds the payments once', () => {
+      const state = TestBed.inject(DemoStateService);
+      const id = made(state);
+      connectAt(state);
+      const business = state.business();
+
+      connectAt(state);
+      expect(state.business()).toBe(business);
+      expect(state.business().transactions.map((t) => t.id)).toEqual(paymentIds(id));
+      expect(state.business().history).toHaveLength(1);
+
+      // The same account at another bank, and then after the New client shortcut: still one set of payments.
+      connectAt(state, 'commerzbank');
+      state.setSetup('new');
+      connectAt(state);
+      expect(state.business().accounts.map((a) => a.id)).toEqual([`${id}-main`]);
+      expect(state.business().transactions.map((t) => t.id)).toEqual(paymentIds(id));
+    });
+
+    it('keeps what the person did to a payment when the bank is connected again', () => {
+      const state = TestBed.inject(DemoStateService);
+      const id = made(state);
+      connectAt(state);
+      state.updateTransaction(`${id}-t3`, markNoReceiptNeeded);
+      state.setSetup('new');
+      connectAt(state);
+      expect(state.business().transactions.find((t) => t.id === `${id}-t3`)!.receipt).toBe('notNeeded');
+    });
+
+    it('the payments wait until the bank step, then each one that needs the person is in the review inbox', () => {
+      const state = TestBed.inject(DemoStateService);
+      const id = made(state);
+      expect(state.business().transactions).toEqual([]);
+      expect(reviewItems(state.business(), state.setup()).filter((item) => item.kind === 'payment')).toEqual([]);
+
+      connectAt(state);
+      const waiting = state.business().transactions.filter((t) => paymentStatus(t) !== 'booked').map((t) => t.id);
+      const inbox = reviewItems(state.business(), state.setup()).filter((item) => item.kind === 'payment');
+      expect([...waiting].sort()).toEqual(paymentIds(id).sort());
+      expect(inbox.map((item) => item.id).sort()).toEqual([...waiting].sort());
+      // Oldest first: the private transfer and the Amazon order, the payment to confirm, then the five that lack a receipt.
+      expect(inbox.map((item) => item.kind === 'payment' && item.problem)).toEqual([
+        'unclear',
+        'unclear',
+        'confirm',
+        'noReceipt',
+        'noReceipt',
+        'noReceipt',
+        'noReceipt',
+        'noReceipt',
+      ]);
+      expect(needsYouCount(state.business().transactions)).toBe(8);
+    });
+
+    it('once its tax details are saved the year shows only October', () => {
+      const state = TestBed.inject(DemoStateService);
+      const id = made(state);
+      connectAt(state);
+      state.saveTaxProfile({
+        ...state.business().taxProfile,
+        vatPeriod: 'monthly',
+        vatBasis: 'ist',
+        taxState: 'berlin',
+        taxNumber: '27/123/45678',
+      });
+
+      // Nothing is booked yet, so nothing counts, but the year already starts with the first payment.
+      expect(yearSummary(state.business())).toMatchObject({
+        openingIncomeCents: 0,
+        openingCostsCents: 0,
+        incomeCents: 0,
+        costsCents: 0,
+        paymentsSince: '2026-10-02',
+        byCategory: [],
+      });
+      expect(state.business().incomeTaxReserveCents).toBe(0);
+
+      // The person decides every payment: all of it is October's, net of VAT, and the private transfer does not count.
+      for (const t of paymentIds(id)) state.updateTransaction(t, markNoReceiptNeeded);
+      state.updateTransaction(`${id}-t6`, confirmBooking);
+      state.updateTransaction(`${id}-t7`, (tx) => changeCategory(tx, OFFICE));
+      state.updateTransaction(`${id}-t8`, (tx) => setPrivate(tx, true));
+      const year = yearSummary(state.business());
+      expect(needsYouCount(state.business().transactions)).toBe(0);
+      expect(year.incomeCents).toBe(300000);
+      expect(year.costsCents).toBe(57422);
+      expect(year.costsCents).toBe(year.byCategory.reduce((sum, c) => sum + c.cents, 0));
+      expect(year.byCategory.map((c) => c.labelKey).sort()).toEqual(['office', 'phone', 'rent', 'software', 'travel']);
+      expect(year.openingIncomeCents + year.openingCostsCents).toBe(0);
+      expect(year.paymentsSince).toBe('2026-10-02');
+    });
+
+    it('resetData drops businesses made during the visit', () => {
+      const state = TestBed.inject(DemoStateService);
+      made(state);
+      connectAt(state);
+      const second = made(state);
+      state.resetData();
+
+      expect(state.businesses.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
+      expect(state.stepsOf('new-1')).toEqual(ALL_DONE);
+      expect(state.stepsOf(second)).toEqual(ALL_DONE);
+      state.setBusiness(second);
+      expect(state.business().id).toBe('weber-design');
+    });
+
+    it('resetData opens a sample business again when the open one was made during the visit', () => {
+      const state = TestBed.inject(DemoStateService);
+      made(state);
+      state.resetData();
+      expect(state.business().id).toBe('weber-design');
+      expect(state.setup()).toEqual(ALL_DONE);
+
+      // What is done to the open business reaches the business that is shown, so the open id must name one that exists.
+      state.setSetup('new');
+      expect(state.stepsOf('weber-design')).toEqual(presetSteps('new'));
     });
   });
 });

@@ -18,6 +18,7 @@ import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { Term, TermText } from '../core/i18n/term';
 import { GERMAN_STATES } from '../data/banks';
+import { isVisitBusiness } from '../data/new-business-sample';
 import { DemoStateService } from '../state/demo-state.service';
 import { clearErrors, focusAfterRender } from './form-helpers';
 import { ChoiceCard, FieldError, INPUT_CLASS, NotSureHint } from './form-parts';
@@ -40,8 +41,9 @@ const LIMIT_THIS_YEAR_CENTS = 10000000;
 
 /**
  * "Your tax details" (`/settings/tax`): the questions as cards, then Save. It opens empty until the tax step is done
- * and shows the saved answers after. The VAT questions show only after Yes; a No clears them. Save checks every visible
- * question (and the tax number against the sample tax-office table), names each problem next to its field and keeps all
+ * (a business made during the visit has its kind of work chosen already) and shows the saved answers after. The VAT
+ * questions show only after Yes; a No clears them. Save checks every visible question (and the tax number against the
+ * sample tax-office table), names each problem next to its field and keeps all
  * answers; when all is well it stores them, ticks the tax step and goes back to where the page was opened from
  * (`?from=home`, `?from=invoice` with `&invoice=<id>` for the invoice that was open, or `?from=settings`, the
  * default). What is typed belongs to the business that is open: another business, a reset, or the toolbar's setup
@@ -486,10 +488,7 @@ export class TaxDetailsPage {
   );
   protected readonly draft = linkedSignal<string, TaxDraft>({
     source: this.formKey,
-    computation: () =>
-      untracked(() =>
-        this.demo.setup().tax ? draftOf(this.demo.business().taxProfile) : emptyDraft(),
-      ),
+    computation: () => untracked(() => this.startingDraft()),
   });
   protected readonly errors = linkedSignal<string, TaxErrors>({
     source: this.formKey,
@@ -515,6 +514,18 @@ export class TaxDetailsPage {
     if (!this.unknownToDemo()) return null;
     return this.showStateNote() ? 'state-note' : 'error-number';
   });
+
+  /**
+   * What the form starts with: the saved answers once the tax step is done. Before that it is empty, except for a business
+   * made during the visit, which already knows its kind of work from the sign-up.
+   */
+  private startingDraft(): TaxDraft {
+    const business = this.demo.business();
+    if (this.demo.setup().tax) return draftOf(business.taxProfile);
+    return isVisitBusiness(business.id)
+      ? { ...emptyDraft(), businessKind: business.taxProfile.businessKind }
+      : emptyDraft();
+  }
 
   /** Set from a successful Save until the page has gone, so a second tap saves nothing more. */
   private saving = false;

@@ -8,6 +8,8 @@ import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { TaxProfile } from '../data/models';
+import type { NewOwner } from '../data/new-business-sample';
+import { PERSON } from '../data/sample-person';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
@@ -198,6 +200,94 @@ describe('TaxDetailsPage', () => {
       await settle();
       expect(isChecked('kind-freelance')).toBe(false);
       expect(field('number').value).toBe('');
+    });
+
+    describe('for a business made during the visit', () => {
+      const sara: NewOwner = { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email };
+      const freelance = () => demo.createBusiness(sara, { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' });
+      const trade = () => demo.createBusiness(sara, { name: 'Café Neu', kind: 'trade', legalForm: 'gbr' });
+
+      it('its tax page starts with the kind of work answered at sign-up', async () => {
+        const [first, second] = [freelance(), trade()];
+        demo.setBusiness(first);
+        await render('/settings/tax');
+        expect(isChecked('kind-freelance')).toBe(true);
+        expect(isChecked('kind-trade')).toBe(false);
+
+        demo.setBusiness(second);
+        await settle();
+        expect(isChecked('kind-trade')).toBe(true);
+        expect(isChecked('kind-freelance')).toBe(false);
+      });
+
+      it('leaves every other question open', async () => {
+        demo.setBusiness(trade());
+        await render('/settings/tax');
+        for (const id of ['vat-yes', 'vat-no']) expect(isChecked(id), id).toBe(false);
+        expect(field('state').value).toBe('');
+        expect(field('number').value).toBe('');
+        expect(field('vat-id').value).toBe('');
+        expect(q('year-day')).toBeNull();
+        expect(text(q('year-calendar-text'))).toContain('Calendar year');
+        expect(questions()).toEqual(['q-kind', 'q-vat', 'q-number', 'q-vat-id', 'q-year']);
+      });
+
+      it('the kind of work is saved with the other answers, and the saved answers show after', async () => {
+        const id = trade();
+        demo.setBusiness(id);
+        await render('/settings/tax?from=settings');
+        await choose('vat-yes');
+        await choose('period-quarterly');
+        await choose('basis-soll');
+        await pickState('berlin');
+        await type('number', '27/123/45678');
+        await click('save');
+
+        expect(router.url).toBe('/settings');
+        expect(demo.setup().tax).toBe(true);
+        expect(demo.business().taxProfile).toMatchObject({
+          businessKind: 'trade',
+          kleinunternehmer: false,
+          vatPeriod: 'quarterly',
+          vatBasis: 'soll',
+          taxState: 'berlin',
+          taxNumber: '27/123/45678',
+        });
+
+        await navigate('/settings/tax');
+        expect(isChecked('kind-trade')).toBe(true);
+        expect(isChecked('period-quarterly')).toBe(true);
+      });
+
+      it('is empty again, with the kind of work still chosen, when the toolbar sets the business back to new', async () => {
+        const id = freelance();
+        demo.setBusiness(id);
+        demo.saveTaxProfile({ ...demo.business().taxProfile, vatPeriod: 'monthly', vatBasis: 'ist', taxState: 'berlin', taxNumber: '27/123/45678' });
+        await render('/settings/tax');
+        expect(field('number').value).toBe('27/123/45678');
+        demo.setSetup('new');
+        await settle();
+        expect(field('number').value).toBe('');
+        expect(isChecked('kind-freelance')).toBe(true);
+        expect(isChecked('vat-yes')).toBe(false);
+      });
+    });
+
+    it("a sample business's tax page still starts empty in New client", async () => {
+      demo.setBusiness('cafe-linde'); // its saved answers say trade, which must not be chosen for it
+      demo.setSetup('new');
+      await render('/settings/tax');
+      for (const id of ['kind-freelance', 'kind-trade', 'vat-yes', 'vat-no']) {
+        expect(isChecked(id), id).toBe(false);
+      }
+      expect(field('state').value).toBe('');
+      expect(field('number').value).toBe('');
+
+      demo.setBusiness('sara-yoga');
+      demo.setSetup('new');
+      await settle();
+      expect(isChecked('kind-freelance')).toBe(false);
+      expect(isChecked('vat-no')).toBe(false);
     });
 
     it('names the German terms next to their translations, each explained', async () => {
