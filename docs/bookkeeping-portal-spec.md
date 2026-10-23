@@ -374,7 +374,65 @@ A separate page with four groups and one Speichern:
 
 ### Still to see (needs a click)
 
-The steps after **Jetzt einrichten** (they lead to the bank's own sign-in, so not to be opened in this account), **Neue Regel hinzufügen**, and user management.
+The steps after **Jetzt einrichten** (they lead to the bank's own sign-in, so not to be opened in this account) and **Neue Regel hinzufügen**. User management is in the next section.
+
+## Users and access
+
+Studied Oct 23, 2026, in the original German, by reading the account's pages and their structure only, and BuchhaltungsButler's public help pages on users and roles (see Sources).
+
+Our own version of sign-in, people with access and My account is described in `docs/specs/2026-10-23-sign-in-and-accounts-mockup-design.md`.
+
+### What the client sees
+
+The gear menu has two groups: Unternehmen verwalten (Unternehmensdaten, Einstellungen, Datenimport) and Mein Nutzerkonto (Meine Daten, Abmelden). This account has no user management anywhere: not in the menu, not among the twelve Einstellungen sections, and not in Unternehmensdaten.
+
+**Meine Daten** (my data) is one page with three sections, each with its own Speichern:
+
+| Section | German original | What it holds |
+| --- | --- | --- |
+| Company selection | Firmenauswahl | Aktueller Firmenaccount: a dropdown of the companies this login can reach, to switch to another and save. The help text says that to manage more companies with one login, the "Master" user of each company has to add this login's email as a user. A link removes the login from the company (Firmenverknüpfung aufheben) |
+| User account | Nutzerkonto | E-Mail / Benutzername (the login, also the email address) and Passwort ändern |
+| Personal details | Persönliche Angaben | Vorname, Nachname, Telefon |
+
+- Help texts for two more fields are in the page, but the fields themselves are not shown. One is **Visma Connect**, "the single sign-on of the Visma group" with several ways to confirm a login (authenticator app, SMS, security key, fingerprint), so BuchhaltungsButler belongs to Visma. The other is a **language** field, whose help only says the chart of accounts' language is set elsewhere. BuchhaltungsButler has both, and Bilancor's version hides them (likely).
+- Nothing on the page offers two-factor login or shows where the account is signed in.
+
+**Rechnungsfreigabe** (invoice approval) in Einstellungen is the only place the client meets roles: it is off, and when on, "Mitarbeiter" can only pay an invoice once an "Admin-Nutzer" has approved it.
+
+### How BuchhaltungsButler handles users (from its help pages)
+
+- **Adding a user:** gear icon › Nutzerverwaltung › **Nutzer hinzufügen** opens a window for the email and the role. For someone new, the person adding them then fills in first name, last name and a password; someone who already has a BuchhaltungsButler login just gains access to the company. A grey hourglass shows next to a new user until they confirm their email. The role can be changed and the user deleted later.
+- **Six standard roles:**
+
+| Role | German original | In short |
+| --- | --- | --- |
+| Admin | Admin | Everything, including users, rights, the plan and approving invoices for payment |
+| Tax advisor | Steuerberater:in | Everything bookkeeping needs, especially reports and exports, and can edit master data; can't start transfers or create payments |
+| Standard user | Standardnutzer:in | Bookkeeping, paying approved invoices, creating invoices |
+| Assistant | Assistent:in | Upload, check and sort documents, pay approved invoices, create invoices; no bookings |
+| Receipt checker | Belegprüfer:in | Upload and check incoming documents only; no outgoing invoices and no payment accounts |
+| Read only | Leserecht | Sees all bookkeeping data and reports; no bookings and no changes |
+
+- **Rights table:** a help page lists about 60 single rights per role in 14 groups, from Paketbuchung (the plan) to Unternehmensdaten, Einstellungen, Belege, Überweisungen, Buchungen, Abschluss (including ELSTER and the GDPdU audit export) and Nutzerverwaltung. Only the Admin manages users and rights, books the plan, edits the company's Bankverbindung and invoice approval, and approves transfers.
+- **Custom roles:** Nutzerverwaltung › **Rechteverwaltung** › **Nutzerrolle erstellen** starts a new role from one of the standard roles, then switches single rights on or off. There can be any number of roles.
+- **Tax advisor:** the client adds the advisor by email in Nutzerverwaltung, and the advisor signs in with their own login and switches between their clients. One tax-advisor login is included in every plan, kept out of billing by a "Steuerberater" checkbox on the role. Advisors get a free full account by registering and writing to BuchhaltungsButler's support.
+- **Several companies, one login** (Mehrmandantenfähigkeit): one main login (Hauptkonto) is made Admin of the other companies. Linking a company takes a support request for a temporary second admin access (5 days), adding the main login as Admin, confirming the email, and removing the old admin. A new company is registered with its own email first, then linked the same way. The company name at the top switches between them.
+- **Prices per user:** not on the help pages. Third-party comparisons say the Smart plan includes one user and each further one costs €4.90 a month, and Premium includes five (not confirmed on the official price page).
+- **Language:** a third-party comparison lists German as the only interface language (not confirmed).
+
+### What it shows
+
+- **The client is not in charge of their own account:** with no user management in sight, the Admin ("Master") role is most likely held by Bilancor, not by the client (likely). The client can't add a partner, an employee or their own tax advisor, and can't see who else can open their books.
+- **Inviting means choosing someone else's password:** a person without a login gets the password the inviter sets, instead of an invitation link to choose their own.
+- **Joining a second company is a support case:** the other company's Master has to add you, and linking existing companies needs a 5-day temporary admin from support.
+- **Six roles and about 60 rights for a one-person business:** a freelancer mostly needs two things, "my tax advisor can look" and "my partner or assistant can upload receipts".
+- **The help contradicts itself:** the rights table marks Leserecht "Ja" for editing documents and their assignment, though the role is described as read-only (likely errors in the help page).
+- **German only:** the language field is hidden in this portal, and BuchhaltungsButler appears to be German-only.
+- **No login security on show:** no two-factor login and no list of signed-in devices; Visma's single sign-on is hidden.
+
+### Still to see
+
+The Nutzerverwaltung and Rechteverwaltung screens, and the invitation email: none exist in this account. The login and registration pages were not opened, so the account stays signed in.
 
 ## Screens still to explore
 
@@ -389,7 +447,7 @@ The steps after **Jetzt einrichten** (they lead to the bank's own sign-in, so no
 - [ ] Notifications: types of notifications
 - [ ] Help & Contact: available support channels
 - [x] Tasks filter: keine Auswahl, alle, offen, erledigt (seen in the document filters, Oct 22, 2026)
-- [x] Settings: bank connections, transfer accounts, account management, tax settings, company data, the first connection screen and Datenimport (Oct 22, 2026); users still to see
+- [x] Settings: bank connections, transfer accounts, account management, tax settings, company data, the first connection screen and Datenimport (Oct 22, 2026); users and access through Meine Daten and the public help, since the account has no user management (Oct 23, 2026)
 - [ ] Settings: invoice numbering, invoice approval, layout, payment reminders, API (with Invoicing)
 
 ## Technical and legal foundation
@@ -548,3 +606,5 @@ The key decision is made: software only. What remains is mostly who we sell to, 
 - Official pricing pages, October 21, 2026: [sevDesk](https://sevdesk.de/preise/), [Lexware Office](https://www.lexware.de/preise/), [Norman](https://norman.finance/de/preise), [Kontist](https://kontist.com/pricing/)
 - Accountable prices: [Norman — accounting software in Germany 2026](https://norman.finance/de/en/blog/accounting-software-comparison-germany), [Fastlancer — Accountable review](https://www.fastlancer.org/en/fastlancer-blog/accountable-review/)
 - Screenshots of the portal, October 21, 2026
+- BuchhaltungsButler help on users, October 23, 2026: [Nutzerverwaltung und Rechtevergabe](https://wissen.buchhaltungsbutler.de/hc/de/articles/11453993512733-Nutzerverwaltung-und-Rechtevergabe-nutzen), [rights of the standard roles](https://wissen.buchhaltungsbutler.de/hc/de/articles/13110056377245-%C3%9Cbersicht-Einzelne-Rechte-der-Standard-Nutzerrollen), [custom roles](https://wissen.buchhaltungsbutler.de/hc/de/articles/13124377471133-Individuelle-Nutzerrolle-erstellen), [tax-advisor access](https://wissen.buchhaltungsbutler.de/hc/de/articles/11446168108957-Steuerberater-Zugang-einrichten), [several companies](https://wissen.buchhaltungsbutler.de/hc/de/articles/11453965304349-Mehrmandantenf%C3%A4higkeit-verstehen-und-nutzen)
+- BuchhaltungsButler per-user prices and language (third-party, not confirmed): [quasa — Lexware Office or BuchhaltungsButler](https://quasa.io/de/media/lexware-office-oder-buchhaltungsbutler-bilanzierung-kostet-deutlich-mehr), [trusted.de — BuchhaltungsButler vs billomat](https://trusted.de/buchhaltungsbutler-vs-billomat-buchhaltung)
