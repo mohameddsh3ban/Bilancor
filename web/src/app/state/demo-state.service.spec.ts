@@ -1,12 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { OFFICE, SOFTWARE, TRAVEL } from '../data/categories';
+import { OFFICE, REVENUE_19, SOFTWARE, TRAVEL } from '../data/categories';
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Account, Booking, Doc, SentVatReturn, TaxProfile } from '../data/models';
+import type { Account, Booking, Doc, Invoice, SentVatReturn, TaxProfile, Transaction } from '../data/models';
 import { BUSINESSES, PERSON } from '../data/sample-data';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
-import { docsNeedingYouCount } from '../domain/document-status';
+import { docStatus, docsNeedingYouCount } from '../domain/document-status';
 import { ALL_DONE, presetOf, presetSteps } from '../domain/home-cards';
+import { invoiceStatus, leftCents } from '../domain/invoices';
 import { changeCategory, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { currentVatReturn } from '../domain/vat-return';
@@ -456,7 +457,7 @@ describe('DemoStateService', () => {
       expect(state.dataGeneration()).toBe(generation);
     });
 
-    it('restore puts back payments, documents and rules only: tax answers, accounts and history stay as they are now', () => {
+    it('restore puts back payments, documents, invoices and rules only: tax answers, accounts and history stay as they are now', () => {
       const state = TestBed.inject(DemoStateService);
       const snapshot = state.snapshot();
 
@@ -1042,6 +1043,211 @@ describe('DemoStateService', () => {
 
       state.resetData();
       expect(state.business().vatReturns).toHaveLength(sample);
+    });
+  });
+
+  describe('invoices', () => {
+    const invoice = (state: DemoStateService, id: string) => state.business().invoices.find((i) => i.id === id)!;
+    const doc = (state: DemoStateService, id: string) => state.documents().find((d) => d.id === id)!;
+    const payment = (state: DemoStateService, id: string) => state.business().transactions.find((t) => t.id === id)!;
+
+    /** An incoming payment of Weber Design with no receipt yet, like the Kern payment wd-t19 it is copied from. */
+    function incoming(id: string, cents: number, patch: Partial<Transaction> = {}): Transaction {
+      const copy = structuredClone(BUSINESSES[0].transactions.find((t) => t.id === 'wd-t19')!);
+      return { ...copy, id, amountCents: cents, reference: 'Zahlung', ...patch };
+    }
+
+    it('saveInvoice adds a new invoice after the others and replaces one with the same id', () => {
+      const state = TestBed.inject(DemoStateService);
+      const draft = invoice(state, 'inv-wd-draft');
+      const count = state.business().invoices.length;
+
+      state.saveInvoice({ ...draft, id: 'inv-new' });
+      expect(state.business().invoices).toHaveLength(count + 1);
+      expect(state.business().invoices.at(-1)!.id).toBe('inv-new');
+
+      const edited: Invoice = { ...draft, paymentTermDays: 30 };
+      state.saveInvoice(edited);
+      expect(state.business().invoices).toHaveLength(count + 1);
+      expect(invoice(state, 'inv-wd-draft')).toBe(edited);
+    });
+
+    it('saveInvoice saves into a business that is not open when it is named, and ignores an unknown one', () => {
+      const state = TestBed.inject(DemoStateService);
+      const weber = state.business();
+      const draft = invoice(state, 'inv-wd-draft');
+
+      state.saveInvoice({ ...draft, id: 'inv-for-cafe' }, 'cafe-linde');
+      expect(state.business()).toBe(weber);
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')!.invoices.at(-1)!.id).toBe('inv-for-cafe');
+
+      const all = [...state.businesses];
+      state.saveInvoice(draft, 'nope');
+      expect(state.businesses).toEqual(all);
+    });
+
+    it('removeInvoice removes a draft and nothing else', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.removeInvoice('inv-wd-draft');
+      expect(state.business().invoices.some((i) => i.id === 'inv-wd-draft')).toBe(false);
+
+      const business = state.business();
+      state.removeInvoice('inv-wd-044'); // sent: stays on record
+      state.removeInvoice('nope');
+      expect(state.business()).toBe(business);
+    });
+
+    it("saveInvoiceProfile replaces the open business's invoice details only", () => {
+      const state = TestBed.inject(DemoStateService);
+      const cafe = state.businesses.find((b) => b.id === 'cafe-linde')!.invoiceProfile;
+      const profile = { ...state.business().invoiceProfile, paymentTermDays: 30, language: 'en' as const };
+
+      state.saveInvoiceProfile(profile);
+      expect(state.business().invoiceProfile).toEqual(profile);
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')!.invoiceProfile).toBe(cafe);
+    });
+
+    it('addTransaction puts a payment first, in the named business, and ignores an id that exists', () => {
+      const state = TestBed.inject(DemoStateService);
+      const count = state.business().transactions.length;
+
+      state.addTransaction(incoming('wd-t90', 5000));
+      expect(state.business().transactions).toHaveLength(count + 1);
+      expect(state.business().transactions[0].id).toBe('wd-t90');
+
+      const business = state.business();
+      state.addTransaction(incoming('wd-t90', 6000));
+      state.addTransaction(incoming('wd-t1', 6000));
+      expect(state.business()).toBe(business);
+
+      state.addTransaction({ ...incoming('cl-t90', 5000), accountId: 'cl-qonto' }, 'cafe-linde');
+      expect(state.business()).toBe(business);
+      expect(state.businesses.find((b) => b.id === 'cafe-linde')!.transactions[0].id).toBe('cl-t90');
+    });
+
+    it('linkInvoicePayment pays an invoice in full: the payment gets the invoice as its receipt and the document is linked', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', false);
+
+      const paid = invoice(state, 'inv-wd-044');
+      expect(paid.paymentIds).toEqual(['wd-t19']);
+      expect(invoiceStatus(paid, state.business())).toBe('paid');
+      expect(paid.history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: {} }); // the day the money came in
+
+      const tx = payment(state, 'wd-t19');
+      expect(tx).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf', confirmed: true });
+      expect(tx.booking).toEqual(REVENUE_19);
+      expect(tx.history[0]).toEqual({ date: DEMO_TODAY, key: 'paysInvoice', params: { number: 'RE-2026-044' } });
+      expect(paymentStatus(tx)).toBe('booked');
+
+      expect(doc(state, 'wd-d2').paymentId).toBe('wd-t19');
+      expect(doc(state, 'wd-d2').history[0]).toEqual({ date: DEMO_TODAY, key: 'linked', params: { name: 'Kern Studio Berlin' } });
+      expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
+    });
+
+    it('linkInvoicePayment with auto writes the automatic line on the document', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', true);
+      expect(doc(state, 'wd-d2').history[0].key).toBe('linkedAuto');
+    });
+
+    it('a part payment leaves the invoice partly paid and its document waiting, and the rest completes both', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 100000));
+      state.addTransaction(incoming('wd-t91', 138000));
+
+      state.linkInvoicePayment('inv-wd-044', 'wd-t90', true);
+      expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('partlyPaid');
+      expect(leftCents(invoice(state, 'inv-wd-044'), state.business())).toBe(138000);
+      expect(invoice(state, 'inv-wd-044').history[0]).toEqual({ date: '2026-10-21', key: 'invoicePartlyPaid', params: {} });
+      expect(payment(state, 'wd-t90')).toMatchObject({ receipt: 'attached', receiptFile: 'RE-2026-044.pdf' });
+      expect(doc(state, 'wd-d2').paymentId).toBeNull();
+      expect(docStatus(doc(state, 'wd-d2'))).toBe('waiting');
+
+      state.linkInvoicePayment('inv-wd-044', 'wd-t91', true);
+      expect(invoice(state, 'inv-wd-044').paymentIds).toEqual(['wd-t90', 'wd-t91']);
+      expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('paid');
+      expect(invoice(state, 'inv-wd-044').history[0].key).toBe('invoicePaid');
+      expect(doc(state, 'wd-d2').paymentId).toBe('wd-t91'); // only the payment that completes it
+      expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
+    });
+
+    it('a payment without a booking takes the invoice revenue booking and is confirmed', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 238000, { booking: null, confirmed: false }));
+      state.linkInvoicePayment('inv-wd-044', 'wd-t90', false);
+      expect(payment(state, 'wd-t90')).toMatchObject({ booking: REVENUE_19, confirmed: true });
+    });
+
+    it('a repeated link, and a link that makes no sense, change nothing', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 5000));
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', false);
+      const business = state.business();
+
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', false); // the same again
+      state.linkInvoicePayment('nope', 'wd-t90', false); // no such invoice
+      state.linkInvoicePayment('inv-wd-039', 'nope', false); // no such payment
+      state.linkInvoicePayment('inv-wd-039', 'wd-t2', false); // money going out
+      state.linkInvoicePayment('inv-wd-draft', 'wd-t90', false); // a draft
+      state.linkInvoicePayment('inv-wd-040', 'wd-t90', false); // cancelled
+      state.linkInvoicePayment('inv-wd-042', 'wd-t90', false); // a cancellation invoice
+      state.linkInvoicePayment('inv-wd-044', 'wd-t90', false); // paid already
+      state.linkInvoicePayment('inv-wd-039', 'wd-t1', false); // a payment of another invoice
+      state.linkInvoicePayment('inv-wd-039', 'wd-t19', false); // a payment of another invoice
+      expect(state.business()).toBe(business);
+    });
+
+    it('a payment that has another document linked is not linked to an invoice', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 119000));
+      state.addDocument('weber-design', { ...structuredClone(BUSINESSES[0].documents.find((d) => d.id === 'wd-d4')!), id: 'up-1', paymentId: 'wd-t90' });
+      const business = state.business();
+      state.linkInvoicePayment('inv-wd-039', 'wd-t90', false);
+      expect(state.business()).toBe(business);
+    });
+
+    it('links in a business that is not open when it is named', () => {
+      const state = TestBed.inject(DemoStateService);
+      const weber = state.business();
+      state.addTransaction({ ...incoming('cl-t90', 128520), accountId: 'cl-qonto' }, 'cafe-linde');
+
+      state.linkInvoicePayment('inv-cl-053', 'cl-t90', true, 'cafe-linde');
+      const cafe = state.businesses.find((b) => b.id === 'cafe-linde')!;
+      expect(invoiceStatus(cafe.invoices.find((i) => i.id === 'inv-cl-053')!, cafe)).toBe('paid');
+      expect(cafe.documents.find((d) => d.id === 'cl-d1')!.paymentId).toBe('cl-t90');
+      expect(cafe.transactions.find((t) => t.id === 'cl-t90')!.receiptFile).toBe('RE-2026-053.pdf');
+      expect(state.business()).toBe(weber);
+    });
+
+    it('restore also puts the invoices back, so Undo of a payment that paid one is whole', () => {
+      const state = TestBed.inject(DemoStateService);
+      const snapshot = state.snapshot();
+
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', false);
+      state.saveInvoice({ ...invoice(state, 'inv-wd-draft'), id: 'inv-new' });
+      state.removeInvoice('inv-wd-draft');
+      state.restore(snapshot);
+
+      expect(state.business()).toEqual(snapshot);
+      expect(invoice(state, 'inv-wd-044').paymentIds).toEqual([]);
+      expect(invoiceStatus(invoice(state, 'inv-wd-044'), state.business())).toBe('open');
+      expect(state.business().invoices.some((i) => i.id === 'inv-new')).toBe(false);
+    });
+
+    it('resetData restores the invoices, their payments and the invoice details', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', false);
+      state.saveInvoice({ ...invoice(state, 'inv-wd-draft'), id: 'inv-new' });
+      state.removeInvoice('inv-wd-draft');
+      state.saveInvoiceProfile({ ...state.business().invoiceProfile, paymentTermDays: 30 });
+      state.addTransaction(incoming('wd-t90', 5000));
+
+      state.resetData();
+      expect(state.business().invoices).toEqual(BUSINESSES[0].invoices);
+      expect(state.business().invoiceProfile).toEqual(BUSINESSES[0].invoiceProfile);
+      expect(state.business().transactions).toEqual(BUSINESSES[0].transactions);
+      expect(state.documents()).toEqual(BUSINESSES[0].documents);
     });
   });
 });

@@ -6,6 +6,8 @@ import {
   Business,
   Doc,
   HistoryEntry,
+  Invoice,
+  InvoiceProfile,
   Person,
   SentVatReturn,
   SetupState,
@@ -18,6 +20,7 @@ import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection 
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
+import { invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
 
 const DEFAULT_BUSINESS_ID = 'weber-design';
 
@@ -286,6 +289,96 @@ export class DemoStateService {
     });
   }
 
+  /** Adds a payment to the front of a business's payments (the open one unless named). Ignored for an unknown business, and for an id the business has already. */
+  addTransaction(tx: Transaction, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) =>
+      business.transactions.some((t) => t.id === tx.id) ? business : { ...business, transactions: [tx, ...business.transactions] },
+    );
+  }
+
+  /** Saves an invoice of a business (the open one unless named): replaces the one with the same id, or adds it after the others. Ignored for an unknown business. */
+  saveInvoice(invoice: Invoice, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) => ({
+      ...business,
+      invoices: business.invoices.some((i) => i.id === invoice.id)
+        ? business.invoices.map((i) => (i.id === invoice.id ? invoice : i))
+        : [...business.invoices, invoice],
+    }));
+  }
+
+  /** Removes a draft of the open business. A sent invoice stays on record, so it is ignored (as is an unknown id). */
+  removeInvoice(id: string): void {
+    this.updateBusiness(this.businessIdSignal(), (business) =>
+      business.invoices.some((i) => i.id === id && i.sentOn === null)
+        ? { ...business, invoices: business.invoices.filter((i) => i.id !== id) }
+        : business,
+    );
+  }
+
+  /** Replaces what the open business prints on its invoices, and how it numbers them. */
+  saveInvoiceProfile(profile: InvoiceProfile): void {
+    this.updateBusiness(this.businessIdSignal(), (business) => ({ ...business, invoiceProfile: { ...profile } }));
+  }
+
+  /**
+   * Links an incoming payment to a sent invoice that still has something to pay (open, overdue or partly paid) in a
+   * business (the open one unless named): one change to the invoice, its payment and, when this payment completes the
+   * invoice, its document. The payment is then booked with the invoice as its receipt (a payment with no category takes
+   * the invoice's revenue booking) and says "Pays invoice …". The invoice says it was paid in full or in part, on the day
+   * the money came in. Only the payment that completes the invoice is linked to its document, so Documents shows it as
+   * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically".
+   *
+   * Ignored for an unknown invoice or payment, money going out, an invoice that is a draft, paid or cancelled, and a payment
+   * that pays an invoice or has a document already, so a repeated call does nothing.
+   */
+  linkInvoicePayment(invoiceId: string, txId: string, auto: boolean, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) => {
+      const invoice = business.invoices.find((i) => i.id === invoiceId);
+      const tx = business.transactions.find((t) => t.id === txId);
+      if (!invoice || !tx || tx.amountCents <= 0) return business;
+      const status = invoiceStatus(invoice, business);
+      if (status !== 'open' && status !== 'overdue' && status !== 'partlyPaid') return business;
+      if (business.invoices.some((i) => i.paymentIds.includes(txId)) || business.documents.some((d) => d.paymentId === txId)) {
+        return business;
+      }
+
+      const doc = business.documents.find((d) => d.id === invoice.docId);
+      const unbooked = tx.booking === null;
+      const linkedTx: Transaction = {
+        ...tx,
+        receipt: 'attached',
+        receiptFile: doc?.fileName ?? `${invoice.number}.pdf`,
+        booking: unbooked ? revenueBookingFor(invoice, business.taxProfile) : tx.booking,
+        confirmed: unbooked || tx.confirmed,
+        history: [{ date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '' } }, ...tx.history],
+      };
+      const transactions = business.transactions.map((t) => (t.id === txId ? linkedTx : t));
+      const withPayment: Invoice = { ...invoice, paymentIds: [...invoice.paymentIds, txId] };
+      const complete = leftCents(withPayment, { ...business, transactions }) === 0;
+      const paid: Invoice = {
+        ...withPayment,
+        history: [{ date: tx.date, key: complete ? 'invoicePaid' : 'invoicePartlyPaid', params: {} }, ...invoice.history],
+      };
+      return {
+        ...business,
+        transactions,
+        invoices: business.invoices.map((i) => (i.id === invoiceId ? paid : i)),
+        documents:
+          doc && complete
+            ? business.documents.map((d) =>
+                d.id === doc.id
+                  ? {
+                      ...d,
+                      paymentId: txId,
+                      history: [{ date: DEMO_TODAY, key: auto ? 'linkedAuto' : 'linked', params: { name: tx.counterparty } }, ...d.history],
+                    }
+                  : d,
+              )
+            : business.documents,
+      };
+    });
+  }
+
   /**
    * Learns a rule for the open business: payments from that counterparty get that booking from now on. Adds the rule,
    * or replaces the one for the same counterparty, then books the other unclear payments of the counterparty
@@ -314,8 +407,9 @@ export class DemoStateService {
   }
 
   /**
-   * Puts the payments, documents and learned rules of a business back as a snapshot had them (ignored when no business
-   * has the snapshot's id). Everything else of the business stays as it is now: its tax answers, accounts and history
+   * Puts the payments, documents, invoices and learned rules of a business back as a snapshot had them (ignored when no
+   * business has the snapshot's id): an answer that paid an invoice changed all of them, and Undo takes all of them back.
+   * Everything else of the business stays as it is now: its tax answers, accounts, invoice details and history
    * may have changed since the snapshot, and Undo must not take those back. The restored lists are copies of the
    * snapshot's, so a later restore of the same snapshot works again. The data is not reset: `dataGeneration` stays.
    */
@@ -324,6 +418,7 @@ export class DemoStateService {
       ...business,
       transactions: structuredClone(snapshot.transactions),
       documents: structuredClone(snapshot.documents),
+      invoices: structuredClone(snapshot.invoices),
       categoryRules: structuredClone(snapshot.categoryRules),
     }));
   }
