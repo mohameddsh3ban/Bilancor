@@ -1,11 +1,23 @@
 import { Routes } from '@angular/router';
-import { AppShell } from './shell/app-shell';
-import { ComingSoonPage } from './shell/coming-soon.page';
+import { signedInGuard, signedOutGuard } from './account/signed-in.guard';
 
+// Every route is lazy, so the first load holds only the router and the guards (the sample data comes with the pages).
+// The sign-in pages sit outside the app shell and are for people who are not in; everything else needs a signed-in person.
 export const routes: Routes = [
   {
+    path: 'sign-in',
+    canActivate: [signedOutGuard],
+    loadComponent: () => import('./account/sign-in.page').then((m) => m.SignInPage),
+  },
+  {
+    path: 'forgot-password',
+    canActivate: [signedOutGuard],
+    loadComponent: () => import('./account/forgot-password.page').then((m) => m.ForgotPasswordPage),
+  },
+  {
     path: '',
-    component: AppShell,
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./shell/app-shell').then((m) => m.AppShell),
     children: [
       {
         path: '',
@@ -78,23 +90,30 @@ export const routes: Routes = [
         path: 'invoices/:id',
         loadComponent: () => import('./invoices/invoice.page').then((m) => m.InvoicePage),
       },
-      { path: 'soon/:feature', component: ComingSoonPage },
+      {
+        path: 'soon/:feature',
+        loadComponent: () => import('./shell/coming-soon.page').then((m) => m.ComingSoonPage),
+      },
     ],
   },
   {
     path: 'print/payment/:id',
+    canActivate: [signedInGuard],
     loadComponent: () => import('./print/payment-print.page').then((m) => m.PaymentPrintPage),
   },
   {
     path: 'print/month',
+    canActivate: [signedInGuard],
     loadComponent: () => import('./print/month-print.page').then((m) => m.MonthPrintPage),
   },
   {
     path: 'print/vat-return/:periodStart',
+    canActivate: [signedInGuard],
     loadComponent: () => import('./print/vat-receipt.page').then((m) => m.VatReceiptPage),
   },
   {
     path: 'print/invoice/:id',
+    canActivate: [signedInGuard],
     loadComponent: () => import('./print/invoice-print.page').then((m) => m.InvoicePrintPage),
   },
 ];

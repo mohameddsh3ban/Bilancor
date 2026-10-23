@@ -14,6 +14,7 @@ import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection as setConnection } from '../state/demo-state.testing';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
 import { InvoiceDetailsPage } from './invoice-details.page';
@@ -947,6 +948,7 @@ describe('Settings in the app', () => {
     TestBed.configureTestingModule({
       providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
+    signInAsSara();
   });
 
   afterEach(() => {

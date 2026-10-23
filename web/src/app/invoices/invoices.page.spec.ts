@@ -8,6 +8,7 @@ import { foundAccountsOf } from '../data/banks';
 import { PERSON } from '../data/sample-person';
 import { DemoStateService } from '../state/demo-state.service';
 import { SEND_MS, InvoiceService } from '../state/invoice.service';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { InvoicesPage } from './invoices.page';
 
@@ -408,6 +409,7 @@ describe('Invoices in the menu', () => {
     TestBed.configureTestingModule({
       providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
+    signInAsSara();
   });
 
   afterEach(() => TestBed.inject(LanguageService).setLang('en'));

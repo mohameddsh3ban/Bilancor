@@ -1372,5 +1372,87 @@
       "text": "Schicke Belege und Rechnungen an",
       "sorted": "Wir finden selbst heraus, ob sie erhalten oder gesendet wurden."
     }
+  },
+  "auth": {
+    "demo": {
+      "shown": "Demo: hier gezeigt, statt gesendet",
+      "to": "An:"
+    },
+    "field": {
+      "email": "E-Mail",
+      "password": "Passwort"
+    },
+    "error": {
+      "emailMissing": "Gib deine E-Mail-Adresse ein.",
+      "passwordMissing": "Gib dein Passwort ein."
+    },
+    "signIn": {
+      "title": "Anmelden",
+      "signedOut": "Du bist abgemeldet.",
+      "forgot": "Passwort vergessen?",
+      "submit": "Anmelden",
+      "newHere": "Neu hier?",
+      "createAccount": "Konto erstellen",
+      "demo": "Demo: Saras E-Mail ist schon eingetragen, jedes Passwort funktioniert.",
+      "error": {
+        "member": "In dieser Demo können sich nur Saras Konto und Konten anmelden, die du selbst erstellst. Die App aus Sicht einer anderen Person zu sehen, kommt später.",
+        "unknown": "Zu dieser E-Mail-Adresse gibt es kein Konto."
+      }
+    },
+    "code": {
+      "app": {
+        "title": "Gib deinen Code ein",
+        "hint": "Aus deiner Authenticator-App.",
+        "label": "6-stelliger Code",
+        "switch": "Stattdessen einen Backup-Code verwenden",
+        "demo": "Demo: Jeder 6-stellige Code funktioniert."
+      },
+      "backup": {
+        "title": "Gib einen Backup-Code ein",
+        "hint": "Jeder Backup-Code gilt nur einmal. Nimm einen, wenn du deine Authenticator-App nicht erreichst.",
+        "label": "Backup-Code",
+        "switch": "Stattdessen den Code aus deiner Authenticator-App verwenden",
+        "demo": "Demo: Jeder Backup-Code funktioniert und wird verbraucht."
+      },
+      "trust": "Auf diesem Gerät 30 Tage lang nicht mehr fragen",
+      "submit": "Anmelden",
+      "back": "Zurück",
+      "error": {
+        "digits": "Der Code hat 6 Ziffern.",
+        "backupMissing": "Gib einen deiner Backup-Codes ein.",
+        "noBackups": "Du hast keine Backup-Codes mehr. Nimm den Code aus deiner Authenticator-App."
+      }
+    },
+    "forgot": {
+      "title": "Passwort zurücksetzen",
+      "intro": "Wir schicken dir einen Link per E-Mail. Er gilt 1 Stunde.",
+      "note": "Ein neues Passwort meldet dich auf deinen anderen Geräten ab. Der Code wird bei der nächsten Anmeldung weiterhin abgefragt.",
+      "submit": "Link senden",
+      "back": "Zurück zur Anmeldung",
+      "sent": {
+        "title": "Schau in dein Postfach",
+        "before": "Wenn es ein Konto für ",
+        "after": " gibt, haben wir einen Link geschickt. Er gilt 1 Stunde.",
+        "wrong": "Falsche Adresse?",
+        "change": "Ändern"
+      },
+      "mail": {
+        "subject": "Passwort zurücksetzen",
+        "body": "Jemand möchte das Passwort für dein Konto zurücksetzen. Wenn du das warst, wähle mit der Schaltfläche unten ein neues Passwort. Der Link gilt 1 Stunde.",
+        "action": "Neues Passwort wählen"
+      },
+      "new": {
+        "title": "Neues Passwort wählen",
+        "label": "Neues Passwort",
+        "hint": "Mindestens 10 Zeichen.",
+        "submit": "Passwort speichern",
+        "error": "Nimm mindestens 10 Zeichen."
+      },
+      "done": {
+        "title": "Passwort geändert",
+        "body": "Du bist auf deinen anderen Geräten abgemeldet.",
+        "signIn": "Anmelden"
+      }
+    }
   }
 }

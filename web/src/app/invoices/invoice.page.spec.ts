@@ -11,6 +11,7 @@ import { DEMO_TODAY } from '../data/demo-date';
 import { owedSummary } from '../domain/invoices';
 import { DemoStateService } from '../state/demo-state.service';
 import { InvoiceService } from '../state/invoice.service';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { InvoicePage } from './invoice.page';
 
@@ -597,6 +598,7 @@ describe('the invoice routes', () => {
     TestBed.configureTestingModule({
       providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
+    signInAsSara();
   });
 
   afterEach(() => {

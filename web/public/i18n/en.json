@@ -1372,5 +1372,87 @@
       "text": "Forward receipts and invoices to",
       "sorted": "We work out whether each one is received or sent."
     }
+  },
+  "auth": {
+    "demo": {
+      "shown": "Demo: shown here instead of sent",
+      "to": "To:"
+    },
+    "field": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "error": {
+      "emailMissing": "Type your email.",
+      "passwordMissing": "Type your password."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "signedOut": "You're signed out.",
+      "forgot": "Forgot password?",
+      "submit": "Sign in",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "demo": "Demo: Sara's email is filled in and any password works.",
+      "error": {
+        "member": "In this demo, only Sara's account and accounts you create can sign in. Seeing the app as someone else comes later.",
+        "unknown": "There is no account with this email."
+      }
+    },
+    "code": {
+      "app": {
+        "title": "Enter your code",
+        "hint": "From your authenticator app.",
+        "label": "6-digit code",
+        "switch": "Use a backup code instead",
+        "demo": "Demo: any 6 digits work."
+      },
+      "backup": {
+        "title": "Enter a backup code",
+        "hint": "Each backup code works once. Use one when you can't reach your authenticator app.",
+        "label": "Backup code",
+        "switch": "Use the code from your authenticator app instead",
+        "demo": "Demo: any backup code works, and it is used up."
+      },
+      "trust": "Don't ask again on this device for 30 days",
+      "submit": "Sign in",
+      "back": "Back",
+      "error": {
+        "digits": "The code has 6 digits.",
+        "backupMissing": "Type one of your backup codes.",
+        "noBackups": "You have no backup codes left. Use the code from your authenticator app."
+      }
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "We email you a link. It works for 1 hour.",
+      "note": "A new password signs you out on your other devices. Your code is still asked when you sign in.",
+      "submit": "Send the link",
+      "back": "Back to sign in",
+      "sent": {
+        "title": "Check your email",
+        "before": "If there is an account for ",
+        "after": ", we sent a link. It works for 1 hour.",
+        "wrong": "Wrong address?",
+        "change": "Change it"
+      },
+      "mail": {
+        "subject": "Reset your password",
+        "body": "Someone asked to reset the password of your account. If it was you, choose a new password with the button below. The link works for 1 hour.",
+        "action": "Choose a new password"
+      },
+      "new": {
+        "title": "Choose a new password",
+        "label": "New password",
+        "hint": "At least 10 characters.",
+        "submit": "Save password",
+        "error": "Use at least 10 characters."
+      },
+      "done": {
+        "title": "Password changed",
+        "body": "You're signed out on your other devices.",
+        "signIn": "Sign in"
+      }
+    }
   }
 }
