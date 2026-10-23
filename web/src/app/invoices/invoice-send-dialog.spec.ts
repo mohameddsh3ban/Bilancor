@@ -3,10 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { MockInstance } from 'vitest';
+import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Invoice } from '../data/models';
+import { invoiceText } from '../domain/invoice-texts';
 import { invoiceStatus } from '../domain/invoices';
 import { DemoStateService } from '../state/demo-state.service';
 import { InvoiceService, SEND_MS } from '../state/invoice.service';
@@ -376,15 +378,52 @@ describe('the send step, opened from the invoice page', () => {
       await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/invoices/inv-wd-039'));
     });
 
-    it('a reminder for a part-paid invoice asks for what is left', async () => {
+    it('a reminder for a part-paid invoice names the whole invoice and what is left, not that nothing came in', async () => {
       demo.setBusiness('sara-yoga');
       const invoice = invoiceOf('inv-sy-021');
-      demo.saveInvoice({ ...invoice, issueDate: '2026-09-01', paymentTermDays: 14 }); // due 15 Sep, 300.00 left
+      demo.saveInvoice({ ...invoice, issueDate: '2026-09-01', paymentTermDays: 14 }); // due 15 Sep, 300.00 of 600.00 left
       await render('/invoices/inv-sy-021?remind=1');
       await expectOpen();
       expect(text(q('send-subject'))).toBe('Zahlungserinnerung zu Rechnung RE-2026-021');
-      expect(q<HTMLTextAreaElement>('send-message')!.value).toContain('300,00');
-      expect(q<HTMLTextAreaElement>('send-message')!.value).not.toContain('600,00');
+      expect(q<HTMLTextAreaElement>('send-message')!.value).toBe(
+        invoiceText('de', 'emailReminderBodyPartly', {
+          name: 'Physio Zentrum Mitte',
+          number: 'RE-2026-021',
+          total: formatMoney(60000, 'de'),
+          left: formatMoney(30000, 'de'),
+          date: formatDate('2026-09-15', 'de', { year: true }),
+        }),
+      );
+      expect(q<HTMLTextAreaElement>('send-message')!.value).toContain(
+        `zu unserer Rechnung RE-2026-021 über ${formatMoney(60000, 'de')} ist noch ein Betrag von ${formatMoney(30000, 'de')} offen.`,
+      );
+      expect(q<HTMLTextAreaElement>('send-message')!.value).not.toContain('keinen Zahlungseingang');
+    });
+
+    it('so does the formal reminder for a part-paid invoice', async () => {
+      demo.setBusiness('sara-yoga');
+      const invoice = invoiceOf('inv-sy-021');
+      demo.saveInvoice({
+        ...invoice,
+        issueDate: '2026-09-01',
+        paymentTermDays: 14,
+        reminders: [{ level: 1, sentOn: '2026-10-01' }],
+      });
+      await render('/invoices/inv-sy-021?remind=1');
+      await expectOpen();
+      expect(text(q('send-title'))).toBe('Send formal reminder');
+      expect(q<HTMLTextAreaElement>('send-message')!.value).toBe(
+        invoiceText('de', 'emailFormalBodyPartly', {
+          name: 'Physio Zentrum Mitte',
+          number: 'RE-2026-021',
+          total: formatMoney(60000, 'de'),
+          left: formatMoney(30000, 'de'),
+          date: formatDate('2026-10-29', 'de', { year: true }),
+        }),
+      );
+      expect(q<HTMLTextAreaElement>('send-message')!.value).toContain(
+        `ist von der Rechnung RE-2026-021 über ${formatMoney(60000, 'de')} noch ein Betrag von ${formatMoney(30000, 'de')} offen.`,
+      );
     });
   });
 

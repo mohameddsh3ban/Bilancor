@@ -99,6 +99,47 @@ describe('invoice texts', () => {
       expect(invoiceText('de', 'emailFormalBody', params)).toContain('30. Oktober 2026');
     });
 
+    describe('for an invoice that is part paid', () => {
+      const partly = { ...params, total: '2.380,00 €', left: '880,00 €' };
+
+      it('the friendly reminder names the whole invoice, what is still open, and does not say nothing came in', () => {
+        expect(invoiceText('de', 'emailReminderBodyPartly', partly)).toBe(
+          'Guten Tag Studio Kern,\n\nzu unserer Rechnung RE-2026-045 über 2.380,00 € ist noch ein Betrag von 880,00 € offen. Sie war am 30. Oktober 2026 fällig. Vielleicht ist die Zahlung nur untergegangen.\n\nBitte überweisen Sie den offenen Betrag innerhalb von 7 Tagen. Zur Sicherheit finden Sie die Rechnung noch einmal im Anhang. Falls Sie bereits gezahlt haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\nMit freundlichen Grüßen',
+        );
+        expect(invoiceText('en', 'emailReminderBodyPartly', partly)).toBe(
+          'Hello Studio Kern,\n\nfor our invoice RE-2026-045 for 2.380,00 €, an amount of 880,00 € is still open. It was due on 30. Oktober 2026. Perhaps the payment was simply overlooked.\n\nPlease transfer the open amount within 7 days. For your convenience the invoice is attached again. If you have already paid, please ignore this message.\n\nKind regards',
+        );
+        expect(invoiceText('de', 'emailReminderBodyPartly', partly)).not.toContain('keinen Zahlungseingang');
+        expect(invoiceText('en', 'emailReminderBodyPartly', partly)).not.toContain('not yet received payment');
+      });
+
+      it('the formal reminder names the whole invoice and what is still open, and keeps the new date and the interest', () => {
+        expect(invoiceText('de', 'emailFormalBodyPartly', partly)).toBe(
+          'Guten Tag Studio Kern,\n\ntrotz unserer Zahlungserinnerung ist von der Rechnung RE-2026-045 über 2.380,00 € noch ein Betrag von 880,00 € offen.\n\nWir bitten Sie, den offenen Betrag bis zum 30. Oktober 2026 zu überweisen. Die Rechnung finden Sie im Anhang. Bitte beachten Sie, dass bei weiterem Zahlungsverzug Verzugszinsen berechnet werden können.\n\nFalls Sie bereits gezahlt haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\nMit freundlichen Grüßen',
+        );
+        expect(invoiceText('en', 'emailFormalBodyPartly', partly)).toBe(
+          'Hello Studio Kern,\n\nDespite our payment reminder, 880,00 € of invoice RE-2026-045 for 2.380,00 € is still unpaid.\n\nPlease transfer the open amount by 30. Oktober 2026. The invoice is attached again. Please note that late-payment interest may be charged if payment is delayed further.\n\nIf you have already paid, please ignore this message.\n\nKind regards',
+        );
+      });
+
+      it('they are filled in completely when given all five values, and the German ones use the formal address', () => {
+        for (const lang of ['de', 'en'] as const) {
+          for (const key of ['emailReminderBodyPartly', 'emailFormalBodyPartly'] as const) {
+            const text = invoiceText(lang, key, partly);
+            expect(text, `${lang} ${key}`).not.toMatch(/[{}]/);
+            for (const part of ['RE-2026-045', '2.380,00 €', '880,00 €', '30. Oktober 2026']) {
+              expect(text, `${lang} ${key}`).toContain(part);
+            }
+          }
+        }
+        for (const key of ['emailReminderBodyPartly', 'emailFormalBodyPartly'] as const) {
+          const text = invoiceText('de', key, partly);
+          expect(text, key).toContain('Sie');
+          expect(text, key).not.toMatch(/\bdu\b|\bdein/i);
+        }
+      });
+    });
+
     it('every email is filled in completely when given all four values, in both languages', () => {
       for (const lang of ['de', 'en'] as const) {
         for (const key of ['emailInvoiceSubject', 'emailInvoiceBody', 'emailReminderSubject', 'emailReminderBody', 'emailFormalSubject', 'emailFormalBody'] as const) {

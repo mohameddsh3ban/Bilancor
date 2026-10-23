@@ -49,10 +49,16 @@ const DE = {
   emailReminderSubject: 'Zahlungserinnerung zu Rechnung {number}',
   emailReminderBody:
     'Guten Tag {name},\n\nfür unsere Rechnung {number} über {amount} konnten wir bisher keinen Zahlungseingang feststellen. Sie war am {date} fällig. Vielleicht ist die Zahlung nur untergegangen.\n\nBitte überweisen Sie den Betrag innerhalb von 7 Tagen. Zur Sicherheit finden Sie die Rechnung noch einmal im Anhang. Falls Sie bereits gezahlt haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\nMit freundlichen Grüßen',
+  // The same for an invoice that is part paid, so it does not say that nothing came in. {total}: the whole invoice; {left}: what is still open
+  emailReminderBodyPartly:
+    'Guten Tag {name},\n\nzu unserer Rechnung {number} über {total} ist noch ein Betrag von {left} offen. Sie war am {date} fällig. Vielleicht ist die Zahlung nur untergegangen.\n\nBitte überweisen Sie den offenen Betrag innerhalb von 7 Tagen. Zur Sicherheit finden Sie die Rechnung noch einmal im Anhang. Falls Sie bereits gezahlt haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\nMit freundlichen Grüßen',
   // The formal reminder (Mahnung). {date}: the new date to pay by
   emailFormalSubject: 'Mahnung zu Rechnung {number}',
   emailFormalBody:
     'Guten Tag {name},\n\ntrotz unserer Zahlungserinnerung ist die Rechnung {number} über {amount} bisher nicht beglichen.\n\nWir bitten Sie, den Betrag bis zum {date} zu überweisen. Die Rechnung finden Sie im Anhang. Bitte beachten Sie, dass bei weiterem Zahlungsverzug Verzugszinsen berechnet werden können.\n\nFalls Sie bereits gezahlt haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\nMit freundlichen Grüßen',
+  // The same for an invoice that is part paid. {total}: the whole invoice; {left}: what is still open
+  emailFormalBodyPartly:
+    'Guten Tag {name},\n\ntrotz unserer Zahlungserinnerung ist von der Rechnung {number} über {total} noch ein Betrag von {left} offen.\n\nWir bitten Sie, den offenen Betrag bis zum {date} zu überweisen. Die Rechnung finden Sie im Anhang. Bitte beachten Sie, dass bei weiterem Zahlungsverzug Verzugszinsen berechnet werden können.\n\nFalls Sie bereits gezahlt haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\nMit freundlichen Grüßen',
 };
 
 export type InvoiceTextKey = keyof typeof DE;
@@ -97,9 +103,13 @@ const EN: Record<InvoiceTextKey, string> = {
   emailReminderSubject: 'Payment reminder for invoice {number}',
   emailReminderBody:
     'Hello {name},\n\nwe have not yet received payment for our invoice {number} for {amount}, which was due on {date}. Perhaps the payment was simply overlooked.\n\nPlease transfer the amount within 7 days. For your convenience the invoice is attached again. If you have already paid, please ignore this message.\n\nKind regards',
+  emailReminderBodyPartly:
+    'Hello {name},\n\nfor our invoice {number} for {total}, an amount of {left} is still open. It was due on {date}. Perhaps the payment was simply overlooked.\n\nPlease transfer the open amount within 7 days. For your convenience the invoice is attached again. If you have already paid, please ignore this message.\n\nKind regards',
   emailFormalSubject: 'Formal reminder for invoice {number}',
   emailFormalBody:
     'Hello {name},\n\nDespite our payment reminder, invoice {number} for {amount} is still unpaid.\n\nPlease transfer the amount by {date}. The invoice is attached again. Please note that late-payment interest may be charged if payment is delayed further.\n\nIf you have already paid, please ignore this message.\n\nKind regards',
+  emailFormalBodyPartly:
+    'Hello {name},\n\nDespite our payment reminder, {left} of invoice {number} for {total} is still unpaid.\n\nPlease transfer the open amount by {date}. The invoice is attached again. Please note that late-payment interest may be charged if payment is delayed further.\n\nIf you have already paid, please ignore this message.\n\nKind regards',
 };
 
 /** Every text of the invoice, by language. Both languages have the same keys (the type says so, and a test checks it). */
