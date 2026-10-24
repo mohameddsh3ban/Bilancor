@@ -880,6 +880,35 @@ describe('SettingsPage', () => {
       expect(status('wd-qonto')).toBe('Renew in 5 days');
     });
 
+    it('stays open when other data changes: undoing an import in the same card does not close it', async () => {
+      demo.setBusiness('sara-yoga');
+      demo.recordImport({
+        id: 'imp-1',
+        accountId: 'sy-qonto',
+        statementId: 'sy-qonto-oktober',
+        fileName: 'export_2026-10.csv',
+        importedOn: '2026-10-22',
+        paymentIds: ['a', 'b'],
+        skippedCount: 0,
+      });
+      await render();
+      await click('bank-action-sy-qonto');
+      expect(q('bank-approval-sy-qonto')).not.toBeNull();
+
+      await click('imports-toggle-sy-qonto');
+      await click('import-undo-imp-1');
+      expect(demo.business().imports).toEqual([]);
+      expect(q('bank-approval-sy-qonto')).not.toBeNull();
+      expect(status('sy-qonto')).toBe('Sign in again');
+
+      // Any other change of the data leaves it open too, and it is still the one that approves.
+      demo.updateTransaction('sy-t1', (tx) => ({ ...tx, confirmed: !tx.confirmed }));
+      await settle();
+      expect(q('bank-approval-sy-qonto')).not.toBeNull();
+      await click('approve');
+      expect(status('sy-qonto')).toBe('Connected');
+    });
+
     it('closes when the account no longer needs it', async () => {
       await render();
       await click('bank-action-wd-qonto');

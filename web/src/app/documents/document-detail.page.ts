@@ -34,9 +34,10 @@ import { DocumentPaper } from './document-paper';
 import { DocumentPayment } from './document-payment';
 import { DocumentStatusChip } from './document-status-chip';
 import { DocumentSteps } from './document-steps';
+import { SelfIssuedPaper } from './self-issued-paper';
 
 /**
- * One document of the open business, top to bottom: the scan (a drawn page), a box to type in what could not be
+ * One document of the open business, top to bottom: the scan (a drawn page; for a self-issued receipt the receipt itself), a box to type in what could not be
  * read, the header, the three steps, what was read with Edit, the booking, the payment, the history and Remove.
  * Typing in a field, booking and linking really change the sample data, and each change adds a history line. The document
  * of an invoice written in Invoices is locked: it says so, opens the invoice, and has no Edit, no category change and no
@@ -64,6 +65,7 @@ import { DocumentSteps } from './document-steps';
     NgIcon,
     PaymentHistory,
     RouterLink,
+    SelfIssuedPaper,
     Term,
     TranslocoPipe,
   ],
@@ -84,7 +86,14 @@ import { DocumentSteps } from './document-steps';
         class="bg-card border-border flex flex-col gap-6 rounded-xl border p-4"
         data-testid="document-detail"
       >
-        <app-document-paper [doc]="doc" />
+        @if (doc.selfIssued) {
+          <!-- The receipt the person wrote is the scan: the placeholder would show the payee and a number as if the payee had issued it. -->
+          <div class="bg-muted/50 rounded-lg p-3" aria-hidden="true" data-testid="self-issued-scan">
+            <app-self-issued-paper [doc]="doc" [business]="business()" [compact]="true" />
+          </div>
+        } @else {
+          <app-document-paper [doc]="doc" />
+        }
 
         @if (fixField(); as field) {
           <form
@@ -333,6 +342,8 @@ export class DocumentDetailPage {
   });
 
   protected readonly accounts = computed(() => this.demo.business().accounts);
+  /** The open business: the one that writes a self-issued receipt, for the receipt's own page (its name and address). */
+  protected readonly business = this.demo.business;
 
   /** The payment just made from the open document (Paid in cash or with my own money), while Undo is on offer. */
   protected readonly paid = computed<PaidReceipt | null>(() => {

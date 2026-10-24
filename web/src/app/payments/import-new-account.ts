@@ -36,7 +36,8 @@ function nextStatementAccountId(business: Business): string {
 /**
  * "A new account": the name of the bank and the IBAN of an account the app cannot connect (the person tapped "My bank isn't listed", or
  * A new account… in the choice). Continue makes a statement account (no bank connection, payments from statements) and opens its import.
- * The name must not be empty and the IBAN must be shaped like one (as Invoice details checks its IBAN); each problem is named next to its
+ * The name must not be empty and the IBAN must be shaped like one (as Invoice details checks its IBAN) and not be the IBAN of an account the
+ * business has already (however it is spaced or capitalised): two accounts with one IBAN would be one account twice. Each problem is named next to its
  * field, what was typed is kept, and the message goes as soon as the field is changed. What is typed belongs to the open business and its
  * data: another business, or a reset, starts the form over.
  */
@@ -167,6 +168,8 @@ export class ImportNewAccount {
     const errors: NewAccountErrors = {};
     if (name === '') errors.name = 'statementImport.new.nameError';
     if (!isIban(iban)) errors.iban = 'statementImport.new.ibanError';
+    else if (this.demo.business().accounts.some((account) => account.iban !== null && normalizeIban(account.iban) === iban))
+      errors.iban = 'statementImport.new.ibanExists';
     if (errors.name || errors.iban) {
       this.errors.set(errors);
       focusAfterRender(this.injector, this.host.nativeElement, '[aria-invalid="true"]');

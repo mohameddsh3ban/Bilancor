@@ -315,11 +315,19 @@ export class BankAccounts {
   });
 
   /**
+   * The business and data the open sign-in belongs to: a key of its own, so that only another business or a reset closes it, not every
+   * change of the data (a plain function reading `business()` would, as the business is a new object each time: an Undo import in the
+   * same card would close the panel).
+   */
+  private readonly scope = computed(
+    () => `${this.demo.business().id}|${this.demo.dataGeneration()}`,
+  );
+  /**
    * The account whose sign-in is open. It belongs to the business and the data it was opened for: another business, or
    * a reset, closes it.
    */
   private readonly openId = linkedSignal<string, string | null>({
-    source: () => `${this.demo.business().id}|${this.demo.dataGeneration()}`,
+    source: this.scope,
     computation: () => null,
   });
   /** The open sign-in, as long as its account still needs one (it closes by itself once the connection is renewed). */

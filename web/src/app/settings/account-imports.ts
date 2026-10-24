@@ -36,7 +36,8 @@ function saveTextFile(fileName: string, text: string, type: string): void {
   link.href = url;
   link.download = fileName;
   link.click();
-  URL.revokeObjectURL(url);
+  // Not at once: Safari and iOS can cancel a download whose address is revoked right after the click.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 /**

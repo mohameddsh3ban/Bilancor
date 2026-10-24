@@ -814,6 +814,34 @@ describe('PaymentCard', () => {
         expect(photo?.paymentId).toBeNull();
       });
 
+      it('keeps the self-issued link off while the photo is read: its answer would be dropped and the typed form lost', async () => {
+        vi.useFakeTimers();
+        show('wd-t3');
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(false);
+
+        click(q('answer-photo'));
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(true);
+        click(q('answer-self-issued'));
+        expect(document.body.querySelector('[data-testid="self-issued-dialog"]')).toBeNull();
+
+        await vi.advanceTimersByTimeAsync(READING_MS);
+        fixture.detectChanges();
+        expect(review.summary().receiptsAdded).toBe(1);
+      });
+
+      it('keeps it off when the photo was taken elsewhere too, and back on once it is read', async () => {
+        vi.useFakeTimers();
+        show('wd-t3');
+        void TestBed.inject(UploadService).addPhotoFor('wd-t3');
+        fixture.detectChanges();
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(true);
+
+        demo.resetData(); // the photo is taken away while it is read
+        await vi.advanceTimersByTimeAsync(READING_MS);
+        fixture.detectChanges();
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(false);
+      });
+
       it('shows Reading… also when the photo was taken elsewhere', async () => {
         vi.useFakeTimers();
         show('wd-t3');

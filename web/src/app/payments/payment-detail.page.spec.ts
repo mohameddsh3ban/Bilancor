@@ -533,9 +533,39 @@ describe('PaymentDetailPage', () => {
       expect(text(d('receipt-state'))).toBe('IMG_2049.jpg');
       expect(d('open-document')!.getAttribute('href')).toBe('/documents/wd-d7');
       expect(d('bank-iban')).toBeNull(); // there is no bank behind it
-      expect(text(d('private-blocked'))).toBe('This payment has a document. Unlink it first.');
+      // It can't be unlinked, so it doesn't say to unlink the document: it says why the payment stays business.
+      expect(text(d('private-blocked'))).toBe('This payment was made from its receipt, so it stays business.');
       expect(d('kind-private')).toBeNull();
       expect(historyTexts()).toEqual(['You marked it as paid with your own money']);
+    });
+
+    it('a payment paid in cash says the same, in every language', async () => {
+      TestBed.inject(ReceiptService).markPaid('wd-d7', 'cash', '2026-10-19');
+      await render('/payments/paid-wd-d7');
+      expect(text(d('private-blocked'))).toBe('This payment was made from its receipt, so it stays business.');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlockedPaid);
+      expect(text(d('private-blocked'))).not.toBe(de.payments.detail.booking.privateBlocked);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlockedPaid);
+    });
+
+    it('a payment with a self-issued receipt stays business, and does not say to unlink the receipt that cannot be unlinked, in every language', async () => {
+      const receipts = TestBed.inject(ReceiptService);
+      expect(receipts.createSelfIssued('wd-t20', { purpose: 'Parken beim Kunden', reason: 'machine', reasonText: null, address: null }, 'payment')).not.toBeNull();
+      await render('/payments/wd-t20');
+      expect(d('open-document')).not.toBeNull();
+      expect(text(d('private-blocked'))).toBe('This payment has a self-issued receipt, so it stays business.');
+      expect(d('kind-private')).toBeNull();
+      expect(d('kind-business')).toBeNull();
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlockedSelfIssued);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlockedSelfIssued);
     });
 
     it('choosing a document twice writes one history line on each side', async () => {

@@ -203,12 +203,13 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
                 {{ 'payments.detail.receipt.noReceiptNeeded' | transloco }}
               </button>
             </div>
-            <!-- Money out can have a receipt written by the person: a small link under the answers, which opens the form on top of the card. -->
+            <!-- Money out can have a receipt written by the person: a small link under the answers, which opens the form on top of the card. It waits while a photo is read: an answer is not taken then, so the form's would be lost. -->
             @if (canWriteReceipt()) {
               <button
                 type="button"
-                class="text-primary focus-visible:ring-ring/50 mx-auto min-h-10 rounded-sm px-1 text-sm underline underline-offset-4 outline-none focus-visible:ring-3"
+                class="text-primary focus-visible:ring-ring/50 mx-auto min-h-10 rounded-sm px-1 text-sm underline underline-offset-4 outline-none focus-visible:ring-3 disabled:opacity-50"
                 data-testid="answer-self-issued"
+                [disabled]="reading()"
                 (click)="selfIssuedOpen.set(true)"
               >
                 {{ 'review.a.writeReceipt' | transloco }}

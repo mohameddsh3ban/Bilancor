@@ -1603,6 +1603,24 @@ describe('DocumentDetailPage', () => {
       await render('/documents/wd-d4');
       expect(d('self-issued-box')).toBeNull();
       expect(d('print-self-issued')).toBeNull();
+      expect(d('self-issued-paper')).toBeNull();
+      expect(d('document-paper')).not.toBeNull();
+    });
+
+    it('shows the German receipt itself as the scan, not the placeholder that reads like an invoice of the payee', async () => {
+      const id = write();
+      await render(`/documents/${id}`);
+
+      expect(d('document-paper')).toBeNull();
+      expect(d('paper-invoice')).toBeNull();
+      expect(text(d('paper-title'))).toBe('Eigenbeleg EB-2026-001');
+      expect(text(d('paper-payee')!.querySelector('dd'))).toBe('APCOA Parking');
+      expect(text(d('paper-vat'))).toBe('Keine Vorsteuer');
+      const sheet = d('self-issued-paper')!;
+      expect(sheet.getAttribute('dir')).toBe('ltr');
+      expect(sheet.getAttribute('lang')).toBe('de');
+      // A picture of what the fields and the print page say in words, like the placeholder: hidden from screen readers.
+      expect(sheet.closest('[aria-hidden="true"]')).not.toBeNull();
     });
 
     it('still confirms the category of the payment: writing the receipt did not', async () => {
@@ -1651,6 +1669,19 @@ describe('DocumentDetailPage', () => {
         expect(da('payment-suggestion').map((s) => text(inside(s, 'suggestion-name')))).not.toContain(
           'APCOA Parking',
         );
+      });
+
+      it('offers neither "Paid in cash or with my own money" nor the payment search: a second expense would follow', async () => {
+        turnUp();
+        await render('/documents/wd-d4');
+        expect(d('cash-payment')).not.toBeNull();
+        expect(d('search-payments')).not.toBeNull();
+
+        write();
+        await render('/documents/wd-d4');
+        expect(d('payment-self-issued')).not.toBeNull();
+        expect(d('cash-payment')).toBeNull();
+        expect(d('search-payments')).toBeNull();
       });
 
       it('says nothing before the receipt is written, or for another document', async () => {

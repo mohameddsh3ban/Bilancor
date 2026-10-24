@@ -18,6 +18,7 @@ import { IMPORT_MS, StatementImportService } from '../state/statement-import.ser
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
 import { StatementImportPage } from './statement-import.page';
+import ar from '../../../public/i18n/ar.json';
 
 @Component({ template: '<p data-testid="stub">stub</p>' })
 class Stub {}
@@ -399,6 +400,18 @@ describe('StatementImportPage', () => {
       // Back to the file as it was read: it can be imported again.
       expect(text(q('count-new'))).toBe('New 5');
       expect(text(button('import-button'))).toBe('Import 5 payments');
+    });
+
+    it('undo puts the cursor on the status that says so, so it does not fall to the page when the summary is gone', async () => {
+      await importCafe();
+      q('summary-undo')!.focus();
+      expect(document.activeElement).toBe(q('summary-undo'));
+
+      await click('summary-undo');
+      expect(q('summary-undo')).toBeNull();
+      expect(q('undone')!.getAttribute('role')).toBe('status');
+      expect(q('undone')!.getAttribute('tabindex')).toBe('-1');
+      expect(document.activeElement).toBe(q('undone'));
     });
 
     it('says so when an import can not be undone any more, and keeps the summary', async () => {
@@ -794,6 +807,56 @@ describe('StatementImportPage', () => {
       expect(demo.business().accounts.find((a) => a.name === 'Volksbank')).toBeDefined(); // trimmed
     });
 
+    it('refuses an IBAN the business already has, at the field, however it is typed, and makes no account', async () => {
+      await render('/payments/import?new=1&from=settings');
+      const before = demo.business().accounts.length;
+      await type('new-name', 'Mein Qonto');
+      await type('new-iban', 'de08 1001 0101 0482 9136 50'); // Weber's Qonto, with spaces and in lower case
+      await click('new-continue');
+
+      expect(text(q('new-error-iban'))).toBe('You already have an account with this IBAN.');
+      expect(q('new-error-name')).toBeNull();
+      expect(q('new-iban')!.getAttribute('aria-invalid')).toBe('true');
+      expect(document.activeElement).toBe(q('new-iban'));
+      expect((q('new-iban') as HTMLInputElement).value).toBe('de08 1001 0101 0482 9136 50');
+      expect(demo.business().accounts).toHaveLength(before);
+      expect(router.url).toBe('/payments/import?new=1&from=settings');
+
+      // The message goes as soon as the field is changed, and another IBAN makes the account.
+      await type('new-iban', 'DE89 3704 0044 0532 0130 00');
+      expect(q('new-error-iban')).toBeNull();
+      await click('new-continue');
+      expect(demo.business().accounts).toHaveLength(before + 1);
+    });
+
+    it('refuses the IBAN of an account made here a moment ago too', async () => {
+      await render('/payments/import?new=1&from=settings');
+      await type('new-name', 'Volksbank');
+      await type('new-iban', 'DE02120300000000202051');
+      await click('new-continue');
+      const before = demo.business().accounts.length;
+
+      await render('/payments/import?new=1&from=settings');
+      await type('new-name', 'Noch eine');
+      await type('new-iban', 'DE02 1203 0000 0000 2020 51');
+      await click('new-continue');
+      expect(text(q('new-error-iban'))).toBe('You already have an account with this IBAN.');
+      expect(demo.business().accounts).toHaveLength(before);
+    });
+
+    it('says it in German and Arabic', async () => {
+      await render('/payments/import?new=1&from=settings');
+      await type('new-name', 'Mein Qonto');
+      await type('new-iban', 'DE08100101010482913650');
+      await click('new-continue');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(q('new-error-iban'))).toBe('Du hast schon ein Konto mit dieser IBAN.');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(q('new-error-iban'))).toBe(ar.statementImport.new.ibanExists);
+    });
+
     it('gives a second account of the business an id of its own', async () => {
       await render('/payments/import?new=1&from=settings');
       await type('new-name', 'Volksbank');
@@ -801,7 +864,7 @@ describe('StatementImportPage', () => {
       await click('new-continue');
       await render('/payments/import?new=1&from=settings');
       await type('new-name', 'Sparda-Bank');
-      await type('new-iban', 'DE02120300000000202051');
+      await type('new-iban', 'DE89370400440532013000');
       await click('new-continue');
       expect(
         demo

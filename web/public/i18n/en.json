@@ -811,7 +811,9 @@
         "business": "Business",
         "private": "Private",
         "privateBlocked": "This payment has a document. Unlink it first.",
-        "privateBlockedInvoice": "This payment pays an invoice, so it stays business."
+        "privateBlockedInvoice": "This payment pays an invoice, so it stays business.",
+        "privateBlockedPaid": "This payment was made from its receipt, so it stays business.",
+        "privateBlockedSelfIssued": "This payment has a self-issued receipt, so it stays business."
       },
       "picker": {
         "search": "Search categories",
@@ -1712,6 +1714,7 @@
       "iban": "IBAN",
       "ibanHint": "You find it on the statement or in your online banking.",
       "ibanError": "This doesn't look like an IBAN. Check it and try again.",
+      "ibanExists": "You already have an account with this IBAN.",
       "continue": "Continue"
     },
     "file": {

@@ -39,10 +39,11 @@ describe('SelfIssuedPaper', () => {
     return demo.documents().find((doc) => doc.id === id)!;
   }
 
-  function render(doc: Doc, business: Business = demo.business()): HTMLElement {
+  function render(doc: Doc, business: Business = demo.business(), compact = false): HTMLElement {
     const fixture = TestBed.createComponent(SelfIssuedPaper);
     fixture.componentRef.setInput('doc', doc);
     fixture.componentRef.setInput('business', business);
+    fixture.componentRef.setInput('compact', compact);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -171,6 +172,38 @@ describe('SelfIssuedPaper', () => {
         expect(paper.getAttribute('dir'), lang).toBe('ltr');
         expect(paper.getAttribute('lang'), lang).toBe('de');
       }
+    });
+  });
+
+  describe('as a preview in a narrow panel (compact)', () => {
+    it('keeps the sheet small whatever the window: no wider padding or text from the screen width, only from the width of the sheet itself', () => {
+      const doc = written();
+      const el = render(doc, demo.business(), true);
+      const paper = q(el, 'self-issued-paper')!;
+      expect(paper.className.split(' ').filter((name) => name.startsWith('sm:'))).toEqual([]);
+      for (const name of ['bg-white', 'border-neutral-200', 'p-4', 'text-xs']) {
+        expect(paper.classList.contains(name), name).toBe(true);
+      }
+      // The full sheet keeps its screen-width padding and text.
+      const full = q(render(doc), 'self-issued-paper')!;
+      expect(full.classList.contains('sm:p-8')).toBe(true);
+      expect(full.parentElement!.classList.contains('@container')).toBe(true);
+    });
+
+    it('puts each label above its value when the sheet is narrow, and beside it from 16 rem of width (a container query, not the window)', () => {
+      const el = render(written(), demo.business(), true);
+      expect(el.classList.contains('@container')).toBe(true);
+      const row = q(el, 'paper-payee')!;
+      expect(row.classList.contains('flex-col')).toBe(true);
+      expect(row.classList.contains('@3xs:flex-row')).toBe(true);
+      const label = row.querySelector('dt')!;
+      expect(label.className.split(' ').filter((name) => name.startsWith('sm:'))).toEqual([]);
+      expect(label.classList.contains('@3xs:w-32')).toBe(true);
+    });
+
+    it('says the same things as the full sheet', () => {
+      const doc = written();
+      expect(text(render(doc, demo.business(), true))).toBe(text(render(doc)));
     });
   });
 

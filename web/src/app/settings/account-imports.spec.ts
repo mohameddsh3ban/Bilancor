@@ -213,7 +213,10 @@ describe('AccountImports', () => {
       await importStatement('cl-sparkasse');
       await render();
       await open();
-      await press('import-download-imp-1');
+      q('import-download-imp-1')!.click();
+      // The address is given back after the browser has had its turn: some browsers (Safari, iOS) cancel a download whose address is revoked at once.
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+      await settle();
 
       const original = statementText(findSampleStatement(demo.business(), 'cl-sparkasse-oktober')!);
       expect(saved).toEqual({
@@ -222,6 +225,8 @@ describe('AccountImports', () => {
         text: original,
       });
       expect(original).toContain('Metro Großmarkt');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(URL.revokeObjectURL).toHaveBeenCalledOnce();
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:demo');
     });
 

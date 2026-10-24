@@ -30,7 +30,8 @@ const SUGGESTIONS = 3;
  * payment" is not there): the payment is the invoice's. Neither can a self-issued receipt: the payment keeps its 0 % VAT. Nor can a
  * receipt whose payment was made from it as paid in cash or with the person's own money (see `lockedToReceipt`): it says the two stay
  * together. A waiting receipt that is probably the real one of a payment that has a self-issued receipt says so, and can't be linked
- * to it (the payment has a receipt already). Once part of the invoice is paid it lists the payments that came
+ * to it (the payment has a receipt already); it offers neither the search over the payments nor "Paid in cash or with my own money"
+ * either, which would add a second expense with VAT. Once part of the invoice is paid it lists the payments that came
  * in instead of looking for a first one. A received receipt that is read and waits for its payment also offers "Paid in cash or with
  * my own money" (see `PaidPrivatelyDialog`), which makes the payment from the receipt; the document of an invoice written in
  * Invoices leads to the invoice instead, where Mark as paid works. Each action does something only while it still applies, so a
@@ -198,32 +199,34 @@ const SUGGESTIONS = 3;
             {{ 'documents.detail.payment.noMatch' | transloco }}
           </p>
         }
-        <div class="flex flex-wrap items-center gap-2">
-          <app-payment-picker [payments]="candidates()" (picked)="link($event)" />
-          @if (doc().invoice; as written) {
-            <a
-              hlmBtn
-              variant="outline"
-              size="lg"
-              data-testid="pay-in-invoice"
-              [routerLink]="['/invoices', written.id]"
-            >
-              {{ 'documents.detail.payment.payInInvoice' | transloco }}
-            </a>
-          } @else if (canPay()) {
-            <button
-              hlmBtn
-              variant="outline"
-              size="lg"
-              type="button"
-              aria-haspopup="dialog"
-              data-testid="cash-payment"
-              (click)="payOpen.set(true)"
-            >
-              {{ 'documents.detail.payment.cash' | transloco }}
-            </button>
-          }
-        </div>
+        @if (!selfIssuedPayment()) {
+          <div class="flex flex-wrap items-center gap-2">
+            <app-payment-picker [payments]="candidates()" (picked)="link($event)" />
+            @if (doc().invoice; as written) {
+              <a
+                hlmBtn
+                variant="outline"
+                size="lg"
+                data-testid="pay-in-invoice"
+                [routerLink]="['/invoices', written.id]"
+              >
+                {{ 'documents.detail.payment.payInInvoice' | transloco }}
+              </a>
+            } @else if (canPay()) {
+              <button
+                hlmBtn
+                variant="outline"
+                size="lg"
+                type="button"
+                aria-haspopup="dialog"
+                data-testid="cash-payment"
+                (click)="payOpen.set(true)"
+              >
+                {{ 'documents.detail.payment.cash' | transloco }}
+              </button>
+            }
+          </div>
+        }
       }
       <app-paid-privately-dialog [doc]="doc()" [(open)]="payOpen" />
     </section>

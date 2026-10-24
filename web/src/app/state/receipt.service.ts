@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Business } from '../data/models';
 import { canPayPrivately, paidFromReceiptFor, payDayAllowed } from '../domain/cash-payments';
+import { linkDocument } from '../domain/document-actions';
 import { isClosedDate } from '../domain/months';
 import { canWriteSelfIssued, selfIssuedDocFor, selfIssuedProblems, withoutVat, type SelfIssuedInput } from '../domain/self-issued';
 import { DemoStateService } from './demo-state.service';
@@ -124,12 +125,8 @@ export class ReceiptService {
 
     const tx = paidFromReceiptFor(doc, account, day, business.taxProfile.kleinunternehmer);
     this.demo.addTransaction(tx, business.id);
-    // `link` wants a payment whose receipt is missing; this one is made with its receipt, so the receipt's side of the link is written here, as `link` would.
-    this.demo.updateDocument(doc.id, (d) => ({
-      ...d,
-      paymentId: tx.id,
-      history: [{ date: DEMO_TODAY, key: 'linked', params: { name: tx.counterparty } }, ...d.history],
-    }), business.id);
+    // `link` wants a payment whose receipt is missing; this one is made with its receipt, so only the receipt's side of the link is written (see `linkDocument`).
+    this.demo.updateDocument(doc.id, (d) => linkDocument(d, tx, false).doc, business.id);
     this.offerUndo({ kind: 'paid', paid: { txId: tx.id, docId: doc.id, how }, snapshot, scope: this.scope() });
     return tx.id;
   }

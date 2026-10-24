@@ -218,8 +218,9 @@ interface FileRead {
           } @else {
             @if (undone(); as count) {
               <p
-                class="bg-positive/10 text-positive rounded-lg px-3 py-2 text-sm font-medium"
+                class="bg-positive/10 text-positive rounded-lg px-3 py-2 text-sm font-medium outline-none"
                 role="status"
+                tabindex="-1"
                 data-testid="undone"
               >
                 {{ plural('statementImport.undone', count) | transloco: { count } }}
@@ -726,12 +727,16 @@ export class StatementImportPage {
     focusAfterRender(this.injector, this.host.nativeElement, '[data-testid="summary-title"]');
   }
 
-  /** Undo import: the payments are taken out again and the screen shows the file as it was read, ready to import again. If it can't be undone any more it says why. */
+  /**
+   * Undo import: the payments are taken out again and the screen shows the file as it was read, ready to import again, with a status that
+   * says so and has the cursor, so it does not fall to the page when the summary is gone. If it can't be undone any more it says why.
+   */
   protected undo(done: ImportSummary): void {
     if (this.demo.undoImport(done.importId)) {
       this.undoBlocked.set(null);
       this.summary.set(null);
       this.undone.set(done.added);
+      focusAfterRender(this.injector, this.host.nativeElement, '[data-testid="undone"]');
       return;
     }
     const business = this.demo.business();

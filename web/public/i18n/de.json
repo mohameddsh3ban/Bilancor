@@ -811,7 +811,9 @@
         "business": "Geschäftlich",
         "private": "Privat",
         "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung.",
-        "privateBlockedInvoice": "Diese Zahlung bezahlt eine Rechnung, deshalb bleibt sie geschäftlich."
+        "privateBlockedInvoice": "Diese Zahlung bezahlt eine Rechnung, deshalb bleibt sie geschäftlich.",
+        "privateBlockedPaid": "Diese Zahlung wurde aus ihrem Beleg erstellt, deshalb bleibt sie geschäftlich.",
+        "privateBlockedSelfIssued": "Diese Zahlung hat einen Eigenbeleg, deshalb bleibt sie geschäftlich."
       },
       "picker": {
         "search": "Kategorien durchsuchen",
@@ -1712,6 +1714,7 @@
       "iban": "IBAN",
       "ibanHint": "Du findest sie auf dem Kontoauszug oder in deinem Online-Banking.",
       "ibanError": "Das sieht nicht wie eine IBAN aus. Prüfe sie und versuche es noch einmal.",
+      "ibanExists": "Du hast schon ein Konto mit dieser IBAN.",
       "continue": "Weiter"
     },
     "file": {

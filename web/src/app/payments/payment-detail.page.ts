@@ -27,6 +27,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
 import { Account, Booking, Doc, Invoice, Transaction } from '../data/models';
 import { accountName } from '../domain/bank-connection';
+import { lockedToReceipt } from '../domain/cash-payments';
 import {
   changeCategory,
   confirmBooking,
@@ -37,7 +38,7 @@ import { invoiceOfPayment } from '../domain/invoices';
 import { isClosedDate } from '../domain/months';
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
-import { canWriteSelfIssued } from '../domain/self-issued';
+import { canWriteSelfIssued, hasSelfIssuedReceipt } from '../domain/self-issued';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReceiptService, type WrittenReceipt } from '../state/receipt.service';
 import { UploadService } from '../state/upload.service';
@@ -332,6 +333,15 @@ import { PaymentStatusChip } from './payment-status-chip';
               <p class="text-muted-foreground text-sm" data-testid="private-blocked">
                 {{ 'payments.detail.booking.privateBlockedInvoice' | transloco }}
               </p>
+            } @else if (lockedReceipt(); as locked) {
+              <p class="text-muted-foreground text-sm" data-testid="private-blocked">
+                {{
+                  (locked === 'paid'
+                    ? 'payments.detail.booking.privateBlockedPaid'
+                    : 'payments.detail.booking.privateBlockedSelfIssued'
+                  ) | transloco
+                }}
+              </p>
             } @else if (linkedDoc()) {
               <p class="text-muted-foreground text-sm" data-testid="private-blocked">
                 {{ 'payments.detail.booking.privateBlocked' | transloco }}
@@ -453,6 +463,18 @@ export class PaymentDetailPage {
   protected readonly linkedDoc = computed<Doc | null>(() => {
     const id = this.payment()?.id;
     return id ? (this.demo.documents().find((doc) => doc.paymentId === id) ?? null) : null;
+  });
+
+  /**
+   * Why the open payment's receipt can't be unlinked, when it is not just a link the person made: the payment was made from its receipt
+   * (paid in cash or with own money), or has a self-issued receipt. Either way the payment stays business, and the page says that
+   * instead of "Unlink it first". Null for a payment with no such receipt.
+   */
+  protected readonly lockedReceipt = computed<'paid' | 'selfIssued' | null>(() => {
+    const tx = this.payment();
+    if (!tx) return null;
+    if (lockedToReceipt(tx)) return 'paid';
+    return hasSelfIssuedReceipt(this.demo.business(), tx.id) ? 'selfIssued' : null;
   });
 
   /** The invoice the open payment pays (it is one of the invoice's payments), if any: a part payment of it as well. */
