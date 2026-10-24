@@ -2152,5 +2152,114 @@
         "body": "You will no longer be able to open its books. The owner can invite you again."
       }
     }
+  },
+  "help": {
+    "topics": {
+      "start": "Getting started",
+      "payments": "Bank and payments",
+      "receipts": "Receipts and documents",
+      "invoices": "Invoices",
+      "taxes": "Taxes and year-end",
+      "account": "Your account and people",
+      "privacy": "Your data and privacy"
+    },
+    "answers": {
+      "setup-steps": {
+        "q": "What are the three setup steps?",
+        "a": "The Finish setting up list on the homepage has three steps: Connect your bank, Add your tax details and Upload your first receipt. Do them in any order. Each one ticks itself once it's done, and the list goes away when all three are.\n\nThe tax details are five short questions, and most answers are in your letter from the tax office. No bank connection? Importing a bank statement ticks the bank step too.\n\nEach business has its own steps, so switching business shows that business's progress."
+      },
+      "switch-business": {
+        "q": "How do I switch between my businesses?",
+        "a": "Tap the business's name in the top bar. The list shows every business you're in, with your role in each (Owner, Full access, …); choose one to open it. Each business has its own books, steps and people.\n\nTo start another business of your own, choose Add a business at the end of the list. You answer a few questions about it and accept the terms, and you become its owner. Each business has its own plan."
+      },
+      "change-language": {
+        "q": "How do I change the app's language?",
+        "a": "Tap EN, DE or عربي in the top bar, or choose a language on the Language card in My account (open it from your initials at the end of the top bar). The language is yours: it sets the app and our emails to you, and others in the same business keep their own.\n\nTax returns, exports and invoices to German customers stay German, whatever you choose. Each invoice can be in German or English; the default is in Settings › Invoice details."
+      },
+      "connect-bank": {
+        "q": "How do I connect my bank?",
+        "a": "Open Connect your bank (from the homepage, Payments or Settings › Bank accounts), pick your bank and sign in on your bank's own page. Then tick the accounts that are for the business; private accounts stay out. Your payments then come in by themselves.\n\nThe app can see your payments and balance and fetches new ones every day. It can't move money, make transfers or see your bank password.\n\nBank not in the list? Choose My bank isn't listed and import a bank statement (Kontoauszug) from your online banking instead, as a CSV file or in the bank standard (CAMT)."
+      },
+      "renew-bank": {
+        "q": "What does Renew mean on a bank connection?",
+        "a": "Your bank lets the app read your account for 180 days at a time; after that, you confirm it with your bank again. In Settings › Bank accounts, a connection that ends within 14 days shows Renew in 5 days (or however many days are left), and the homepage reminds you too.\n\nChoose Renew and sign in at your bank: the connection shows Connected again and payments keep coming in. A connection that has already ended shows Sign in again, which works the same way."
+      },
+      "payment-needs": {
+        "q": "What does a payment need from me?",
+        "a": "Every business payment needs a category, a confirmed booking and a receipt. The app does most of it: it books what it can and links the receipts it finds. What it can't decide waits for you under Needs you.\n\nTap Needs you in the top bar to go through them one card at a time: say what an unclear payment was for, confirm a booking, add a missing receipt with Take a photo or Pick from Documents, or choose No receipt needed. Receipt lost? For money out, you can write a self-issued receipt (Eigenbeleg).\n\nA payment that still needs you isn't in your VAT return or your figures yet."
+      },
+      "private-payment": {
+        "q": "What if a payment was private?",
+        "a": "Open the payment and switch This payment is from Business to Private, or choose Private, not for the business in Needs you. A private payment needs no receipt and is left out of your VAT return and your profit. Private money coming in, such as money from your own account, is booked as an owner's deposit (Privateinlage).\n\nA payment with a document linked to it can't be made private until you unlink the document, and a payment that pays an invoice stays business.\n\nPaid a business cost with your own card or cash? Open its receipt in Documents, choose Paid in cash or with my own money, then With my own money. The payment goes into the Own money account, and the cost counts for the business."
+      },
+      "add-receipt-phone": {
+        "q": "How do I add a receipt with my phone?",
+        "a": "Tap the camera button in the middle of the bottom bar, or Add on Documents, then Take a photo; several pages become one document. You can also choose a file (PDF, JPG, PNG or an e-invoice as XML, up to 20 MB), or forward receipts by email to your business's own address, shown there and in Settings › Documents inbox.\n\nThe app reads each document and works out whether it's a bill you received (Eingangsbeleg) or an invoice you sent (Ausgangsbeleg); when it can't tell, it asks you. When it's sure which payment a receipt belongs to, it links them; otherwise it suggests likely payments.\n\nMissing the receipt for one payment? Open the payment and choose Take photo: the receipt is linked to it straight away."
+      },
+      "receipt-unreadable": {
+        "q": "What if a receipt couldn't be read?",
+        "a": "When the app can't read a receipt's amount, date or name, the receipt shows in the Needs you box at the top of Documents, and the homepage tells you how many there are. The part it couldn't read is marked on the scan.\n\nChoose Type it in and enter what's on the receipt, or open the document and use Edit. Saving clears the problem; if there's another one, the card asks about that next.\n\nIf the app can't tell whether it's a bill you received (Eingangsbeleg) or an invoice you sent, it asks Received or Sent."
+      },
+      "self-issued": {
+        "q": "What is a self-issued receipt (Eigenbeleg)?",
+        "a": "A receipt you write yourself when the original is lost or you never got one, for example from a parking machine. It is for money out whose receipt is missing: open the payment and choose Write a self-issued receipt, or in Needs you, Receipt lost? Write one yourself.\n\nSay what it was for and why there's no receipt, tick I confirm this is true and choose Create receipt. The app numbers it (EB-2026-001, …) and adds it to Documents, linked to the payment, and you can print it. The receipt itself is always in German.\n\nNo VAT can be claimed back with a self-issued receipt, so the payment's VAT no longer counts. Once written, it can't be changed or removed; Undo works only for a few seconds."
+      },
+      "write-invoice": {
+        "q": "How do I write an invoice?",
+        "a": "In Invoices, choose New invoice. Pick a customer you've invoiced before or add a new one, add lines for what you did, and choose the dates. The totals update as you type, and the draft saves itself.\n\nReady to send lists what a German invoice (Rechnung) must show and links to anything missing, such as your tax number in Settings. When nothing is missing, Preview and send shows the email; Send gives the invoice its number and emails it to your customer.\n\nA sent invoice can't be changed. To correct an open one, choose Cancel invoice in its ⋯ menu, which makes a cancellation invoice (Stornorechnung), then Make a corrected copy."
+      },
+      "e-invoice": {
+        "q": "What is an e-invoice (XRechnung, ZUGFeRD)?",
+        "a": "An e-invoice (E-Rechnung) carries its data in a form a computer can read. The app chooses the format when you send an invoice, and the send step shows it.\n\nA business in Germany gets ZUGFeRD, a PDF with the data inside. A public office gets XRechnung, a pure data file, which needs the office's routing ID (Leitweg-ID). A private person and customers abroad get a plain PDF, and so do business customers if your business doesn't charge VAT (Kleinunternehmer).\n\nE-invoices you receive go to Documents like any other file: choose the XML file."
+      },
+      "customer-pays": {
+        "q": "What happens when a customer pays?",
+        "a": "When a payment's reference names the number of your invoice (Rechnung), the app matches it by itself: the invoice turns Paid, or Partly paid when less came in. When only the amount matches, Needs you asks whether it's the payment for that invoice. Paid in cash? Open the invoice and choose Mark as paid.\n\nAfter its due date, the invoice shows Overdue. Send a friendly reminder (Zahlungserinnerung) asks your customer to pay within 7 days; a week later you can send a formal reminder (Mahnung). The app never writes to a customer by itself."
+      },
+      "vat-due": {
+        "q": "When is my VAT return due?",
+        "a": "If your business charges VAT, its VAT return (UStVA) is due on the 10th of the month after the period: 10 November for October if you file monthly, 10 October for July to September if you file quarterly. With a permanent extension (Dauerfristverlängerung), it's one month later. If you file only once a year, there's just the yearly return, due 31 July of the next year.\n\nYour period and extension come from your tax details in Settings. Taxes and the homepage show the next due date, and a reminder pops up when you open the app within 21 days of it. The app shows the 10th even when it falls on a weekend.\n\nA Kleinunternehmer charges no VAT and has no VAT return."
+      },
+      "send-return": {
+        "q": "What happens when I send my VAT return?",
+        "a": "On Taxes, Send to the tax office first shows a check: the period, the VAT you charged, the VAT you paid and the result. Send passes your VAT return (UStVA) to the tax office through ELSTER, its official online channel.\n\nYou then get a transfer receipt (Übertragungsprotokoll) to print or save as a PDF; it stays under Sent earlier with the date and amount. A sent return can't be changed, and the next period becomes your current return.\n\nSending also closes the months of the period: their payments can't be changed after that."
+      },
+      "payment-blocks-send": {
+        "q": "Why does a payment stop me sending my VAT return?",
+        "a": "Your VAT return (UStVA) counts only booked payments. While a payment of the period still needs you (it isn't sorted, isn't confirmed or has no receipt), the return would leave it out, so the button reads Fix 1 payment first, or however many there are.\n\nChoose it to open Needs you and answer the cards. Once every payment of the period is booked, the button is Send to the tax office again.\n\nThe button is also off while the period is still running; the note under it says from when you can send."
+      },
+      "klein-limit": {
+        "q": "What is the Kleinunternehmer limit?",
+        "a": "A Kleinunternehmer is a small business that charges no VAT while its revenue stays under the limits. The app uses these: revenue under €25,000 last year and under €100,000 this year.\n\nIf your business doesn't charge VAT, Taxes and the homepage show your revenue this year against €25,000 and how much of the limit you've used. It counts the same income as your year on Taxes, so it moves as payments are booked; from €20,000 it shows as a warning, and above €100,000 in red.\n\nWhether the rule fits your business, and what to do near the limit, is a question for your tax advisor (Steuerberater:in)."
+      },
+      "close-month": {
+        "q": "What happens when I close a month?",
+        "a": "On Reports, Month by month shows each month's income, costs and profit: your monthly business report (BWA). A finished month that isn't closed yet has a Close button.\n\nFirst the app checks the month: every payment must be booked and have its receipt, or the month can't be closed yet. It also warns about possible duplicates and about bank accounts to check against your statement. Only the owner and people with full access can close a month.\n\nClosing locks the month's bookings (Festschreibung): they can't be changed any more. Sending a VAT return closes the months of its period by itself."
+      },
+      "export-advisor": {
+        "q": "How do I send my books to my tax advisor?",
+        "a": "On Reports, under Export for your tax advisor, choose a month, quarter or year, then Download DATEV (ZIP), the format tax advisors read, or Spreadsheet (CSV). Payments that still need you are marked as open, or you can fix them first. Print summary lists each booking with its account in the chart of accounts (SKR03).\n\nYour tax advisor (Steuerberater:in) can also download it with their own login: invite them in Settings › People with access.\n\nFor a tax audit there's a separate audit export, in the format the tax office asks for (GDPdU). Ask your tax advisor first."
+      },
+      "invite-advisor": {
+        "q": "How do I invite my tax advisor?",
+        "a": "In Settings › People with access, choose Invite someone, type their email, choose Tax advisor and Send invitation. Only the owner of the business can invite people.\n\nYour tax advisor (Steuerberater:in) gets a link that works for 7 days and chooses their own password. They can see everything and download receipts and exports, but can't change bookings, connect banks or send returns.\n\nEveryone is included in the price. The ⋮ menu next to a person changes what they can do or removes them."
+      },
+      "six-digit-code": {
+        "q": "How does the 6-digit code work?",
+        "a": "Two-step login is always on, because your account holds bank and tax data. After your password, the app asks for the 6-digit code from your authenticator app, so only someone with your phone can sign in. Tick Don't ask again on this device for 30 days to skip the code on a device you trust.\n\nNo phone at hand? Choose Use a backup code instead: each of your 8 backup codes works once.\n\nNew phone? In My account › Signing in, Use a new phone sets up the code again, and Make new codes gives you 8 new backup codes; the old ones stop working."
+      },
+      "roles": {
+        "q": "What can each role do?",
+        "a": "Owner: everything, and the only one who invites people, changes their roles and removes them. Full access, such as a partner: everything the owner can, except people and the plan.\n\nReceipts only, such as an assistant: uploads receipts and fixes the ones they added; no payments, bank balances, taxes or settings. Tax advisor (Steuerberater:in): sees everything and downloads receipts and exports, but can't change bookings, connect banks or send returns.\n\nThe owner chooses the role when inviting someone and can change it later. To hand the business over, the owner makes a person with Full access the owner."
+      },
+      "who-sees-books": {
+        "q": "Who can see my books?",
+        "a": "Only the people in Settings › People with access, each with the role the owner gave them. Your tax advisor (Steuerberater:in) sees them only once invited, with their own login.\n\nOur support team has no access. When you ask us for help, the owner can choose Let support look for 7 days; support can then only look, not change anything, and Stop now ends it at any time.\n\nWhen you sign up, you accept the data processing agreement (AVV): the contract that sets out what we may do with your data and how it's kept safe."
+      },
+      "records-kept": {
+        "q": "How long are my records kept?",
+        "a": "In Germany, a business has to keep its books and receipts for up to 10 years. So a business's books stay in the app: a person who leaves or is removed loses access, but what they did stays in the history, and an owner can only leave after handing the business over.\n\nSome records are locked so they stay as they were: a sent invoice, a self-issued receipt, and every booking in a closed month (Festschreibung)."
+      }
+    }
   }
 }
