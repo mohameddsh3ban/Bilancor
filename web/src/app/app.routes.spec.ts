@@ -138,6 +138,21 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
 
+  it('Help is inside the app shell: signed out it asks for signing in first, signed in it opens the page', async () => {
+    const harness = await RouterTestingHarness.create('/help');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+  });
+
   it('Import a bank statement is inside the app shell, and is not a payment called "import": signed out it asks for signing in first', async () => {
     const harness = await RouterTestingHarness.create('/payments/import');
     harness.detectChanges();

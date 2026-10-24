@@ -227,7 +227,6 @@
   "soon": {
     "home": "Start",
     "payments": "Zahlungen",
-    "help": "Hilfe",
     "more": "Mehr",
     "terms": "Bedingungen der Bankanbindung",
     "unreadable": "Nicht lesbare Belege",
@@ -2154,6 +2153,45 @@
     }
   },
   "help": {
+    "title": "Hilfe",
+    "pages": {
+      "start": "Start",
+      "payments": "Zahlungen",
+      "documents": "Dokumente",
+      "invoices": "Rechnungen",
+      "taxes": "Steuern",
+      "reports": "Auswertungen",
+      "settings": "Einstellungen"
+    },
+    "home": {
+      "searchLabel": "In der Hilfe suchen",
+      "searchPlaceholder": "Wobei brauchst du Hilfe?",
+      "found": {
+        "one": "1 Ergebnis",
+        "many": "{{count}} Ergebnisse"
+      },
+      "results": "Suchergebnisse",
+      "term": "Begriff",
+      "nothingTitle": "Nichts gefunden",
+      "nothingBody": "Schreib uns, was du gesucht hast.",
+      "nothingAction": "Schreib uns",
+      "forPage": "Hilfe zur Seite „{{page}}“",
+      "because": "Weil du von „{{page}}“ kommst.",
+      "topics": "Themen",
+      "allTopics": "Alle Themen",
+      "answers": {
+        "one": "1 Antwort",
+        "many": "{{count}} Antworten"
+      },
+      "termsTitle": "Deutsche Begriffe A–Z",
+      "termsBody": "{{count}} Wörter aus Briefen und Formularen, erklärt.",
+      "termsAction": "Liste öffnen",
+      "contactTitle": "Schreib uns",
+      "contactBody": "Wir antworten auf Deutsch, Englisch oder Arabisch.",
+      "contactAction": "Nachricht schreiben",
+      "taxNote": "Wir erklären, wie die App funktioniert und was deutsche Begriffe bedeuten. Für Beratung zu deinen eigenen Steuern frag deine {{term}}.",
+      "taxAction": "Lade deine Steuerberater:in ein"
+    },
     "topics": {
       "start": "Erste Schritte",
       "payments": "Bank und Zahlungen",

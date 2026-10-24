@@ -129,6 +129,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./account/add-business.page').then((m) => m.AddBusinessPage),
       },
+      // The Help page itself. Its other pages (German terms A–Z, Write to us and one answer) are routes of their own, with the fixed paths above help/:id.
+      {
+        path: 'help',
+        loadComponent: () => import('./help/help.page').then((m) => m.HelpPage),
+      },
       {
         path: 'soon/:feature',
         loadComponent: () => import('./shell/coming-soon.page').then((m) => m.ComingSoonPage),

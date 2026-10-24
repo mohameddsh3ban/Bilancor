@@ -10,6 +10,7 @@ import { AccountService } from '../state/account.service';
 import { signInAsSara } from '../state/account.testing';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection } from '../state/demo-state.testing';
+import { HelpContextService } from '../state/help-context.service';
 import { NoticeService } from '../state/notice.service';
 import { PersonLanguageService } from '../state/person-language.service';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
@@ -348,6 +349,46 @@ describe('AppShell and the review inbox', () => {
     await settle();
     expect(router.url).toBe('/payments');
     expect(shell.querySelector('[data-testid="review-layer"]')).toBeNull();
+  });
+});
+
+describe('AppShell and Help', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
+    });
+    signInAsSara();
+  });
+
+  afterEach(() => {
+    document.documentElement.lang = '';
+    document.documentElement.dir = '';
+  });
+
+  it('the menu opens Help for the page the client was on: the shell has been watching the pages', async () => {
+    const harness = await RouterTestingHarness.create('/payments');
+    harness.detectChanges();
+    const shell = harness.routeNativeElement as HTMLElement;
+    const settle = async () => {
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    };
+    expect(shell.querySelector('aside a[href="/help"]')).not.toBeNull();
+    expect(TestBed.inject(HelpContextService).lastPage()).toBe('/payments');
+
+    shell.querySelector<HTMLElement>('aside a[href="/help"]')!.click();
+    await vi.waitFor(async () => {
+      await settle();
+      expect(shell.querySelector('app-help-page')).not.toBeNull();
+    });
+    expect(TestBed.inject(Router).url).toBe('/help');
+    expect(shell.querySelector('[data-testid="help-for-page-title"]')?.textContent?.trim()).toBe(
+      'Help with Payments',
+    );
+    // Help itself is not a page to come back to.
+    expect(TestBed.inject(HelpContextService).lastPage()).toBe('/payments');
   });
 });
 

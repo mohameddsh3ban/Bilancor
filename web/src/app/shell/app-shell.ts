@@ -6,6 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { HelpContextService } from '../state/help-context.service';
 import { ReviewService } from '../state/review.service';
 import { BottomBar } from './bottom-bar';
 import { DemoToolbar } from './demo-toolbar';
@@ -41,6 +42,10 @@ export class AppShell {
     // The review inbox sends the person back to the page they came from. Start its service here, with the app, so it
     // has seen that page before the first visit to /review.
     inject(ReviewService);
+
+    // Help offers the questions for the page the client came from. Start its service here too, so it has seen that page
+    // before the first visit to /help.
+    inject(HelpContextService);
 
     // The tax reminder pops up over whatever page the app opened on. It is loaded as the app starts, not with it: its
     // dialog code would otherwise weigh on every start (and the build's size budget).

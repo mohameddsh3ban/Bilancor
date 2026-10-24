@@ -227,7 +227,6 @@
   "soon": {
     "home": "Home",
     "payments": "Payments",
-    "help": "Help",
     "more": "More",
     "terms": "Bank connection terms",
     "unreadable": "Unreadable receipts",
@@ -2154,6 +2153,45 @@
     }
   },
   "help": {
+    "title": "Help",
+    "pages": {
+      "start": "Home",
+      "payments": "Payments",
+      "documents": "Documents",
+      "invoices": "Invoices",
+      "taxes": "Taxes",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "home": {
+      "searchLabel": "Search help",
+      "searchPlaceholder": "What do you need help with?",
+      "found": {
+        "one": "1 result",
+        "many": "{{count}} results"
+      },
+      "results": "Search results",
+      "term": "Term",
+      "nothingTitle": "Nothing found",
+      "nothingBody": "Write to us and tell us what you were looking for.",
+      "nothingAction": "Write to us",
+      "forPage": "Help with {{page}}",
+      "because": "Because you came from {{page}}.",
+      "topics": "Topics",
+      "allTopics": "All topics",
+      "answers": {
+        "one": "1 answer",
+        "many": "{{count}} answers"
+      },
+      "termsTitle": "German terms A–Z",
+      "termsBody": "{{count}} words from letters and forms, explained.",
+      "termsAction": "Open the list",
+      "contactTitle": "Write to us",
+      "contactBody": "We answer in English, German or Arabic.",
+      "contactAction": "Write a message",
+      "taxNote": "We explain how the app works and what German terms mean. For advice on your own taxes, ask a tax advisor ({{term}}).",
+      "taxAction": "Invite your tax advisor"
+    },
     "topics": {
       "start": "Getting started",
       "payments": "Bank and payments",
