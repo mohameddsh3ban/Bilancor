@@ -427,6 +427,21 @@ describe('PaymentsPage', () => {
       expect(tableHeadings()[3]).toEqual(['July 2026', 'Closed']);
     });
 
+    it('on a phone the heading line wraps and the word Closed is inside the heading', async () => {
+      await render();
+      const [october, september] = qa('month-group');
+      const header = september.querySelector('header')!;
+      // The totals drop to a line of their own when there is no room (German, large amounts), they are not clipped.
+      expect(header.classList).toContain('flex-wrap');
+      const totals = header.querySelector('p')!;
+      expect(totals.classList).toContain('flex-wrap');
+      expect(totals.classList).not.toContain('shrink-0');
+      // Heading navigation reads the month and its word.
+      expect(text(header.querySelector('h2'))).toBe('September 2026 Closed');
+      expect(header.querySelector('h2 [data-testid="month-closed"]')).not.toBeNull();
+      expect(text(october.querySelector('h2'))).toBe('October 2026');
+    });
+
     it('says Closed in a word in every language, and shows nothing extra on a row', async () => {
       await render();
       const lang = TestBed.inject(LanguageService);
