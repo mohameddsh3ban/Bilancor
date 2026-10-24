@@ -1,5 +1,11 @@
 import { TERM_KEYS, type TermKey } from '../core/i18n/term-keys';
-import { HELP_ANSWERS, PAGE_QUESTIONS, type HelpPage, type HelpTopic } from '../data/help';
+import {
+  HELP_ANSWERS,
+  KLEINUNTERNEHMER_TAXES_QUESTIONS,
+  PAGE_QUESTIONS,
+  type HelpPage,
+  type HelpTopic,
+} from '../data/help';
 
 // The rules of the Help page: which help belongs to the page the person came from, and the search over the answers and
 // the German terms. They only know ids and texts they are given, never the language of the page or the clock.
@@ -27,18 +33,17 @@ export function helpPageOf(url: string | null): HelpPage {
   return PAGE_OF_SEGMENT.get(path.split('/')[1] ?? '') ?? 'start';
 }
 
-/** The answer a Kleinunternehmer is shown first under Taxes. */
-const KLEIN_LIMIT = 'klein-limit';
-
 /**
- * The questions for a page, as ids of answers. For a Kleinunternehmer, Taxes starts with the limit; it keeps the same
- * number of questions, so the last of the VAT return questions makes room. Always a new list.
+ * The questions for a page, as ids of answers. Under Taxes, a Kleinunternehmer gets their own list, which starts with
+ * the limit and leaves out the VAT return questions (they have no VAT return); every other page, and every other
+ * business, gets the page's list. Always a new list.
  */
 export function pageQuestions(page: HelpPage, kleinunternehmer: boolean): string[] {
-  const questions = PAGE_QUESTIONS[page];
-  return page === 'taxes' && kleinunternehmer
-    ? [KLEIN_LIMIT, ...questions.slice(0, -1)]
-    : [...questions];
+  return [
+    ...(page === 'taxes' && kleinunternehmer
+      ? KLEINUNTERNEHMER_TAXES_QUESTIONS
+      : PAGE_QUESTIONS[page]),
+  ];
 }
 
 /**

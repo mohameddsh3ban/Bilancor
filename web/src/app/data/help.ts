@@ -180,8 +180,8 @@ export const HELP_ANSWERS: HelpAnswer[] = [
 
 /**
  * The questions Help offers for the page the person came from, as ids of `HELP_ANSWERS`. Taxes has the first three
- * questions of its topic; Reports has closing a month, the export for the tax advisor and the VAT return; every other
- * page has the answers of its topic.
+ * questions of its topic (the VAT return ones; a Kleinunternehmer's are `KLEINUNTERNEHMER_TAXES_QUESTIONS`); Reports has
+ * closing a month, the export for the tax advisor and the VAT return; every other page has the answers of its topic.
  */
 export const PAGE_QUESTIONS: Record<HelpPage, string[]> = {
   start: ['setup-steps', 'switch-business', 'change-language'],
@@ -192,6 +192,17 @@ export const PAGE_QUESTIONS: Record<HelpPage, string[]> = {
   reports: ['close-month', 'export-advisor', 'vat-due'],
   settings: ['invite-advisor', 'six-digit-code', 'roles'],
 };
+
+/**
+ * The questions Help offers under Taxes to a Kleinunternehmer, instead of `PAGE_QUESTIONS.taxes`: the limit first, then
+ * the year-end questions. A Kleinunternehmer has no VAT return, so neither "When is my VAT return due?" nor "What happens
+ * when I send it?" is offered.
+ */
+export const KLEINUNTERNEHMER_TAXES_QUESTIONS: string[] = [
+  'klein-limit',
+  'close-month',
+  'export-advisor',
+];
 
 /**
  * The pages of the app where each German term shows up (in the menu's order), for the line under a term in German terms A–Z.

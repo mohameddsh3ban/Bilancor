@@ -2,7 +2,13 @@ import en from '../../../public/i18n/en.json';
 import de from '../../../public/i18n/de.json';
 import ar from '../../../public/i18n/ar.json';
 import { TERM_KEYS, type TermKey } from '../core/i18n/term-keys';
-import { HELP_ANSWERS, PAGE_QUESTIONS, TERM_PAGES, type HelpPage } from '../data/help';
+import {
+  HELP_ANSWERS,
+  KLEINUNTERNEHMER_TAXES_QUESTIONS,
+  PAGE_QUESTIONS,
+  TERM_PAGES,
+  type HelpPage,
+} from '../data/help';
 import {
   helpPageOf,
   normalizeForSearch,
@@ -103,9 +109,17 @@ describe('pageQuestions', () => {
     }
   });
 
-  it("starts a Kleinunternehmer's Taxes questions with the limit, and keeps the first two of the others", () => {
-    expect(pageQuestions('taxes', true)).toEqual(['klein-limit', 'vat-due', 'send-return']);
-    expect(pageQuestions('taxes', true)).toHaveLength(PAGE_QUESTIONS.taxes.length);
+  it("starts a Kleinunternehmer's Taxes questions with the limit, and offers no VAT return question", () => {
+    const questions = pageQuestions('taxes', true);
+    expect(questions).toEqual(['klein-limit', 'close-month', 'export-advisor']);
+    for (const id of questions)
+      expect(
+        HELP_ANSWERS.map((answer) => answer.id),
+        id,
+      ).toContain(id);
+    expect(questions).not.toContain('vat-due');
+    expect(questions).not.toContain('send-return');
+    expect(questions).not.toContain('payment-blocks-send');
   });
 
   it('leaves every other page as it is for a Kleinunternehmer', () => {
@@ -119,6 +133,11 @@ describe('pageQuestions', () => {
     pageQuestions('taxes', false).push('x');
     pageQuestions('taxes', true).push('x');
     expect(PAGE_QUESTIONS.taxes).toEqual(before);
+    expect(KLEINUNTERNEHMER_TAXES_QUESTIONS).toEqual([
+      'klein-limit',
+      'close-month',
+      'export-advisor',
+    ]);
   });
 });
 

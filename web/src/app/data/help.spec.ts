@@ -3,6 +3,7 @@ import { TERM_KEYS } from '../core/i18n/term-keys';
 import {
   HELP_ANSWERS,
   HELP_TOPICS,
+  KLEINUNTERNEHMER_TAXES_QUESTIONS,
   PAGE_QUESTIONS,
   TERM_PAGES,
   type HelpPage,
@@ -107,6 +108,20 @@ describe('PAGE_QUESTIONS', () => {
   it('keeps the Kleinunternehmer limit out of Taxes, where only a Kleinunternehmer sees it first', () => {
     expect(idsOf('taxes')).toContain('klein-limit');
     expect(PAGE_QUESTIONS.taxes).not.toContain('klein-limit');
+  });
+
+  it("gives a Kleinunternehmer's Taxes the limit and the year-end questions, with no VAT return question", () => {
+    expect(KLEINUNTERNEHMER_TAXES_QUESTIONS).toEqual([
+      'klein-limit',
+      'close-month',
+      'export-advisor',
+    ]);
+    expect(new Set(KLEINUNTERNEHMER_TAXES_QUESTIONS).size).toBe(
+      KLEINUNTERNEHMER_TAXES_QUESTIONS.length,
+    );
+    for (const id of KLEINUNTERNEHMER_TAXES_QUESTIONS) expect(ids, id).toContain(id);
+    expect(KLEINUNTERNEHMER_TAXES_QUESTIONS).not.toContain('vat-due');
+    expect(KLEINUNTERNEHMER_TAXES_QUESTIONS).not.toContain('send-return');
   });
 });
 
