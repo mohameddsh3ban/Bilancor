@@ -142,8 +142,8 @@ describe('paymentCandidates', () => {
 });
 
 describe('documentCandidates', () => {
-  it('offers the Böttcher receipt first for wd-t17, then the unread photo', () => {
-    expect(ids(documentCandidates(tx(weber, 'wd-t17'), weber.documents))).toEqual(['wd-d4', 'wd-d1']);
+  it('offers the Böttcher receipt first for wd-t17, then the nearer receipt (wd-d8, of the sample statement), then the unread photo', () => {
+    expect(ids(documentCandidates(tx(weber, 'wd-t17'), weber.documents))).toEqual(['wd-d4', 'wd-d8', 'wd-d1']);
   });
 
   it('leaves out linked, reading and duplicate documents', () => {

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { OFFICE, REVENUE_19, REVENUE_7, REVENUE_EU_RC, SOFTWARE, TRAVEL } from '../data/categories';
+import { ADVERTISING, OFFICE, REVENUE_19, REVENUE_7, REVENUE_EU_RC, SOFTWARE, TRAVEL } from '../data/categories';
 import { BANKS, FOUND_ACCOUNTS, foundAccountsOf } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, Booking, Doc, Invoice, SentVatReturn, StatementImport, TaxProfile, Transaction } from '../data/models';
-import type { NewBusinessInput, NewOwner } from '../data/new-business-sample';
+import { newBusinessAccount, newBusinessPayments, type NewBusinessInput, type NewOwner } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { PERSON } from '../data/sample-person';
 import { counterpartyKey, type CategoryRule } from '../domain/category-rules';
@@ -831,6 +831,241 @@ describe('DemoStateService', () => {
       state.setSetup('active');
       expect(accountIds(state)).toEqual(['wd-qonto', 'wd-savings', 'wd-cash']);
       expect(accountOf(state, 'wd-savings').connection.kind).toBe('connected');
+    });
+  });
+
+  describe('statement accounts and imports', () => {
+    const volksbank: Account = {
+      id: 'wd-volksbank',
+      kind: 'bank',
+      name: 'Volksbank',
+      balanceCents: 0,
+      lastUpdate: DEMO_TODAY,
+      connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+      product: 'business',
+      iban: 'DE02120300000000202051',
+    };
+    const accountIds = (state: DemoStateService, businessId = state.business().id): string[] =>
+      businessOf(state, businessId).accounts.map((a) => a.id);
+    const record = (paymentIds: string[], patch: Partial<StatementImport> = {}): StatementImport => ({
+      id: 'imp-1',
+      accountId: 'wd-volksbank',
+      statementId: 'wd-volksbank-oktober',
+      fileName: 'volksbank-oktober.xml',
+      importedOn: DEMO_TODAY,
+      paymentIds,
+      skippedCount: 0,
+      ...patch,
+    });
+    /** A payment as an import builds it: booked, with no receipt yet and nothing in its history but its import. */
+    const imported = (id: string, who: string, cents: number, date = '2026-10-15'): Transaction => ({
+      id,
+      date,
+      counterparty: who,
+      accountId: 'wd-volksbank',
+      amountCents: cents,
+      booking: cents > 0 ? REVENUE_19 : ADVERTISING,
+      confirmed: true,
+      isPrivate: false,
+      receipt: 'missing',
+      receiptFile: null,
+      counterpartyIban: '',
+      reference: '',
+      history: [{ date: DEMO_TODAY, key: 'imported', params: { account: 'Volksbank', file: 'volksbank-oktober.xml' } }],
+      beforePrivate: null,
+      beforeLink: null,
+    });
+    const doc = (state: DemoStateService, id: string) => state.documents().find((d) => d.id === id)!;
+    const invoice = (state: DemoStateService, id: string) => state.business().invoices.find((i) => i.id === id)!;
+
+    describe('addAccount', () => {
+      it('adds the account before the cash box, as it was given, with no history line and no bank step', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setSetup('new');
+        state.addAccount(volksbank);
+        expect(accountIds(state)).toEqual(['wd-qonto', 'wd-volksbank', 'wd-cash']);
+        expect(state.business().accounts[1]).toEqual(volksbank);
+        expect(state.business().history).toEqual([]);
+        expect(state.setup()).toEqual(presetSteps('new'));
+      });
+
+      it('keeps its own copy: the account that was given is never shared with the business', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.addAccount(volksbank);
+        const added = state.business().accounts.find((a) => a.id === 'wd-volksbank')!;
+        expect(added).not.toBe(volksbank);
+        expect(added.connection).not.toBe(volksbank.connection);
+      });
+
+      it('adds an account with an id the business has once, however often it is called', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.addAccount(volksbank);
+        const business = state.business();
+        state.addAccount({ ...volksbank, name: 'Other name' });
+        state.addAccount({ ...volksbank, id: 'wd-cash' });
+        expect(state.business()).toBe(business);
+        expect(state.business().accounts.find((a) => a.id === 'wd-volksbank')!.name).toBe('Volksbank');
+      });
+
+      it('goes at the end for a business that has no cash box', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setBusiness('sara-yoga');
+        state.addAccount({ ...volksbank, id: 'sy-volksbank' });
+        expect(accountIds(state)).toEqual(['sy-qonto', 'sy-volksbank']);
+      });
+
+      it('adds to the business that is named, whichever is open, and ignores one that does not exist', () => {
+        const state = TestBed.inject(DemoStateService);
+        const weber = state.business();
+        state.addAccount({ ...volksbank, id: 'cl-volksbank' }, 'cafe-linde');
+        expect(state.business()).toBe(weber);
+        expect(accountIds(state, 'cafe-linde')).toEqual(['cl-qonto', 'cl-sparkasse', 'cl-volksbank', 'cl-cash']);
+
+        const all = [...state.businesses];
+        state.addAccount(volksbank, 'nope');
+        expect(state.businesses).toEqual(all);
+      });
+
+      it('resetData takes the account back', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.addAccount(volksbank);
+        state.resetData();
+        expect(accountIds(state)).toEqual(['wd-qonto', 'wd-cash']);
+      });
+    });
+
+    describe('recordImport', () => {
+      it('puts the record in front of the earlier ones, in the open business', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.recordImport(record(['a']));
+        state.recordImport(record(['b'], { id: 'imp-2' }));
+        expect(state.business().imports.map((i) => i.id)).toEqual(['imp-2', 'imp-1']);
+        expect(state.business().imports[1]).toEqual(record(['a']));
+      });
+
+      it('records an import with an id it has once', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.recordImport(record(['a']));
+        const business = state.business();
+        state.recordImport(record(['b']));
+        expect(state.business()).toBe(business);
+      });
+
+      it('records into the business that is named, and ignores one that does not exist', () => {
+        const state = TestBed.inject(DemoStateService);
+        const weber = state.business();
+        state.recordImport(record(['a']), 'cafe-linde');
+        expect(state.business()).toBe(weber);
+        expect(businessOf(state, 'cafe-linde').imports).toEqual([record(['a'])]);
+
+        const all = [...state.businesses];
+        state.recordImport(record(['a']), 'nope');
+        expect(state.businesses).toEqual(all);
+      });
+
+      it('resetData takes the records back', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.recordImport(record(['a']));
+        state.resetData();
+        expect(state.business().imports).toEqual([]);
+      });
+    });
+
+    describe('undoImport', () => {
+      /** Weber Design with the Volksbank account, two imported payments and their automatic links: the receipt wd-d8 and the invoice RE-2026-039. */
+      function withLinkedImport(state: DemoStateService): void {
+        state.addAccount(volksbank);
+        state.addTransaction(imported('imp-1-r1', 'Druckerei Mayer', -14280));
+        state.addTransaction(imported('imp-1-r0', 'Bäckerei Lange', 119000, '2026-10-20'));
+        state.recordImport(record(['imp-1-r0', 'imp-1-r1']));
+        state.link('wd-d8', 'imp-1-r1', true);
+        state.linkInvoicePayment('inv-wd-039', 'imp-1-r0', true);
+      }
+
+      it("removes the import's payments and takes its automatic links back: the receipt waits again and the invoice is open again", () => {
+        const state = TestBed.inject(DemoStateService);
+        const before = structuredClone(state.business());
+        withLinkedImport(state);
+        expect(doc(state, 'wd-d8').paymentId).toBe('imp-1-r1');
+        expect(invoiceStatus(invoice(state, 'inv-wd-039'), state.business())).toBe('paid');
+
+        expect(state.undoImport('imp-1')).toBe(true);
+
+        expect(state.business().transactions).toEqual(before.transactions);
+        expect(state.business().documents).toEqual(before.documents);
+        expect(state.business().invoices).toEqual(before.invoices);
+        expect(invoiceStatus(invoice(state, 'inv-wd-039'), state.business())).toBe('overdue');
+        expect(state.business().imports).toEqual([]);
+        expect(state.business().history).toEqual([{ date: DEMO_TODAY, key: 'importUndone', params: { file: 'volksbank-oktober.xml' } }]);
+      });
+
+      it('keeps the account the import was made into, the bank step, and every other payment and import', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.setSetup('halfway');
+        withLinkedImport(state);
+        state.addTransaction(imported('imp-2-r0', 'Kopierladen', -1500));
+        state.recordImport(record(['imp-2-r0'], { id: 'imp-2', fileName: 'zweite-datei.xml' }));
+
+        expect(state.undoImport('imp-1')).toBe(true);
+        expect(accountIds(state)).toContain('wd-volksbank');
+        expect(state.setup()).toEqual(presetSteps('halfway'));
+        expect(state.business().transactions.find((t) => t.id === 'imp-2-r0')).toBeDefined();
+        expect(state.business().imports.map((i) => i.id)).toEqual(['imp-2']);
+      });
+
+      it('takes back only the lines of its own payments from an invoice that other payments paid in part', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.addTransaction(imported('imp-1-r0', 'Bäckerei Lange', 50000, '2026-10-19'));
+        state.addTransaction({ ...imported('wd-t90', 'Bäckerei Lange', 20000, '2026-10-18'), history: [] });
+        state.recordImport(record(['imp-1-r0']));
+        state.linkInvoicePayment('inv-wd-039', 'wd-t90', false);
+        state.linkInvoicePayment('inv-wd-039', 'imp-1-r0', true);
+        expect(invoice(state, 'inv-wd-039').paymentIds).toEqual(['wd-t90', 'imp-1-r0']);
+
+        expect(state.undoImport('imp-1')).toBe(true);
+        const left = invoice(state, 'inv-wd-039');
+        expect(left.paymentIds).toEqual(['wd-t90']);
+        expect(left.history.map((line) => [line.key, line.params['paymentId']])).toContainEqual(['invoicePartlyPaid', 'wd-t90']);
+        expect(left.history.some((line) => line.params['paymentId'] === 'imp-1-r0')).toBe(false);
+        expect(invoiceStatus(left, state.business())).toBe('partlyPaid');
+      });
+
+      it('is refused, with nothing changed, for an id no import has', () => {
+        const state = TestBed.inject(DemoStateService);
+        withLinkedImport(state);
+        const business = state.business();
+        expect(state.undoImport('nope')).toBe(false);
+        expect(state.business()).toBe(business);
+      });
+
+      it('is refused once a payment of the import was worked on', () => {
+        const state = TestBed.inject(DemoStateService);
+        withLinkedImport(state);
+        state.updateTransaction('imp-1-r1', markNoReceiptNeeded);
+        const business = state.business();
+        expect(state.undoImport('imp-1')).toBe(false);
+        expect(state.business()).toBe(business);
+      });
+
+      it('is refused once a month of one of its payments is closed', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.addAccount(volksbank);
+        state.addTransaction(imported('imp-1-r0', 'Druckerei Mayer', -14280, '2026-09-10')); // September of Weber Design is closed
+        state.recordImport(record(['imp-1-r0']));
+        const business = state.business();
+        expect(state.undoImport('imp-1')).toBe(false);
+        expect(state.business()).toBe(business);
+      });
+
+      it('only undoes an import of the open business', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.recordImport(record([]), 'cafe-linde');
+        expect(state.undoImport('imp-1')).toBe(false);
+        expect(businessOf(state, 'cafe-linde').imports).toHaveLength(1);
+        state.setBusiness('cafe-linde');
+        expect(state.undoImport('imp-1')).toBe(true);
+        expect(state.business().imports).toEqual([]);
+      });
     });
   });
 
@@ -1761,6 +1996,58 @@ describe('DemoStateService', () => {
       connectAt(state);
       expect(state.business().accounts.map((a) => a.id)).toEqual([`${id}-main`]);
       expect(state.business().transactions.map((t) => t.id)).toEqual(paymentIds(id));
+    });
+
+    describe('payments the business has already, from an imported statement', () => {
+      /** A statement account of the open business that already holds some of the demo bank's October payments, as an import of the generic statement leaves them. */
+      function withPaymentsOf(state: DemoStateService, id: string, take: number, patch: Partial<Transaction> = {}): void {
+        state.addAccount({
+          id: `${id}-statement`,
+          kind: 'bank',
+          name: 'Volksbank',
+          balanceCents: 0,
+          lastUpdate: DEMO_TODAY,
+          connection: { kind: 'statement', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+          product: 'business',
+          iban: null,
+        });
+        const arriving = newBusinessPayments(id, newBusinessAccount(id, 'Qonto'), 'Sara Weber');
+        for (const [i, tx] of arriving.slice(0, take).entries()) {
+          state.addTransaction({ ...tx, id: `imp-1-r${i}`, accountId: `${id}-statement`, ...patch });
+        }
+      }
+
+      it("skips each of the eight payments that any account of the business has already, and brings the rest", () => {
+        const state = TestBed.inject(DemoStateService);
+        const id = made(state);
+        withPaymentsOf(state, id, 3);
+        connectAt(state);
+
+        const ids = state.business().transactions.map((t) => t.id);
+        expect(ids).toHaveLength(8);
+        expect(ids.filter((tid) => tid.startsWith('imp-1-'))).toEqual(['imp-1-r2', 'imp-1-r1', 'imp-1-r0']);
+        expect(ids.filter((tid) => tid.startsWith(`${id}-t`))).toEqual([4, 5, 6, 7, 8].map((n) => `${id}-t${n}`));
+      });
+
+      it('skips all eight when the business has them all, and still connects the account', () => {
+        const state = TestBed.inject(DemoStateService);
+        const id = made(state);
+        withPaymentsOf(state, id, 8);
+        connectAt(state);
+
+        expect(state.business().transactions.map((t) => t.id)).toEqual(Array.from({ length: 8 }, (_, i) => `imp-1-r${7 - i}`));
+        expect(state.business().accounts.map((a) => a.id)).toEqual([`${id}-statement`, `${id}-main`]);
+        expect(state.setup().bank).toBe(true);
+      });
+
+      it('a payment with the same date and amount but another name and reference is another payment, so the demo payment still comes', () => {
+        const state = TestBed.inject(DemoStateService);
+        const id = made(state);
+        withPaymentsOf(state, id, 1, { counterparty: 'Someone else', reference: 'Something else' });
+        connectAt(state);
+        expect(state.business().transactions).toHaveLength(9);
+        expect(state.business().transactions.some((t) => t.id === `${id}-t1`)).toBe(true);
+      });
     });
 
     it('keeps what the person did to a payment when the bank is connected again', () => {

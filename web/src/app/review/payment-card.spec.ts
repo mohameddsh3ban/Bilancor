@@ -571,6 +571,7 @@ describe('PaymentCard', () => {
     it('does not offer to add a document when none fits: that would leave the review', async () => {
       demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d8', (d) => ({ ...d, paymentId: 'wd-t2' }));
       show('wd-t17');
       click(q('pick-document'));
       await settle();

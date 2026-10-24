@@ -109,6 +109,8 @@ export const EXTRA_DOCUMENTS: Record<string, Doc[]> = {
     // An invoice that was cancelled, and the cancellation invoice that cancels it: both stay on record, and no payment will settle either.
     extra({ id: 'wd-d5', file: 'RE-2026-040.pdf', source: 'file', name: 'Agentur Nord', direction: 'sent', invoiceNo: 'RE-2026-040', date: '2026-10-01', dueDate: '2026-10-15', cents: 59500, booking: REVENUE_19, confirmed: true }),
     extra({ id: 'wd-d6', file: 'RE-2026-042.pdf', source: 'file', name: 'Agentur Nord', direction: 'sent', invoiceNo: 'RE-2026-042', date: '2026-10-07', cents: 59500, booking: REVENUE_19, confirmed: true }),
+    // The invoice for the Volksbank payment of the sample statement (volksbank-oktober.xml): its only certain match, which importing links by itself.
+    extra({ id: 'wd-d8', file: 'druckerei-mayer-rechnung.pdf', source: 'file', name: 'Druckerei Mayer', direction: 'received', invoiceNo: 'DM-26-0418', date: '2026-10-14', cents: 14280, booking: ADVERTISING, confirmed: false }),
   ],
   'sara-yoga': [
     // The invoice for the payment sy-t8.

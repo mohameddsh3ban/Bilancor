@@ -13,6 +13,7 @@ import {
   SentVatReturn,
   SetupState,
   SetupSteps,
+  StatementImport,
   TaxProfile,
   Transaction,
 } from '../data/models';
@@ -32,6 +33,7 @@ import { ALL_DONE, presetSteps } from '../domain/home-cards';
 import { invoiceOfPayment, invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
 import * as months from '../domain/months';
 import * as people from '../domain/people';
+import { canUndoImport, isDuplicate, type StatementRow } from '../domain/statement-import';
 import { AccountService } from './account.service';
 
 /** A fresh copy of the sample businesses, so edits never touch the shared sample data. */
@@ -50,6 +52,51 @@ function newCashBox(businessId: string): Account {
     connection: noConnection('cash'),
     product: 'cash',
     iban: null,
+  };
+}
+
+/** The accounts with the added ones in front of the cash box, which stays last. */
+function beforeCashBox(accounts: readonly Account[], added: readonly Account[]): Account[] {
+  const cashAt = accounts.findIndex((account) => account.kind === 'cash');
+  return cashAt === -1 ? [...accounts, ...added] : [...accounts.slice(0, cashAt), ...added, ...accounts.slice(cashAt)];
+}
+
+/** A payment as a statement row, to ask whether a business has it already (see `isDuplicate`). */
+function asRow(tx: Transaction): StatementRow {
+  return { index: 0, date: tx.date, amountCents: tx.amountCents, counterparty: tx.counterparty, reference: tx.reference };
+}
+
+/**
+ * The business without the payments of a statement import, and with what automatic matching did to them taken back: a document
+ * that was linked to one waits again (without the line that linked it), an invoice one of them paid does not have the payment any
+ * more (nor the line that said it was paid), and the record of the import is gone. One `importUndone` line on the business.
+ */
+function withoutImport(business: Business, imp: StatementImport): Business {
+  const ids = new Set(imp.paymentIds);
+  const names = new Map(business.transactions.filter((tx) => ids.has(tx.id)).map((tx) => [tx.id, tx.counterparty]));
+  const unlinked = (doc: Doc): Doc => {
+    const name = doc.paymentId === null ? undefined : names.get(doc.paymentId);
+    if (name === undefined) return doc;
+    const linkedAt = doc.history.findIndex((line) => (line.key === 'linked' || line.key === 'linkedAuto') && line.params['name'] === name);
+    return { ...doc, paymentId: null, history: doc.history.filter((_, i) => i !== linkedAt) };
+  };
+  const unpaid = (invoice: Invoice): Invoice =>
+    invoice.paymentIds.some((id) => ids.has(id))
+      ? {
+          ...invoice,
+          paymentIds: invoice.paymentIds.filter((id) => !ids.has(id)),
+          history: invoice.history.filter(
+            (line) => !((line.key === 'invoicePaid' || line.key === 'invoicePartlyPaid') && ids.has(line.params['paymentId'] ?? '')),
+          ),
+        }
+      : invoice;
+  return {
+    ...business,
+    transactions: business.transactions.filter((tx) => !ids.has(tx.id)),
+    documents: business.documents.map(unlinked),
+    invoices: business.invoices.map(unpaid),
+    imports: business.imports.filter((i) => i.id !== imp.id),
+    history: [{ date: DEMO_TODAY, key: 'importUndone', params: { file: imp.fileName } }, ...business.history],
   };
 }
 
@@ -180,7 +227,8 @@ export class DemoStateService {
    * become statement accounts and keep their payments. The accounts it is given are never changed (they are shared sample data).
    *
    * The first time the business account of a business made during the visit is added, its eight October payments come
-   * in with it (newest first); it has them once, however often it is connected.
+   * in with it (newest first); it has them once, however often it is connected. A payment the business has already, in any
+   * of its accounts (an imported statement may have brought it, see `isDuplicate`), does not come a second time.
    */
   connectAccounts(bankId: string, accounts: readonly Account[], fetchFrom: string): void {
     const bankDone = this.setup().bank;
@@ -212,16 +260,19 @@ export class DemoStateService {
         .map(connect);
       if (added.length === 0 && kept.every((account, i) => account === business.accounts[i])) return business;
 
-      const cashAt = kept.findIndex((account) => account.kind === 'cash');
       const main = isVisitBusiness(business.id)
         ? added.find((account) => account.id === newBusinessAccountId(business.id))
         : undefined;
+      const arriving = main
+        ? newBusinessPayments(business.id, main, people.ownerOf(business).name ?? business.name).filter((tx) => {
+            const row = asRow(tx);
+            return !business.transactions.some((own) => isDuplicate(row, own, null));
+          })
+        : [];
       return {
         ...business,
-        accounts: cashAt === -1 ? [...kept, ...added] : [...kept.slice(0, cashAt), ...added, ...kept.slice(cashAt)],
-        transactions: main
-          ? [...newBusinessPayments(business.id, main, people.ownerOf(business).name ?? business.name), ...business.transactions]
-          : business.transactions,
+        accounts: beforeCashBox(kept, added),
+        transactions: arriving.length > 0 ? [...arriving, ...business.transactions] : business.transactions,
         history: [...lines.reverse(), ...business.history],
       };
     });
@@ -239,6 +290,46 @@ export class DemoStateService {
             history: [{ date: DEMO_TODAY, key: 'cashAdded', params: {} }, ...business.history],
           },
     );
+  }
+
+  /**
+   * Adds an account to a business (the open one unless named), in front of its cash box: a statement account of a bank the
+   * demo does not list, for instance. The business keeps its own copy. Ignored for an unknown business and for an id the business
+   * has already, so a repeated call does nothing. It writes no history line and does not tick the bank step: importing a statement does.
+   */
+  addAccount(account: Account, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) =>
+      business.accounts.some((a) => a.id === account.id)
+        ? business
+        : { ...business, accounts: beforeCashBox(business.accounts, [{ ...account, connection: { ...account.connection } }]) },
+    );
+  }
+
+  /**
+   * Remembers a statement import in a business (the open one unless named), in front of the earlier ones. Ignored for an unknown
+   * business and for an id the business has already. The payments themselves are added by the caller (`addTransaction`).
+   */
+  recordImport(imp: StatementImport, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) =>
+      business.imports.some((i) => i.id === imp.id)
+        ? business
+        : { ...business, imports: [{ ...imp, paymentIds: [...imp.paymentIds] }, ...business.imports] },
+    );
+  }
+
+  /**
+   * Undoes a statement import of the open business: its payments are removed and the links its automatic matching made are taken
+   * back (see `withoutImport`). The account it was made into, and the bank step, stay. False, with nothing changed, for an id the open
+   * business has no import with, and for one that can't be undone any more (see `canUndoImport`: a payment of it was worked on,
+   * or sits in a month that has been closed since).
+   */
+  undoImport(importId: string): boolean {
+    const before = this.data();
+    this.updateBusiness(this.businessIdSignal(), (business) => {
+      const imp = business.imports.find((i) => i.id === importId);
+      return imp && canUndoImport(business, imp, (month) => months.isClosedDate(business, `${month}-01`)) ? withoutImport(business, imp) : business;
+    });
+    return this.data() !== before;
   }
 
   /**

@@ -468,13 +468,14 @@ describe('PaymentDetailPage', () => {
     it('lists the documents that fit the payment, best match first', async () => {
       await render('/payments/wd-t17');
       await click('pick-document');
-      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Bürobedarf Schulz']);
+      // Druckerei Mayer is the receipt of the sample statement's Volksbank payment: unlinked and received, so it fits any payment out.
+      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Druckerei Mayer', 'Bürobedarf Schulz']);
     });
 
     it('the picker offers only received documents for money out', async () => {
       await render('/payments/wd-t3');
       await click('pick-document');
-      expect(optionNames()).toEqual(['Bürobedarf Schulz', 'Böttcher Bürobedarf']);
+      expect(optionNames()).toEqual(['Bürobedarf Schulz', 'Druckerei Mayer', 'Böttcher Bürobedarf']);
     });
 
     it('and only sent documents for money in', async () => {
@@ -487,6 +488,7 @@ describe('PaymentDetailPage', () => {
     it('with no document that fits, says so and offers to add one', async () => {
       demo.updateDocument('wd-d1', (x) => ({ ...x, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (x) => ({ ...x, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d8', (x) => ({ ...x, paymentId: 'wd-t2' }));
       await render('/payments/wd-t17');
       await click('pick-document');
       expect(text(inBody('document-picker-empty'))).toContain(
