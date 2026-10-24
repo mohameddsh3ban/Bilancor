@@ -424,6 +424,7 @@
       },
       "dialog": {
         "via": "Your return will be sent through {{term}}, the tax office's official channel.",
+        "closes": "Sending also closes {{months}}: their payments can't be changed after that.",
         "cancel": "Cancel",
         "confirm": "Send",
         "sending": "Your return is on its way to the tax office.",

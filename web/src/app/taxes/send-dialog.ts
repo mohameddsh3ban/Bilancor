@@ -17,8 +17,10 @@ import { lucideLoaderCircle } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
+import { formatMonthRange } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppTaxPeriodPipe } from '../core/format/tax-period.pipe';
+import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
 import { DialogCard } from '../core/layout/dialog-card';
 import type { SentVatReturn } from '../data/models';
@@ -127,6 +129,9 @@ const TITLE_KEY: Record<Step, string> = {
             <p class="text-muted-foreground text-sm" data-testid="send-via">
               {{ via[0] }}<app-term key="elster" />{{ via[1] }}
             </p>
+            <p class="text-muted-foreground text-sm" data-testid="send-closes">
+              {{ 'taxes.send.dialog.closes' | transloco: { months: closesMonths() } }}
+            </p>
 
             <hlm-dialog-footer>
               <button
@@ -208,6 +213,7 @@ const TITLE_KEY: Record<Step, string> = {
 })
 export class SendDialog {
   protected readonly tax = inject(TaxService);
+  private readonly language = inject(LanguageService);
   private readonly injector = inject(EnvironmentInjector);
 
   /** The return to check: the open business's current one. Only read at the check step; the other steps never look at it again. */
@@ -233,6 +239,11 @@ export class SendDialog {
   protected readonly titleKey = computed(() => TITLE_KEY[this.step()]);
 
   protected readonly result = computed(() => resultWording(this.view()));
+  /** The months of the period, which sending closes in Reports ("October", "July–September"). */
+  protected readonly closesMonths = computed(() => {
+    const { start, end } = this.view().period;
+    return formatMonthRange(start.slice(0, 7), end.slice(0, 7), this.language.lang());
+  });
   protected readonly termMark = TERM_MARK;
   protected readonly periodOf = sentPeriod;
 

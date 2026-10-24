@@ -160,6 +160,24 @@ describe('send dialog, opened from the VAT tab', () => {
     await expectClosed();
   });
 
+  it("says at the check step that sending closes the period's months, in each language", async () => {
+    await render();
+    await openDialog();
+    expect(text(q('send-closes'))).toBe(
+      "Sending also closes July–September: their payments can't be changed after that.",
+    );
+
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(text(q('send-closes'))).toBe(
+      'Mit dem Senden schließt du auch Juli–September ab: Die Zahlungen darin lassen sich danach nicht mehr ändern.',
+    );
+
+    TestBed.inject(LanguageService).setLang('ar');
+    await settle();
+    expect(text(q('send-closes'))).toContain('يوليو–سبتمبر');
+  });
+
   it('the dialog takes no place among the cards: its element is not displayed, and the dialog shows elsewhere', async () => {
     await render();
     const host = (fixture.nativeElement as HTMLElement).querySelector('app-send-dialog')!;

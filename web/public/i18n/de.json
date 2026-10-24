@@ -424,6 +424,7 @@
       },
       "dialog": {
         "via": "Deine Erklärung wird über {{term}} gesendet, den offiziellen Weg zum Finanzamt.",
+        "closes": "Mit dem Senden schließt du auch {{months}} ab: Die Zahlungen darin lassen sich danach nicht mehr ändern.",
         "cancel": "Abbrechen",
         "confirm": "Senden",
         "sending": "Deine Erklärung ist auf dem Weg zum Finanzamt.",
