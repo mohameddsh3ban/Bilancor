@@ -1776,6 +1776,19 @@
         "savings": "Savings",
         "card": "Credit card",
         "cash": "Cash box"
+      },
+      "imports": {
+        "title": "Imports",
+        "payment": {
+          "one": "payment",
+          "many": "payments"
+        },
+        "download": "Download the file",
+        "undo": "Undo import",
+        "blocked": {
+          "worked": "Can't be undone: some payments were worked on",
+          "closed": "Can't be undone: a month it touches is closed"
+        }
       }
     },
     "inbox": {

@@ -25,6 +25,7 @@ import {
   type ConnectionStatus,
 } from '../domain/bank-connection';
 import { DemoStateService } from '../state/demo-state.service';
+import { AccountImports } from './account-imports';
 import { BankApproval } from './bank-approval';
 import { BankTile } from './bank-tile';
 
@@ -83,13 +84,15 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
  * product, masked IBAN, last fetch, a status word and the button that goes with it. Renew and Sign in again open the
  * bank's (simulated) sign-in inside the row, one at a time; approving renews the connection and puts the cursor on the
  * row's new status, cancelling closes it and puts the cursor back there. Import statement opens the import of that
- * account (`/payments/import`, back to Settings). Before the bank step is done the page says so and offers **Connect your
+ * account (`/payments/import`, back to Settings). A row of an account that has imports ends with their list, with Download
+ * and Undo (see `AccountImports`). Before the bank step is done the page says so and offers **Connect your
  * bank**, with only the cash box listed.
  */
 @Component({
   selector: 'app-bank-accounts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AccountImports,
     AppDatePipe,
     BankApproval,
     BankTile,
@@ -248,6 +251,7 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
                     />
                   </div>
                 }
+                <app-account-imports [accountId]="row.account.id" />
               </li>
             }
           </ul>

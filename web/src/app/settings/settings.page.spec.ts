@@ -655,6 +655,52 @@ describe('SettingsPage', () => {
       await settle();
       expect(rowIds()).toEqual(['sy-qonto']);
     });
+
+    it('an account that has imports ends its row with their list, and the others show none', async () => {
+      demo.setBusiness('cafe-linde');
+      demo.recordImport({
+        id: 'imp-1',
+        accountId: 'cl-sparkasse',
+        statementId: 'cl-sparkasse-oktober',
+        fileName: 'sparkasse-oktober.csv',
+        importedOn: '2026-10-22',
+        paymentIds: ['a', 'b', 'c'],
+        skippedCount: 0,
+      });
+      await render();
+
+      const area = q('bank-row-cl-sparkasse')!.querySelector('app-account-imports');
+      expect(text(area?.querySelector('button'))).toBe('Imports (1)');
+      expect(q('bank-row-cl-qonto')!.querySelector('[data-testid^="imports-"]')).toBeNull();
+      expect(q('bank-row-cl-cash')!.querySelector('[data-testid^="imports-"]')).toBeNull();
+
+      await click('imports-toggle-cl-sparkasse');
+      expect(text(q('import-line-imp-1'))).toBe('22 Oct · sparkasse-oktober.csv · 3 payments');
+      expect(text(q('import-undo-imp-1'))).toBe('Undo import');
+    });
+
+    it('undoing an import in the row takes it out of the list', async () => {
+      demo.setBusiness('cafe-linde');
+      demo.recordImport({
+        id: 'imp-1',
+        accountId: 'cl-sparkasse',
+        statementId: 'cl-sparkasse-oktober',
+        fileName: 'sparkasse-oktober.csv',
+        importedOn: '2026-10-22',
+        paymentIds: ['a', 'b'],
+        skippedCount: 0,
+      });
+      await render();
+      await click('imports-toggle-cl-sparkasse');
+      await click('import-undo-imp-1');
+
+      expect(demo.business().imports).toEqual([]);
+      expect(q('imports-toggle-cl-sparkasse')).toBeNull();
+      expect(text(q('imports-status-cl-sparkasse'))).toBe(
+        'Import undone. 2 payments were taken out again.',
+      );
+      expect(q('bank-row-cl-sparkasse')).not.toBeNull();
+    });
   });
 
   describe('Renew and Sign in again', () => {

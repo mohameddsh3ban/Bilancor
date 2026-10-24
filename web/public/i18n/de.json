@@ -1776,6 +1776,19 @@
         "savings": "Sparkonto",
         "card": "Kreditkarte",
         "cash": "Kasse"
+      },
+      "imports": {
+        "title": "Importe",
+        "payment": {
+          "one": "Zahlung",
+          "many": "Zahlungen"
+        },
+        "download": "Datei herunterladen",
+        "undo": "Import rückgängig machen",
+        "blocked": {
+          "worked": "Lässt sich nicht rückgängig machen: Einige Zahlungen wurden schon bearbeitet",
+          "closed": "Lässt sich nicht rückgängig machen: Ein Monat, den der Import berührt, ist abgeschlossen"
+        }
       }
     },
     "inbox": {
