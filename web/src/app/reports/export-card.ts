@@ -185,7 +185,7 @@ type ExportFile = 'datev' | 'csv';
                   </p>
                   <p>
                     {{ 'reports.demo.noFile' | transloco }}
-                    <bdi dir="ltr" class="font-medium break-all" data-testid="export-file">{{
+                    <bdi dir="ltr" class="font-medium wrap-anywhere" data-testid="export-file">{{
                       name
                     }}</bdi>
                   </p>

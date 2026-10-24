@@ -540,6 +540,8 @@ describe('ReportsPage', () => {
       expect(text(q('audit-demo'))).toContain('Demo');
       expect(text(q('audit-file'))).toBe('weber-design_GDPdU_2026.zip');
       expect(q('audit-file')!.closest('bdi[dir="ltr"]')).not.toBeNull();
+      expect(q('audit-file')!.classList.contains('wrap-anywhere')).toBe(true);
+      expect(q('audit-file')!.classList.contains('break-all')).toBe(false);
     });
 
     it('names the file of the open business, and forgets the box when another business opens', async () => {

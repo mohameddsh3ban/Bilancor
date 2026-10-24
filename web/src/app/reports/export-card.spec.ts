@@ -249,6 +249,9 @@ describe('ExportCard', () => {
     expect(text(box)).toContain('No file is made in the demo. Its name would be');
     expect(text(q('export-file'))).toBe('weber-design_DATEV_2026-10.zip');
     expect(q('export-file')!.closest('bdi[dir="ltr"]')).not.toBeNull();
+    // The name wraps only where it must (never in the middle of "2026" while a better place is free).
+    expect(q('export-file')!.classList.contains('wrap-anywhere')).toBe(true);
+    expect(q('export-file')!.classList.contains('break-all')).toBe(false);
     expect(text(q('export-print'))).toBe('Print summary');
     expect(q('export-print')!.getAttribute('href')).toBe('/print/export/2026-10');
 

@@ -55,7 +55,7 @@ import { DemoStateService } from '../state/demo-state.service';
               </p>
               <p>
                 {{ 'reports.demo.noFile' | transloco }}
-                <bdi dir="ltr" class="font-medium break-all" data-testid="audit-file">{{
+                <bdi dir="ltr" class="font-medium wrap-anywhere" data-testid="audit-file">{{
                   fileName()
                 }}</bdi>
               </p>
