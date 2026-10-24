@@ -51,6 +51,7 @@ describe('the routes', () => {
       '/print/month',
       '/print/vat-return/2026-09-01',
       '/print/invoice/wd-i1',
+      '/print/export/2026-10',
     ];
     for (const url of pages) {
       await harness.navigateByUrl(url);

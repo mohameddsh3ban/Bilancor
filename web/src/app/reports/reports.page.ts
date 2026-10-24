@@ -7,12 +7,14 @@ import { pluralKey } from '../core/i18n/plural-key';
 import { needsYouCount } from '../domain/payment-status';
 import { DemoStateService } from '../state/demo-state.service';
 import { AuditCard } from './audit-card';
+import { ExportCard } from './export-card';
 import { MonthTable } from './month-table';
 
 /**
- * Reports (`/reports`): the year month by month, closing a finished month, and the audit export. Until the tax details are
- * saved there are no figures to work out (whether the business charges VAT decides them), so the page only points at them,
- * as Taxes does; once they are saved but no bank is connected yet, it asks for the bank, as Payments does.
+ * Reports (`/reports`): the year month by month, closing a finished month, the export for the tax advisor and the audit
+ * export. Until the tax details are saved there are no figures to work out (whether the business charges VAT decides
+ * them), so the page only points at them, as Taxes does; once they are saved but no bank is connected yet, it asks for
+ * the bank, as Payments does.
  *
  * Above the cards, one line counts the payments that still need the person: they are not in the figures or in an export
  * yet. Phone: one column, in that order; computer: the months on one side, the exports on the other.
@@ -20,7 +22,15 @@ import { MonthTable } from './month-table';
 @Component({
   selector: 'app-reports-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AuditCard, HlmButton, HlmCardImports, MonthTable, RouterLink, TranslocoPipe],
+  imports: [
+    AuditCard,
+    ExportCard,
+    HlmButton,
+    HlmCardImports,
+    MonthTable,
+    RouterLink,
+    TranslocoPipe,
+  ],
   host: { class: 'flex flex-col gap-4' },
   template: `
     <h1 class="text-2xl font-semibold">{{ 'reports.title' | transloco }}</h1>
@@ -74,6 +84,7 @@ import { MonthTable } from './month-table';
           <app-month-table />
         </div>
         <div class="flex min-w-0 flex-col gap-4">
+          <app-export-card />
           <app-audit-card />
         </div>
       </div>

@@ -532,6 +532,53 @@
       "confirm": "Close {{month}}",
       "notYet": "Not yet"
     },
+    "export": {
+      "title": "Export for your tax advisor",
+      "body": "Your bookings and receipts in the format tax advisors read (DATEV), or as a spreadsheet.",
+      "period": "Period",
+      "kind": {
+        "month": "Month",
+        "quarter": "Quarter",
+        "year": "Year"
+      },
+      "pick": {
+        "month": "Choose a month",
+        "quarter": "Choose a quarter",
+        "year": "Choose a year"
+      },
+      "bookings": {
+        "one": "1 booking",
+        "many": "{{count}} bookings"
+      },
+      "receipts": {
+        "one": "1 receipt",
+        "many": "{{count}} receipts"
+      },
+      "counts": "{{period}}: {{bookings}}, {{receipts}}",
+      "state": {
+        "closed": "Closed",
+        "notClosed": "Not closed",
+        "running": "Running",
+        "partly": "Partly closed"
+      },
+      "nothing": "Nothing to export yet",
+      "choice": {
+        "open": {
+          "one": "Export it marked as open",
+          "many": "Export with them marked as open"
+        },
+        "fix": {
+          "one": "Fix it first",
+          "many": "Fix them first"
+        }
+      },
+      "fixOff": "Downloads are off while you fix them first.",
+      "datev": "Download DATEV (ZIP)",
+      "csv": "Spreadsheet (CSV)",
+      "print": "Print summary",
+      "advisor": "Your tax advisor {{name}} can download it too, with their own login.",
+      "invite": "Invite your tax advisor in {{link}}"
+    },
     "audit": {
       "title": "For a tax audit",
       "body": "If the tax office audits you, it may ask for your books in a set format. Ask your tax advisor first: usually their export is enough.",
@@ -1214,7 +1261,20 @@
   "print": {
     "back": "Back",
     "nothing": "Nothing to print here.",
-    "account": "Account: {{name}}"
+    "account": "Account: {{name}}",
+    "export": {
+      "caption": "The bookings of this export",
+      "col": {
+        "account": "Account (SKR03)",
+        "receipt": "Receipt"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "booked": "Booked",
+      "open": "Open",
+      "openNote": "Open means the payment still needs a decision from the client: it is in this export, and its booking can change.",
+      "unknown": "This isn't a period you can export, so there is nothing to print."
+    }
   },
   "home": {
     "notices": {

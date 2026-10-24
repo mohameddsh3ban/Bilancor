@@ -101,10 +101,11 @@ describe('ReportsPage', () => {
   const edit = (id: string, change: (tx: Transaction) => Transaction) =>
     demo.updateTransaction(id, change);
 
-  it('has a title, and shows the month table and the audit card once the tax details and the bank are done', async () => {
+  it('has a title, and shows the month table, the export and the audit card once the tax details and the bank are done', async () => {
     await render('weber-design');
     expect(text(el.querySelector('h1'))).toBe('Reports');
     expect(q('month-table')).not.toBeNull();
+    expect(q('export-card')).not.toBeNull();
     expect(q('audit-card')).not.toBeNull();
     expect(q('reports-missing')).toBeNull();
     expect(q('reports-connect')).toBeNull();
@@ -119,6 +120,7 @@ describe('ReportsPage', () => {
     );
     expect(q('reports-missing-link')!.getAttribute('href')).toBe('/settings/tax');
     expect(q('month-table')).toBeNull();
+    expect(q('export-card')).toBeNull();
     expect(q('audit-card')).toBeNull();
     expect(q('reports-needs')).toBeNull();
     expect(q('reports-connect')).toBeNull();
@@ -141,6 +143,7 @@ describe('ReportsPage', () => {
     expect(q('reports-connect-link')!.getAttribute('href')).toBe('/settings/bank/connect');
     expect(text(q('reports-connect-link'))).toBe('Connect your bank');
     expect(q('month-table')).toBeNull();
+    expect(q('export-card')).toBeNull();
     expect(q('audit-card')).toBeNull();
 
     demo.completeStep('bank');

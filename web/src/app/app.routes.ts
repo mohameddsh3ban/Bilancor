@@ -140,6 +140,11 @@ export const routes: Routes = [
     loadComponent: () => import('./print/vat-receipt.page').then((m) => m.VatReceiptPage),
   },
   {
+    path: 'print/export/:period',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./print/export-summary.page').then((m) => m.ExportSummaryPage),
+  },
+  {
     path: 'print/invoice/:id',
     canActivate: [signedInGuard],
     loadComponent: () => import('./print/invoice-print.page').then((m) => m.InvoicePrintPage),

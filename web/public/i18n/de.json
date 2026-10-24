@@ -532,6 +532,53 @@
       "confirm": "{{month}} abschließen",
       "notYet": "Noch nicht"
     },
+    "export": {
+      "title": "Export für deine Steuerberater:in",
+      "body": "Deine Buchungen und Belege in dem Format, das Steuerberater:innen lesen (DATEV), oder als Tabelle.",
+      "period": "Zeitraum",
+      "kind": {
+        "month": "Monat",
+        "quarter": "Quartal",
+        "year": "Jahr"
+      },
+      "pick": {
+        "month": "Monat wählen",
+        "quarter": "Quartal wählen",
+        "year": "Jahr wählen"
+      },
+      "bookings": {
+        "one": "1 Buchung",
+        "many": "{{count}} Buchungen"
+      },
+      "receipts": {
+        "one": "1 Beleg",
+        "many": "{{count}} Belege"
+      },
+      "counts": "{{period}}: {{bookings}}, {{receipts}}",
+      "state": {
+        "closed": "Abgeschlossen",
+        "notClosed": "Nicht abgeschlossen",
+        "running": "Läuft",
+        "partly": "Teilweise abgeschlossen"
+      },
+      "nothing": "Noch nichts zu exportieren",
+      "choice": {
+        "open": {
+          "one": "Mit Markierung als offen exportieren",
+          "many": "Mit Markierung als offen exportieren"
+        },
+        "fix": {
+          "one": "Zuerst erledigen",
+          "many": "Zuerst erledigen"
+        }
+      },
+      "fixOff": "Die Downloads sind aus, solange du die Zahlungen zuerst erledigst.",
+      "datev": "DATEV (ZIP) herunterladen",
+      "csv": "Tabelle (CSV)",
+      "print": "Zusammenfassung drucken",
+      "advisor": "Deine Steuerberater:in {{name}} kann den Export auch herunterladen, mit eigenem Login.",
+      "invite": "Lade deine Steuerberater:in unter {{link}} ein"
+    },
     "audit": {
       "title": "Für eine Betriebsprüfung",
       "body": "Wenn das Finanzamt dich prüft, kann es deine Bücher in einem festen Format verlangen. Frag zuerst deine Steuerberater:in: Meist reicht deren Export.",
@@ -1214,7 +1261,20 @@
   "print": {
     "back": "Zurück",
     "nothing": "Hier gibt es nichts zu drucken.",
-    "account": "Konto: {{name}}"
+    "account": "Konto: {{name}}",
+    "export": {
+      "caption": "Die Buchungen dieses Exports",
+      "col": {
+        "account": "Konto (SKR03)",
+        "receipt": "Beleg"
+      },
+      "yes": "Ja",
+      "no": "Nein",
+      "booked": "Gebucht",
+      "open": "Offen",
+      "openNote": "Offen heißt: Die Zahlung braucht noch eine Entscheidung der Mandant:in. Sie steckt in diesem Export, ihre Buchung kann sich noch ändern.",
+      "unknown": "Das ist kein Zeitraum, den du exportieren kannst, deshalb gibt es nichts zu drucken."
+    }
   },
   "home": {
     "notices": {
