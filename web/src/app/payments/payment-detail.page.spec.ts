@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { formatDate, formatMoney } from '../core/format/format';
+import { formatDate, formatMoney, formatMonthRange } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { FOUND_ACCOUNTS } from '../data/banks';
@@ -800,6 +800,133 @@ describe('PaymentDetailPage', () => {
       await render('/payments/wd-t3');
       expect(d('download-pdf')!.getAttribute('href')).toBe('/print/payment/wd-t3');
       expect(text(d('download-pdf'))).toBe('Download PDF');
+    });
+  });
+
+  describe('a payment in a closed month', () => {
+    /** Everything a payment can be changed with: nothing of it is there once its month is closed. */
+    const ACTIONS = [
+      'change-category',
+      'confirm-booking',
+      'no-receipt-needed',
+      'take-photo',
+      'pick-document',
+      'self-receipt',
+      'kind-business',
+      'kind-private',
+      'private-blocked',
+    ];
+    const noActions = () => {
+      for (const id of ACTIONS) expect(d(id), id).toBeNull();
+    };
+    const note = (month: string) => `${month} is closed, so this payment can't be changed.`;
+
+    it('a September payment at Weber Design has no actions and says September is closed', async () => {
+      await render('/payments/wd-t10');
+      noActions();
+      expect(text(d('closed-note'))).toBe(note('September'));
+      expect(d('closed-note')!.querySelector('bdi')!.textContent).toBe('September');
+      // It keeps everything it shows.
+      expect(text(d('detail-counterparty'))).toBe('Telekom');
+      expect(text(d('detail-amount'))).toBe(formatMoney(-3995, 'en', { signed: true }));
+      expect(text(d('detail-meta'))).toBe(`${formatDate('2026-09-22', 'en')} · Qonto`);
+      expect(status()).toBe('Booked');
+      expect(text(d('receipt-state'))).not.toBe('');
+      expect(text(d('booking-label'))).toBe('Phone & internet · 4920 Telefon');
+      expect(text(d('booking-vat'))).toBe('19%');
+      expect(text(d('bank-iban'))).toBe('DE12 3705 0198 0012 3456 01');
+      expect(text(d('bank-reference'))).toBe('Rechnung 8841 0689, Mobilfunk September');
+      expect(historyTexts().length).toBeGreaterThan(0);
+      expect(d('download-pdf')).not.toBeNull();
+    });
+
+    it('a payment in a closed month that lacks its receipt says so, with no way to add one', async () => {
+      demo.updateTransaction('wd-t14', (tx) => ({
+        ...tx,
+        receipt: 'missing',
+        receiptFile: null,
+        confirmed: false,
+      }));
+      await render('/payments/wd-t14');
+      expect(text(d('closed-note'))).toBe(note('August'));
+      expect(text(d('receipt-state'))).toBe('Receipt missing');
+      expect(text(d('receipt-section'))).not.toContain(en.payments.detail.receipt.missingHint);
+      noActions();
+    });
+
+    it('a private payment loses its Business / Private switch with its month, and says what it is', async () => {
+      demo.updateTransaction('wd-t15', (tx) => ({ ...tx, date: '2026-10-14' }));
+      await render('/payments/wd-t15');
+      expect(d('kind-private')).not.toBeNull();
+      expect(d('closed-note')).toBeNull();
+      demo.updateTransaction('wd-t15', (tx) => ({ ...tx, date: '2026-08-14' }));
+      await settle();
+      noActions();
+      expect(text(d('closed-note'))).toBe(note('August'));
+      expect(text(d('booking-label'))).toBe('Private withdrawal · 1800 Privatentnahmen allgemein');
+    });
+
+    it('a payment of an invoice keeps its links to the invoice and to the document', async () => {
+      // Müller's payment of 26 Sep pays an invoice written in Invoices: both links only open a page.
+      await render('/payments/wd-t9');
+      noActions();
+      expect(d('pays-invoice')).not.toBeNull();
+      expect(d('open-document')).not.toBeNull();
+    });
+
+    it('an October payment still has its actions', async () => {
+      await render('/payments/wd-t3');
+      expect(d('closed-note')).toBeNull();
+      for (const id of ACTIONS.filter(
+        (id) => !['confirm-booking', 'private-blocked'].includes(id),
+      )) {
+        expect(d(id), id).not.toBeNull();
+      }
+      await harness.navigateByUrl('/payments/wd-t1');
+      await settle();
+      expect(d('closed-note')).toBeNull();
+      expect(d('confirm-booking')).not.toBeNull();
+    });
+
+    it('closing September at Sara Weber Yoga takes the actions off its payments', async () => {
+      demo.setBusiness('sara-yoga');
+      await render('/payments/sy-t10');
+      expect(d('closed-note')).toBeNull();
+      expect(d('change-category')).not.toBeNull();
+      expect(d('private-blocked')).not.toBeNull(); // its receipt is a document, so it can't be marked private
+      expect(demo.closeMonth('2026-09')).toBe(true);
+      await settle();
+      noActions();
+      expect(text(d('closed-note'))).toBe(note('September'));
+      expect(text(d('detail-counterparty'))).toBe('Raumhaus Berlin');
+      // October stays open.
+      await harness.navigateByUrl('/payments/sy-t2');
+      await settle();
+      expect(d('closed-note')).toBeNull();
+      expect(d('confirm-booking')).not.toBeNull();
+    });
+
+    it('a payment dated in the earlier months is closed too', async () => {
+      demo.updateTransaction('wd-t14', (tx) => ({ ...tx, date: '2026-07-10' }));
+      await render('/payments/wd-t14');
+      expect(text(d('closed-note'))).toBe(note('July'));
+      noActions();
+    });
+
+    it('names the month in the language of the page, set apart from the sentence around it', async () => {
+      await render('/payments/wd-t10');
+      const lang = TestBed.inject(LanguageService);
+      lang.setLang('de');
+      await settle();
+      expect(text(d('closed-note'))).toBe(
+        de.payments.closedNote.replace('{{month}}', formatMonthRange('2026-09', '2026-09', 'de')),
+      );
+      expect(text(d('closed-note'))).toContain('September');
+      lang.setLang('ar');
+      await settle();
+      const arabic = formatMonthRange('2026-09', '2026-09', 'ar');
+      expect(text(d('closed-note'))).toBe(ar.payments.closedNote.replace('{{month}}', arabic));
+      expect(d('closed-note')!.querySelector('bdi')!.textContent).toBe(arabic);
     });
   });
 

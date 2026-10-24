@@ -742,6 +742,8 @@
     "download": "تنزيل الشهر",
     "monthIn": "الوارد",
     "monthOut": "الصادر",
+    "closed": "مغلق",
+    "closedNote": "تم إغلاق {{month}}، لذا لا يمكن تغيير هذه الدفعة.",
     "empty": {
       "noMatch": "لا توجد مدفوعات مطابقة",
       "allClear": {

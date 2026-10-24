@@ -742,6 +742,8 @@
     "download": "Download month",
     "monthIn": "In",
     "monthOut": "Out",
+    "closed": "Closed",
+    "closedNote": "{{month}} is closed, so this payment can't be changed.",
     "empty": {
       "noMatch": "No payments match",
       "allClear": {

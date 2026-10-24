@@ -742,6 +742,8 @@
     "download": "Monat herunterladen",
     "monthIn": "Eingang",
     "monthOut": "Ausgang",
+    "closed": "Abgeschlossen",
+    "closedNote": "{{month}} ist abgeschlossen, deshalb kann diese Zahlung nicht mehr geändert werden.",
     "empty": {
       "noMatch": "Keine Zahlung passt",
       "allClear": {

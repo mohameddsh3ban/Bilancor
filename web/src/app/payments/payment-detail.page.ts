@@ -9,13 +9,19 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideDownload, lucideFileText, lucideX } from '@ng-icons/lucide';
+import {
+  lucideArrowLeft,
+  lucideDownload,
+  lucideFileText,
+  lucideLock,
+  lucideX,
+} from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmTooltip } from '@spartan-ng/helm/tooltip';
 import { map } from 'rxjs';
 import { AppDatePipe } from '../core/format/date.pipe';
-import { formatIban } from '../core/format/format';
+import { formatIban, formatMonthRange } from '../core/format/format';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
@@ -28,6 +34,7 @@ import {
   setPrivate,
 } from '../domain/payment-actions';
 import { invoiceOfPayment } from '../domain/invoices';
+import { isClosedDate } from '../domain/months';
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
 import { DemoStateService } from '../state/demo-state.service';
@@ -46,6 +53,8 @@ import { PaymentStatusChip } from './payment-status-chip';
  * the receipt pays the invoice (see `DemoStateService.link`). A payment that pays an invoice stays business, and says why;
  * a payment that another document links to can't be marked private either (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
  * the list.
+ * A payment dated in a closed month (see `isClosedDate`) keeps everything it shows and offers none of these actions;
+ * it says why instead.
  * When the payment is not there (another business opened, an unknown id, no bank yet) it goes back to the list.
  */
 @Component({
@@ -66,7 +75,9 @@ import { PaymentStatusChip } from './payment-status-chip';
     Term,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideDownload, lucideFileText, lucideX })],
+  viewProviders: [
+    provideIcons({ lucideArrowLeft, lucideDownload, lucideFileText, lucideLock, lucideX }),
+  ],
   host: { class: 'flex flex-col gap-3' },
   template: `
     @if (payment(); as tx) {
@@ -127,6 +138,20 @@ import { PaymentStatusChip } from './payment-status-chip';
               {{ 'payments.detail.paysInvoice' | transloco: { number: isolate(invoice.number ?? '') } }}
             </a>
           }
+          @if (closed()) {
+            @let closedNote =
+              ('payments.closedNote' | transloco: { month: monthMark }).split(monthMark);
+            <p
+              class="bg-muted/50 text-muted-foreground mt-1 flex items-start gap-2 rounded-md p-3 text-sm"
+              data-testid="closed-note"
+            >
+              <ng-icon name="lucideLock" size="16" class="mt-0.5 shrink-0" aria-hidden="true" />
+              <span
+                >{{ closedNote[0] }}<bdi>{{ monthName() }}</bdi
+                >{{ closedNote[1] }}</span
+              >
+            </p>
+          }
         </header>
 
         <section class="flex flex-col gap-3" data-testid="receipt-section">
@@ -169,7 +194,7 @@ import { PaymentStatusChip } from './payment-status-chip';
               <p class="text-negative text-sm font-medium" data-testid="receipt-state">
                 {{ 'payments.detail.receipt.missing' | transloco }}
               </p>
-              @if (!tx.isPrivate) {
+              @if (!tx.isPrivate && !closed()) {
                 <p class="text-muted-foreground text-sm">
                   {{ 'payments.detail.receipt.missingHint' | transloco }}
                 </p>
@@ -258,64 +283,66 @@ import { PaymentStatusChip } from './payment-status-chip';
             </div>
           </dl>
 
-          <div class="flex flex-wrap items-center gap-2">
-            @if (!tx.isPrivate) {
-              <app-category-picker [current]="tx.booking" (picked)="pick($event)" />
-            }
-            @if (status === 'confirm') {
-              <button
-                hlmBtn
-                size="lg"
-                type="button"
-                data-testid="confirm-booking"
-                (click)="confirm()"
-              >
-                {{ 'payments.detail.booking.confirm' | transloco }}
-              </button>
-            }
-          </div>
-
-          @if (paidInvoice()) {
-            <p class="text-muted-foreground text-sm" data-testid="private-blocked">
-              {{ 'payments.detail.booking.privateBlockedInvoice' | transloco }}
-            </p>
-          } @else if (linkedDoc()) {
-            <p class="text-muted-foreground text-sm" data-testid="private-blocked">
-              {{ 'payments.detail.booking.privateBlocked' | transloco }}
-            </p>
-          } @else {
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="text-muted-foreground text-sm">
-                {{ 'payments.detail.booking.kind' | transloco }}
-              </span>
-              <div
-                role="group"
-                class="border-border bg-card flex overflow-hidden rounded-md border text-sm"
-                [attr.aria-label]="'payments.detail.booking.kind' | transloco"
-              >
-                @for (isPrivate of [false, true]; track isPrivate) {
-                  <button
-                    type="button"
-                    class="border-border min-h-10 border-s px-4 py-2 first:border-s-0"
-                    [class]="
-                      tx.isPrivate === isPrivate
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-muted'
-                    "
-                    [attr.data-testid]="isPrivate ? 'kind-private' : 'kind-business'"
-                    [attr.aria-pressed]="tx.isPrivate === isPrivate"
-                    (click)="markPrivate(isPrivate)"
-                  >
-                    {{
-                      (isPrivate
-                        ? 'payments.detail.booking.private'
-                        : 'payments.detail.booking.business'
-                      ) | transloco
-                    }}
-                  </button>
-                }
-              </div>
+          @if (!closed()) {
+            <div class="flex flex-wrap items-center gap-2">
+              @if (!tx.isPrivate) {
+                <app-category-picker [current]="tx.booking" (picked)="pick($event)" />
+              }
+              @if (status === 'confirm') {
+                <button
+                  hlmBtn
+                  size="lg"
+                  type="button"
+                  data-testid="confirm-booking"
+                  (click)="confirm()"
+                >
+                  {{ 'payments.detail.booking.confirm' | transloco }}
+                </button>
+              }
             </div>
+
+            @if (paidInvoice()) {
+              <p class="text-muted-foreground text-sm" data-testid="private-blocked">
+                {{ 'payments.detail.booking.privateBlockedInvoice' | transloco }}
+              </p>
+            } @else if (linkedDoc()) {
+              <p class="text-muted-foreground text-sm" data-testid="private-blocked">
+                {{ 'payments.detail.booking.privateBlocked' | transloco }}
+              </p>
+            } @else {
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-muted-foreground text-sm">
+                  {{ 'payments.detail.booking.kind' | transloco }}
+                </span>
+                <div
+                  role="group"
+                  class="border-border bg-card flex overflow-hidden rounded-md border text-sm"
+                  [attr.aria-label]="'payments.detail.booking.kind' | transloco"
+                >
+                  @for (isPrivate of [false, true]; track isPrivate) {
+                    <button
+                      type="button"
+                      class="border-border min-h-10 border-s px-4 py-2 first:border-s-0"
+                      [class]="
+                        tx.isPrivate === isPrivate
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-foreground hover:bg-muted'
+                      "
+                      [attr.data-testid]="isPrivate ? 'kind-private' : 'kind-business'"
+                      [attr.aria-pressed]="tx.isPrivate === isPrivate"
+                      (click)="markPrivate(isPrivate)"
+                    >
+                      {{
+                        (isPrivate
+                          ? 'payments.detail.booking.private'
+                          : 'payments.detail.booking.business'
+                        ) | transloco
+                      }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
           }
         </section>
 
@@ -411,6 +438,19 @@ export class PaymentDetailPage {
     const id = this.payment()?.id;
     return id !== undefined && this.upload.readingFor() === id;
   });
+
+  /** Whether the open payment is dated in a closed month: it keeps what it shows and loses its actions. */
+  protected readonly closed = computed(() => {
+    const tx = this.payment();
+    return tx !== null && isClosedDate(this.demo.business(), tx.date);
+  });
+  /** The month of the open payment by name in the language of the page ("September"), for the line about it being closed. */
+  protected readonly monthName = computed(() => {
+    const month = this.payment()?.date.slice(0, 7) ?? '';
+    return month ? formatMonthRange(month, month, this.language.lang()) : '';
+  });
+  /** Stands where the month goes in the translated line, so the month can sit in a `<bdi>` of its own. */
+  protected readonly monthMark = '\u0001';
 
   protected readonly paymentStatus = paymentStatus;
   protected readonly formatIban = formatIban;
