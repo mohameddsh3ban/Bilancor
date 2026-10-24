@@ -421,7 +421,9 @@ export class DemoStateService {
    * the invoice's revenue booking, and so does one booked with another VAT rate than the invoice, with a line that says so;
    * whether the booking is confirmed stays as it was) and says "Pays invoice …". The invoice says it was paid in full or in part, on the day
    * the money came in, and keeps the id of the payment in that line (`params.paymentId`), so the line can lead to it. Only the payment that completes the invoice is linked to its document, so Documents shows it as
-   * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically".
+   * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically". An automatic match
+   * also marks the payment's own lines (`paysInvoice`, `bookedByInvoice`) with the param `auto: 'true'`, so what the system did
+   * on its own can be told from the person confirming the match (a statement import's undo relies on it).
    *
    * Ignored for an unknown invoice or payment, money going out, an invoice that is a draft, paid or cancelled, and a payment
    * that pays an invoice or has a document already, so a repeated call does nothing.
@@ -443,6 +445,7 @@ export class DemoStateService {
       // reverse-charge or not-taxable invoice) is booked as the invoice says, or the VAT return would count VAT that was never charged.
       const invoiceBooking = revenueBookingFor(invoice, business.taxProfile);
       const rebooked = tx.booking !== null && tx.booking.vatRate !== invoiceBooking.vatRate;
+      const byUs: Record<string, string> = auto ? { auto: 'true' } : {};
       const linkedTx: Transaction = {
         ...tx,
         receipt: 'attached',
@@ -450,8 +453,8 @@ export class DemoStateService {
         booking: unbooked || rebooked ? invoiceBooking : tx.booking,
         confirmed: unbooked || tx.confirmed,
         history: [
-          ...(rebooked ? [{ date: DEMO_TODAY, key: 'bookedByInvoice' as const, params: { category: invoiceBooking.labelKey } }] : []),
-          { date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '' } },
+          ...(rebooked ? [{ date: DEMO_TODAY, key: 'bookedByInvoice' as const, params: { category: invoiceBooking.labelKey, ...byUs } }] : []),
+          { date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '', ...byUs } },
           ...tx.history,
         ],
       };

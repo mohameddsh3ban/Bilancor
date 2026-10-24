@@ -55,8 +55,8 @@ export type HistoryKey =
   | 'invoiceCancellation' // params: number (of the invoice it cancels)
   | 'invoiceDuplicated' // params: number (of the invoice it was copied from)
   | 'paidInCash'
-  | 'paysInvoice' // on a payment; params: number
-  | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category
+  | 'paysInvoice' // on a payment; params: number, and auto ('true') when the system matched it on its own
+  | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category, and auto ('true') as above
   // On a business; `by` is the full name of who did it, `role` a Role id (shown with its "roles.<role>.name" word) and `until` an ISO date
   | 'personInvited' // params: email, role, by
   | 'invitationCancelled' // params: email, by

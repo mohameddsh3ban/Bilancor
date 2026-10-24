@@ -1,6 +1,6 @@
 import { CATEGORIES } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Business, ColumnMapping, ColumnRole, HistoryEntry, HistoryKey, SampleStatement, StatementImport, Transaction } from '../data/models';
+import type { Business, ColumnMapping, ColumnRole, HistoryEntry, SampleStatement, StatementImport, Transaction } from '../data/models';
 import { parseDocAmount } from './amount-input';
 import { applyRuleToUnclear, counterpartyKey } from './category-rules';
 
@@ -252,23 +252,29 @@ export function importTransactions(
 
 // --- undo ---
 
-/** The lines that automatic matching adds to an imported payment: a receipt or an invoice linked on its own. Undoing the import takes those links back. */
-const AUTOMATIC_LINES: ReadonlySet<HistoryKey> = new Set(['receiptLinkedAuto', 'paysInvoice', 'bookedByInvoice']);
+/**
+ * Whether a line in front of the import's own lines is automatic matching, not the person's work: a receipt linked on its own
+ * (`receiptLinkedAuto`), or an invoice matched on its own, which marks the payment's `paysInvoice` and `bookedByInvoice` lines with
+ * the param `auto: 'true'` (see `DemoStateService.linkInvoicePayment`). The person confirming an invoice match writes the same lines
+ * without it. Undoing the import takes the automatic links back.
+ */
+const isAutomatic = (line: HistoryEntry): boolean =>
+  line.key === 'receiptLinkedAuto' || ((line.key === 'paysInvoice' || line.key === 'bookedByInvoice') && line.params['auto'] === 'true');
 
 /**
  * Whether anything happened to an imported payment after the import built it. `importTransactions` writes `imported` as the last
  * line and, above it, `autoBooked` or `bookedByRule` for a booked payment; every action since added a line in front of those, so
- * a line in front that automatic matching does not write is the person's work (answered, confirmed, recategorised, made private,
- * linked by hand, and so on).
- * Two things cannot be told apart by the lines: a rule booking an unclear payment later looks like the rule line the import wrote,
- * and `paysInvoice` is written the same when the person confirms an invoice by hand. Neither blocks undo; the first always goes with
- * the person's own answer to another payment of that counterparty, and undoing frees the invoice again either way.
+ * a line in front that automatic matching does not write (see `isAutomatic`) is the person's work (answered, confirmed,
+ * recategorised, made private, linked or matched to an invoice by hand, and so on).
+ * One thing cannot be told apart by the lines: a rule booking an unclear payment later looks like the rule line the import wrote.
+ * It does not block undo; the rule always goes with the person's own answer to another payment of that counterparty, and that
+ * blocks it when it is in this import.
  */
 function workedOn(tx: Transaction): boolean {
   const { history } = tx;
   const above = history.at(-2)?.key; // what sits above `imported`
   const importLines = history.at(-1)?.key !== 'imported' ? 0 : above === 'autoBooked' || above === 'bookedByRule' ? 2 : 1;
-  return history.slice(0, history.length - importLines).some((line) => !AUTOMATIC_LINES.has(line.key));
+  return history.slice(0, history.length - importLines).some((line) => !isAutomatic(line));
 }
 
 /**

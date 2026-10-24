@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { OFFICE, REVENUE_19, REVENUE_7, REVENUE_EU_RC, SOFTWARE, TRAVEL } from '../data/categories';
 import { BANKS, FOUND_ACCOUNTS, foundAccountsOf } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Account, Booking, Doc, Invoice, SentVatReturn, TaxProfile, Transaction } from '../data/models';
+import type { Account, Booking, Doc, Invoice, SentVatReturn, StatementImport, TaxProfile, Transaction } from '../data/models';
 import type { NewBusinessInput, NewOwner } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { PERSON } from '../data/sample-person';
@@ -13,6 +13,7 @@ import { invoiceStatus, leftCents } from '../domain/invoices';
 import { changeCategory, confirmBooking, markNoReceiptNeeded, setPrivate } from '../domain/payment-actions';
 import { needsYouCount, paymentStatus } from '../domain/payment-status';
 import { reviewItems } from '../domain/review-queue';
+import { undoBlockedBy } from '../domain/statement-import';
 import { yearSummary } from '../domain/tax-year';
 import { currentVatReturn, periodFor, vatReturnFor } from '../domain/vat-return';
 import { AccountService } from './account.service';
@@ -1298,6 +1299,43 @@ describe('DemoStateService', () => {
       expect(docStatus(doc(state, 'wd-d2'))).toBe('done');
     });
 
+    it("an automatic linkInvoicePayment marks the payment's line auto: 'true'; the person's own (auto false) writes it without", () => {
+      const state = TestBed.inject(DemoStateService);
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', true);
+
+      expect(payment(state, 'wd-t19').history[0]).toEqual({ date: DEMO_TODAY, key: 'paysInvoice', params: { number: 'RE-2026-044', auto: 'true' } });
+      expect(doc(state, 'wd-d2').history[0].key).toBe('linkedAuto');
+
+      state.resetData();
+      state.linkInvoicePayment('inv-wd-044', 'wd-t19', false);
+      expect(payment(state, 'wd-t19').history[0].params).toEqual({ number: 'RE-2026-044' });
+    });
+
+    it("a statement import's undo is blocked by an invoice match the person confirmed, and not by one made automatically", () => {
+      const record = (paymentId: string): StatementImport => ({
+        id: 'imp-1',
+        accountId: 'wd-qonto',
+        statementId: 'st-1',
+        fileName: 'konto.csv',
+        importedOn: DEMO_TODAY,
+        paymentIds: [paymentId],
+        skippedCount: 0,
+      });
+      const notClosed = (_month: string): boolean => false;
+
+      const state = TestBed.inject(DemoStateService);
+      state.addTransaction(incoming('wd-t90', 119000));
+      expect(undoBlockedBy(state.business(), record('wd-t90'), notClosed)).toBeNull();
+
+      state.linkInvoicePayment('inv-wd-044', 'wd-t90', true);
+      expect(undoBlockedBy(state.business(), record('wd-t90'), notClosed)).toBeNull();
+
+      state.resetData();
+      state.addTransaction(incoming('wd-t90', 119000));
+      state.linkInvoicePayment('inv-wd-044', 'wd-t90', false);
+      expect(undoBlockedBy(state.business(), record('wd-t90'), notClosed)).toBe('worked');
+    });
+
     describe('the booking of a payment that pays an invoice follows the invoice', () => {
       /** The invoice of Studio Kern (2,000.00 net) as a sale to a business in France: no German VAT, reverse charge. */
       function sendReverseCharge(state: DemoStateService): void {
@@ -1335,6 +1373,20 @@ describe('DemoStateService', () => {
         expect(after.chargedCents).toBe(baseline.chargedCents);
         expect(after.salesCount).toBe(baseline.salesCount);
         expect(after.needsYouCount).toBe(baseline.needsYouCount);
+      });
+
+      it("an automatic match of that payment marks both of its invoice lines auto: 'true'", () => {
+        const state = TestBed.inject(DemoStateService);
+        sendReverseCharge(state);
+        state.addTransaction(incoming('wd-t90', 200000));
+
+        state.linkInvoicePayment('inv-wd-044', 'wd-t90', true);
+
+        expect(payment(state, 'wd-t90').history.slice(0, 3).map((h) => [h.key, h.params])).toEqual([
+          ['bookedByInvoice', { category: REVENUE_EU_RC.labelKey, auto: 'true' }],
+          ['paysInvoice', { number: 'RE-2026-044', auto: 'true' }],
+          ['autoBooked', { category: REVENUE_19.labelKey }],
+        ]);
       });
 
       it('a payment booked at 19 % that pays a 7 % invoice is booked at 7 %', () => {

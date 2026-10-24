@@ -509,7 +509,7 @@ describe('undoBlockedBy and canUndoImport', () => {
     expect(undoBlockedBy(business({ transactions: built }), imp(built.map((t) => t.id)), NOTHING_CLOSED)).toBeNull();
   });
 
-  it("an automatic match of a receipt or an invoice is not work: undo takes those links back", () => {
+  it('an automatic match of a receipt or an invoice is not work: undo takes those links back', () => {
     const { b, record } = imported();
     const matched = change(change(b, record.paymentIds[0], (tx) => ({
       ...tx,
@@ -518,12 +518,50 @@ describe('undoBlockedBy and canUndoImport', () => {
     })), record.paymentIds[1], (tx) => ({
       ...tx,
       history: [
-        { date: '2026-10-22', key: 'bookedByInvoice', params: { category: 'revenue7' } },
-        { date: '2026-10-22', key: 'paysInvoice', params: { number: 'RE-2026-004' } },
+        { date: '2026-10-22', key: 'bookedByInvoice', params: { category: 'revenue7', auto: 'true' } },
+        { date: '2026-10-22', key: 'paysInvoice', params: { number: 'RE-2026-004', auto: 'true' } },
         ...tx.history,
       ],
     }));
     expect(undoBlockedBy(matched, record, NOTHING_CLOSED)).toBeNull();
+  });
+
+  it('an invoice match the person confirmed by hand is work: the same lines without auto block undo', () => {
+    const { b, record } = imported();
+    const handLines: [string, HistoryEntry[]][] = [
+      ['paysInvoice', [{ date: '2026-10-22', key: 'paysInvoice', params: { number: 'RE-2026-004' } }]],
+      [
+        'bookedByInvoice and paysInvoice',
+        [
+          { date: '2026-10-22', key: 'bookedByInvoice', params: { category: 'revenue7' } },
+          { date: '2026-10-22', key: 'paysInvoice', params: { number: 'RE-2026-004' } },
+        ],
+      ],
+      [
+        'only one of the two marked auto',
+        [
+          { date: '2026-10-22', key: 'bookedByInvoice', params: { category: 'revenue7', auto: 'true' } },
+          { date: '2026-10-22', key: 'paysInvoice', params: { number: 'RE-2026-004' } },
+        ],
+      ],
+    ];
+    for (const [label, lines] of handLines) {
+      const confirmed = change(b, record.paymentIds[1], (tx) => ({ ...tx, history: [...lines, ...tx.history] }));
+      expect(undoBlockedBy(confirmed, record, NOTHING_CLOSED), label).toBe('worked');
+      expect(canUndoImport(confirmed, record, NOTHING_CLOSED), label).toBe(false);
+    }
+  });
+
+  it('only auto: "true" makes an invoice line automatic', () => {
+    const { b, record } = imported();
+    const marked = (auto: string) =>
+      change(b, record.paymentIds[1], (tx) => ({
+        ...tx,
+        history: [{ date: '2026-10-22', key: 'paysInvoice', params: { number: 'RE-2026-004', auto } }, ...tx.history],
+      }));
+    expect(undoBlockedBy(marked('true'), record, NOTHING_CLOSED)).toBeNull();
+    expect(undoBlockedBy(marked('false'), record, NOTHING_CLOSED)).toBe('worked');
+    expect(undoBlockedBy(marked(''), record, NOTHING_CLOSED)).toBe('worked');
   });
 
   it('is closed when one of its payments sits in a closed month', () => {
