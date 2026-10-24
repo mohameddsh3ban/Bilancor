@@ -1,5 +1,5 @@
 import type { WritableSignal } from '@angular/core';
-import type { AccountConnection, Business } from '../data/models';
+import type { AccountConnection, Business, Role } from '../data/models';
 import type { DemoStateService } from './demo-state.service';
 
 /**
@@ -33,4 +33,20 @@ export function withConnection(
 /** For tests: a business as the service holds it now, whoever is signed in (`businesses` lists only the person's own). */
 export function businessOf(demo: DemoStateService, businessId: string): Business {
   return (demo as unknown as { data: WritableSignal<Business[]> }).data().find((b) => b.id === businessId)!;
+}
+
+/**
+ * For tests: gives the signed-in person another role in a business. No screen does that (a login is an owner, or has full
+ * access where the owner invited it), so this reaches into the service's working copy of the data.
+ */
+export function withRole(demo: DemoStateService, businessId: string, role: Role): void {
+  const data = (demo as unknown as { data: WritableSignal<Business[]> }).data;
+  const personId = demo.person.id;
+  data.update((all) =>
+    all.map((business) =>
+      business.id !== businessId
+        ? business
+        : { ...business, people: business.people.map((m) => (m.personId === personId ? { ...m, role } : m)) },
+    ),
+  );
 }

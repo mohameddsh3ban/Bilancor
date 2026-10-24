@@ -567,7 +567,8 @@
     "personLeft": "{{name}} hat das Unternehmen verlassen",
     "ownerChanged": "{{by}} hat das Unternehmen an {{name}} übergeben",
     "supportOn": "{{by}} hat dem Support bis {{until}} Einblick gegeben",
-    "supportOff": "{{by}} hat den Zugriff des Supports beendet"
+    "supportOff": "{{by}} hat den Zugriff des Supports beendet",
+    "monthClosed": "{{month}} wurde von {{by}} abgeschlossen"
   },
   "payments": {
     "title": "Zahlungen",

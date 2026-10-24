@@ -629,6 +629,45 @@ describe('sample year figures', () => {
     expect(first('sara-yoga')).toBe('2026-08-04');
     expect(first('cafe-linde')).toBe('2026-07-10');
   });
+
+  it("the sample's closed months and earlier months are as listed", () => {
+    expect(BUSINESSES.map((b) => [b.id, b.yearOpening.untilMonth, b.closedMonths])).toEqual([
+      ['weber-design', '2026-07', [{ month: '2026-08', on: '2026-09-08', by: null }, { month: '2026-09', on: '2026-10-08', by: null }]],
+      ['sara-yoga', '2026-07', [{ month: '2026-08', on: '2026-09-05', by: 'Sara Weber' }]],
+      ['cafe-linde', '2026-06', []],
+    ]);
+  });
+
+  it("each opening line ends in the month before the business's first payment", () => {
+    for (const b of BUSINESSES) {
+      const [year, month] = b.transactions.map((t) => t.date).sort()[0].split('-').map(Number);
+      const before = month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, '0')}`;
+      expect(b.yearOpening.untilMonth, b.id).toBe(before);
+    }
+  });
+
+  it('closed months come in order, after the opening line and once they were over; one closed by nobody was closed the day its VAT return was sent', () => {
+    for (const b of BUSINESSES) {
+      const months = b.closedMonths.map((c) => c.month);
+      expect([...months].sort(), b.id).toEqual(months);
+      for (const closed of b.closedMonths) {
+        expect(closed.month > b.yearOpening.untilMonth, `${b.id} ${closed.month}`).toBe(true);
+        expect(closed.on.slice(0, 7) > closed.month, `${b.id} ${closed.month} is closed once it is over`).toBe(true);
+        const sent = b.vatReturns.find((r) => r.periodStart.slice(0, 7) <= closed.month && closed.month <= r.periodEnd.slice(0, 7));
+        // A month closed by nobody is one whose VAT return was sent that very day.
+        if (closed.by === null) expect(sent?.sentOn, `${b.id} ${closed.month}`).toBe(closed.on);
+      }
+    }
+  });
+
+  it('every closed sample month has all its payments booked, as closing needs', () => {
+    for (const b of BUSINESSES) {
+      for (const closed of b.closedMonths) {
+        const inMonth = b.transactions.filter((t) => t.date.slice(0, 7) === closed.month);
+        expect(inMonth.every((t) => paymentStatus(t) === 'booked'), `${b.id} ${closed.month}`).toBe(true);
+      }
+    }
+  });
 });
 
 describe('sample people', () => {

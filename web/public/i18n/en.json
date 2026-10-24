@@ -567,7 +567,8 @@
     "personLeft": "{{name}} left the business",
     "ownerChanged": "{{by}} handed the business over to {{name}}",
     "supportOn": "{{by}} let support look until {{until}}",
-    "supportOff": "{{by}} stopped support access"
+    "supportOff": "{{by}} stopped support access",
+    "monthClosed": "{{month}} was closed by {{by}}"
   },
   "payments": {
     "title": "Payments",

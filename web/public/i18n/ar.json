@@ -567,7 +567,8 @@
     "personLeft": "{{name}} غادر النشاط",
     "ownerChanged": "{{by}} نقل ملكية النشاط إلى {{name}}",
     "supportOn": "{{by}} سمح لفريق الدعم بالاطلاع حتى {{until}}",
-    "supportOff": "{{by}} أوقف وصول فريق الدعم"
+    "supportOff": "{{by}} أوقف وصول فريق الدعم",
+    "monthClosed": "تم إغلاق {{month}} بواسطة {{by}}"
   },
   "payments": {
     "title": "المدفوعات",

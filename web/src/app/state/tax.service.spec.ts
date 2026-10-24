@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Business } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
+import { closeMonthsOf } from '../domain/months';
 import { currentVatReturn, type VatReturnView } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
 import { SEND_MS, TaxService } from './tax.service';
@@ -58,6 +59,57 @@ describe('TaxService', () => {
       state: 'inProgress',
       dueDate: '2027-01-10',
     });
+  });
+
+  it('sending Q3 closes July to September once', async () => {
+    expect(demo.business().closedMonths).toEqual([]);
+
+    const result = tax.send();
+    await vi.advanceTimersByTimeAsync(SEND_MS);
+    await result;
+
+    expect(demo.business().closedMonths).toEqual([
+      { month: '2026-07', on: DEMO_TODAY, by: null },
+      { month: '2026-08', on: DEMO_TODAY, by: null },
+      { month: '2026-09', on: DEMO_TODAY, by: null },
+    ]);
+    expect(demo.business().history.map((line) => [line.key, line.params])).toEqual([
+      ['monthClosed', { month: '2026-09', byReturn: '1' }],
+      ['monthClosed', { month: '2026-08', byReturn: '1' }],
+      ['monthClosed', { month: '2026-07', byReturn: '1' }],
+    ]);
+
+    // A second pass over the same period adds nothing: the months are closed.
+    const closed = demo.business();
+    expect(closeMonthsOf(closed, '2026-07-01', '2026-09-30', DEMO_TODAY)).toBe(closed);
+    // The other businesses are not touched.
+    expect(demo.businesses.find((b) => b.id === 'weber-design')!.closedMonths).toEqual(sample('weber-design').closedMonths);
+  });
+
+  it('a month closed by hand before keeps its person and its line when the return closes the rest', async () => {
+    expect(demo.closeMonth('2026-08')).toBe(true);
+    const result = tax.send();
+    await vi.advanceTimersByTimeAsync(SEND_MS);
+    await result;
+
+    expect(demo.business().closedMonths).toEqual([
+      { month: '2026-07', on: DEMO_TODAY, by: null },
+      { month: '2026-08', on: DEMO_TODAY, by: 'Sara Weber' },
+      { month: '2026-09', on: DEMO_TODAY, by: null },
+    ]);
+    expect(demo.business().history.map((line) => line.params)).toEqual([
+      { month: '2026-09', byReturn: '1' },
+      { month: '2026-07', byReturn: '1' },
+      { month: '2026-08', by: 'Sara Weber' },
+    ]);
+  });
+
+  it('a send that is dropped by a reset closes nothing', async () => {
+    const dropped = tax.send();
+    demo.resetData();
+    await vi.advanceTimersByTimeAsync(SEND_MS);
+    expect(await dropped).toBeNull();
+    expect(demo.businesses.map((b) => [b.id, b.closedMonths.length])).toEqual([['weber-design', 2], ['sara-yoga', 1], ['cafe-linde', 0]]);
   });
 
   it('records no tax office when the tax number gives none', async () => {

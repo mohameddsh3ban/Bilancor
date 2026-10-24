@@ -57,6 +57,13 @@ describe('translation files', () => {
     expect(en.history.supportOn).toContain('{{until}}');
   });
 
+  it('has a history text for a closed month, naming the month and who closed it', () => {
+    for (const lang of [en, de, ar]) {
+      expect(lang.history.monthClosed).toContain('{{month}}');
+      expect(lang.history.monthClosed).toContain('{{by}}');
+    }
+  });
+
   it('has a name for every role, and what the three roles that can be given can and can not do', () => {
     for (const lang of [en, de, ar]) {
       const roles = lang.roles as Record<string, Record<string, string>>;
