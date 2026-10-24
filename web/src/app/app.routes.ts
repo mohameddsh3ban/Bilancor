@@ -129,10 +129,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./account/add-business.page').then((m) => m.AddBusinessPage),
       },
-      // The Help page itself. Its other pages (German terms A–Z, Write to us and one answer) are routes of their own, with the fixed paths above help/:id.
+      // The Help page, then one answer (help/:id). A page of Help with a fixed path (German terms A–Z, Write to us) goes between the two, above help/:id, so :id never takes its address.
       {
         path: 'help',
         loadComponent: () => import('./help/help.page').then((m) => m.HelpPage),
+      },
+      {
+        path: 'help/:id',
+        loadComponent: () => import('./help/answer.page').then((m) => m.HelpAnswerPage),
       },
       {
         path: 'soon/:feature',

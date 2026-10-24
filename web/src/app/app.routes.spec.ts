@@ -153,6 +153,28 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
 
+  it('An answer of Help (help/:id) is inside the app shell, right after Help, and no fixed path of Help comes below it', async () => {
+    const shell = routes.find((route) => route.path === '')!;
+    const paths = shell.children!.map((route) => route.path);
+    const answerAt = paths.indexOf('help/:id');
+    expect(answerAt).toBeGreaterThan(paths.indexOf('help'));
+    expect(paths.slice(answerAt + 1).filter((path) => path?.startsWith('help'))).toEqual([]);
+
+    const harness = await RouterTestingHarness.create('/help/vat-due');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp%2Fvat-due');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help/vat-due');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help/vat-due');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-page')).toBeNull();
+  });
+
   it('Import a bank statement is inside the app shell, and is not a payment called "import": signed out it asks for signing in first', async () => {
     const harness = await RouterTestingHarness.create('/payments/import');
     harness.detectChanges();

@@ -2192,6 +2192,18 @@
       "taxNote": "Wir erklären, wie die App funktioniert und was deutsche Begriffe bedeuten. Für Beratung zu deinen eigenen Steuern frag deine {{term}}.",
       "taxAction": "Lade deine Steuerberater:in ein"
     },
+    "answer": {
+      "breadcrumb": "Brotkrumen-Navigation",
+      "termsTitle": "Begriffe in dieser Antwort",
+      "open": "{{page}} öffnen",
+      "feedbackTitle": "Hat das deine Frage beantwortet?",
+      "yes": "Ja",
+      "thanks": "Danke",
+      "no": "Nein, schreib uns",
+      "missingTitle": "Diese Antwort gibt es nicht",
+      "missingBody": "Geh zurück zur Hilfe, um zu suchen oder die Themen durchzusehen.",
+      "missingAction": "Zurück zur Hilfe"
+    },
     "topics": {
       "start": "Erste Schritte",
       "payments": "Bank und Zahlungen",

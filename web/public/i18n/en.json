@@ -2192,6 +2192,18 @@
       "taxNote": "We explain how the app works and what German terms mean. For advice on your own taxes, ask a tax advisor ({{term}}).",
       "taxAction": "Invite your tax advisor"
     },
+    "answer": {
+      "breadcrumb": "Breadcrumb",
+      "termsTitle": "German words in this answer",
+      "open": "Open {{page}}",
+      "feedbackTitle": "Did this answer your question?",
+      "yes": "Yes",
+      "thanks": "Thanks",
+      "no": "No, write to us",
+      "missingTitle": "This answer doesn't exist",
+      "missingBody": "Go back to Help to search or browse the topics.",
+      "missingAction": "Back to Help"
+    },
     "topics": {
       "start": "Getting started",
       "payments": "Bank and payments",
