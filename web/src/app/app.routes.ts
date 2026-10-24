@@ -135,6 +135,10 @@ export const routes: Routes = [
         loadComponent: () => import('./help/help.page').then((m) => m.HelpPage),
       },
       {
+        path: 'help/terms',
+        loadComponent: () => import('./help/terms.page').then((m) => m.HelpTermsPage),
+      },
+      {
         path: 'help/:id',
         loadComponent: () => import('./help/answer.page').then((m) => m.HelpAnswerPage),
       },

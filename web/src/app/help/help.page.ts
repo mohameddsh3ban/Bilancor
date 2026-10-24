@@ -9,7 +9,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronLeft, lucideChevronRight, lucideSearch } from '@ng-icons/lucide';
+import { lucideChevronRight, lucideSearch } from '@ng-icons/lucide';
 import { TranslocoPipe, translateObjectSignal, translateSignal } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -20,6 +20,7 @@ import { HELP_ANSWERS, HELP_TOPICS, type HelpPage as HelpPageName } from '../dat
 import { helpPageOf, normalizeForSearch, pageQuestions, searchHelp } from '../domain/help';
 import { DemoStateService } from '../state/demo-state.service';
 import { HelpContextService } from '../state/help-context.service';
+import { HelpBackLink } from './help-back-link';
 import { HelpQuestions } from './help-questions';
 import { HelpResults } from './help-results';
 
@@ -45,6 +46,7 @@ const TOPICS = HELP_TOPICS.map((id) => ({
   selector: 'app-help-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    HelpBackLink,
     HelpQuestions,
     HelpResults,
     HlmButton,
@@ -53,7 +55,7 @@ const TOPICS = HELP_TOPICS.map((id) => ({
     RouterLink,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideSearch })],
+  viewProviders: [provideIcons({ lucideChevronRight, lucideSearch })],
   host: { class: 'flex flex-col gap-4' },
   template: `
     <h1 class="text-2xl font-semibold">{{ 'help.title' | transloco }}</h1>
@@ -104,19 +106,9 @@ const TOPICS = HELP_TOPICS.map((id) => ({
           @if (topic(); as topic) {
             <section hlmCard size="sm" data-testid="help-topic">
               <header hlmCardHeader>
-                <a
-                  routerLink="/help"
-                  class="text-primary inline-flex min-h-8 items-center gap-1 self-start text-sm font-medium"
-                  data-testid="help-all-topics"
-                >
-                  <ng-icon
-                    name="lucideChevronLeft"
-                    size="16"
-                    class="rtl:rotate-180"
-                    aria-hidden="true"
-                  />
+                <app-help-back-link testId="help-all-topics">
                   {{ 'help.home.allTopics' | transloco }}
-                </a>
+                </app-help-back-link>
                 <h2 hlmCardTitle>{{ 'help.topics.' + topic | transloco }}</h2>
               </header>
               <div hlmCardContent>

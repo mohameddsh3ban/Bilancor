@@ -2204,6 +2204,15 @@
       "missingBody": "Geh zurück zur Hilfe, um zu suchen oder die Themen durchzusehen.",
       "missingAction": "Zurück zur Hilfe"
     },
+    "terms": {
+      "filterLabel": "Deutsche Begriffe filtern",
+      "filterPlaceholder": "Gib ein deutsches Wort oder seine Bedeutung ein",
+      "appearsIn": "Kommt vor in: {{pages}}",
+      "pagesSeparator": ", ",
+      "noneTitle": "Kein Begriff passt",
+      "noneBody": "Versuch eine andere Schreibweise oder weniger Buchstaben, oder zeig die ganze Liste.",
+      "noneAction": "Alle Begriffe zeigen"
+    },
     "topics": {
       "start": "Erste Schritte",
       "payments": "Bank und Zahlungen",

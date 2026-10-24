@@ -2204,6 +2204,15 @@
       "missingBody": "Go back to Help to search or browse the topics.",
       "missingAction": "Back to Help"
     },
+    "terms": {
+      "filterLabel": "Filter German terms",
+      "filterPlaceholder": "Type a German word or what it means",
+      "appearsIn": "Appears in: {{pages}}",
+      "pagesSeparator": ", ",
+      "noneTitle": "No term matches",
+      "noneBody": "Try another spelling or fewer letters, or show the whole list.",
+      "noneAction": "Show all terms"
+    },
     "topics": {
       "start": "Getting started",
       "payments": "Bank and payments",

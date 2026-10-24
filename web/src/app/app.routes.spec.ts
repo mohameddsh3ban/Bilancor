@@ -153,6 +153,27 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
 
+  it('German terms A–Z (help/terms) is inside the app shell, between Help and an answer, so :id never takes its address', async () => {
+    const shell = routes.find((route) => route.path === '')!;
+    const paths = shell.children!.map((route) => route.path);
+    expect(paths.indexOf('help/terms')).toBeGreaterThan(paths.indexOf('help'));
+    expect(paths.indexOf('help/terms')).toBeLessThan(paths.indexOf('help/:id'));
+
+    const harness = await RouterTestingHarness.create('/help/terms');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp%2Fterms');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help/terms#kasse');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-terms-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help/terms#kasse');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).toBeNull();
+  });
+
   it('An answer of Help (help/:id) is inside the app shell, right after Help, and no fixed path of Help comes below it', async () => {
     const shell = routes.find((route) => route.path === '')!;
     const paths = shell.children!.map((route) => route.path);

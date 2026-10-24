@@ -10,14 +10,13 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronLeft } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { map } from 'rxjs';
 import { Term } from '../core/i18n/term';
 import { HELP_ANSWERS, type HelpAnswer } from '../data/help';
+import { HelpBackLink } from './help-back-link';
 
 /**
  * The words of a page button for the places the menu has no name for, by where the link goes: "Open My account" and
@@ -40,27 +39,16 @@ const DESTINATION_LABELS = new Map<string, string>([
 @Component({
   selector: 'app-help-answer-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmButton, HlmCardImports, NgIcon, RouterLink, Term, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideChevronLeft })],
+  imports: [HelpBackLink, HlmButton, HlmCardImports, RouterLink, Term, TranslocoPipe],
   host: { class: 'mx-auto flex w-full max-w-2xl flex-col gap-4' },
   template: `
     @if (answer(); as item) {
       <nav [attr.aria-label]="'help.answer.breadcrumb' | transloco" data-testid="answer-breadcrumb">
         <ol class="flex flex-wrap items-center gap-x-2 text-sm">
           <li>
-            <a
-              routerLink="/help"
-              class="text-primary inline-flex min-h-11 items-center gap-1 font-medium"
-              data-testid="answer-crumb-help"
-            >
-              <ng-icon
-                name="lucideChevronLeft"
-                size="16"
-                class="rtl:rotate-180"
-                aria-hidden="true"
-              />
+            <app-help-back-link testId="answer-crumb-help">
               {{ 'help.title' | transloco }}
-            </a>
+            </app-help-back-link>
           </li>
           <li class="text-muted-foreground" aria-hidden="true">·</li>
           <li>
