@@ -642,6 +642,7 @@
   },
   "booking": {
     "advertising": "الإعلان",
+    "bankFees": "رسوم بنكية",
     "consulting": "استشارات قانونية ومهنية",
     "goods7": "شراء بضائع (ضريبة 7%)",
     "insurance": "التأمين",
@@ -710,7 +711,8 @@
     "ownerChanged": "{{by}} نقل ملكية النشاط إلى {{name}}",
     "supportOn": "{{by}} سمح لفريق الدعم بالاطلاع حتى {{until}}",
     "supportOff": "{{by}} أوقف وصول فريق الدعم",
-    "monthClosed": "تم إغلاق {{month}} بواسطة {{by}}"
+    "monthClosed": "تم إغلاق {{month}} بواسطة {{by}}",
+    "importUndone": "تم التراجع عن استيراد {{file}}"
   },
   "payments": {
     "title": "المدفوعات",

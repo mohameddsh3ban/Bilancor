@@ -20,7 +20,7 @@ export interface Account {
 export type ReceiptState = 'attached' | 'missing' | 'notNeeded';
 export interface Booking { skr03: string; nameDe: string; labelKey: string; vatRate: 0 | 7 | 19 } // labelKey -> i18n "booking.<labelKey>"
 export type HistoryKey =
-  | 'imported'
+  | 'imported' // params: account (its name), and file (the name of the statement file) when a statement import brought it in
   | 'autoBooked'
   | 'confirmed'
   | 'receiptNotNeeded'
@@ -68,7 +68,8 @@ export type HistoryKey =
   | 'supportOn' // params: until, by
   | 'supportOff' // params: by
   // On a business, when one of its months is closed: `month` is 'YYYY-MM', and `by` is the full name of who closed it, or `byReturn` is '1' when sending its VAT return did
-  | 'monthClosed'; // params: month, and by or byReturn
+  | 'monthClosed' // params: month, and by or byReturn
+  | 'importUndone'; // on a business, when a statement import is undone; params: file (the import's file name)
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
@@ -192,6 +193,26 @@ export interface Business {
   history: HistoryEntry[]; // changes to the tax details, bank accounts, people and support access, newest first: stored, not shown yet
   people: Member[]; // everyone with access, and the invitations waiting; exactly one joined member is the owner
   supportUntil: string | null; // ISO date; the last day our support team can look at the books, null while it can't
+  imports: StatementImport[]; // the statement imports so far; empty until one is made (see statement-import.ts)
+}
+/** What a column of a bank statement holds: `amountOut` is a separate column for money going out; `ignore` is read by nothing. */
+export type ColumnRole = 'date' | 'amount' | 'amountOut' | 'who' | 'purpose' | 'ignore';
+/** Which column holds what (one role per column, in the file's order), and how money out is shown: with a minus sign, or in its own `amountOut` column. */
+export interface ColumnMapping { roles: ColumnRole[]; moneyOut: 'minus' | 'column' }
+/** What the demo says about one statement row, because the mockup reads no real file: the category (a `Booking` labelKey, null: none), whether it is confirmed, and the receipt it needs. */
+export interface RowMeta { booking: string | null; confirmed: boolean; receipt: ReceiptState }
+/** A sample bank file standing in for the one the person drops: its raw text cells (German formats), how the demo reads it, and what it says about each row. */
+export interface SampleStatement {
+  id: string; fileName: string;
+  format: 'bankCsv' | 'camt' | 'unknownCsv'; bankLabel: string | null; // bankLabel: e.g. 'Sparkasse CSV'; null for an unknown layout
+  header: string[]; cells: string[][];
+  mapping: ColumnMapping | null; // null: the person matches the columns
+  meta: RowMeta[]; // one per row of `cells`
+}
+/** A statement import an account remembers: the file, the day, the payments it brought in (their ids) and the rows it skipped. The sample file is found again by `statementId`. */
+export interface StatementImport {
+  id: string; accountId: string; statementId: string; fileName: string; importedOn: string; // importedOn: ISO date
+  paymentIds: string[]; skippedCount: number;
 }
 /** A browser or phone where the person is signed in; sample rows, never read from the real browser. */
 export interface Device { id: string; browser: string; system: string; place: string; lastSeen: string | null; current: boolean } // lastSeen null: now

@@ -642,6 +642,7 @@
   },
   "booking": {
     "advertising": "Werbekosten",
+    "bankFees": "Bankgebühren",
     "consulting": "Rechts- und Beratungskosten",
     "goods7": "Wareneinkauf (7 % USt)",
     "insurance": "Versicherungen",
@@ -710,7 +711,8 @@
     "ownerChanged": "{{by}} hat das Unternehmen an {{name}} übergeben",
     "supportOn": "{{by}} hat dem Support bis {{until}} Einblick gegeben",
     "supportOff": "{{by}} hat den Zugriff des Supports beendet",
-    "monthClosed": "{{month}} wurde von {{by}} abgeschlossen"
+    "monthClosed": "{{month}} wurde von {{by}} abgeschlossen",
+    "importUndone": "Der Import von {{file}} wurde rückgängig gemacht"
   },
   "payments": {
     "title": "Zahlungen",

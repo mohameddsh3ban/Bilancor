@@ -642,6 +642,7 @@
   },
   "booking": {
     "advertising": "Advertising",
+    "bankFees": "Bank fees",
     "consulting": "Legal & consulting",
     "goods7": "Goods purchased (7% VAT)",
     "insurance": "Insurance",
@@ -710,7 +711,8 @@
     "ownerChanged": "{{by}} handed the business over to {{name}}",
     "supportOn": "{{by}} let support look until {{until}}",
     "supportOff": "{{by}} stopped support access",
-    "monthClosed": "{{month}} was closed by {{by}}"
+    "monthClosed": "{{month}} was closed by {{by}}",
+    "importUndone": "The import of {{file}} was undone"
   },
   "payments": {
     "title": "Payments",

@@ -244,6 +244,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'wd-m3', personId: null, name: null, email: 'mia@example.com', role: 'receipts', status: 'invited', invitedOn: '2026-10-20', expiresOn: '2026-10-27', joinedOn: null },
     ],
     supportUntil: null,
+    imports: [],
   },
   {
     id: 'sara-yoga',
@@ -305,6 +306,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     history: [],
     people: [sara('sy-m1', 'owner', '2026-01-02')],
     supportUntil: null,
+    imports: [],
   },
   {
     id: 'cafe-linde',
@@ -377,6 +379,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       sara('cl-m2', 'full', '2026-03-16'),
     ],
     supportUntil: null,
+    imports: [],
   },
 ];
 
