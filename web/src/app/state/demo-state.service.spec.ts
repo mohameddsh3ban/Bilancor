@@ -364,6 +364,35 @@ describe('DemoStateService', () => {
       expect(payment(state, 'wd-t20')).toMatchObject({ receipt: 'attached', booking: { vatRate: 0 } });
     });
 
+    it('unlink refuses the receipt of a payment made from it (cash or own money): the payment stays locked to it', () => {
+      const state = TestBed.inject(DemoStateService);
+      const receipts = TestBed.inject(ReceiptService);
+      const cashTx = receipts.markPaid('wd-d7', 'cash', '2026-10-19')!;
+      state.setBusiness('sara-yoga');
+      const ownTx = receipts.markPaid('sy-d3', 'own', '2026-10-12')!;
+
+      for (const [businessId, docId, txId] of [
+        ['sara-yoga', 'sy-d3', ownTx],
+        ['weber-design', 'wd-d7', cashTx],
+      ]) {
+        state.setBusiness(businessId);
+        const business = state.business();
+        state.unlink(docId);
+        state.removeDocument(docId);
+        expect(state.business(), docId).toBe(business);
+        expect(doc(state, docId).paymentId, docId).toBe(txId);
+        expect(payment(state, txId), docId).toMatchObject({ receipt: 'attached' });
+      }
+    });
+
+    it('unlink still works for an ordinary receipt that was linked by hand', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.link('wd-d4', 'wd-t17');
+      state.unlink('wd-d4');
+      expect(doc(state, 'wd-d4').paymentId).toBeNull();
+      expect(payment(state, 'wd-t17').receipt).toBe('missing');
+    });
+
     it('editing documents never changes the shared sample data', () => {
       const state = TestBed.inject(DemoStateService);
       state.link('wd-d4', 'wd-t17');
@@ -1206,6 +1235,61 @@ describe('DemoStateService', () => {
       state.renewConnection('wd-qonto');
       expect(accountOf(state, 'wd-qonto').connection.fetchFrom).toBe('2025-01-01');
       expect(accountOf(state, 'wd-cash')).toBe(cash);
+    });
+  });
+
+  describe('addOwnMoneyAccount', () => {
+    it('adds the Own money account, with no payments, no bank and one ownMoneyAdded line', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      expect(state.business().accounts.some((a) => a.kind === 'own')).toBe(false);
+      state.addOwnMoneyAccount();
+      const own = state.business().accounts.filter((a) => a.kind === 'own');
+      expect(own).toHaveLength(1);
+      expect(own[0]).toEqual({
+        id: 'sara-yoga-own',
+        kind: 'own',
+        name: 'Own money',
+        balanceCents: 0,
+        lastUpdate: DEMO_TODAY,
+        connection: { kind: 'own', consentUntil: null, lastFetched: null, fetchFrom: null, broken: false },
+        product: 'own',
+        iban: null,
+      });
+      expect(state.business().history).toEqual([{ date: DEMO_TODAY, key: 'ownMoneyAdded', params: {} }]);
+    });
+
+    it('is idempotent: twice adds one account and one line, and the open business is unchanged the second time', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addOwnMoneyAccount();
+      const after = state.business();
+      state.addOwnMoneyAccount();
+      expect(state.business()).toBe(after);
+      expect(state.business().accounts.filter((a) => a.kind === 'own')).toHaveLength(1);
+      expect(state.business().history.filter((h) => h.key === 'ownMoneyAdded')).toHaveLength(1);
+    });
+
+    it('goes in front of the cash box, which stays last, and does not count as the bank step', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setSetup('new');
+      state.addOwnMoneyAccount();
+      expect(state.business().accounts.map((a) => a.id)).toEqual(['wd-qonto', 'weber-design-own', 'wd-cash']);
+      expect(state.setup()).toEqual(presetSteps('new'));
+    });
+
+    it('goes after the accounts of a business with no cash box, and a cash box added later goes last', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      state.addOwnMoneyAccount();
+      state.addCashBox();
+      expect(state.business().accounts.map((a) => a.id)).toEqual(['sy-qonto', 'sara-yoga-own', 'sara-yoga-cash']);
+    });
+
+    it('resetData takes it back', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.addOwnMoneyAccount();
+      state.resetData();
+      expect(state.business().accounts.some((a) => a.kind === 'own')).toBe(false);
     });
   });
 

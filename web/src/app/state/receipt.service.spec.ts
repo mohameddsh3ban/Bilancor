@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { OFFICE, TRAVEL } from '../data/categories';
+import { OFFICE, SUPPLIES, TRAVEL } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Doc, Transaction } from '../data/models';
 import { PERSON } from '../data/sample-person';
@@ -7,8 +7,10 @@ import { docStatus } from '../domain/document-status';
 import { isClosedDate } from '../domain/months';
 import { changeCategory } from '../domain/payment-actions';
 import { paymentStatus } from '../domain/payment-status';
+import { reviewItems } from '../domain/review-queue';
 import type { SelfIssuedInput } from '../domain/self-issued';
 import { undoBlockedBy } from '../domain/statement-import';
+import { vatRateShown } from '../domain/tax-rules';
 import { yearSummary } from '../domain/tax-year';
 import { periodFor, vatReturnFor } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
@@ -246,6 +248,292 @@ describe('ReceiptService', () => {
       expect(payment('imp-1-r1').receipt).toBe('attached');
     });
   });
+  describe('markPaid', () => {
+    const accountOf = (id: string) => demo.business().accounts.find((a) => a.id === id)!;
+
+    it('paid in cash adds a cash-box payment, linked and booked, and its VAT counts', () => {
+      const october = periodFor('2026-10-15', 'monthly');
+      const before = vatReturnFor(demo.business(), october);
+      const cashBox = demo.business().accounts.find((a) => a.kind === 'cash')!;
+
+      const id = service.markPaid('wd-d7', 'cash', '2026-10-20');
+
+      expect(id).toBe('paid-wd-d7');
+      expect(demo.business().accounts.filter((a) => a.kind === 'cash')).toEqual([cashBox]);
+      expect(payment(id!)).toEqual({
+        id: 'paid-wd-d7',
+        date: '2026-10-20',
+        counterparty: 'Copyshop Kreuzberg',
+        accountId: cashBox.id,
+        amountCents: -1850,
+        booking: OFFICE,
+        confirmed: true,
+        isPrivate: false,
+        receipt: 'attached',
+        receiptFile: 'IMG_2049.jpg',
+        counterpartyIban: '',
+        reference: 'B-7731',
+        history: [{ date: '2026-10-20', key: 'paidInCash', params: {} }],
+        beforePrivate: null,
+        beforeLink: null,
+      });
+      expect(demo.business().transactions[0].id).toBe(id);
+      expect(paymentStatus(payment(id!))).toBe('booked');
+
+      // The receipt is linked to it by hand and is done; the person is not asked about either.
+      expect(doc('wd-d7')).toMatchObject({ paymentId: id });
+      expect(doc('wd-d7').history[0]).toEqual({ date: DEMO_TODAY, key: 'linked', params: { name: 'Copyshop Kreuzberg' } });
+      expect(docStatus(doc('wd-d7'))).toBe('done');
+
+      // 18,50 € at 19 % holds 2,95 € of VAT, which the October return now claims back.
+      const after = vatReturnFor(demo.business(), october);
+      expect(after.paidCents - before.paidCents).toBe(295);
+      expect(after.purchasesCount).toBe(before.purchasesCount + 1);
+      expect(after.needsYouCount).toBe(before.needsYouCount);
+    });
+
+    it('the year\'s costs count the net amount of a payment made from a receipt, the VAT being claimed back', () => {
+      const costs = yearSummary(demo.business()).paymentsCostsCents;
+      service.markPaid('wd-d7', 'cash', '2026-10-20');
+      expect(yearSummary(demo.business()).paymentsCostsCents).toBe(costs + 1850 - 295);
+    });
+
+    it('paid with own money creates the Own money account and a linked payment on it', () => {
+      expect(demo.business().accounts.some((a) => a.kind === 'own')).toBe(false);
+
+      const id = service.markPaid('wd-d7', 'own', '2026-10-19');
+
+      const own = demo.business().accounts.filter((a) => a.kind === 'own');
+      expect(own.map((a) => a.id)).toEqual(['weber-design-own']);
+      expect(demo.business().history[0]).toEqual({ date: DEMO_TODAY, key: 'ownMoneyAdded', params: {} });
+      expect(payment(id!)).toMatchObject({
+        accountId: 'weber-design-own',
+        amountCents: -1850,
+        booking: OFFICE,
+        confirmed: true,
+        receipt: 'attached',
+        history: [{ date: '2026-10-19', key: 'paidWithOwnMoney', params: {} }],
+      });
+      expect(doc('wd-d7').paymentId).toBe(id);
+      // The receipt's VAT counts whoever paid it: a proper invoice still allows it.
+      const october = periodFor('2026-10-15', 'monthly');
+      expect(vatReturnFor(demo.business(), october).paidCents).toBeGreaterThanOrEqual(295);
+    });
+
+    it('a second receipt paid with own money goes to the same Own money account', () => {
+      service.markPaid('wd-d7', 'own', '2026-10-19');
+      demo.updateDocument('wd-d1', (d) => ({ ...d, amountCents: 3000 }));
+      const id = service.markPaid('wd-d1', 'own', '2026-10-20');
+
+      expect(id).toBe('paid-wd-d1');
+      expect(demo.business().accounts.filter((a) => a.kind === 'own')).toHaveLength(1);
+      expect(demo.business().history.filter((h) => h.key === 'ownMoneyAdded')).toHaveLength(1);
+      expect(payment(id!).accountId).toBe('weber-design-own');
+    });
+
+    it('own money for a Kleinunternehmer has no VAT, and the whole amount is a cost', () => {
+      demo.setBusiness('sara-yoga');
+      expect(demo.business().taxProfile.kleinunternehmer).toBe(true);
+      const costs = yearSummary(demo.business()).paymentsCostsCents;
+
+      const id = service.markPaid('sy-d3', 'own', '2026-10-12');
+
+      expect(payment(id!)).toMatchObject({
+        accountId: 'sara-yoga-own',
+        amountCents: -8900,
+        counterparty: 'Yogamatten-Shop',
+        confirmed: true,
+        receipt: 'attached',
+      });
+      expect(payment(id!).booking).toEqual({ ...SUPPLIES, vatRate: 0 });
+      expect(vatRateShown(demo.business().taxProfile, payment(id!).booking!)).toBeNull();
+      expect(yearSummary(demo.business()).paymentsCostsCents).toBe(costs + 8900);
+    });
+
+    it('neither way of paying ticks the bank step', () => {
+      demo.setSetup('new');
+      const steps = demo.setup();
+      demo.updateDocument('wd-d7', (d) => ({ ...d, fromUpload: true }));
+      demo.updateDocument('wd-d1', (d) => ({ ...d, fromUpload: true, amountCents: 3000 }));
+
+      expect(service.markPaid('wd-d7', 'cash', '2026-10-19')).not.toBeNull();
+      expect(service.markPaid('wd-d1', 'own', '2026-10-20')).not.toBeNull();
+
+      expect(demo.setup()).toEqual(steps);
+      expect(demo.setup().bank).toBe(false);
+    });
+
+    it('is dated the day it was paid, from the receipt\'s date up to today', () => {
+      for (const day of ['2026-10-19', '2026-10-21', DEMO_TODAY]) {
+        demo.resetData();
+        expect(service.markPaid('wd-d7', 'cash', day), day).toBe('paid-wd-d7');
+        expect(payment('paid-wd-d7').date).toBe(day);
+      }
+    });
+
+    it('paid on must be between the receipt date and today: nothing changes for another day', () => {
+      for (const day of ['2026-10-18', '2026-10-23', '2027-01-01', '', 'yesterday']) {
+        const before = demo.business();
+        expect(service.markPaid('wd-d7', 'cash', day), day).toBeNull();
+        expect(service.markPaid('wd-d7', 'own', day), day).toBeNull();
+        expect(demo.business(), day).toBe(before);
+      }
+    });
+
+    it('is refused, with nothing changed, for what is not a received receipt waiting for its payment', () => {
+      demo.updateDocument('wd-d1', (d) => ({ ...d, reading: true }));
+      const refused: [string, string][] = [
+        ['wd-nobody', 'unknown document'],
+        ['wd-d2', 'a sent invoice (it is paid in Invoices)'],
+        ['wd-d3', 'a sent document'],
+        ['doc-wd-t2', 'a receipt that has its payment'],
+        ['wd-d1', 'a document that is still being read'],
+        ['wd-d5', 'a cancelled invoice'],
+      ];
+      for (const [id, why] of refused) {
+        const before = demo.business();
+        expect(service.markPaid(id, 'cash', DEMO_TODAY), why).toBeNull();
+        expect(demo.business(), why).toBe(before);
+      }
+    });
+
+    it('is refused for a self-issued receipt and for a document whose amount is not read yet', () => {
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      demo.updateDocument('wd-d7', (d) => ({ ...d, amountCents: null }));
+      const before = demo.business();
+
+      expect(service.markPaid('doc-EB-2026-001', 'cash', DEMO_TODAY)).toBeNull();
+      expect(service.markPaid('wd-d7', 'cash', DEMO_TODAY)).toBeNull();
+      expect(demo.business()).toBe(before);
+    });
+
+    it('marks a receipt once: asked again, nothing is added', () => {
+      service.markPaid('wd-d7', 'cash', '2026-10-19');
+      const before = demo.business();
+      expect(service.markPaid('wd-d7', 'cash', '2026-10-19')).toBeNull();
+      expect(service.markPaid('wd-d7', 'own', '2026-10-19')).toBeNull();
+      expect(demo.business()).toBe(before);
+    });
+
+    it('a receipt with no category yet gives a payment with none, which still asks for one', () => {
+      demo.updateDocument('wd-d7', (d) => ({ ...d, booking: null, bookingConfirmed: false }));
+      const id = service.markPaid('wd-d7', 'cash', '2026-10-19');
+      expect(payment(id!)).toMatchObject({ booking: null, confirmed: false });
+      expect(paymentStatus(payment(id!))).toBe('unclear');
+    });
+
+    it('is no question for the review inbox: the payment is booked, and the account it goes to is not a bank', () => {
+      const queue = reviewItems(demo.business(), demo.setup()).length;
+      service.markPaid('wd-d7', 'own', '2026-10-19');
+      expect(reviewItems(demo.business(), demo.setup())).toHaveLength(queue);
+      expect(accountOf('weber-design-own').connection.kind).toBe('own');
+    });
+
+    it('the payment is locked to its receipt: unlink refuses it', () => {
+      const id = service.markPaid('wd-d7', 'cash', '2026-10-19')!;
+      demo.unlink('wd-d7');
+      expect(doc('wd-d7').paymentId).toBe(id);
+      expect(payment(id).receipt).toBe('attached');
+    });
+
+    it('works in a business with no cash box: it gets one, with one cashAdded line', () => {
+      demo.setBusiness('sara-yoga');
+      expect(demo.business().accounts.some((a) => a.kind === 'cash')).toBe(false);
+
+      const id = service.markPaid('sy-d3', 'cash', '2026-10-13');
+
+      expect(payment(id!).accountId).toBe('sara-yoga-cash');
+      expect(demo.business().history[0].key).toBe('cashAdded');
+    });
+  });
+
+  describe('the undo offer after a receipt was marked as paid', () => {
+    it('is offered for UNDO_MS, and gone after that', () => {
+      vi.useFakeTimers();
+      expect(service.justPaid()).toBeNull();
+      service.markPaid('wd-d7', 'cash', '2026-10-19');
+      expect(service.justPaid()).toEqual({ txId: 'paid-wd-d7', docId: 'wd-d7', how: 'cash' });
+
+      vi.advanceTimersByTime(UNDO_MS - 1);
+      expect(service.justPaid()).not.toBeNull();
+      vi.advanceTimersByTime(1);
+      expect(service.justPaid()).toBeNull();
+    });
+
+    it('undo within 5 seconds removes the payment and unlinks the receipt', () => {
+      vi.useFakeTimers();
+      const copyshop = structuredClone(doc('wd-d7'));
+      const payments = demo.business().transactions.length;
+      service.markPaid('wd-d7', 'own', '2026-10-19');
+
+      service.undoPaid('paid-wd-d7');
+
+      expect(service.justPaid()).toBeNull();
+      expect(demo.business().transactions).toHaveLength(payments);
+      expect(demo.business().transactions.some((tx) => tx.id === 'paid-wd-d7')).toBe(false);
+      expect(doc('wd-d7')).toEqual(copyshop);
+      expect(docStatus(doc('wd-d7'))).toBe('waiting');
+      // The receipt can be paid again, and now says the same as before.
+      expect(service.markPaid('wd-d7', 'cash', '2026-10-20')).toBe('paid-wd-d7');
+    });
+
+    it('does nothing once the 5 seconds are over, or for another payment, or a second time', () => {
+      vi.useFakeTimers();
+      service.markPaid('wd-d7', 'cash', '2026-10-19');
+      service.undoPaid('wd-t2');
+      expect(payment('paid-wd-d7')).toBeDefined();
+
+      vi.advanceTimersByTime(UNDO_MS);
+      service.undoPaid('paid-wd-d7');
+      expect(payment('paid-wd-d7')).toBeDefined();
+      expect(doc('wd-d7').paymentId).toBe('paid-wd-d7');
+
+      demo.updateDocument('wd-d1', (d) => ({ ...d, amountCents: 3000 }));
+      service.markPaid('wd-d1', 'cash', '2026-10-20');
+      service.undoPaid('paid-wd-d1');
+      const after = demo.business();
+      service.undoPaid('paid-wd-d1');
+      expect(demo.business()).toBe(after);
+    });
+
+    it('a refused markPaid offers nothing', () => {
+      vi.useFakeTimers();
+      service.markPaid('wd-d7', 'cash', '2026-10-18');
+      expect(service.justPaid()).toBeNull();
+    });
+
+    it('goes with the data: a reset, or another business, ends the offer', () => {
+      vi.useFakeTimers();
+      service.markPaid('wd-d7', 'cash', '2026-10-19');
+      demo.resetData();
+      expect(service.justPaid()).toBeNull();
+      service.undoPaid('paid-wd-d7');
+      expect(demo.business().transactions.some((tx) => tx.id === 'paid-wd-d7')).toBe(false);
+
+      service.markPaid('wd-d7', 'cash', '2026-10-19');
+      demo.setBusiness('sara-yoga');
+      expect(service.justPaid()).toBeNull();
+    });
+
+    it('shares the one offer with the self-issued receipt: the newer one takes it over and the older is not on offer', () => {
+      vi.useFakeTimers();
+      service.markPaid('wd-d7', 'cash', '2026-10-19');
+      vi.advanceTimersByTime(3000);
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      expect(service.justPaid()).toBeNull();
+      expect(service.justWritten()?.txId).toBe('wd-t20');
+
+      vi.advanceTimersByTime(3000); // the first timer would have run out by now
+      expect(service.justWritten()).not.toBeNull();
+      service.undoPaid('paid-wd-d7');
+      expect(payment('paid-wd-d7')).toBeDefined();
+
+      service.markPaid('wd-d1', 'cash', '2026-10-20'); // not complete: refused, offer stays
+      service.undoWritten();
+      expect(demo.documents().some((d) => d.selfIssued !== null)).toBe(false);
+    });
+  });
+
   describe('the undo offer after a receipt written from the payment page', () => {
     it('is offered for UNDO_MS, and gone after that', () => {
       vi.useFakeTimers();

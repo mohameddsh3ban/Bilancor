@@ -14,6 +14,7 @@ import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection as setConnection } from '../state/demo-state.testing';
+import { ReceiptService } from '../state/receipt.service';
 import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
@@ -549,6 +550,47 @@ describe('SettingsPage', () => {
       expect(q('bank-iban-wd-cash')).toBeNull();
       expect(q('bank-fetched-wd-cash')).toBeNull();
       expect(q('bank-row-wd-cash')!.querySelector('app-bank-tile')).toBeNull();
+    });
+
+    it('settings shows the own-money row: money paid privately for the business, with the German word explained, and no button, no bank and no imports', async () => {
+      TestBed.inject(ReceiptService).markPaid('wd-d7', 'own', '2026-10-19');
+      await render();
+      expect(rowIds()).toEqual(['wd-qonto', 'weber-design-own', 'wd-cash']); // in front of the cash box
+      expect(text(q('bank-name-weber-design-own'))).toBe('Own money');
+      expect(text(q('bank-line-weber-design-own'))).toBe(
+        "Money you paid for the business privately: an owner's deposit (Privateinlage)",
+      );
+      expect(q('bank-line-weber-design-own')!.querySelector('app-term')).not.toBeNull();
+      expect(status('weber-design-own')).toBe('Private');
+      expect(action('weber-design-own')).toBeNull();
+      expect(q('bank-iban-weber-design-own')).toBeNull();
+      expect(q('bank-fetched-weber-design-own')).toBeNull();
+      const row = q('bank-row-weber-design-own')!;
+      expect(row.querySelector('app-bank-tile')).toBeNull();
+      expect(row.querySelector('[data-testid^="imports-"]')).toBeNull();
+      expect(row.querySelector('button[data-testid^="bank-action-"], a[data-testid^="bank-action-"]')).toBeNull();
+      expect(q('bank-status-weber-design-own')!.className).toContain('text-muted-foreground');
+
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(q('bank-name-weber-design-own'))).toBe('Eigenes Geld');
+      expect(text(q('bank-line-weber-design-own'))).toBe(
+        'Geld, das du privat für das Geschäft bezahlt hast: eine Privateinlage',
+      );
+      expect(status('weber-design-own')).toBe('Privat');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(q('bank-name-weber-design-own'))).toBe(ar.settings.bank.product.own);
+      expect(text(q('bank-line-weber-design-own'))).toContain('Privateinlage');
+      expect(q('bank-line-weber-design-own')!.querySelector('bdi')!.getAttribute('dir')).toBe('ltr');
+    });
+
+    it('the own-money row is there before the bank step too: the person made it, it is not a bank', async () => {
+      demo.setSetup('new');
+      demo.addOwnMoneyAccount();
+      await render();
+      expect(rowIds()).toEqual(['weber-design-own', 'wd-cash']);
+      expect(q('bank-connect-first')).not.toBeNull();
     });
 
     it('IBANs are masked', async () => {

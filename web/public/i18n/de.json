@@ -195,6 +195,16 @@
       "de": "Kontoauszug",
       "explain": "Die Liste der Zahlungen, die deine Bank dir für einen Zeitraum schickt, als Datei oder PDF. Du lädst sie in deinem Online-Banking herunter."
     },
+    "kasse": {
+      "label": "Kasse",
+      "de": "Kasse",
+      "explain": "Das Bargeld des Geschäfts, zum Beispiel in einer Kassenschublade, nicht auf einem Bankkonto. Barzahlungen für das Geschäft werden hier gebucht."
+    },
+    "privateinlage": {
+      "label": "Privateinlage",
+      "de": "Privateinlage",
+      "explain": "Geld, das du aus deinem Privatvermögen ins Geschäft gibst, zum Beispiel wenn du eine Geschäftsausgabe mit deiner eigenen Karte bezahlst. Es ist kein Einkommen; den Beleg für die Ausgabe behält das Geschäft."
+    },
     "festschreibung": {
       "label": "Festschreibung",
       "de": "Festschreibung",
@@ -225,7 +235,6 @@
     "receipt": "Ersten Beleg hochladen",
     "account": "Konto",
     "photo": "Foto aufnehmen",
-    "cashPayment": "Bar oder privat bezahlt",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -699,6 +708,7 @@
     "bankConnected": "Du hast {{account}} bei {{bank}} verbunden",
     "bankRenewed": "Du hast die Verbindung zu {{bank}} erneuert",
     "cashAdded": "Du hast eine Kasse hinzugefügt",
+    "ownMoneyAdded": "Du hast das Konto Eigenes Geld hinzugefügt",
     "invoiceCreated": "Du hast die Rechnung erstellt",
     "invoiceSent": "Du hast sie per E-Mail an {{email}} gesendet",
     "invoiceReminded": "Du hast Erinnerung {{level}} von 2 per E-Mail gesendet",
@@ -708,6 +718,7 @@
     "invoiceCancellation": "Du hast sie erstellt, um die Rechnung {{number}} zu stornieren",
     "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
     "paidInCash": "Du hast sie als bar bezahlt markiert",
+    "paidWithOwnMoney": "Du hast sie als mit eigenem Geld bezahlt markiert",
     "paysInvoice": "Bezahlt die Rechnung {{number}}",
     "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht",
     "selfIssued": "Du hast den Eigenbeleg {{number}} erstellt",
@@ -988,13 +999,32 @@
         "noMatch": "Noch keine passenden Zahlungen",
         "thisOne": "Diese",
         "searchAll": "Alle Zahlungen durchsuchen",
-        "cash": "Bar oder privat bezahlt",
+        "cash": "Bar oder mit eigenem Geld bezahlt",
         "payInInvoice": "Bar bezahlt? In der Rechnung markieren",
         "partPaid": "Bisher teilweise bezahlt:",
         "notThis": "Nicht diese Zahlung",
         "hasSelfIssued": "Für diese Zahlung gibt es schon einen Eigenbeleg.",
+        "lockedHint": "Diese Zahlung wurde aus diesem Beleg erstellt, die beiden bleiben zusammen.",
         "closedCancelled": "Diese Rechnung wurde storniert, deshalb ist keine Zahlung nötig.",
         "closedCancellation": "Eine Stornorechnung braucht keine Zahlung."
+      },
+      "paid": {
+        "cash": "Als bar bezahlt markiert",
+        "own": "Als mit eigenem Geld bezahlt markiert",
+        "undo": "Rückgängig"
+      },
+      "paidDialog": {
+        "title": "Wie wurde bezahlt?",
+        "close": "Schließen",
+        "cash": "Bar, aus der {{term}}",
+        "own": "Mit eigenem Geld",
+        "ownHint": "Private Karte oder eigenes Bargeld",
+        "howError": "Wähle, wie bezahlt wurde.",
+        "date": "Bezahlt am",
+        "dateError": "Wähle einen Tag vom Belegdatum bis heute.",
+        "hint": "Die Zahlung wird erfasst und zählt wie jede andere in deiner Buchhaltung.",
+        "done": "Fertig",
+        "cancel": "Abbrechen"
       },
       "picker": {
         "search": "Zahlungen durchsuchen",
@@ -1800,6 +1830,7 @@
       "connectFirst": "Verbinde deine Bank",
       "before": "Verbinde deine Bank, dann erscheinen hier deine Konten mit ihren Zahlungen.",
       "cashLine": "Die Zahlungen kommen aus deinen Belegen",
+      "ownLine": "Geld, das du privat für das Geschäft bezahlt hast: eine {{term}}",
       "statementLine": "Die Zahlungen kommen aus importierten Kontoauszügen",
       "lastFetchedToday": "zuletzt abgerufen heute, {{time}}",
       "lastFetched": "zuletzt abgerufen am {{date}}, {{time}}",
@@ -1810,7 +1841,8 @@
         "renewToday": "Heute erneuern",
         "signInAgain": "Erneut anmelden",
         "statement": "Kontoauszug-Import",
-        "cash": "Kasse"
+        "cash": "Kasse",
+        "own": "Privat"
       },
       "action": {
         "renew": "Erneuern",
@@ -1821,7 +1853,8 @@
         "business": "Geschäftskonto",
         "savings": "Sparkonto",
         "card": "Kreditkarte",
-        "cash": "Kasse"
+        "cash": "Kasse",
+        "own": "Eigenes Geld"
       },
       "imports": {
         "title": "Importe",

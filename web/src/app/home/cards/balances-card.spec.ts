@@ -28,6 +28,19 @@ describe('BalancesCard', () => {
     expect(updated('wd-cash')).toBe('Updated 14 Oct');
   });
 
+  it("does not list the Own money account: it holds nothing of the business's, so no balance of it is shown", () => {
+    const demo = TestBed.inject(DemoStateService);
+    demo.setBusiness('weber-design');
+    demo.addOwnMoneyAccount();
+    expect(demo.business().accounts.some((account) => account.kind === 'own')).toBe(true);
+    const fixture = TestBed.createComponent(BalancesCard);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="account-weber-design-own"]')).toBeNull();
+    expect(el.textContent).not.toContain('Own money');
+    expect(el.querySelectorAll('[data-testid^="account-w"]')).toHaveLength(2);
+  });
+
   it('translates the cash account name and leaves bank names alone', () => {
     TestBed.inject(DemoStateService).setBusiness('weber-design');
     const language = TestBed.inject(LanguageService);

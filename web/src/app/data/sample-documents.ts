@@ -111,6 +111,8 @@ export const EXTRA_DOCUMENTS: Record<string, Doc[]> = {
     // An invoice that was cancelled, and the cancellation invoice that cancels it: both stay on record, and no payment will settle either.
     extra({ id: 'wd-d5', file: 'RE-2026-040.pdf', source: 'file', name: 'Agentur Nord', direction: 'sent', invoiceNo: 'RE-2026-040', date: '2026-10-01', dueDate: '2026-10-15', cents: 59500, booking: REVENUE_19, confirmed: true }),
     extra({ id: 'wd-d6', file: 'RE-2026-042.pdf', source: 'file', name: 'Agentur Nord', direction: 'sent', invoiceNo: 'RE-2026-042', date: '2026-10-07', cents: 59500, booking: REVENUE_19, confirmed: true }),
+    // A photo of a till receipt for something paid in cash: no payment will ever show it, so the person says it was paid in cash ("Paid in cash or with my own money").
+    extra({ id: 'wd-d7', file: 'IMG_2049.jpg', source: 'photo', name: 'Copyshop Kreuzberg', direction: 'received', invoiceNo: 'B-7731', date: '2026-10-19', cents: 1850, booking: OFFICE, confirmed: false }),
     // The invoice for the Volksbank payment of the sample statement (volksbank-oktober.xml): its only certain match, which importing links by itself.
     extra({ id: 'wd-d8', file: 'druckerei-mayer-rechnung.pdf', source: 'file', name: 'Druckerei Mayer', direction: 'received', invoiceNo: 'DM-26-0418', date: '2026-10-14', cents: 14280, booking: ADVERTISING, confirmed: false }),
   ],
@@ -119,6 +121,8 @@ export const EXTRA_DOCUMENTS: Record<string, Doc[]> = {
     extra({ id: 'sy-d1', file: 'flyer-rechnung.pdf', source: 'file', name: 'Kiezdruck Druckerei', direction: 'received', invoiceNo: 'KD-3391', date: '2026-10-04', cents: 4500, booking: ADVERTISING, confirmed: false }),
     // An invoice to a customer that is paid in part (the payment sy-t15 covers half of it), so it is not linked to a payment yet.
     extra({ id: 'sy-d2', file: 'RE-2026-021.pdf', source: 'file', name: 'Physio Zentrum Mitte', direction: 'sent', invoiceNo: 'RE-2026-021', date: '2026-10-14', dueDate: '2026-11-13', cents: 60000, booking: REVENUE_KU, confirmed: true }),
+    // An invoice she paid with her own card, not from the business account: no payment of the business will show it ("Paid in cash or with my own money"). She is a Kleinunternehmer, so no VAT counts.
+    extra({ id: 'sy-d3', file: 'yogamatten-shop-rechnung.pdf', source: 'file', name: 'Yogamatten-Shop', direction: 'received', invoiceNo: 'YS-50214', date: '2026-10-12', cents: 8900, booking: SUPPLIES, confirmed: false }),
   ],
   'cafe-linde': [
     // An invoice to a customer who has not paid and was reminded once: overdue since 9 October.

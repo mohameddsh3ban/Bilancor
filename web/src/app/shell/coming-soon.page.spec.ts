@@ -56,6 +56,12 @@ describe('ComingSoonPage', () => {
     for (const lang of [en, de, ar]) expect(lang.soon).not.toHaveProperty('selfReceipt');
   });
 
+  it('coming soon no longer lists cashPayment: Paid in cash or with my own money is built, so its title is gone and its link lands on the default page', async () => {
+    const el = await render('/soon/cashPayment');
+    expect(el.querySelector('h1')?.textContent).toContain('This page');
+    for (const lang of [en, de, ar]) expect(lang.soon).not.toHaveProperty('cashPayment');
+  });
+
   it('has a title for every feature a link uses', async () => {
     const features = [
       'home',
@@ -68,7 +74,6 @@ describe('ComingSoonPage', () => {
       'receipt',
       'account',
       'photo',
-      'cashPayment',
     ];
     const harness = await RouterTestingHarness.create('/soon/home');
     for (const feature of features) {

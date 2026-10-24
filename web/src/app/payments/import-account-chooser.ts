@@ -13,8 +13,8 @@ const ROW_CLASS =
 
 /**
  * "Which account is it for?": the accounts that take a statement, then **A new account…**. Statement accounts come first (their
- * payments only come from statements), then the connected ones, which take older months than the bank connection fetched. The cash box
- * has no statement. A connected account only counts once the bank step is done, as in Settings; a statement account always does.
+ * payments only come from statements), then the connected ones, which take older months than the bank connection fetched. The cash box and
+ * the Own money account have no statement. A connected account only counts once the bank step is done, as in Settings; a statement account always does.
  * Each is a link into the import for that account, remembering where the person came from.
  */
 @Component({
@@ -102,7 +102,7 @@ export class ImportAccountChooser {
       .business()
       .accounts.filter(
         (account) =>
-          account.kind !== 'cash' && (bankDone || account.connection.kind === 'statement'),
+          account.kind === 'bank' && (bankDone || account.connection.kind === 'statement'),
       )
       .map((account) => ({
         id: account.id,

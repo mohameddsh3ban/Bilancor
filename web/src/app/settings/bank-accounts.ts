@@ -16,6 +16,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../core/format/date.pipe';
+import { Term } from '../core/i18n/term';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account } from '../data/models';
 import {
@@ -36,6 +37,7 @@ const TONES: Record<ConnectionStatus['kind'], string> = {
   signInAgain: 'bg-negative/10 text-negative',
   statement: 'bg-muted text-muted-foreground',
   cash: 'bg-muted text-muted-foreground',
+  own: 'bg-muted text-muted-foreground',
 };
 
 /** The button each status has, if any. */
@@ -45,6 +47,7 @@ const ACTIONS: Record<ConnectionStatus['kind'], AccountRow['action']> = {
   signInAgain: 'signIn',
   statement: 'import',
   cash: null,
+  own: null,
 };
 
 /** The words for a status, as a translation key under `settings.bank.status` and its parameters. */
@@ -59,7 +62,7 @@ function statusWords(status: ConnectionStatus): { key: string; params: { days: n
 /** What a row of the list shows about one account. */
 interface AccountRow {
   account: Account;
-  /** The bank behind the account; null for the cash box. */
+  /** The bank behind the account; null for the cash box and the Own money account. */
   bank: string | null;
   status: ConnectionStatus;
   statusKey: string;
@@ -86,7 +89,9 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
  * row's new status, cancelling closes it and puts the cursor back there. Import statement opens the import of that
  * account (`/payments/import`, back to Settings). A row of an account that has imports ends with their list, with Download
  * and Undo (see `AccountImports`). Before the bank step is done the page says so and offers **Connect your
- * bank**, with only the cash box listed.
+ * bank**, with only the cash box and the Own money account listed (the accounts the person made, not banks). The Own money account says
+ * it is money the person paid for the business privately (an owner's deposit, Privateinlage); like the cash box it has no button and
+ * no imports.
  */
 @Component({
   selector: 'app-bank-accounts',
@@ -100,6 +105,7 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
     HlmCardImports,
     NgIcon,
     RouterLink,
+    Term,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideBanknote, lucidePlus })],
@@ -172,6 +178,10 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
                     >
                       @if (row.account.kind === 'cash') {
                         {{ 'settings.bank.cashLine' | transloco }}
+                      } @else if (row.account.kind === 'own') {
+                        @let ownLine =
+                          ('settings.bank.ownLine' | transloco: { term: termMark }).split(termMark);
+                        {{ ownLine[0] }}<app-term key="privateinlage" />{{ ownLine[1] }}
                       } @else {
                         @if (row.iban; as iban) {
                           <bdi dir="ltr" [attr.data-testid]="'bank-iban-' + row.account.id">{{
@@ -267,15 +277,17 @@ export class BankAccounts {
   private readonly approvals = viewChildren<ElementRef<HTMLElement>>('approval');
 
   protected readonly connectPage = '/settings/bank/connect';
+  /** Stands where the term goes in the Own money line, so the term can be a button of its own with its explanation. */
+  protected readonly termMark = '\u0001';
 
   protected readonly bankDone = computed(() => this.demo.setup().bank);
 
-  /** The rows: every account once the bank step is done, only the cash box before. */
+  /** The rows: every account once the bank step is done, before it only those that are not banks (the cash box, Own money). */
   protected readonly rows = computed<AccountRow[]>(() => {
     const bankDone = this.bankDone();
     return this.demo
       .business()
-      .accounts.filter((account) => bankDone || account.kind === 'cash')
+      .accounts.filter((account) => bankDone || account.kind !== 'bank')
       .map((account) => {
         const status = connectionStatus(account);
         const words = statusWords(status);

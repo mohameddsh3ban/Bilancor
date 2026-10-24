@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Account, Business, HistoryEntry, Invoice, Transaction } from '../data/models';
+import type { Account, Business, HistoryEntry, Invoice } from '../data/models';
+import { newId, paymentFor } from '../domain/cash-payments';
 import {
   canSendInvoice,
   effectiveTaxNote,
@@ -36,14 +37,6 @@ interface OnItsWay {
   generation: number;
 }
 
-/** `<prefix>-<n>` for the smallest n above the number of ids taken that none of them uses. */
-function newId(prefix: string, taken: readonly string[]): string {
-  const used = new Set(taken);
-  let n = taken.length + 1;
-  while (used.has(`${prefix}-${n}`)) n++;
-  return `${prefix}-${n}`;
-}
-
 /** A new draft with nothing filled in: today's date, the current month, and the term, language and VAT rate a new invoice starts with. */
 function blankDraft(business: Business, id: string): Invoice {
   const profile = business.invoiceProfile;
@@ -66,34 +59,6 @@ function blankDraft(business: Business, id: string): Invoice {
     cancelledBy: null,
     cancels: null,
     history: [{ date: DEMO_TODAY, key: 'invoiceCreated', params: {} }],
-  };
-}
-
-/** An incoming payment of what is left of an invoice, booked and confirmed, with no receipt yet (linking it to the invoice gives it one). */
-function paymentFor(
-  business: Business,
-  invoice: Invoice,
-  accountId: string,
-  date: string,
-  counterpartyIban: string,
-  history: HistoryEntry[],
-): Transaction {
-  return {
-    id: newId(`${business.id}-pay`, business.transactions.map((t) => t.id)),
-    date,
-    counterparty: invoice.customer.name,
-    accountId,
-    amountCents: leftCents(invoice, business),
-    booking: revenueBookingFor(invoice, business.taxProfile),
-    confirmed: true,
-    isPrivate: false,
-    receipt: 'missing',
-    receiptFile: null,
-    counterpartyIban,
-    reference: invoice.number ?? '',
-    history,
-    beforePrivate: null,
-    beforeLink: null,
   };
 }
 

@@ -603,6 +603,22 @@ describe('StatementImportPage', () => {
       expect(q('choose-new')).not.toBeNull();
     });
 
+    it('does not offer the Own money account: it is not a bank, so a statement does not fit it, and an address that names it starts the account choice', async () => {
+      demo.setBusiness('cafe-linde');
+      demo.addOwnMoneyAccount();
+      expect(demo.business().accounts.some((account) => account.id === 'cafe-linde-own')).toBe(true);
+      await render('/payments/import?from=payments');
+      expect(qa('chooser-row').map((row) => row.getAttribute('data-account'))).toEqual([
+        'cl-sparkasse',
+        'cl-qonto',
+      ]);
+      expect(q('choose-cafe-linde-own')).toBeNull();
+
+      await render('/payments/import?account=cafe-linde-own&from=payments');
+      expect(q('chooser')).not.toBeNull();
+      expect(q('drop-zone')).toBeNull();
+    });
+
     it('an account that is not one of the open business starts the account choice, and so does the cash box', async () => {
       demo.setBusiness('cafe-linde');
       await render('/payments/import?account=wd-qonto&from=payments');

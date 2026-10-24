@@ -1,7 +1,7 @@
 import type { Account, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { presetSteps } from './home-cards';
-import { decisionCount, decisionMinutes, newestTransactions, totalAvailableCents } from './home-figures';
+import { balanceAccounts, decisionCount, decisionMinutes, newestTransactions, totalAvailableCents } from './home-figures';
 
 const account = (balanceCents: number): Account => ({
   id: String(balanceCents),
@@ -36,6 +36,13 @@ describe('home figures', () => {
   it('totals the account balances', () => {
     expect(totalAvailableCents([account(1000), account(250), account(-50)])).toBe(1200);
     expect(totalAvailableCents([])).toBe(0);
+  });
+
+  it("lists the accounts that hold the business's money: the Own money account is not one of them", () => {
+    const own: Account = { ...account(0), id: 'own', kind: 'own', product: 'own' };
+    const cash: Account = { ...account(500), id: 'cash', kind: 'cash', product: 'cash' };
+    expect(balanceAccounts([account(1000), own, cash]).map((a) => a.id)).toEqual(['1000', 'cash']);
+    expect(balanceAccounts([own])).toEqual([]);
   });
 
   it('estimates a minute per decision, at least one', () => {

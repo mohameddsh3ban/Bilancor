@@ -68,6 +68,16 @@ describe('KeyNumbers', () => {
     expect(t.textContent).toContain(formatMoney(15000, 'en'));
   });
 
+  it("does not list the Own money account under the total, which it does not change", () => {
+    demo.addOwnMoneyAccount();
+    const t = tile(render(), 'balances')!;
+    expect(t.textContent).not.toContain('Own money');
+    expect(t.querySelectorAll('li')).toHaveLength(2);
+    expect(t.querySelector('[data-testid="tile-balances-total"]')?.textContent?.trim()).toBe(
+      formatMoney(1263020, 'en'),
+    );
+  });
+
   it('names a connected savings account by the bank and the product in the language of the page', () => {
     demo.connectAccounts('qonto', FOUND_ACCOUNTS['weber-design']['qonto'], '2026-01-01');
     const t = tile(render(), 'balances')!;

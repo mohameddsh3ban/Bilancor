@@ -10,6 +10,7 @@ import { invoiceStatus } from '../domain/invoices';
 import { DocumentDetailPage } from '../documents/document-detail.page';
 import { DocumentsPage } from '../documents/documents.page';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
 import ar from '../../../public/i18n/ar.json';
@@ -493,14 +494,14 @@ describe('PaymentDetailPage', () => {
     it('lists the documents that fit the payment, best match first', async () => {
       await render('/payments/wd-t17');
       await click('pick-document');
-      // Druckerei Mayer is the receipt of the sample statement's Volksbank payment: unlinked and received, so it fits any payment out.
-      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Druckerei Mayer', 'Bürobedarf Schulz']);
+      // Druckerei Mayer is the receipt of the sample statement's Volksbank payment and Copyshop Kreuzberg the receipt of a cash payment: unlinked and received, so they fit any payment out.
+      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Druckerei Mayer', 'Copyshop Kreuzberg', 'Bürobedarf Schulz']);
     });
 
     it('the picker offers only received documents for money out', async () => {
       await render('/payments/wd-t3');
       await click('pick-document');
-      expect(optionNames()).toEqual(['Bürobedarf Schulz', 'Druckerei Mayer', 'Böttcher Bürobedarf']);
+      expect(optionNames()).toEqual(['Copyshop Kreuzberg', 'Bürobedarf Schulz', 'Druckerei Mayer', 'Böttcher Bürobedarf']);
     });
 
     it('and only sent documents for money in', async () => {
@@ -514,12 +515,27 @@ describe('PaymentDetailPage', () => {
       demo.updateDocument('wd-d1', (x) => ({ ...x, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (x) => ({ ...x, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d8', (x) => ({ ...x, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d7', (x) => ({ ...x, paymentId: 'wd-t2' }));
       await render('/payments/wd-t17');
       await click('pick-document');
       expect(text(inBody('document-picker-empty'))).toContain(
         'No unlinked documents fit this payment',
       );
       expect(inBody('document-picker-add')!.getAttribute('href')).toBe('/documents?add=1');
+    });
+
+    it('a payment made from a receipt (paid with own money) shows its account, its receipt and its line, and stays business', async () => {
+      TestBed.inject(ReceiptService).markPaid('wd-d7', 'own', '2026-10-19');
+      await render('/payments/paid-wd-d7');
+
+      expect(text(d('detail-meta'))).toBe('19 Oct · Own money');
+      expect(status()).toBe('Booked');
+      expect(text(d('receipt-state'))).toBe('IMG_2049.jpg');
+      expect(d('open-document')!.getAttribute('href')).toBe('/documents/wd-d7');
+      expect(d('bank-iban')).toBeNull(); // there is no bank behind it
+      expect(text(d('private-blocked'))).toBe('This payment has a document. Unlink it first.');
+      expect(d('kind-private')).toBeNull();
+      expect(historyTexts()).toEqual(['You marked it as paid with your own money']);
     });
 
     it('choosing a document twice writes one history line on each side', async () => {

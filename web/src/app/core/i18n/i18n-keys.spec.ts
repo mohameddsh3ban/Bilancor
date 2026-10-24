@@ -57,6 +57,16 @@ describe('translation files', () => {
     expect(en.history.supportOn).toContain('{{until}}');
   });
 
+  it('has a history text for a payment marked as paid with own money and for adding the Own money account, as for the cash box', () => {
+    for (const lang of [en, de, ar]) {
+      expect(lang.history.paidWithOwnMoney).toBeTruthy();
+      expect(lang.history.ownMoneyAdded).toBeTruthy();
+      expect(lang.history.paidWithOwnMoney).not.toBe(lang.history.paidInCash);
+    }
+    expect(en.history.paidWithOwnMoney).toBe('You marked it as paid with your own money');
+    expect(de.history.paidWithOwnMoney).toBe('Du hast sie als mit eigenem Geld bezahlt markiert');
+  });
+
   it('has a history text for a closed month, naming the month and who closed it', () => {
     for (const lang of [en, de, ar]) {
       expect(lang.history.monthClosed).toContain('{{month}}');
@@ -127,6 +137,8 @@ describe('translation files', () => {
       'festschreibung',
       'camt',
       'kontoauszug',
+      'kasse',
+      'privateinlage',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

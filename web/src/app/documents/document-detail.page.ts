@@ -22,6 +22,7 @@ import { changeDocCategory, confirmDocBooking, editDocument } from '../domain/do
 import { missingField, visibleDocuments } from '../domain/document-status';
 import { changeCategory, confirmBooking } from '../domain/payment-actions';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService, type PaidReceipt } from '../state/receipt.service';
 import { BookingLabel } from '../payments/booking-label';
 import { CategoryPicker } from '../payments/category-picker';
 import { Term } from '../core/i18n/term';
@@ -41,7 +42,9 @@ import { DocumentSteps } from './document-steps';
  * of an invoice written in Invoices is locked: it says so, opens the invoice, and has no Edit, no category change and no
  * Remove (and no "Not this payment" once the invoice is paid), so a sent invoice can't change silently. A self-issued receipt
  * is locked the same way: it says it is a self-issued receipt (Eigenbeleg), offers Print, and has no Edit, category change, Remove or
- * "Not this payment". Below `lg`
+ * "Not this payment". A received receipt that waits for its payment offers "Paid in cash or with my own money" (see `DocumentPayment`);
+ * once it is done the page says so and offers Undo for a few seconds (see `ReceiptService.justPaid`), and the receipt stays with its
+ * payment ("Not this payment" is not there). Below `lg`
  * it is a page of its own; from `lg` it is the panel beside the list. When the document is not there (another
  * business opened, an unknown id, not shown in this setup state) it goes back to the list.
  */
@@ -170,6 +173,27 @@ import { DocumentSteps } from './document-steps';
           </span>
         </header>
 
+        <div role="status" class="empty:hidden">
+          @if (paid(); as made) {
+            <p
+              class="bg-positive/10 border-positive/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+              data-testid="paid-undo"
+            >
+              <span class="min-w-0" data-testid="paid-undo-text">{{
+                'documents.detail.paid.' + made.how | transloco
+              }}</span>
+              <button
+                type="button"
+                class="text-primary focus-visible:ring-ring/50 min-h-10 shrink-0 rounded-sm px-1 font-semibold underline underline-offset-4 outline-none focus-visible:ring-3"
+                data-testid="undo-paid"
+                (click)="undoPaid(made.txId)"
+              >
+                {{ 'documents.detail.paid.undo' | transloco }}
+              </button>
+            </p>
+          }
+        </div>
+
         @if (doc.invoice; as written) {
           <section
             class="bg-muted/50 border-border flex flex-col gap-2 rounded-lg border p-3"
@@ -279,6 +303,7 @@ import { DocumentSteps } from './document-steps';
 })
 export class DocumentDetailPage {
   private readonly demo = inject(DemoStateService);
+  private readonly receipts = inject(ReceiptService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -308,6 +333,12 @@ export class DocumentDetailPage {
   });
 
   protected readonly accounts = computed(() => this.demo.business().accounts);
+
+  /** The payment just made from the open document (Paid in cash or with my own money), while Undo is on offer. */
+  protected readonly paid = computed<PaidReceipt | null>(() => {
+    const paid = this.receipts.justPaid();
+    return paid !== null && paid.docId === this.doc()?.id ? paid : null;
+  });
 
   /**
    * The field of the document that could not be read and is asked for in the box under the scan. A document that is
@@ -360,6 +391,11 @@ export class DocumentDetailPage {
   }
 
   // Each action changes the document or the payment only while it still applies, so a double tap never writes a second history line.
+
+  /** Undo, right after the receipt was marked as paid in cash or with the person's own money: the payment is gone and the receipt waits again. */
+  protected undoPaid(txId: string): void {
+    this.receipts.undoPaid(txId);
+  }
 
   /** Types in the field that could not be read; a value that does not fit (an amount of 0 or less, an empty text) is refused. */
   protected saveFix(event: Event): void {

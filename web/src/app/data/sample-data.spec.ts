@@ -223,9 +223,9 @@ describe('sample documents', () => {
     }
   });
 
-  it('the documents that are not linked wait for a payment or a decision, or are closed invoices: wd-d1 to wd-d6, wd-d8, sy-d1, sy-d2 and cl-d1', () => {
+  it('the documents that are not linked wait for a payment or a decision, or are closed invoices: wd-d1 to wd-d8, sy-d1 to sy-d3 and cl-d1 (wd-d7 and sy-d3 are the receipts paid in cash and with own money)', () => {
     const unlinked = BUSINESSES.flatMap((b) => b.documents.filter((d) => d.paymentId === null).map((d) => d.id));
-    expect(unlinked).toEqual(['wd-d1', 'wd-d2', 'wd-d3', 'wd-d4', 'wd-d5', 'wd-d6', 'wd-d8', 'sy-d1', 'sy-d2', 'cl-d1']);
+    expect(unlinked).toEqual(['wd-d1', 'wd-d2', 'wd-d3', 'wd-d4', 'wd-d5', 'wd-d6', 'wd-d7', 'wd-d8', 'sy-d1', 'sy-d2', 'sy-d3', 'cl-d1']);
   });
 
   it('wd-d1 is a photo with no amount yet; wd-d4 and sy-d1 are receipts for payments that lack one', () => {

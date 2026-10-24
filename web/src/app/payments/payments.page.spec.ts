@@ -7,6 +7,7 @@ import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { FOUND_ACCOUNTS } from '../data/banks';
 import { groupByMonth } from '../domain/payment-filters';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
 import ar from '../../../public/i18n/ar.json';
@@ -217,6 +218,28 @@ describe('PaymentsPage', () => {
     await settle();
     expect(labels()).toEqual(['Alle Konten', 'Qonto', 'Qonto · Sparkonto', 'Qonto · Kreditkarte', 'Kasse']);
     expect(text(q('chip-account'))).toContain('Qonto · Sparkonto');
+  });
+
+  it('payments filter lists Own money, and filtering by it shows the payment paid with own money, named by the account in every language', async () => {
+    TestBed.inject(ReceiptService).markPaid('wd-d7', 'own', '2026-10-19');
+    await render();
+    const labels = () =>
+      Array.from((q('filter-account') as HTMLSelectElement).options).map((o) => o.textContent?.trim());
+    expect(labels()).toEqual(['All accounts', 'Qonto', 'Own money', 'Cash box']);
+
+    await pick('filter-account', 'weber-design-own');
+    expect(qa('payment-row')).toHaveLength(1);
+    expect(text(q('chip-account'))).toContain('Own money');
+    expect(text(qa('payment-table-row')[0])).toContain('Copyshop Kreuzberg');
+    expect(text(qa('payment-table-row')[0])).toContain('Own money');
+
+    TestBed.inject(LanguageService).setLang('de');
+    await settle();
+    expect(labels()).toEqual(['Alle Konten', 'Qonto', 'Eigenes Geld', 'Kasse']);
+    expect(text(q('chip-account'))).toContain('Eigenes Geld');
+    TestBed.inject(LanguageService).setLang('ar');
+    await settle();
+    expect(labels()).toContain(ar.settings.bank.product.own);
   });
 
   it('names the account of a payment in the table by its bank and product, like the filter does', async () => {

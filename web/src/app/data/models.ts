@@ -4,18 +4,18 @@ export type SetupState = 'new' | 'halfway' | 'active';
 /** The three setup steps of a business, each done or not. */
 export interface SetupSteps { bank: boolean; tax: boolean; receipt: boolean }
 export type TxStatus = 'booked' | 'confirm' | 'noReceipt' | 'unclear';
-/** How an account gets its payments: a bank connection (with a consent that ends), imported statements, or the cash box. */
+/** How an account gets its payments: a bank connection (with a consent that ends), imported statements, the cash box, or the Own money account (payments made from receipts). */
 export interface AccountConnection {
-  kind: 'connected' | 'statement' | 'cash';
+  kind: 'connected' | 'statement' | 'cash' | 'own';
   consentUntil: string | null; // ISO date; the day the bank consent ends (connected only)
   lastFetched: string | null; // ISO date-time, local demo time, e.g. '2026-10-22T06:12' (connected only)
   fetchFrom: string | null; // ISO date; the first day payments were asked for. Stored, filters nothing in the mockup
   broken: boolean; // the bank says the connection no longer works
 }
 export interface Account {
-  id: string; kind: 'bank' | 'cash'; name: string; balanceCents: number; lastUpdate: string; // ISO date
-  connection: AccountConnection; product: 'business' | 'savings' | 'card' | 'cash';
-  iban: string | null; // null for the cash box
+  id: string; kind: 'bank' | 'cash' | 'own'; name: string; balanceCents: number; lastUpdate: string; // ISO date
+  connection: AccountConnection; product: 'business' | 'savings' | 'card' | 'cash' | 'own';
+  iban: string | null; // null for the cash box and the Own money account
 }
 export type ReceiptState = 'attached' | 'missing' | 'notNeeded';
 export interface Booking { skr03: string; nameDe: string; labelKey: string; vatRate: 0 | 7 | 19 } // labelKey -> i18n "booking.<labelKey>"
@@ -46,6 +46,7 @@ export type HistoryKey =
   | 'bankConnected' // params: bank, account
   | 'bankRenewed' // params: bank
   | 'cashAdded'
+  | 'ownMoneyAdded' // on a business, when it first got its Own money account (money the owner paid for the business privately)
   | 'invoiceCreated'
   | 'invoiceSent' // params: email (the address it went to)
   | 'invoiceReminded' // params: level ('1' or '2')
@@ -54,7 +55,8 @@ export type HistoryKey =
   | 'invoiceCancelled' // params: number (of the cancellation invoice)
   | 'invoiceCancellation' // params: number (of the invoice it cancels)
   | 'invoiceDuplicated' // params: number (of the invoice it was copied from)
-  | 'paidInCash'
+  | 'paidInCash' // on a payment (and a sent invoice) marked as paid in cash
+  | 'paidWithOwnMoney' // on a payment made from a received receipt with the owner's own money (see `paidFromReceiptFor`)
   | 'paysInvoice' // on a payment; params: number, and auto ('true') when the system matched it on its own
   | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category, and auto ('true') as above
   | 'selfIssued' // on the document of a self-issued receipt (Eigenbeleg); params: number

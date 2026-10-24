@@ -27,6 +27,7 @@ import {
 } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection } from '../domain/bank-connection';
+import { lockedToReceipt } from '../domain/cash-payments';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
@@ -51,6 +52,20 @@ function newCashBox(businessId: string): Account {
     lastUpdate: DEMO_TODAY,
     connection: noConnection('cash'),
     product: 'cash',
+    iban: null,
+  };
+}
+
+/** The Own money account of a business that has none: money the owner paid for the business privately. No payments of its own, no balance, no bank and no IBAN. */
+function newOwnMoneyAccount(businessId: string): Account {
+  return {
+    id: `${businessId}-own`,
+    kind: 'own',
+    name: 'Own money',
+    balanceCents: 0,
+    lastUpdate: DEMO_TODAY,
+    connection: noConnection('own'),
+    product: 'own',
     iban: null,
   };
 }
@@ -293,6 +308,22 @@ export class DemoStateService {
   }
 
   /**
+   * Gives the open business the Own money account when it has none, in front of its cash box, with an `ownMoneyAdded` line: the account of
+   * what the owner paid for the business privately (see `paidFromReceiptFor`). It does not count as the bank step.
+   */
+  addOwnMoneyAccount(): void {
+    this.updateBusiness(this.businessIdSignal(), (business) =>
+      business.accounts.some((account) => account.kind === 'own')
+        ? business
+        : {
+            ...business,
+            accounts: beforeCashBox(business.accounts, [newOwnMoneyAccount(business.id)]),
+            history: [{ date: DEMO_TODAY, key: 'ownMoneyAdded', params: {} }, ...business.history],
+          },
+    );
+  }
+
+  /**
    * Adds an account to a business (the open one unless named), in front of its cash box: a statement account of a bank the
    * demo does not list, for instance. The business keeps its own copy. Ignored for an unknown business and for an id the business
    * has already, so a repeated call does nothing. It writes no history line and does not tick the bank step: importing a statement does.
@@ -459,14 +490,15 @@ export class DemoStateService {
 
   /**
    * Takes a document of the open business off its payment, putting the payment back as it was. Ignored when it is not linked,
-   * for the document of an invoice written in Invoices (the payment stays the invoice's payment), and for a self-issued receipt
-   * (putting the payment back would give its VAT back, though the payment keeps the mark that it has none).
+   * for the document of an invoice written in Invoices (the payment stays the invoice's payment), for a self-issued receipt
+   * (putting the payment back would give its VAT back, though the payment keeps the mark that it has none), and for a payment
+   * made from its receipt as paid in cash or with the owner's own money (it is locked to the receipt, see `lockedToReceipt`).
    */
   unlink(docId: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) => {
       const doc = business.documents.find((d) => d.id === docId);
       const tx = doc?.paymentId ? business.transactions.find((t) => t.id === doc.paymentId) : undefined;
-      if (!doc || !tx || doc.invoice !== null || doc.selfIssued !== null) return business;
+      if (!doc || !tx || doc.invoice !== null || doc.selfIssued !== null || lockedToReceipt(tx)) return business;
       const unlinked = unlinkDocument(doc, tx);
       return {
         ...business,

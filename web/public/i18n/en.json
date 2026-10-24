@@ -195,6 +195,16 @@
       "de": "Kontoauszug",
       "explain": "The list of payments your bank sends you for a period, as a file or a PDF. You download it from your online banking."
     },
+    "kasse": {
+      "label": "cash box",
+      "de": "Kasse",
+      "explain": "The business's own cash, in a till or a drawer, not in a bank account. Payments made in cash for the business are booked here."
+    },
+    "privateinlage": {
+      "label": "owner's deposit",
+      "de": "Privateinlage",
+      "explain": "Money you put into the business from your private funds, for example when you pay a business cost with your own card. It is not income, and the business keeps the receipt for the cost."
+    },
     "festschreibung": {
       "label": "Locking the books",
       "de": "Festschreibung",
@@ -225,7 +235,6 @@
     "receipt": "Upload your first receipt",
     "account": "Account",
     "photo": "Take a photo",
-    "cashPayment": "Paid in cash or privately",
     "default": "This page"
   },
   "comingSoon": {
@@ -699,6 +708,7 @@
     "bankConnected": "You connected {{account}} at {{bank}}",
     "bankRenewed": "You renewed the connection to {{bank}}",
     "cashAdded": "You added a cash box",
+    "ownMoneyAdded": "You added the Own money account",
     "invoiceCreated": "You created the invoice",
     "invoiceSent": "You sent it by email to {{email}}",
     "invoiceReminded": "You sent reminder {{level}} of 2 by email",
@@ -708,6 +718,7 @@
     "invoiceCancellation": "You created it to cancel invoice {{number}}",
     "invoiceDuplicated": "You copied it from invoice {{number}}",
     "paidInCash": "You marked it as paid in cash",
+    "paidWithOwnMoney": "You marked it as paid with your own money",
     "paysInvoice": "Pays invoice {{number}}",
     "bookedByInvoice": "Booked as {{category}} to match the invoice",
     "selfIssued": "You wrote the self-issued receipt {{number}}",
@@ -988,13 +999,32 @@
         "noMatch": "No matching payments yet",
         "thisOne": "This one",
         "searchAll": "Search all payments",
-        "cash": "Paid in cash or privately",
+        "cash": "Paid in cash or with my own money",
         "payInInvoice": "Paid in cash? Mark it in the invoice",
         "partPaid": "Part paid so far:",
         "notThis": "Not this payment",
         "hasSelfIssued": "This payment already has a self-issued receipt.",
+        "lockedHint": "This payment was made from this receipt, so the two stay together.",
         "closedCancelled": "This invoice was cancelled, so no payment is needed.",
         "closedCancellation": "A cancellation invoice needs no payment."
+      },
+      "paid": {
+        "cash": "Marked as paid in cash",
+        "own": "Marked as paid with your own money",
+        "undo": "Undo"
+      },
+      "paidDialog": {
+        "title": "How was it paid?",
+        "close": "Close",
+        "cash": "In cash, from the {{term}}",
+        "own": "With my own money",
+        "ownHint": "A private card, or cash of your own",
+        "howError": "Choose how it was paid.",
+        "date": "Paid on",
+        "dateError": "Pick a day from the date of the receipt up to today.",
+        "hint": "It's recorded as a payment that counts like any other in your books.",
+        "done": "Done",
+        "cancel": "Cancel"
       },
       "picker": {
         "search": "Search payments",
@@ -1800,6 +1830,7 @@
       "connectFirst": "Connect your bank",
       "before": "Connect your bank and your accounts show up here, with their payments.",
       "cashLine": "Payments come from your receipts",
+      "ownLine": "Money you paid for the business privately: an {{term}}",
       "statementLine": "Payments come from imported statements",
       "lastFetchedToday": "last fetched today, {{time}}",
       "lastFetched": "last fetched {{date}}, {{time}}",
@@ -1810,7 +1841,8 @@
         "renewToday": "Renew today",
         "signInAgain": "Sign in again",
         "statement": "Statement import",
-        "cash": "Cash"
+        "cash": "Cash",
+        "own": "Private"
       },
       "action": {
         "renew": "Renew",
@@ -1821,7 +1853,8 @@
         "business": "Business account",
         "savings": "Savings",
         "card": "Credit card",
-        "cash": "Cash box"
+        "cash": "Cash box",
+        "own": "Own money"
       },
       "imports": {
         "title": "Imports",

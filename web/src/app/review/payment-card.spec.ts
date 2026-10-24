@@ -591,6 +591,7 @@ describe('PaymentCard', () => {
       demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d8', (d) => ({ ...d, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d7', (d) => ({ ...d, paymentId: 'wd-t2' }));
       show('wd-t17');
       click(q('pick-document'));
       await settle();

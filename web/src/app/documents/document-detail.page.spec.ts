@@ -10,7 +10,6 @@ import type { Doc } from '../data/models';
 import { READING_MS, newReadingDoc } from '../domain/document-upload';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
-import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReceiptService } from '../state/receipt.service';
 import { UploadService } from '../state/upload.service';
@@ -44,7 +43,6 @@ describe('DocumentDetailPage', () => {
             component: PaymentsPage,
             children: [{ path: ':id', component: PaymentDetailPage }],
           },
-          { path: 'soon/:feature', component: ComingSoonPage },
         ]),
       ],
     });
@@ -1148,14 +1146,173 @@ describe('DocumentDetailPage', () => {
       expect(tx('wd-t17').history.filter((h) => h.key === 'receiptUnlinked')).toHaveLength(1);
     });
 
-    it('Paid in cash or privately opens the coming-soon page', async () => {
-      await render('/documents/wd-d4');
-      const cash = d('cash-payment')!;
-      expect(text(cash)).toBe('Paid in cash or privately');
-      expect(cash.getAttribute('href')).toBe('/soon/cashPayment');
-      await click(cash);
-      expect(TestBed.inject(Router).url).toBe('/soon/cashPayment');
-      expect(text(el.querySelector('h1'))).toBe('Paid in cash or privately');
+    describe('Paid in cash or with my own money', () => {
+      const dialog = () => document.body.querySelector<HTMLElement>('[role="dialog"]');
+      const inDialog = (testId: string) =>
+        dialog()?.querySelector<HTMLElement>(`[data-testid="${testId}"]`) ?? null;
+
+      async function expectDialog(open: boolean): Promise<void> {
+        await vi.waitFor(async () => {
+          await settle();
+          expect(dialog() !== null).toBe(open);
+        });
+      }
+
+      /** Opens the pop-up, picks a way, and presses Done. */
+      async function payAs(how: 'cash' | 'own'): Promise<void> {
+        await click(d('cash-payment'));
+        await expectDialog(true);
+        inDialog(`paid-how-${how}`)!.querySelector('input')!.click();
+        await settle();
+        inDialog('paid-done')!.click();
+        await expectDialog(false);
+      }
+
+      it('is a button for a received receipt that waits for its payment, and it opens the pop-up instead of a page of its own', async () => {
+        await render('/documents/wd-d7');
+        const cash = d('cash-payment')!;
+        expect(cash.tagName).toBe('BUTTON');
+        expect(text(cash)).toBe('Paid in cash or with my own money');
+        expect(cash.getAttribute('aria-haspopup')).toBe('dialog');
+        expect(d('pay-in-invoice')).toBeNull();
+        await expectDialog(false);
+
+        await click(cash);
+        await expectDialog(true);
+        expect(text(inDialog('paid-title'))).toBe('How was it paid?');
+        expect(TestBed.inject(Router).url).toBe('/documents/wd-d7');
+      });
+
+      it('is offered for the other waiting receipts too, and not where it does not fit', async () => {
+        await render('/documents/wd-d4'); // Böttcher: a received receipt with payments it might be
+        expect(d('cash-payment')).not.toBeNull();
+
+        await render('/documents/wd-d3'); // a sent document that is not an invoice written here
+        expect(d('cash-payment')).toBeNull();
+        await render('/documents/wd-d2'); // a sent invoice keeps its own Mark as paid, in Invoices
+        expect(d('cash-payment')).toBeNull();
+        expect(d('pay-in-invoice')!.getAttribute('href')).toBe('/invoices/inv-wd-044');
+        await render('/documents/wd-d1'); // a photo whose amount is not read yet
+        expect(d('cash-payment')).toBeNull();
+        await render('/documents/doc-wd-t2'); // a receipt that has its payment
+        expect(d('cash-payment')).toBeNull();
+      });
+
+      it("is offered for Sara's receipt too, and makes the payment with no VAT and a cash box of her own", async () => {
+        demo.setBusiness('sara-yoga');
+        await render('/documents/sy-d3');
+        expect(d('cash-payment')).not.toBeNull();
+        await payAs('cash');
+        expect(tx('paid-sy-d3')).toMatchObject({ accountId: 'sara-yoga-cash', amountCents: -8900 });
+        expect(tx('paid-sy-d3').booking!.vatRate).toBe(0);
+        expect(text(inside(d('linked-payment'), 'linked-meta'))).toBe('12 Oct · Cash box');
+      });
+
+      it('in cash: the payment is on the cash box, the receipt is Done and linked, and the page says so with Undo', async () => {
+        await render('/documents/wd-d7');
+        await payAs('cash');
+
+        expect(doc('wd-d7').paymentId).toBe('paid-wd-d7');
+        expect(tx('paid-wd-d7')).toMatchObject({ accountId: 'wd-cash', amountCents: -1850, date: '2026-10-19', receipt: 'attached' });
+        expect(status()).toBe('Done');
+        expect(text(d('paid-undo-text'))).toBe('Marked as paid in cash');
+        expect(text(d('undo-paid'))).toBe('Undo');
+        expect(d('paid-undo')!.closest('[role="status"]')).not.toBeNull();
+        expect(d('cash-payment')).toBeNull();
+        const linked = d('linked-payment')!;
+        expect(linked.getAttribute('href')).toBe('/payments/paid-wd-d7');
+        expect(plain(inside(linked, 'linked-name'))).toBe('Copyshop Kreuzberg');
+        expect(text(inside(linked, 'linked-meta'))).toBe('19 Oct · Cash box');
+        expect(text(inside(linked, 'linked-amount'))).toBe(formatMoney(-1850, 'en', { signed: true }));
+        expect(text(d('booking-label'))).toContain('4930');
+        expect(d('confirm-booking')).toBeNull(); // confirmed with the payment
+        expect(historyTexts()[0]).toBe('You linked it to the Copyshop Kreuzberg payment');
+      });
+
+      it('with my own money: the payment is on the Own money account, which the page names', async () => {
+        await render('/documents/wd-d7');
+        await payAs('own');
+
+        expect(tx('paid-wd-d7').accountId).toBe('weber-design-own');
+        expect(text(d('paid-undo-text'))).toBe('Marked as paid with your own money');
+        expect(text(inside(d('linked-payment'), 'linked-meta'))).toBe('19 Oct · Own money');
+        TestBed.inject(LanguageService).setLang('de');
+        await settle();
+        expect(text(inside(d('linked-payment'), 'linked-meta'))).toBe(`${formatDate('2026-10-19', 'de')} · Eigenes Geld`);
+        expect(text(d('paid-undo-text'))).toBe('Als mit eigenem Geld bezahlt markiert');
+        expect(text(d('undo-paid'))).toBe('Rückgängig');
+      });
+
+      it('the payment is locked to its receipt: no "Not this payment", and a line says why', async () => {
+        await render('/documents/wd-d7');
+        expect(d('payment-locked')).toBeNull();
+        await payAs('cash');
+
+        expect(d('unlink-payment')).toBeNull();
+        expect(text(d('payment-locked'))).toBe('This payment was made from this receipt, so the two stay together.');
+        // ... and not for an ordinary payment that was linked by hand
+        await render('/documents/wd-d4');
+        await click(inside(da('payment-suggestion')[0], 'link-payment'));
+        expect(d('unlink-payment')).not.toBeNull();
+        expect(d('payment-locked')).toBeNull();
+      });
+
+      it('the receipt stays with its payment after the 5 seconds are over: Undo goes, the lock stays', async () => {
+        await render('/documents/wd-d7');
+        // Fake timers only from here, and no waiting on the router: the offer and the page both follow signals, which draw at once.
+        vi.useFakeTimers();
+        TestBed.inject(ReceiptService).markPaid('wd-d7', 'cash', '2026-10-19');
+        harness.detectChanges();
+        expect(d('undo-paid')).not.toBeNull();
+
+        vi.advanceTimersByTime(5000);
+        harness.detectChanges();
+
+        expect(d('paid-undo')).toBeNull();
+        expect(d('undo-paid')).toBeNull();
+        expect(d('unlink-payment')).toBeNull();
+        expect(text(d('payment-locked'))).toContain('stay together');
+        expect(doc('wd-d7').paymentId).toBe('paid-wd-d7');
+      });
+
+      it('Undo within 5 seconds takes the payment away and the receipt waits again, ready to be paid', async () => {
+        await render('/documents/wd-d7');
+        const payments = demo.business().transactions.length;
+        await payAs('own');
+        expect(demo.business().transactions).toHaveLength(payments + 1);
+
+        await click(d('undo-paid'));
+
+        expect(demo.business().transactions).toHaveLength(payments);
+        expect(doc('wd-d7').paymentId).toBeNull();
+        expect(status()).toBe('Waiting for payment');
+        expect(d('paid-undo')).toBeNull();
+        expect(d('linked-payment')).toBeNull();
+        expect(d('cash-payment')).not.toBeNull();
+        expect(historyTexts()).not.toContain('You linked it to the Copyshop Kreuzberg payment');
+      });
+
+      it('the Undo notice is only on the receipt that was paid', async () => {
+        await render('/documents/wd-d7');
+        await payAs('cash');
+        await render('/documents/wd-d4');
+        expect(d('paid-undo')).toBeNull();
+        await render('/documents/wd-d7');
+        expect(d('paid-undo')).not.toBeNull();
+      });
+
+      it('Cancel makes no payment, and Done makes one', async () => {
+        await render('/documents/wd-d7');
+        const payments = demo.business().transactions.length;
+        await click(d('cash-payment'));
+        await expectDialog(true);
+        inDialog('paid-cancel')!.click();
+        await expectDialog(false);
+        expect(demo.business().transactions).toHaveLength(payments);
+
+        await payAs('cash');
+        expect(demo.business().transactions).toHaveLength(payments + 1);
+      });
     });
 
     describe('Search all payments', () => {
@@ -1359,7 +1516,7 @@ describe('DocumentDetailPage', () => {
       expect(d('search-payments')).not.toBeNull();
     });
 
-    it("Paid in cash or privately is not offered on an invoice's document: its invoice has Mark as paid, so it links there", async () => {
+    it("sent invoices keep their own Mark as paid link: Paid in cash or with my own money is not offered on an invoice's document, which links to its invoice", async () => {
       await render('/documents/wd-d2');
       expect(d('cash-payment')).toBeNull();
       const link = d('pay-in-invoice')!;
@@ -1375,7 +1532,7 @@ describe('DocumentDetailPage', () => {
 
       // A document that is not an invoice written here keeps it.
       await render('/documents/wd-d4');
-      expect(text(d('cash-payment'))).toBe('Paid in cash or privately');
+      expect(text(d('cash-payment'))).toBe('Paid in cash or with my own money');
       expect(d('pay-in-invoice')).toBeNull();
     });
 

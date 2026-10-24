@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronRight } from '@ng-icons/lucide';
@@ -9,11 +9,13 @@ import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { Account, Doc, Transaction } from '../data/models';
 import { accountName } from '../domain/bank-connection';
+import { canPayPrivately, lockedToReceipt } from '../domain/cash-payments';
 import { paymentCandidates } from '../domain/document-matching';
 import { isClosedInvoice } from '../domain/document-status';
 import { invoiceDocNote, invoicePayments } from '../domain/invoices';
 import { selfIssuedPaymentFor } from '../domain/self-issued';
 import { DemoStateService } from '../state/demo-state.service';
+import { PaidPrivatelyDialog } from './paid-privately-dialog';
 import { PaymentPicker } from './payment-picker';
 
 /** How many suggested payments show before the person has to search. */
@@ -25,12 +27,14 @@ const SUGGESTIONS = 3;
  * opens in Payments, and "Not this payment" to take the link away. While the document is still being read there is
  * nothing to link yet, so only "No payment yet." shows. For a cancelled invoice and a cancellation invoice no payment is
  * looked for: it says none is needed. The document of an invoice written in Invoices cannot be unlinked ("Not this
- * payment" is not there): the payment is the invoice's. Neither can a self-issued receipt: the payment keeps its 0 % VAT. A waiting
- * receipt that is probably the real one of a payment that has a self-issued receipt says so, and can't be linked to it (the payment
- * has a receipt already). Once part of the invoice is paid it lists the payments that came
- * in instead of looking for a first one, and in place of "Paid in cash or privately" (which is coming soon) it leads to the
- * invoice, where Mark as paid works. Each action does something only while it still applies, so a double tap writes one
- * history line on each side.
+ * payment" is not there): the payment is the invoice's. Neither can a self-issued receipt: the payment keeps its 0 % VAT. Nor can a
+ * receipt whose payment was made from it as paid in cash or with the person's own money (see `lockedToReceipt`): it says the two stay
+ * together. A waiting receipt that is probably the real one of a payment that has a self-issued receipt says so, and can't be linked
+ * to it (the payment has a receipt already). Once part of the invoice is paid it lists the payments that came
+ * in instead of looking for a first one. A received receipt that is read and waits for its payment also offers "Paid in cash or with
+ * my own money" (see `PaidPrivatelyDialog`), which makes the payment from the receipt; the document of an invoice written in
+ * Invoices leads to the invoice instead, where Mark as paid works. Each action does something only while it still applies, so a
+ * double tap writes one history line on each side.
  */
 @Component({
   selector: 'app-document-payment',
@@ -41,6 +45,7 @@ const SUGGESTIONS = 3;
     MoneyPipe,
     NgIcon,
     NgTemplateOutlet,
+    PaidPrivatelyDialog,
     PaymentPicker,
     RouterLink,
     TranslocoPipe,
@@ -89,7 +94,7 @@ const SUGGESTIONS = 3;
 
       @if (payment(); as linked) {
         <ng-container *ngTemplateOutlet="paymentRow; context: { $implicit: linked }" />
-        @if (doc().invoice === null && doc().selfIssued === null) {
+        @if (canUnlink()) {
           <div class="flex flex-wrap gap-2">
             <button
               hlmBtn
@@ -102,6 +107,10 @@ const SUGGESTIONS = 3;
               {{ 'documents.detail.payment.notThis' | transloco }}
             </button>
           </div>
+        } @else if (madeFromReceipt()) {
+          <p class="text-muted-foreground text-sm" data-testid="payment-locked">
+            {{ 'documents.detail.payment.lockedHint' | transloco }}
+          </p>
         }
       } @else if (doc().reading) {
         <p class="text-sm" data-testid="payment-intro">
@@ -201,19 +210,22 @@ const SUGGESTIONS = 3;
             >
               {{ 'documents.detail.payment.payInInvoice' | transloco }}
             </a>
-          } @else {
-            <a
+          } @else if (canPay()) {
+            <button
               hlmBtn
               variant="outline"
               size="lg"
+              type="button"
+              aria-haspopup="dialog"
               data-testid="cash-payment"
-              [routerLink]="['/soon', 'cashPayment']"
+              (click)="payOpen.set(true)"
             >
               {{ 'documents.detail.payment.cash' | transloco }}
-            </a>
+            </button>
           }
         </div>
       }
+      <app-paid-privately-dialog [doc]="doc()" [(open)]="payOpen" />
     </section>
   `,
 })
@@ -251,6 +263,23 @@ export class DocumentPayment {
     const doc = this.doc();
     if (!isClosedInvoice(doc)) return null;
     return doc.invoice?.role === 'cancellation' ? 'closedCancellation' : 'closedCancelled';
+  });
+
+  /** Whether the pop-up that says the receipt was paid in cash or with the person's own money is open. */
+  protected readonly payOpen = signal(false);
+  /** Whether the document is a received receipt that is read and waits for its payment, so the person can say how it was paid. */
+  protected readonly canPay = computed(() => canPayPrivately(this.doc()));
+  /** Whether the person can take the document off its payment: the document is not an invoice's or a self-issued receipt, and the payment was not made from it. */
+  protected readonly canUnlink = computed(() => {
+    const doc = this.doc();
+    const payment = this.payment();
+    return payment !== null && doc.invoice === null && doc.selfIssued === null && !lockedToReceipt(payment);
+  });
+  /** Whether the payment was made from this receipt as paid in cash or with the person's own money, which keeps the two together. */
+  protected readonly madeFromReceipt = computed(() => {
+    const doc = this.doc();
+    const payment = this.payment();
+    return payment !== null && doc.invoice === null && doc.selfIssued === null && lockedToReceipt(payment);
   });
 
   protected accountOf(payment: Transaction): Account | undefined {

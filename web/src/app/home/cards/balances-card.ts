@@ -7,7 +7,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../../core/format/date.pipe';
 import { MoneyPipe } from '../../core/format/money.pipe';
 import { accountName } from '../../domain/bank-connection';
-import { totalAvailableCents } from '../../domain/home-figures';
+import { balanceAccounts, totalAvailableCents } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 
 /** Each account with its balance (tap opens the coming soon page), and the total available. */
@@ -72,6 +72,6 @@ export class BalancesCard {
   private readonly demo = inject(DemoStateService);
 
   protected readonly nameOf = accountName;
-  protected readonly accounts = computed(() => this.demo.business().accounts);
+  protected readonly accounts = computed(() => balanceAccounts(this.demo.business().accounts));
   protected readonly total = computed(() => totalAvailableCents(this.accounts()));
 }

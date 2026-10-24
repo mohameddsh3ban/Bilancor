@@ -8,14 +8,15 @@ export { addDays, daysBetween };
 
 /**
  * How healthy an account's connection is: a bank connection that is fine, one whose consent ends soon (with the days
- * left), one that needs a new sign-in, or an account that has no bank connection to look after (statement or cash box).
+ * left), one that needs a new sign-in, or an account that has no bank connection to look after (statement, cash box or Own money).
  */
 export type ConnectionStatus =
   | { kind: 'connected' }
   | { kind: 'renewSoon'; daysLeft: number }
   | { kind: 'signInAgain' }
   | { kind: 'statement' }
-  | { kind: 'cash' };
+  | { kind: 'cash' }
+  | { kind: 'own' };
 
 /** A consent that ends within this many days (the last day included) is shown as "renew soon". */
 const RENEW_WITHIN_DAYS = 14;
@@ -78,11 +79,11 @@ export function bankNotices(accounts: readonly Account[], today: string = DEMO_T
 
 /**
  * The bank an account is at: the name of a business account is its bank ("Qonto"), and a savings account or credit
- * card keeps it at the front of its stored English name ("Qonto Savings"). Null for the cash box, which has no bank.
- * A name that no bank of the picker starts is its own bank.
+ * card keeps it at the front of its stored English name ("Qonto Savings"). Null for the cash box and the Own money
+ * account, which have no bank. A name that no bank of the picker starts is its own bank.
  */
 export function bankNameOf(account: Account): string | null {
-  if (account.kind === 'cash') return null;
+  if (account.kind !== 'bank') return null;
   const names = BANKS.map((bank) => bank.name).filter(
     (name) => account.name === name || account.name.startsWith(`${name} `),
   );
@@ -92,10 +93,11 @@ export function bankNameOf(account: Account): string | null {
 /**
  * What an account is called on screen, whatever the language: a business account is its stored name (the bank,
  * "Qonto"), a savings account or credit card is "bank · product" with `productLabel` (the product's name in the
- * language of the page) instead of the stored English name, and the cash box is just its `productLabel`.
+ * language of the page) instead of the stored English name, and the cash box and the Own money account are just their
+ * `productLabel`.
  */
 export function accountName(account: Account, productLabel: string): string {
-  if (account.kind === 'cash') return productLabel;
+  if (account.kind !== 'bank') return productLabel;
   if (account.product === 'business') return account.name;
   return `${bankNameOf(account) ?? account.name} · ${productLabel}`;
 }
@@ -133,8 +135,8 @@ export function isRenewed(connection: AccountConnection, today: string = DEMO_TO
   );
 }
 
-/** The connection of an account that has no bank to look after: payments from imported statements, or the cash box. */
-export function noConnection(kind: 'statement' | 'cash'): AccountConnection {
+/** The connection of an account that has no bank to look after: payments from imported statements, the cash box, or the Own money account. */
+export function noConnection(kind: 'statement' | 'cash' | 'own'): AccountConnection {
   return { kind, consentUntil: null, lastFetched: null, fetchFrom: null, broken: false };
 }
 

@@ -46,7 +46,7 @@ interface FileRead {
 
 /**
  * Import a bank statement (`/payments/import`): for an account that has no bank connection, or one that has but lacks older months.
- * `?account=<id>` names the account; without it (or with an id that is not one of the open business's accounts, or the cash box) the
+ * `?account=<id>` names the account; without it (or with an id that is not one of the open business's accounts, the cash box or the Own money account) the
  * person picks one first, and `?new=1` asks for the name and IBAN of a new one. `?from=home|payments|settings` says where Back leads.
  *
  * The screen follows the file from top to bottom: the account, the drop zone (a file, or **Use a sample statement**: the mockup reads no
@@ -565,13 +565,13 @@ export class StatementImportPage {
   private readonly accountId = computed(() => this.params().get('account'));
   private readonly isNew = computed(() => this.params().get('new') === '1');
 
-  /** The account of the open business the address names, if it takes a statement: any but the cash box. */
+  /** The account of the open business the address names, if it takes a statement: a bank account, not the cash box or the Own money account. */
   protected readonly account = computed(() => {
     const id = this.accountId();
     return (
       this.demo
         .business()
-        .accounts.find((account) => account.id === id && account.kind !== 'cash') ?? null
+        .accounts.find((account) => account.id === id && account.kind === 'bank') ?? null
     );
   });
   /** What the page shows: the form for a new account, the import of the account named, or the choice of an account. */
