@@ -66,7 +66,11 @@ export type HistoryKey =
   | 'personLeft' // params: name, by (the person who left)
   | 'ownerChanged' // params: name (the new owner), by
   | 'supportOn' // params: until, by
-  | 'supportOff'; // params: by
+  | 'supportOff' // params: by
+  // On a business, when one of its months is closed. `month` is always the raw 'YYYY-MM' (a screen that shows the line formats it
+  // as a month name in the person's language); `by` is the full name of who closed it
+  | 'monthClosed' // params: month, by
+  | 'monthClosedByReturn'; // params: month (no person: sending its VAT return closed it)
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
@@ -113,6 +117,12 @@ export interface SentVatReturn {
   chargedCents: number; paidCents: number; resultCents: number; // VAT charged, VAT paid, and charged minus paid (negative: a refund)
   ticket: string; // the transfer ticket, e.g. 'ET-2026-0908-41827'
   taxOffice: string | null; // the tax office it was sent to, as the tax number gave it then (null: it gave none); the receipt shows this, whatever the number is later
+}
+/** A month of the year that is closed: its bookings can't be changed any more. */
+export interface ClosedMonth {
+  month: string; // 'YYYY-MM'
+  on: string; // ISO date; the day it was closed
+  by: string | null; // the full name of the person who closed it, or null when sending its VAT return did
 }
 /** What a category adds up to in a year: the category's label, SKR03 account and German name (a `Booking`'s), and the amount. */
 export interface CategoryTotal { labelKey: string; skr03: string; nameDe: string; cents: number }
@@ -173,8 +183,11 @@ export interface Business {
   /**
    * The months of this year before the business's first payment here (net for a business that charges VAT, gross for a
    * Kleinunternehmer), stored because no payments exist for them. The year figures (see tax-year.ts) add the payments to it.
+   * `untilMonth` ('YYYY-MM') is the last month it covers: Reports shows January to that month as one closed line, and
+   * a payment dated inside it joins that line.
    */
-  yearOpening: { incomeCents: number; costsCents: number; costsByCategory: CategoryTotal[] };
+  yearOpening: { incomeCents: number; costsCents: number; costsByCategory: CategoryTotal[]; untilMonth: string };
+  closedMonths: ClosedMonth[]; // oldest first; the months up to `yearOpening.untilMonth` count as closed without being listed here
   incomeTaxReserveCents: number;
   invoices: Invoice[]; invoiceProfile: InvoiceProfile; // the invoices written in the app (drafts included), and how they are printed and numbered
   notices: Notice[]; noticeHistory: Notice[]; categoryRules: CategoryRule[];

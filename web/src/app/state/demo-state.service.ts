@@ -30,6 +30,7 @@ import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
 import { invoiceOfPayment, invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
+import * as months from '../domain/months';
 import * as people from '../domain/people';
 import { AccountService } from './account.service';
 
@@ -265,10 +266,26 @@ export class DemoStateService {
 
   /**
    * Adds a VAT return that was sent to the tax office to the end of the returns of a business (the open one unless named;
-   * ignored for an unknown business). The business's current return then moves on to the period after it. Reset demo takes it back.
+   * ignored for an unknown business). The business's current return then moves on to the period after it, and the months of
+   * its period that are not closed yet are closed (see `months.closeMonthsOf`). Reset demo takes both back.
    */
   recordSentReturn(sent: SentVatReturn, businessId: string = this.businessIdSignal()): void {
-    this.updateBusiness(businessId, (business) => ({ ...business, vatReturns: [...business.vatReturns, sent] }));
+    this.updateBusiness(businessId, (business) =>
+      months.closeMonthsOf({ ...business, vatReturns: [...business.vatReturns, sent] }, sent.periodStart, sent.periodEnd, DEMO_TODAY),
+    );
+  }
+
+  /**
+   * Closes a finished month of the open business, by the person: its bookings can't change any more. Only the owner and
+   * someone with full access may. False, with nothing changed, for anyone else and for a month that can't be closed (the
+   * running month, one that is closed already, one of the earlier months, one with a payment that needs the person).
+   */
+  closeMonth(month: string): boolean {
+    if (!months.canCloseMonths(this.myRole())) return false;
+    const person = this.person;
+    const before = this.data();
+    this.updateBusiness(this.businessIdSignal(), (b) => months.closeMonth(b, month, `${person.firstName} ${person.lastName}`, DEMO_TODAY));
+    return this.data() !== before;
   }
 
   /**

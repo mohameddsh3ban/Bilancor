@@ -175,6 +175,21 @@
       "de": "Steuerberater:in",
       "explain": "A licensed professional in Germany who advises on taxes and files tax returns for others. This app does not give personal tax advice; a Steuerberater:in does."
     },
+    "bwa": {
+      "label": "Monthly business report",
+      "de": "BWA",
+      "explain": "The monthly overview of your income, costs and profit (Betriebswirtschaftliche Auswertung). Tax advisors and banks often ask for it."
+    },
+    "gdpdu": {
+      "label": "Tax audit data format",
+      "de": "GDPdU",
+      "explain": "The set format in which the tax office can ask for your books in digital form during an audit. Your tax advisor usually knows what to hand over."
+    },
+    "festschreibung": {
+      "label": "Locking the books",
+      "de": "Festschreibung",
+      "explain": "Once the bookings of a month are locked, they can't be changed or deleted any more. A later fix is made as a correction in the current month."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -192,7 +207,6 @@
   "soon": {
     "home": "Home",
     "payments": "Payments",
-    "reports": "Reports",
     "help": "Help",
     "more": "More",
     "terms": "Bank connection terms",
@@ -447,6 +461,134 @@
       "prepared": "These are prepared at the end of the year."
     }
   },
+  "reports": {
+    "title": "Reports",
+    "connect": {
+      "title": "Connect your bank to see your months",
+      "body": "Your months show up here as soon as your bank is connected.",
+      "action": "Connect your bank"
+    },
+    "needs": {
+      "title": {
+        "one": "1 payment still needs you",
+        "many": "{{count}} payments still need you"
+      },
+      "note": {
+        "one": "It isn't in these figures yet; an export marks it as open.",
+        "many": "They aren't in these figures yet; an export marks them as open."
+      },
+      "start": "Start"
+    },
+    "months": {
+      "title": "Month by month",
+      "net": "Income and costs without VAT, from the booked payments. Always up to date.",
+      "gross": "Income and costs as paid, from the booked payments. Always up to date.",
+      "income": "Income",
+      "costs": "Costs",
+      "profit": "Profit",
+      "earlier": "earlier months",
+      "until": "until {{date}}",
+      "state": {
+        "closed": "Closed",
+        "notClosed": "Not closed",
+        "running": "Running"
+      },
+      "close": "Close",
+      "closeMonth": "Close {{month}}",
+      "readyFrom": "Ready to close from {{date}}",
+      "total": "Year so far",
+      "byReturn": {
+        "one": "{{months}} closed by itself when its VAT return was sent",
+        "many": "{{months}} closed by themselves when their VAT returns were sent"
+      },
+      "onlyFull": "Only the owner and people with full access can close a month."
+    },
+    "close": {
+      "title": "Close {{month}}?",
+      "cross": "Close window",
+      "locks": "Closing locks its bookings: they can't be changed any more. This is called {{term}}.",
+      "check": {
+        "paid": "Every payment is booked and has its receipt",
+        "unclear": {
+          "one": "1 unclear",
+          "many": "{{count}} unclear"
+        },
+        "confirm": "{{count}} to confirm",
+        "noReceipt": {
+          "one": "1 receipt missing",
+          "many": "{{count}} receipts missing"
+        },
+        "join": ", ",
+        "start": "Start",
+        "noDuplicates": "Nothing looks like a duplicate",
+        "duplicates": {
+          "one": "1 document looks like a duplicate",
+          "many": "{{count}} documents look like duplicates"
+        },
+        "show": "Show",
+        "matches": "Matches the bank",
+        "statement": "Check it against your statement"
+      },
+      "confirm": "Close {{month}}",
+      "notYet": "Not yet"
+    },
+    "export": {
+      "title": "Export for your tax advisor",
+      "body": "Your bookings and receipts in the format tax advisors read (DATEV), or as a spreadsheet.",
+      "period": "Period",
+      "kind": {
+        "month": "Month",
+        "quarter": "Quarter",
+        "year": "Year"
+      },
+      "pick": {
+        "month": "Choose a month",
+        "quarter": "Choose a quarter",
+        "year": "Choose a year"
+      },
+      "bookings": {
+        "one": "1 booking",
+        "many": "{{count}} bookings"
+      },
+      "receipts": {
+        "one": "1 receipt",
+        "many": "{{count}} receipts"
+      },
+      "counts": "{{period}}: {{bookings}}, {{receipts}}",
+      "state": {
+        "closed": "Closed",
+        "notClosed": "Not closed",
+        "running": "Running",
+        "partly": "Partly closed"
+      },
+      "nothing": "Nothing to export yet",
+      "choice": {
+        "open": {
+          "one": "Export it marked as open",
+          "many": "Export with them marked as open"
+        },
+        "fix": {
+          "one": "Fix it first",
+          "many": "Fix them first"
+        }
+      },
+      "fixOff": "Downloads are off while you fix them first.",
+      "datev": "Download DATEV (ZIP)",
+      "csv": "Spreadsheet (CSV)",
+      "print": "Print summary",
+      "advisor": "Your tax advisor {{name}} can download it too, with their own login.",
+      "invite": "Invite your tax advisor in {{link}}"
+    },
+    "audit": {
+      "title": "For a tax audit",
+      "body": "If the tax office audits you, it may ask for your books in a set format. Ask your tax advisor first: usually their export is enough.",
+      "download": "Download the audit export (ZIP)"
+    },
+    "demo": {
+      "label": "Demo",
+      "noFile": "No file is made in the demo. Its name would be"
+    }
+  },
   "taxReminder": {
     "title": "{{count}} tax returns are coming up",
     "titleOne": "A tax return is coming up",
@@ -567,7 +709,9 @@
     "personLeft": "{{name}} left the business",
     "ownerChanged": "{{by}} handed the business over to {{name}}",
     "supportOn": "{{by}} let support look until {{until}}",
-    "supportOff": "{{by}} stopped support access"
+    "supportOff": "{{by}} stopped support access",
+    "monthClosed": "{{month}} was closed by {{by}}",
+    "monthClosedByReturn": "{{month}} was closed by its VAT return"
   },
   "payments": {
     "title": "Payments",
@@ -599,6 +743,8 @@
     "download": "Download month",
     "monthIn": "In",
     "monthOut": "Out",
+    "closed": "Closed",
+    "closedNote": "{{month}} is closed, so this payment can't be changed.",
     "empty": {
       "noMatch": "No payments match",
       "allClear": {
@@ -1118,7 +1264,21 @@
   "print": {
     "back": "Back",
     "nothing": "Nothing to print here.",
-    "account": "Account: {{name}}"
+    "account": "Account: {{name}}",
+    "export": {
+      "caption": "The bookings of this export",
+      "col": {
+        "account": "Account (SKR03)",
+        "receipt": "Receipt"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "notNeeded": "Not needed",
+      "booked": "Booked",
+      "open": "Open",
+      "openNote": "Open means the payment still needs a decision from the client: it is in this export, and its booking can change.",
+      "unknown": "This isn't a period you can export, so there is nothing to print."
+    }
   },
   "home": {
     "notices": {

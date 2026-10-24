@@ -17,7 +17,7 @@ import { yearSummary } from '../domain/tax-year';
 import { currentVatReturn, periodFor, vatReturnFor } from '../domain/vat-return';
 import { AccountService } from './account.service';
 import { DemoStateService } from './demo-state.service';
-import { businessOf, withConnection as setConnection } from './demo-state.testing';
+import { businessOf, withConnection as setConnection, withRole } from './demo-state.testing';
 
 describe('DemoStateService', () => {
   it('starts with weber-design and every setup step done', () => {
@@ -1063,6 +1063,33 @@ describe('DemoStateService', () => {
       expect(state.businesses).toEqual(all);
     });
 
+    it('closes the months of its period, by nobody, with a line for each', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.recordSentReturn(sent({ periodStart: '2026-07-01', periodEnd: '2026-09-30' }), 'cafe-linde');
+      const cafe = businessOf(state, 'cafe-linde');
+      expect(cafe.closedMonths).toEqual([
+        { month: '2026-07', on: DEMO_TODAY, by: null },
+        { month: '2026-08', on: DEMO_TODAY, by: null },
+        { month: '2026-09', on: DEMO_TODAY, by: null },
+      ]);
+      expect(cafe.history.map((line) => [line.key, line.params])).toEqual([
+        ['monthClosedByReturn', { month: '2026-09' }],
+        ['monthClosedByReturn', { month: '2026-08' }],
+        ['monthClosedByReturn', { month: '2026-07' }],
+      ]);
+    });
+
+    it('leaves a month that is closed already as it was: one closed by hand keeps its person, and no line is added for it', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.recordSentReturn(sent({ periodStart: '2026-08-01', periodEnd: '2026-09-30' }), 'sara-yoga');
+      const sara = businessOf(state, 'sara-yoga');
+      expect(sara.closedMonths).toEqual([
+        { month: '2026-08', on: '2026-09-05', by: 'Sara Weber' },
+        { month: '2026-09', on: DEMO_TODAY, by: null },
+      ]);
+      expect(sara.history).toEqual([{ date: DEMO_TODAY, key: 'monthClosedByReturn', params: { month: '2026-09' } }]);
+    });
+
     it('never changes the shared sample data, and resetData takes the return back', () => {
       const state = TestBed.inject(DemoStateService);
       const sample = BUSINESSES.find((b) => b.id === 'weber-design')!.vatReturns.length;
@@ -1072,6 +1099,103 @@ describe('DemoStateService', () => {
 
       state.resetData();
       expect(state.business().vatReturns).toHaveLength(sample);
+    });
+  });
+
+  describe('closing a month', () => {
+    it('closing September at Sara Weber Yoga adds one closed month and one line by Sara Weber', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      const before = state.business();
+
+      expect(state.closeMonth('2026-09')).toBe(true);
+      expect(state.business().closedMonths).toEqual([...before.closedMonths, { month: '2026-09', on: DEMO_TODAY, by: 'Sara Weber' }]);
+      expect(state.business().history).toEqual([
+        { date: DEMO_TODAY, key: 'monthClosed', params: { month: '2026-09', by: 'Sara Weber' } },
+        ...before.history,
+      ]);
+      expect(state.business().transactions).toBe(before.transactions);
+    });
+
+    it('closing again changes nothing and says so: false, with no second line', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      expect(state.closeMonth('2026-09')).toBe(true);
+      const closed = state.business();
+      expect(state.closeMonth('2026-09')).toBe(false);
+      expect(state.business()).toBe(closed);
+    });
+
+    it('refuses the running, closed, blocked and opening months, and one still to come', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      state.updateTransaction('sy-t10', (tx) => ({ ...tx, confirmed: false })); // a September payment that still needs Sara
+      const before = state.business();
+      for (const month of ['2026-10', '2026-11', '2026-08', '2026-09', '2026-07', '2026-01']) {
+        expect(state.closeMonth(month), month).toBe(false);
+      }
+      expect(state.business()).toBe(before);
+    });
+
+    it('works on the open business only, and the others stay as they are', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      const weber = businessOf(state, 'weber-design');
+      const cafe = businessOf(state, 'cafe-linde');
+      state.closeMonth('2026-09');
+      expect(businessOf(state, 'weber-design')).toBe(weber);
+      expect(businessOf(state, 'cafe-linde')).toBe(cafe);
+    });
+
+    it('someone with full access can close too: Sara at Café Linde, by her own name', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('cafe-linde');
+      expect(state.myRole()).toBe('full');
+      expect(state.closeMonth('2026-08')).toBe(true);
+      expect(state.business().closedMonths).toEqual([{ month: '2026-08', on: DEMO_TODAY, by: 'Sara Weber' }]);
+    });
+
+    it('a person with receipts-only or tax-advisor access cannot close a month', () => {
+      const state = TestBed.inject(DemoStateService);
+      state.setBusiness('sara-yoga');
+      for (const role of ['receipts', 'advisor'] as const) {
+        withRole(state, 'sara-yoga', role);
+        const before = state.business();
+        expect(state.myRole(), role).toBe(role);
+        expect(state.closeMonth('2026-09'), role).toBe(false);
+        expect(state.business(), role).toBe(before);
+      }
+    });
+
+    it('never changes the shared sample data, and resetData brings back the sample closed months', () => {
+      const state = TestBed.inject(DemoStateService);
+      const sampleClosed = BUSINESSES.find((b) => b.id === 'sara-yoga')!.closedMonths;
+      state.setBusiness('sara-yoga');
+      state.closeMonth('2026-09');
+      expect(sampleClosed).toHaveLength(1);
+      expect(state.business().closedMonths).toHaveLength(2);
+
+      state.resetData();
+      expect(state.businesses.map((b) => [b.id, b.closedMonths.map((c) => c.month)])).toEqual([
+        ['weber-design', ['2026-08', '2026-09']],
+        ['sara-yoga', ['2026-08']],
+        ['cafe-linde', []],
+      ]);
+      expect(state.businesses.find((b) => b.id === 'sara-yoga')!.history).toEqual([]);
+    });
+
+    it('a business made in the demo can close nothing yet: only its running October is there', () => {
+      const accounts = TestBed.inject(AccountService);
+      const state = TestBed.inject(DemoStateService);
+      const id = state.createBusiness(
+        { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email },
+        { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' },
+      );
+      accounts.signIn(PERSON.id, false);
+      state.setBusiness(id);
+      expect(state.business().closedMonths).toEqual([]);
+      expect(state.closeMonth('2026-10')).toBe(false);
+      expect(state.closeMonth('2026-09')).toBe(false); // the opening line ends there
     });
   });
 

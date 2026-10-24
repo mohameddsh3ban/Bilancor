@@ -1,5 +1,5 @@
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Business, CategoryTotal } from '../data/models';
+import type { Business, CategoryTotal, Transaction } from '../data/models';
 import { paymentStatus } from './payment-status';
 import { vatPartCents } from './vat-return';
 
@@ -18,10 +18,20 @@ export interface YearSummary {
 }
 
 /**
- * The year of `today` (a calendar year, up to `today`) for a business. From payments, those that are booked and not
- * private count: money in is income, money out is costs, net of VAT for a business that charges VAT and gross for a
- * Kleinunternehmer, who neither charges nor gets back VAT. The business's `yearOpening` adds the months before its
- * first payment. `today` is an ISO date, never the real clock.
+ * What one payment adds to the year, or null when it adds nothing (a private payment, or one that is not booked yet):
+ * money in is income, money out is costs, net of VAT for a business that charges VAT and gross for a Kleinunternehmer,
+ * who neither charges nor gets back VAT. Taxes and Reports both count payments with this, so they never disagree.
+ */
+export function paymentFigure(tx: Transaction, chargesVat: boolean): { incomeCents: number; costsCents: number } | null {
+  if (tx.isPrivate || paymentStatus(tx) !== 'booked') return null;
+  const cents = Math.abs(tx.amountCents) - (chargesVat ? vatPartCents(tx) : 0);
+  return tx.amountCents > 0 ? { incomeCents: cents, costsCents: 0 } : { incomeCents: 0, costsCents: cents };
+}
+
+/**
+ * The year of `today` (a calendar year, up to `today`) for a business. From payments, those that count (see
+ * `paymentFigure`) are added. The business's `yearOpening` adds the months before its first payment. `today` is an ISO
+ * date, never the real clock.
  */
 export function yearSummary(business: Business, today: string = DEMO_TODAY): YearSummary {
   const year = Number(today.slice(0, 4));
@@ -35,12 +45,11 @@ export function yearSummary(business: Business, today: string = DEMO_TODAY): Yea
   let paymentsCostsCents = 0;
 
   for (const tx of thisYear) {
-    if (tx.isPrivate || paymentStatus(tx) !== 'booked') continue;
-    const cents = Math.abs(tx.amountCents) - (chargesVat ? vatPartCents(tx) : 0);
-    if (tx.amountCents > 0) {
-      paymentsIncomeCents += cents;
-      continue;
-    }
+    const figure = paymentFigure(tx, chargesVat);
+    if (figure === null) continue;
+    paymentsIncomeCents += figure.incomeCents;
+    if (tx.amountCents > 0) continue;
+    const cents = figure.costsCents;
     paymentsCostsCents += cents;
     const { labelKey, skr03, nameDe } = tx.booking!; // a booked payment has its booking
     const category = categories.get(labelKey);

@@ -7,13 +7,16 @@ import { AppMonthPipe } from '../core/format/month.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { Account } from '../data/models';
 import { accountName } from '../domain/bank-connection';
+import { isClosedDate } from '../domain/months';
 import { MonthGroup } from '../domain/payment-filters';
 import { paymentStatus } from '../domain/payment-status';
+import { DemoStateService } from '../state/demo-state.service';
 import { BookingLabel, showsBookingLabel, skr03Text } from './booking-label';
 import { PaymentStatusChip } from './payment-status-chip';
 
 /**
- * Computer layout of the payments: one table, a header row per month with its in/out totals.
+ * Computer layout of the payments: one table, a header row per month with its in/out totals; the header of a closed
+ * month says Closed.
  * The whole row opens the payment (stretched link on the counterparty).
  * Shown from `lg`, or from `2xl` while a payment is open beside the table.
  */
@@ -71,9 +74,18 @@ import { PaymentStatusChip } from './payment-status-chip';
             <tr class="bg-muted/50">
               <th scope="colgroup" colspan="6" class="px-4 py-2 text-start">
                 <span class="flex items-baseline justify-between gap-3">
-                  <span class="font-semibold" data-testid="table-month-title">{{
-                    group.month | appMonth
-                  }}</span>
+                  <span class="flex items-baseline gap-2">
+                    <span class="font-semibold" data-testid="table-month-title">{{
+                      group.month | appMonth
+                    }}</span>
+                    @if (closedMonths().has(group.month)) {
+                      <span
+                        class="bg-positive/10 text-positive rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                        data-testid="table-month-closed"
+                        >{{ 'payments.closed' | transloco }}</span
+                      >
+                    }
+                  </span>
                   <span class="text-muted-foreground flex shrink-0 gap-3 text-xs font-normal">
                     <span>
                       {{ 'payments.monthIn' | transloco }}
@@ -159,6 +171,7 @@ export class PaymentTable {
   protected readonly nameOf = accountName;
 
   private readonly language = inject(LanguageService);
+  private readonly demo = inject(DemoStateService);
 
   readonly groups = input.required<readonly MonthGroup[]>();
   readonly accounts = input.required<readonly Account[]>();
@@ -170,6 +183,15 @@ export class PaymentTable {
   protected readonly showLabel = computed(() => showsBookingLabel(this.language.lang()));
   protected readonly skr03 = skr03Text;
   protected readonly status = paymentStatus;
+  /** The months of the groups that are closed (a month of the earlier months line too), as 'YYYY-MM'. */
+  protected readonly closedMonths = computed(
+    () =>
+      new Set(
+        this.groups()
+          .map((group) => group.month)
+          .filter((month) => isClosedDate(this.demo.business(), `${month}-01`)),
+      ),
+  );
 
   protected accountOf(accountId: string): Account | undefined {
     return this.accounts().find((a) => a.id === accountId);

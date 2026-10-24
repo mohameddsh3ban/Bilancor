@@ -2,7 +2,7 @@ import { PHONE, PRIVATE_IN, PRIVATE_OUT, RENT, REVENUE_19, REVENUE_7, REVENUE_KU
 import type { Booking, Business, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { paymentStatus } from './payment-status';
-import { yearSummary } from './tax-year';
+import { paymentFigure, yearSummary } from './tax-year';
 
 const business = (id: string): Business => BUSINESSES.find((b) => b.id === id)!;
 const weber = business('weber-design');
@@ -24,8 +24,40 @@ const payment = (amountCents: number, booking: Booking | null, patch: Partial<Tr
 /** A business with no opening line and only the given payments, so that a figure comes from those alone. */
 const only = (b: Business, ...transactions: Transaction[]): Business => ({
   ...b,
-  yearOpening: { incomeCents: 0, costsCents: 0, costsByCategory: [] },
+  yearOpening: { incomeCents: 0, costsCents: 0, costsByCategory: [], untilMonth: b.yearOpening.untilMonth },
   transactions,
+});
+
+describe('paymentFigure', () => {
+  it('a booked sale is income and a booked cost is costs, net of VAT for a business that charges VAT', () => {
+    expect(paymentFigure(payment(11900, REVENUE_19), true)).toEqual({ incomeCents: 10000, costsCents: 0 });
+    expect(paymentFigure(payment(-11900, SOFTWARE), true)).toEqual({ incomeCents: 0, costsCents: 10000 });
+  });
+
+  it('a Kleinunternehmer counts the gross amount', () => {
+    expect(paymentFigure(payment(11900, REVENUE_KU), false)).toEqual({ incomeCents: 11900, costsCents: 0 });
+    expect(paymentFigure(payment(-11900, SOFTWARE), false)).toEqual({ incomeCents: 0, costsCents: 11900 });
+  });
+
+  it('a payment with no VAT counts in full, also for a business that charges VAT', () => {
+    expect(paymentFigure(payment(-310000, SALARIES), true)).toEqual({ incomeCents: 0, costsCents: 310000 });
+  });
+
+  it('is null for a private payment and for one that is not booked yet', () => {
+    expect(paymentFigure(payment(-6430, PRIVATE_OUT, { isPrivate: true, receipt: 'notNeeded', receiptFile: null }), true)).toBeNull();
+    expect(paymentFigure(payment(11900, REVENUE_19, { confirmed: false }), true)).toBeNull();
+    expect(paymentFigure(payment(-11900, SOFTWARE, { receipt: 'missing', receiptFile: null }), true)).toBeNull();
+    expect(paymentFigure(payment(-4900, null), true)).toBeNull();
+  });
+
+  it("adds up to the year's payments for every sample business", () => {
+    for (const b of BUSINESSES) {
+      const figures = b.transactions.map((tx) => paymentFigure(tx, !b.taxProfile.kleinunternehmer)).filter((figure) => figure !== null);
+      const s = yearSummary(b);
+      expect(figures.reduce((sum, figure) => sum + figure.incomeCents, 0), b.id).toBe(s.paymentsIncomeCents);
+      expect(figures.reduce((sum, figure) => sum + figure.costsCents, 0), b.id).toBe(s.paymentsCostsCents);
+    }
+  });
 });
 
 describe('yearSummary', () => {
@@ -111,6 +143,7 @@ describe('yearSummary', () => {
     const b: Business = {
       ...weber,
       yearOpening: {
+        untilMonth: '2026-07',
         incomeCents: 0,
         costsCents: 150000,
         costsByCategory: [

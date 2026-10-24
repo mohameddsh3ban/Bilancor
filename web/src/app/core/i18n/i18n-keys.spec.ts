@@ -57,6 +57,16 @@ describe('translation files', () => {
     expect(en.history.supportOn).toContain('{{until}}');
   });
 
+  it('has a history text for a closed month, naming the month and who closed it, and one for a month its VAT return closed', () => {
+    for (const lang of [en, de, ar]) {
+      expect(lang.history.monthClosed).toContain('{{month}}');
+      expect(lang.history.monthClosed).toContain('{{by}}');
+      // No person behind it, so no {{by}}.
+      expect(lang.history.monthClosedByReturn).toContain('{{month}}');
+      expect(lang.history.monthClosedByReturn).not.toContain('{{by}}');
+    }
+  });
+
   it('has a name for every role, and what the three roles that can be given can and can not do', () => {
     for (const lang of [en, de, ar]) {
       const roles = lang.roles as Record<string, Record<string, string>>;
@@ -107,6 +117,9 @@ describe('translation files', () => {
       'mahnung',
       'leitwegId',
       'reverseCharge',
+      'bwa',
+      'gdpdu',
+      'festschreibung',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

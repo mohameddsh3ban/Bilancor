@@ -9,6 +9,8 @@ import { groupByMonth } from '../domain/payment-filters';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
+import ar from '../../../public/i18n/ar.json';
+import de from '../../../public/i18n/de.json';
 
 describe('PaymentsPage', () => {
   let demo: DemoStateService;
@@ -371,6 +373,93 @@ describe('PaymentsPage', () => {
     TestBed.inject(LanguageService).setLang('de');
     await settle();
     expect(text(qa('month-title')[0])).toBe('Oktober 2026');
+  });
+
+  describe('a closed month', () => {
+    /** The month headings of the phone list, with the word Closed where there is one. */
+    const listHeadings = () =>
+      qa('month-group').map((g) => [
+        text(g.querySelector('[data-testid="month-title"]')),
+        text(g.querySelector('[data-testid="month-closed"]')),
+      ]);
+    const tableHeadings = () =>
+      qa('table-month-group').map((g) => [
+        text(g.querySelector('[data-testid="table-month-title"]')),
+        text(g.querySelector('[data-testid="table-month-closed"]')),
+      ]);
+
+    it('the August and September headings say Closed', async () => {
+      await render();
+      const expected = [
+        ['October 2026', ''],
+        ['September 2026', 'Closed'],
+        ['August 2026', 'Closed'],
+      ];
+      expect(listHeadings()).toEqual(expected);
+      expect(tableHeadings()).toEqual(expected);
+    });
+
+    it('closing September at Sara Weber Yoga adds Closed to its heading', async () => {
+      demo.setBusiness('sara-yoga');
+      await render();
+      expect(listHeadings().map(([title, closed]) => `${title}: ${closed}`)).toEqual([
+        'October 2026: ',
+        'September 2026: ',
+        'August 2026: Closed',
+      ]);
+      expect(demo.closeMonth('2026-09')).toBe(true);
+      await settle();
+      expect(listHeadings()[1]).toEqual(['September 2026', 'Closed']);
+      expect(tableHeadings()[1]).toEqual(['September 2026', 'Closed']);
+      expect(listHeadings()[0]).toEqual(['October 2026', '']);
+    });
+
+    it('a month inside the earlier months says Closed when a payment is dated there', async () => {
+      demo.updateTransaction('wd-t14', (tx) => ({ ...tx, date: '2026-07-10' }));
+      await render();
+      expect(listHeadings().map(([title]) => title)).toEqual([
+        'October 2026',
+        'September 2026',
+        'August 2026',
+        'July 2026',
+      ]);
+      expect(listHeadings()[3]).toEqual(['July 2026', 'Closed']);
+      expect(tableHeadings()[3]).toEqual(['July 2026', 'Closed']);
+    });
+
+    it('on a phone the heading line wraps and the word Closed is inside the heading', async () => {
+      await render();
+      const [october, september] = qa('month-group');
+      const header = september.querySelector('header')!;
+      // The totals drop to a line of their own when there is no room (German, large amounts), they are not clipped.
+      expect(header.classList).toContain('flex-wrap');
+      const totals = header.querySelector('p')!;
+      expect(totals.classList).toContain('flex-wrap');
+      expect(totals.classList).not.toContain('shrink-0');
+      // Heading navigation reads the month and its word.
+      expect(text(header.querySelector('h2'))).toBe('September 2026 Closed');
+      expect(header.querySelector('h2 [data-testid="month-closed"]')).not.toBeNull();
+      expect(text(october.querySelector('h2'))).toBe('October 2026');
+    });
+
+    it('says Closed in a word in every language, and shows nothing extra on a row', async () => {
+      await render();
+      const lang = TestBed.inject(LanguageService);
+      lang.setLang('de');
+      await settle();
+      expect(listHeadings()[1][1]).toBe(de.payments.closed);
+      lang.setLang('ar');
+      await settle();
+      expect(listHeadings()[1][1]).toBe(ar.payments.closed);
+      lang.setLang('en');
+      await settle();
+      const septemberRows = qa('month-group')[1].querySelectorAll('[data-testid="payment-row"]');
+      const octoberRows = qa('month-group')[0].querySelectorAll('[data-testid="payment-row"]');
+      expect(septemberRows.length).toBeGreaterThan(0);
+      // A row of a closed month has the same parts as a row of an open one.
+      expect(septemberRows[0].children.length).toBe(octoberRows[0].children.length);
+      expect(septemberRows[0].textContent).not.toContain('Closed');
+    });
   });
 
   it('download month links to the print view of the filtered month, or the newest', async () => {

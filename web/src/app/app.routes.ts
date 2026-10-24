@@ -70,6 +70,10 @@ export const routes: Routes = [
         loadComponent: () => import('./taxes/taxes.page').then((m) => m.TaxesPage),
       },
       {
+        path: 'reports',
+        loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./settings/settings.page').then((m) => m.SettingsPage),
       },
@@ -134,6 +138,11 @@ export const routes: Routes = [
     path: 'print/vat-return/:periodStart',
     canActivate: [signedInGuard],
     loadComponent: () => import('./print/vat-receipt.page').then((m) => m.VatReceiptPage),
+  },
+  {
+    path: 'print/export/:period',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./print/export-summary.page').then((m) => m.ExportSummaryPage),
   },
   {
     path: 'print/invoice/:id',

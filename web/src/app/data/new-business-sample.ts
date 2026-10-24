@@ -1,4 +1,5 @@
 import { OFFICE, OTHER_COSTS, PHONE, RENT, REVENUE_19, SOFTWARE, TRAVEL } from './categories';
+import { monthBefore } from '../domain/dates';
 import { DEMO_TODAY } from './demo-date';
 import type { Account, Booking, Business, BusinessKind, HistoryEntry, PoolResult, Transaction } from './models';
 
@@ -27,7 +28,8 @@ export function isVisitBusiness(businessId: string): boolean {
 
 /**
  * A business as it is the moment it is made: a new client with the person as its owner, the kind of work and the legal
- * form they answered, and nothing else yet. The year opening is empty, because the business starts in October 2026.
+ * form they answered, and nothing else yet. The year opening is empty and ends in September, because the business starts in
+ * October 2026; no month is closed.
  */
 export function newBusiness(id: string, input: NewBusinessInput, owner: NewOwner): Business {
   return {
@@ -50,7 +52,8 @@ export function newBusiness(id: string, input: NewBusinessInput, owner: NewOwner
     documents: [],
     vatReturns: [],
     legalForm: input.legalForm,
-    yearOpening: { incomeCents: 0, costsCents: 0, costsByCategory: [] },
+    yearOpening: { incomeCents: 0, costsCents: 0, costsByCategory: [], untilMonth: monthBefore(DEMO_TODAY) },
+    closedMonths: [],
     incomeTaxReserveCents: 0,
     invoices: [],
     invoiceProfile: {

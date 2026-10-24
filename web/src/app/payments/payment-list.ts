@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronRight } from '@ng-icons/lucide';
 import { RouterLink } from '@angular/router';
@@ -6,12 +6,16 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { AppMonthPipe } from '../core/format/month.pipe';
+import { isClosedDate } from '../domain/months';
 import { paymentStatus } from '../domain/payment-status';
 import { MonthGroup } from '../domain/payment-filters';
+import { DemoStateService } from '../state/demo-state.service';
 import { PaymentStatusChip } from './payment-status-chip';
 
 /**
- * Phone layout of the payments: one card per month with its in/out totals, one row per payment.
+ * Phone layout of the payments: one card per month with its in/out totals, one row per payment. The heading of a closed
+ * month says Closed, inside the heading, so heading navigation reads it. The heading line wraps: on a narrow phone the
+ * totals drop to a line of their own instead of being clipped.
  * Hidden from `lg` (the table takes over), or from `2xl` while a payment is open beside the list.
  */
 @Component({
@@ -34,9 +38,21 @@ import { PaymentStatusChip } from './payment-status-chip';
         class="bg-card border-border overflow-hidden rounded-xl border"
         data-testid="month-group"
       >
-        <header class="bg-muted/50 flex items-baseline justify-between gap-3 px-4 py-2">
-          <h2 class="font-semibold" data-testid="month-title">{{ group.month | appMonth }}</h2>
-          <p class="text-muted-foreground flex shrink-0 gap-3 text-xs">
+        <header
+          class="bg-muted/50 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 py-2"
+        >
+          <h2 class="flex flex-wrap items-baseline gap-x-2 font-semibold">
+            <span data-testid="month-title">{{ group.month | appMonth }}</span>
+            @if (closedMonths().has(group.month)) {
+              &ngsp;
+              <span
+                class="bg-positive/10 text-positive rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                data-testid="month-closed"
+                >{{ 'payments.closed' | transloco }}</span
+              >
+            }
+          </h2>
+          <p class="text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
             <span data-testid="month-in">
               {{ 'payments.monthIn' | transloco }}
               <bdi dir="ltr" class="text-positive font-medium">{{
@@ -96,11 +112,22 @@ import { PaymentStatusChip } from './payment-status-chip';
   `,
 })
 export class PaymentList {
+  private readonly demo = inject(DemoStateService);
+
   readonly groups = input.required<readonly MonthGroup[]>();
   readonly selectedId = input<string | null>(null);
   /** A payment is open beside the list, so the table gets less room and gives way to this list for longer. */
   readonly panelOpen = input(false);
 
   protected readonly status = paymentStatus;
+  /** The months of the groups that are closed (a month of the earlier months line too), as 'YYYY-MM'. */
+  protected readonly closedMonths = computed(
+    () =>
+      new Set(
+        this.groups()
+          .map((group) => group.month)
+          .filter((month) => isClosedDate(this.demo.business(), `${month}-01`)),
+      ),
+  );
   protected readonly hiddenFrom = computed(() => (this.panelOpen() ? '2xl:hidden' : 'lg:hidden'));
 }

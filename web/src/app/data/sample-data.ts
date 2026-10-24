@@ -134,11 +134,13 @@ const cashBox = (): AccountConnection => ({ kind: 'cash', consentUntil: null, la
 /** One category's amount in a year opening line, labelled and numbered like the booking it comes from. */
 const total = (b: Booking, cents: number): CategoryTotal => ({ labelKey: b.labelKey, skr03: b.skr03, nameDe: b.nameDe, cents });
 /**
- * The months of the year before a business's first sample payment: its income, and its costs as the sum of the categories.
- * The income is what makes the year's income reach the round figure noted at each business once the booked sample payments
- * are added (a test in tax-year.spec.ts checks it); the costs are plausible, not calculated.
+ * The months of the year before a business's first sample payment, up to `untilMonth` ('YYYY-MM', the month before it): its
+ * income, and its costs as the sum of the categories. The income is what makes the year's income reach the round figure
+ * noted at each business once the booked sample payments are added (a test in tax-year.spec.ts checks it); the costs are
+ * plausible, not calculated.
  */
-const opening = (incomeCents: number, costs: CategoryTotal[]): Business['yearOpening'] => ({
+const opening = (untilMonth: string, incomeCents: number, costs: CategoryTotal[]): Business['yearOpening'] => ({
+  untilMonth,
   incomeCents,
   costsCents: costs.reduce((sum, c) => sum + c.cents, 0),
   costsByCategory: costs,
@@ -206,7 +208,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     ],
     legalForm: 'sole',
     // January to July, net: 42 079,00 € of income, so the year (with the booked payments since August) reaches 48 600,00 €.
-    yearOpening: opening(4207900, [
+    yearOpening: opening('2026-07', 4207900, [
       total(RENT, 210000),
       total(TRAVEL, 118000),
       total(SOFTWARE, 96000),
@@ -217,6 +219,11 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       total(OFFICE, 30000),
       total(PHONE, 23500),
     ]),
+    // August and September were closed by their VAT returns, on the days those were sent.
+    closedMonths: [
+      { month: '2026-08', on: '2026-09-08', by: null },
+      { month: '2026-09', on: '2026-10-08', by: null },
+    ],
     incomeTaxReserveCents: 320000,
     notices: [
       { id: 'wd-n1', kind: 'terms', urgency: 1, blocking: true, params: {}, date: '2026-10-20' },
@@ -275,7 +282,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     vatReturns: [],
     legalForm: 'sole',
     // January to July, gross (a Kleinunternehmer has no VAT to take out): 18 000,00 € of income, so the year reaches 21 300,00 €.
-    yearOpening: opening(1800000, [
+    yearOpening: opening('2026-07', 1800000, [
       total(RENT, 245000),
       total(INSURANCE, 42000),
       total(SUPPLIES, 38000),
@@ -283,6 +290,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       total(ADVERTISING, 15000),
       total(SOFTWARE, 12000),
     ]),
+    // August was closed by hand; September is left open, and every check would pass if she closed it.
+    closedMonths: [{ month: '2026-08', on: '2026-09-05', by: 'Sara Weber' }],
     incomeTaxReserveCents: 210000,
     notices: [
       { id: 'sy-n1', kind: 'revenueLimit', urgency: 2, blocking: false, params: { percent: 85, limit: 25000 }, date: '2026-10-20' },
@@ -340,7 +349,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     ],
     legalForm: 'gbr',
     // January to June, net (the payments here start in July): 101 581,36 € of income, so the year reaches 112 400,00 €.
-    yearOpening: opening(10158136, [
+    yearOpening: opening('2026-06', 10158136, [
       total(GOODS_7, 3100000),
       total(SALARIES, 1830000),
       total(RENT, 930000),
@@ -351,6 +360,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       total(ADVERTISING, 85000),
       total(CONSULTING, 70000),
     ]),
+    // Q2's return was sent, so its months are in the opening line; July to September wait for the Q3 return.
+    closedMonths: [],
     incomeTaxReserveCents: 580000,
     notices: [],
     noticeHistory: [

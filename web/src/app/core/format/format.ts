@@ -61,10 +61,13 @@ export function formatMonth(month: string, lang: Lang): string {
   }).format(new Date(`${month}-01`));
 }
 
-/** The names of the months from `first` to `last` (both 'YYYY-MM'), without the year: "January–July", or one name when they are the same month. */
-export function formatMonthRange(first: string, last: string, lang: Lang): string {
+/**
+ * The names of the months from `first` to `last` (both 'YYYY-MM'), without the year: "January–July", or one name when they
+ * are the same month. `short` gives the short names ("Jan–Jul") for a narrow place.
+ */
+export function formatMonthRange(first: string, last: string, lang: Lang, opts: { short?: boolean } = {}): string {
   const name = (month: string) =>
-    new Intl.DateTimeFormat(LOCALES[lang], { month: 'long', timeZone: 'UTC' }).format(new Date(`${month}-01`));
+    new Intl.DateTimeFormat(LOCALES[lang], { month: opts.short ? 'short' : 'long', timeZone: 'UTC' }).format(new Date(`${month}-01`));
   return first === last ? name(first) : `${name(first)}–${name(last)}`;
 }
 

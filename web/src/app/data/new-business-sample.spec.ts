@@ -1,7 +1,9 @@
+import { monthBefore } from '../domain/dates';
 import { certainMatch } from '../domain/document-matching';
 import { applyReadResult, newReadingDoc, nextPoolResult } from '../domain/document-upload';
 import { presetSteps } from '../domain/home-cards';
 import { invoiceRows, nextInvoiceNumber } from '../domain/invoices';
+import { monthRows } from '../domain/months';
 import { paymentStatus } from '../domain/payment-status';
 import { CATEGORIES, OFFICE, OTHER_COSTS, PHONE, RENT, REVENUE_19, SOFTWARE, TRAVEL } from './categories';
 import { DEMO_TODAY } from './demo-date';
@@ -73,8 +75,15 @@ describe('newBusiness', () => {
   });
 
   it('starts its year with nothing before the first payment and nothing set aside', () => {
-    expect(business().yearOpening).toEqual({ incomeCents: 0, costsCents: 0, costsByCategory: [] });
+    expect(business().yearOpening).toEqual({ incomeCents: 0, costsCents: 0, costsByCategory: [], untilMonth: '2026-09' });
+    // Its opening line ends the month before today's, so the running month is the first one it shows.
+    expect(business().yearOpening.untilMonth).toBe(monthBefore(DEMO_TODAY));
     expect(business().incomeTaxReserveCents).toBe(0);
+  });
+
+  it('has no month closed: only October, which is running, comes after its empty opening line', () => {
+    expect(business().closedMonths).toEqual([]);
+    expect(monthRows(business(), DEMO_TODAY).map((row) => [row.from, row.state])).toEqual([['2026-10', 'running']]);
   });
 
   it('is owned by the person, who joined today, and nobody else has access', () => {
@@ -121,6 +130,7 @@ describe('newBusiness', () => {
     expect(one.people).not.toBe(other.people);
     expect(one.taxProfile).not.toBe(other.taxProfile);
     expect(one.yearOpening.costsByCategory).not.toBe(other.yearOpening.costsByCategory);
+    expect(one.closedMonths).not.toBe(other.closedMonths);
   });
 });
 

@@ -40,7 +40,10 @@ export type TermKey =
   | 'zahlungserinnerung'
   | 'mahnung'
   | 'leitwegId'
-  | 'reverseCharge';
+  | 'reverseCharge'
+  | 'bwa'
+  | 'gdpdu'
+  | 'festschreibung';
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({

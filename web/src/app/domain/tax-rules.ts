@@ -14,6 +14,6 @@ export function categoriesFor(tax: TaxProfile): Booking[] {
  * The VAT rate to show for a booking, or null for "no VAT". A Kleinunternehmer never charges or reclaims VAT,
  * so they always get null, whatever the category's usual rate is.
  */
-export function vatRateShown(tax: TaxProfile, booking: Booking): number | null {
+export function vatRateShown(tax: TaxProfile, booking: { vatRate: number }): number | null {
   return tax.kleinunternehmer || booking.vatRate === 0 ? null : booking.vatRate;
 }
