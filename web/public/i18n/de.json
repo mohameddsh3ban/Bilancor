@@ -1273,6 +1273,7 @@
       },
       "yes": "Ja",
       "no": "Nein",
+      "notNeeded": "Nicht nötig",
       "booked": "Gebucht",
       "open": "Offen",
       "openNote": "Offen heißt: Die Zahlung braucht noch eine Entscheidung der Mandant:in. Sie steckt in diesem Export, ihre Buchung kann sich noch ändern.",

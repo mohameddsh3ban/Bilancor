@@ -156,6 +156,15 @@ describe('ExportCard', () => {
     expect(q('export-fix-off')).toBeNull();
   });
 
+  it('a payment that needs no receipt is a booking and not a receipt in the summary, and it no longer needs the person', async () => {
+    await render('weber-design');
+    demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' })); // Deutsche Bahn
+    await settle();
+    expect(text(q('export-summary'))).toBe(
+      'October: 11 bookings, 8 receipts · Running · 5 payments still need you',
+    );
+  });
+
   it('a period with nothing that needs the person has no choices', async () => {
     await render('weber-design');
     await pick('2026-09');

@@ -1,4 +1,4 @@
-import type { Business, Transaction } from '../data/models';
+import type { Business, ReceiptState, Transaction } from '../data/models';
 import { isClosedDate, monthRows } from './months';
 import { paymentStatus } from './payment-status';
 import { periodFor } from './vat-return';
@@ -23,7 +23,7 @@ export type ExportState = 'closed' | 'notClosed' | 'running' | 'partly';
 /** What an export holds, for the summary above its downloads. */
 export interface ExportSummary {
   bookings: number; // the period's payments that are not private
-  receipts: number; // those payments with their receipt attached (what Payments shows), so the rows' receipts add up to it
+  receipts: number; // those payments with their receipt attached (what Payments shows), so the rows with receipt 'attached' add up to it
   needsYou: number; // those payments that need the person, by `paymentStatus`: unclear, not confirmed, or receipt missing
   state: ExportState;
   empty: boolean; // no payments to export
@@ -38,7 +38,7 @@ export interface ExportRow {
   skr03: string | null;
   nameDe: string | null;
   vatRate: number | null;
-  hasReceipt: boolean; // the payment's receipt is attached, as Payments shows it (a part payment of an invoice counts)
+  receipt: ReceiptState; // the payment's own receipt state, as Payments shows it: attached (a part payment of an invoice counts), missing, or not needed
   open: boolean; // the payment needs the person: the export marks it as open
 }
 
@@ -112,7 +112,7 @@ export function exportRows(business: Business, period: ExportPeriod): ExportRow[
       skr03: tx.booking?.skr03 ?? null,
       nameDe: tx.booking?.nameDe ?? null,
       vatRate: tx.booking?.vatRate ?? null,
-      hasReceipt: tx.receipt === 'attached',
+      receipt: tx.receipt,
       open: paymentStatus(tx) !== 'booked',
     }))
     .sort((a, b) => a.date.localeCompare(b.date));

@@ -10,6 +10,7 @@ import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
 import { LanguageService } from '../core/i18n/language.service';
 import { DEMO_TODAY } from '../data/demo-date';
+import type { ReceiptState } from '../data/models';
 import {
   exportPeriods,
   exportRows,
@@ -26,11 +27,18 @@ import { printOnceRendered } from './print-once';
 
 const KINDS: readonly ExportKind[] = ['month', 'quarter', 'year'];
 
+/** The word for a payment's receipt: Yes when it is attached, No when it is missing, Not needed when the payment needs none. */
+const RECEIPT_WORDS: Record<ReceiptState, string> = {
+  attached: 'print.export.yes',
+  missing: 'print.export.no',
+  notNeeded: 'print.export.notNeeded',
+};
+
 /**
  * The printable summary of an export for the tax advisor (Reports › Export for your tax advisor › Print summary): the
  * business, the period with its days, what the export holds (the same line as the card) and one row for each booking with
- * its date, counterparty, amount, SKR03 account and German name, VAT rate, whether the receipt is attached, and whether the
- * booking is done or still open. The period comes from the address (`/print/export/2026-10`, `2026-Q4` or `2026`), and it
+ * its date, counterparty, amount, SKR03 account and German name, VAT rate, the receipt (Yes when attached, No when missing, Not
+ * needed when the payment needs none), and whether the booking is done or still open. The period comes from the address (`/print/export/2026-10`, `2026-Q4` or `2026`), and it
  * has to be one the card offers. It sits outside the app shell and opens the print dialog once after it first renders. A
  * period that cannot be exported says so, and so does one with no payments; neither prints.
  */
@@ -148,7 +156,7 @@ const KINDS: readonly ExportKind[] = ['month', 'quarter', 'year'];
                         [ngTemplateOutletContext]="{ row, rate }"
                       />
                       · {{ 'print.export.col.receipt' | transloco }}:
-                      {{ (row.hasReceipt ? 'print.export.yes' : 'print.export.no') | transloco }}
+                      {{ receiptWord[row.receipt] | transloco }}
                     </span>
                   </td>
                   <td class="py-2 pe-2 text-end whitespace-nowrap sm:pe-3">
@@ -177,7 +185,7 @@ const KINDS: readonly ExportKind[] = ['month', 'quarter', 'year'];
                     </span>
                   </td>
                   <td class="py-2 pe-2 max-sm:hidden sm:pe-3" data-testid="row-receipt">
-                    {{ (row.hasReceipt ? 'print.export.yes' : 'print.export.no') | transloco }}
+                    {{ receiptWord[row.receipt] | transloco }}
                   </td>
                   <td class="py-2 whitespace-nowrap">
                     <span
@@ -219,6 +227,7 @@ export class ExportSummaryPage {
   });
 
   protected readonly business = this.demo.business;
+  protected readonly receiptWord = RECEIPT_WORDS;
 
   /** The period of the address, when it is one the card offers for the open business. */
   private readonly period = computed<ExportPeriod | null>(() => {

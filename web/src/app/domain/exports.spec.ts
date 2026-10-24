@@ -97,7 +97,7 @@ describe('exportSummary', () => {
     expect(exportSummary(sara, october, DEMO_TODAY)).toEqual({ bookings: 8, receipts: 7, needsYou: 3, state: 'running', empty: false });
     expect(exportRows(sara, october).find((row) => row.date === '2026-10-21')).toMatchObject({
       counterparty: 'Physio Zentrum Mitte',
-      hasReceipt: true,
+      receipt: 'attached',
       open: false,
     });
     // The same payments are in Q4 and the year.
@@ -105,7 +105,7 @@ describe('exportSummary', () => {
     expect(exportSummary(sara, periodOf(sara, 'year', '2026'), DEMO_TODAY).receipts).toBe(7 + 4 + 3); // October, September (4 payments), August (3)
   });
 
-  it('a payment that needs no receipt has none, and does not need the person', () => {
+  it('a payment that needs no receipt has none, is not a receipt in the count, and does not need the person', () => {
     const noReceiptNeeded = {
       ...weber,
       transactions: weber.transactions.map((tx) => (tx.id === 'wd-t3' ? { ...tx, receipt: 'notNeeded' as const } : tx)),
@@ -113,9 +113,25 @@ describe('exportSummary', () => {
     const october = periodOf(noReceiptNeeded, 'month', '2026-10');
     expect(exportSummary(noReceiptNeeded, october, DEMO_TODAY)).toMatchObject({ bookings: 11, receipts: 8, needsYou: 5 });
     expect(exportRows(noReceiptNeeded, october).find((row) => row.counterparty === 'Deutsche Bahn')).toMatchObject({
-      hasReceipt: false,
+      receipt: 'notNeeded',
       open: false,
     });
+  });
+
+  it('a row says whether its receipt is attached, missing or not needed, as the payment has it', () => {
+    const october = periodOf(weber, 'month', '2026-10');
+    const withReceipt = (receipt: 'attached' | 'missing' | 'notNeeded') => ({
+      ...weber,
+      transactions: weber.transactions.map((tx) => (tx.id === 'wd-t3' ? { ...tx, receipt } : tx)),
+    });
+    const bahn = (b: typeof weber) => exportRows(b, october).find((row) => row.counterparty === 'Deutsche Bahn')!;
+    expect(bahn(withReceipt('attached')).receipt).toBe('attached');
+    expect(bahn(withReceipt('missing'))).toMatchObject({ receipt: 'missing', open: true });
+    expect(bahn(withReceipt('notNeeded'))).toMatchObject({ receipt: 'notNeeded', open: false });
+    // Only an attached receipt is a receipt in the summary.
+    const receipts = (b: typeof weber) => exportSummary(b, october, DEMO_TODAY).receipts;
+    expect(receipts(withReceipt('attached'))).toBe(receipts(withReceipt('missing')) + 1);
+    expect(receipts(withReceipt('notNeeded'))).toBe(receipts(withReceipt('missing')));
   });
 
   it('private payments are not bookings', () => {
@@ -209,7 +225,7 @@ describe('exportRows', () => {
       skr03: RENT.skr03,
       nameDe: RENT.nameDe,
       vatRate: 19,
-      hasReceipt: true,
+      receipt: 'attached',
       open: false,
     });
     expect(august[2].amountCents).toBe(150000); // money in is positive
@@ -218,16 +234,16 @@ describe('exportRows', () => {
     expect(october.map((row) => row.date)).toEqual([...october.map((row) => row.date)].sort());
     const open = october.filter((row) => row.open).map((row) => row.counterparty);
     expect(open.sort()).toEqual(['Amazon', 'Amazon', 'Deutsche Bahn', 'Kern Studio Berlin', 'Müller GmbH', 'SCHREIBWAREN BOETTCHER']);
-    expect(october.filter((row) => !row.open && !row.hasReceipt)).toEqual([]);
+    expect(october.filter((row) => !row.open && row.receipt === 'missing')).toEqual([]);
   });
 
   it('an open row keeps what the payment has: a suggested booking, or none at all', () => {
     const october = exportRows(weber, periodOf(weber, 'month', '2026-10'));
     // Kern Studio: booked and confirmed, but the receipt is missing.
-    expect(october.find((row) => row.counterparty === 'Kern Studio Berlin')).toMatchObject({ skr03: '8400', vatRate: 19, hasReceipt: false, open: true });
+    expect(october.find((row) => row.counterparty === 'Kern Studio Berlin')).toMatchObject({ skr03: '8400', vatRate: 19, receipt: 'missing', open: true });
     // An Amazon order with no category yet: no account and no rate, though its receipt is there.
     const unclear = october.find((row) => row.date === '2026-10-02')!;
-    expect(unclear).toMatchObject({ counterparty: 'Amazon', skr03: null, nameDe: null, vatRate: null, hasReceipt: true, open: true });
+    expect(unclear).toMatchObject({ counterparty: 'Amazon', skr03: null, nameDe: null, vatRate: null, receipt: 'attached', open: true });
   });
 
   it('the rows agree with the summary: a row per booking, the open ones, and the receipts', () => {
@@ -239,7 +255,7 @@ describe('exportRows', () => {
           const label = `${b.id} ${period.key}`;
           expect(rows.length, label).toBe(summary.bookings);
           expect(rows.filter((row) => row.open).length, label).toBe(summary.needsYou);
-          expect(rows.filter((row) => row.hasReceipt).length, label).toBe(summary.receipts);
+          expect(rows.filter((row) => row.receipt === 'attached').length, label).toBe(summary.receipts);
           expect(summary.empty, label).toBe(rows.length === 0);
         }
       }

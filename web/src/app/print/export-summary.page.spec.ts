@@ -132,6 +132,30 @@ describe('ExportSummaryPage', () => {
     expect(text(q('export-summary'))).toContain('5 payments still need you');
   });
 
+  it('says Yes, No or Not needed for the receipt, so a payment that needs none is not a missing one', async () => {
+    demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' })); // Deutsche Bahn
+    await render('/print/export/2026-10');
+    expect(cell(rowOf('Deutsche Bahn', '17 Oct'), 'row-receipt')).toBe('Not needed');
+    expect(cell(rowOf('Kern Studio Berlin', '21 Oct'), 'row-receipt')).toBe('No'); // missing
+    expect(cell(rowOf('Amazon', '2 Oct'), 'row-receipt')).toBe('Yes'); // attached
+    // The phone's line under the name says the same.
+    const bahn = rowOf('Deutsche Bahn', '17 Oct');
+    expect(text(bahn.querySelector('td:nth-child(2) span.block'))).toContain('Receipt: Not needed');
+    // Not needed is not open: only the payments that need the person are.
+    expect(cell(bahn, 'row-status')).toBe('Booked');
+    // The summary line still counts attached receipts only.
+    expect(text(q('export-summary'))).toBe(
+      'October: 11 bookings, 8 receipts · Running · 5 payments still need you',
+    );
+  });
+
+  it('says it in German too', async () => {
+    TestBed.inject(LanguageService).setLang('de');
+    demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
+    await render('/print/export/2026-10');
+    expect(cell(rowOf('Deutsche Bahn', '17. Okt.'), 'row-receipt')).toBe('Nicht nötig');
+  });
+
   it('a period without anything open has no note about open payments', async () => {
     await render('/print/export/2026-09');
     expect(text(q('export-summary'))).toBe('September: 4 bookings, 4 receipts · Closed');
