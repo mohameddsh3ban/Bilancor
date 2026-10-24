@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 import { LanguageService } from './core/i18n/language.service';
 import { provideTranslocoTesting } from './core/i18n/transloco-testing';
+import { AccountService } from './state/account.service';
 import { signInAsSara } from './state/account.testing';
 import { provideNoTaxReminder } from './state/tax-reminder.testing';
 
@@ -126,6 +127,27 @@ describe('the routes', () => {
     harness.detectChanges();
     expect(router.url).toBe('/payments');
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+  });
+
+  it('signed out while the app shell is open (the sign-in page is still loading), the next link in it goes to sign-in', async () => {
+    signInAsSara();
+    const harness = await RouterTestingHarness.create('/payments');
+    harness.detectChanges();
+    expect(router.url).toBe('/payments');
+    expect(document.querySelector('app-shell')).not.toBeNull();
+
+    // The shell route is already active, so its own guard is not asked again: its children's guard must be.
+    TestBed.inject(AccountService).signOut();
+    await harness.navigateByUrl('/documents');
+    expect(router.url).toBe('/sign-in?next=%2Fdocuments');
+    expect(nextOf()).toBe('/documents');
+
+    // A page inside a page of the shell (a payment's details) is a child navigation as well.
+    signInAsSara();
+    await harness.navigateByUrl('/payments');
+    TestBed.inject(AccountService).signOut();
+    await harness.navigateByUrl('/payments/wd-t3');
+    expect(router.url).toBe('/sign-in?next=%2Fpayments%2Fwd-t3');
   });
 
   it('the join page sits outside the app shell: signed out it asks for signing in first, then opens with no top bar', async () => {

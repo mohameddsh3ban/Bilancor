@@ -29,6 +29,9 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [signedInGuard],
+    // The shell stays active while a person moves between its pages, so its own guard is asked only once: a link clicked
+    // after Sign out or Reset demo (while the sign-in page loads) would otherwise keep a signed-out visitor inside.
+    canActivateChild: [signedInGuard],
     loadComponent: () => import('./shell/app-shell').then((m) => m.AppShell),
     children: [
       {
