@@ -17,6 +17,7 @@ import { isEmail, normalEmail } from '../domain/people';
 import { clearErrors, focusAfterRender } from '../settings/form-helpers';
 import { FieldError, INPUT_CLASS } from '../settings/form-parts';
 import { AccountService } from '../state/account.service';
+import { DemoStateService } from '../state/demo-state.service';
 import { DemoEmail } from './demo-email';
 
 /** Where the email change is: nothing started, the new address being typed, or its confirmation link waiting. */
@@ -235,6 +236,7 @@ interface NameErrors {
 })
 export class YouCard {
   private readonly accounts = inject(AccountService);
+  private readonly demo = inject(DemoStateService);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
@@ -292,6 +294,7 @@ export class YouCard {
     this.accounts.updatePerson(this.person().id, (p) =>
       p.firstName === first && p.lastName === last ? p : { ...p, firstName: first, lastName: last },
     );
+    this.keepRowsInStep(first, last, this.person().email);
     // The fields show what was kept (a name typed with spaces round it does not change the person, so nothing else would).
     this.firstName.set(first);
     this.lastName.set(last);
@@ -338,9 +341,16 @@ export class YouCard {
     this.accounts.updatePerson(this.person().id, (p) =>
       p.email === address ? p : { ...p, email: address },
     );
+    const { firstName, lastName } = this.person();
+    this.keepRowsInStep(firstName, lastName, address);
     this.emailStep.set('idle');
     this.emailChanged.set(true);
     this.focus('you-email-changed');
+  }
+
+  /** The people lists of the person's businesses hold their name and email too: they follow the account. */
+  private keepRowsInStep(first: string, last: string, email: string): void {
+    this.demo.updateLoginRows(this.person().id, `${first} ${last}`, email);
   }
 
   /** Why this address (already written in its kept form) can't be the new email, as a translation key. */

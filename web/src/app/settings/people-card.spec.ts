@@ -183,13 +183,8 @@ describe('PeopleCard', () => {
       expect(text(q('people-intro'))).toContain("Sara Weber Yoga's books");
     });
 
-    it('shows the name and email a login has now: after Sara renames herself, her row does too, and the other rows stay', async () => {
-      TestBed.inject(AccountService).updatePerson('p1', (p) => ({
-        ...p,
-        firstName: 'Mara',
-        lastName: 'Klein',
-        email: 'Mara.Klein@Example.com',
-      }));
+    it('after Sara renames herself her row shows the new name and email from the stored row, and the other rows stay', async () => {
+      demo.updateLoginRows('p1', 'Mara Klein', 'Mara.Klein@Example.com');
       await render();
       expect(name('wd-m1')).toBe('Mara Klein (you)');
       expect(text(q('people-avatar-wd-m1'))).toBe('MK');
@@ -213,10 +208,11 @@ describe('PeopleCard', () => {
         { name: 'Studio Becker', kind: 'freelance', legalForm: 'sole' },
       );
       accounts.signIn(id, false);
-      accounts.updatePerson(id, (p) => ({ ...p, firstName: 'Mina', lastName: 'Berger' }));
+      demo.updateLoginRows(id, 'Mina Berger', 'mina.b@example.com');
       await render(business);
       expect(name(`${business}-m1`)).toBe('Mina Berger (you)');
       expect(text(q(`people-avatar-${business}-m1`))).toBe('MB');
+      expect(sub(`${business}-m1`)).toMatch(/^mina.b@example.com · /);
     });
 
     it('is the card of the page: a section with the anchor people', async () => {
@@ -306,6 +302,20 @@ describe('PeopleCard', () => {
       await invite('Jana@Kanzlei-Hoffmann.example', 'full');
       expect(text(inDialog('invite-error-email'))).toBe('This person already has access.');
       expect(rowIds()).toHaveLength(3);
+    });
+
+    it("Sara's changed address is the one that already has access; her old one can be invited", async () => {
+      demo.updateLoginRows('p1', 'Sara Weber', 'sara.klein@example.com');
+      await render();
+      await invite(' Sara.Klein@example.com ', 'full');
+      expect(text(inDialog('invite-error-email'))).toBe('This person already has access.');
+      expect(rowIds()).toHaveLength(3);
+
+      await type(inDialog<HTMLInputElement>('invite-email')!, 'sara@example.com');
+      inDialog('invite-submit')!.click();
+      await settle();
+      expect(inDialog('invite-error-email')).toBeNull();
+      expect(rowIds()).toHaveLength(4);
     });
 
     it('asks for an email, a real one, and a role, and puts the cursor on what is missing', async () => {

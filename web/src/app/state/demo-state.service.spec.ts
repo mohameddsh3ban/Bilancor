@@ -2018,6 +2018,61 @@ describe('DemoStateService', () => {
       });
     });
 
+    describe('updateLoginRows', () => {
+      it("gives the login's row in every one of their businesses the new name and email, and no other row", () => {
+        const state = TestBed.inject(DemoStateService);
+        const others = state.businesses.flatMap((b) =>
+          b.people.filter((m) => m.personId !== PERSON.id),
+        );
+        state.updateLoginRows(PERSON.id, 'Mara Klein', 'mara.klein@example.com');
+
+        const own = state.businesses.flatMap((b) => b.people.filter((m) => m.personId === PERSON.id));
+        expect(own).toHaveLength(3);
+        for (const member of own) {
+          expect(member).toMatchObject({ name: 'Mara Klein', email: 'mara.klein@example.com' });
+        }
+        expect(
+          state.businesses.flatMap((b) => b.people.filter((m) => m.personId !== PERSON.id)),
+        ).toEqual(others);
+        // Not a change to the people of a business: no history line.
+        expect(state.businesses.every((b) => b.history.length === 0)).toBe(true);
+      });
+
+      it('moves the invitation check and the member-email check to the new address', () => {
+        const state = TestBed.inject(DemoStateService);
+        expect(state.isMemberEmail('sara@example.com')).toBe(true);
+        state.updateLoginRows(PERSON.id, 'Sara Weber', 'sara.klein@example.com');
+        expect(state.isMemberEmail('sara@example.com')).toBe(false);
+        expect(state.isMemberEmail(' Sara.Klein@example.com ')).toBe(true);
+
+        const people = state.business().people;
+        expect(state.invite('sara.klein@example.com', 'full')).toBe('hasAccess');
+        expect(state.invite('SARA.KLEIN@example.com', 'full')).toBe('hasAccess');
+        expect(state.business().people).toBe(people);
+        // The old address is free to invite now.
+        expect(state.invite('sara@example.com', 'full')).toBeNull();
+        expect(state.business().people.at(-1)).toMatchObject({
+          email: 'sara@example.com',
+          status: 'invited',
+        });
+      });
+
+      it('changes nothing for a login that has no rows, or when the rows already say this', () => {
+        const state = TestBed.inject(DemoStateService);
+        const before = state.businesses;
+        state.updateLoginRows('p99', 'Nobody', 'nobody@example.com');
+        state.updateLoginRows(PERSON.id, 'Sara Weber', 'sara@example.com');
+        expect(state.businesses).toBe(before);
+      });
+
+      it('resetData puts the rows back as the sample has them', () => {
+        const state = TestBed.inject(DemoStateService);
+        state.updateLoginRows(PERSON.id, 'Mara Klein', 'mara.klein@example.com');
+        state.resetData();
+        expect(state.businesses[0].people).toEqual(BUSINESSES[0].people);
+      });
+    });
+
     describe('isMemberEmail', () => {
       it('is true for a row of any business, joined or invited, whatever the case', () => {
         const state = TestBed.inject(DemoStateService);

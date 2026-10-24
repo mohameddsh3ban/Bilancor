@@ -23,6 +23,7 @@ import {
   normalEmail,
   ownerOf,
   removeMember,
+  renameLogin,
   resendInvite,
   roleOf,
   setSupport,
@@ -422,6 +423,58 @@ describe('leave', () => {
   it('changes nothing for someone who is not in the business', () => {
     const business = linde();
     expect(leave(business, 'p99', TODAY)).toBe(business);
+    expect(renameLogin(business, 'p99', 'Nobody', 'nobody@example.com')).toBe(business);
+  });
+});
+
+describe('renameLogin', () => {
+  const NAME = 'Mara Klein';
+  const EMAIL = 'mara.klein@example.com';
+
+  it("gives the login's row its new name and email, adds no history line, and leaves every other row as it is", () => {
+    const business = weber();
+    const after = renameLogin(business, PERSON.id, NAME, EMAIL);
+    expect(row(after, 'wd-m1')).toEqual({ ...row(business, 'wd-m1'), name: NAME, email: EMAIL });
+    expect(row(after, 'wd-m2')).toBe(row(business, 'wd-m2'));
+    expect(row(after, 'wd-m3')).toBe(row(business, 'wd-m3'));
+    expect(after.people.map((m) => m.id)).toEqual(business.people.map((m) => m.id));
+    expect(after.history).toBe(business.history);
+    // The business it was given is as it was.
+    expect(row(business, 'wd-m1')).toMatchObject({ name: SARA, email: 'sara@example.com' });
+  });
+
+  it('does the same in every business the login is in, so a call per business covers all of them', () => {
+    const business = linde();
+    const after = renameLogin(business, PERSON.id, NAME, EMAIL);
+    expect(row(after, 'cl-m2')).toMatchObject({ name: NAME, email: EMAIL, role: 'full' });
+    expect(row(after, 'cl-m1')).toBe(row(business, 'cl-m1'));
+  });
+
+  it('leaves a row with no login alone, even when it holds the same email', () => {
+    const business = weber();
+    const lookalike: Member = {
+      ...row(business, 'wd-m3')!,
+      id: 'wd-m9',
+      email: 'sara@example.com',
+    };
+    const withLookalike = { ...business, people: [...business.people, lookalike] };
+    const after = renameLogin(withLookalike, PERSON.id, NAME, EMAIL);
+    expect(row(after, 'wd-m9')).toBe(lookalike);
+  });
+
+  it('is the same business when there is nothing to change: the login is not in it, or has this name and email already', () => {
+    const business = weber();
+    expect(renameLogin(business, 'p99', NAME, EMAIL)).toBe(business);
+    expect(renameLogin(business, PERSON.id, SARA, 'sara@example.com')).toBe(business);
+    const renamed = renameLogin(business, PERSON.id, NAME, EMAIL);
+    expect(renameLogin(renamed, PERSON.id, NAME, EMAIL)).toBe(renamed);
+  });
+
+  it('is what the invitation check and the member-email check read: the new address has access, the old one has none', () => {
+    const after = renameLogin(weber(), PERSON.id, NAME, EMAIL);
+    expect(inviteError(after, EMAIL)).toBe('hasAccess');
+    expect(inviteError(after, ' MARA.Klein@example.com ')).toBe('hasAccess');
+    expect(inviteError(after, 'sara@example.com')).toBeNull();
   });
 });
 

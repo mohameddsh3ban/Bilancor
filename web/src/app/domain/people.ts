@@ -259,6 +259,29 @@ export function leave(business: Business, personId: string, today: string): Busi
   );
 }
 
+/**
+ * Keeps the rows of a login in step with its account: My account changed its name or email, so every row whose
+ * `personId` is that login holds the new ones (the people list, the invitation check and the sign-in page's "who is this"
+ * all read the rows). Rows of anyone else, and waiting invitations, stay. It is not a change to who has access, so it adds
+ * no history line, and it returns the business it was given when no row changes.
+ */
+export function renameLogin(
+  business: Business,
+  personId: string,
+  name: string,
+  email: string,
+): Business {
+  let changed = false;
+  const people = business.people.map((member) => {
+    if (member.personId !== personId || (member.name === name && member.email === email)) {
+      return member;
+    }
+    changed = true;
+    return { ...member, name, email };
+  });
+  return changed ? { ...business, people } : business;
+}
+
 /** Lets our support team look for `SUPPORT_DAYS` from today, or stops it. */
 export function setSupport(business: Business, on: boolean, by: string, today: string): Business {
   if (on) {

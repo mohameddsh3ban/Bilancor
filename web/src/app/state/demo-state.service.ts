@@ -557,6 +557,18 @@ export class DemoStateService {
     this.updateBusiness(businessId, (b) => people.leave(b, personId, DEMO_TODAY));
   }
 
+  /**
+   * Gives the login's rows in every business the name and email it has now (My account changed them), so the people
+   * lists, the invitation check and `isMemberEmail` follow the account. No history line; nothing changes when the rows
+   * already say this.
+   */
+  updateLoginRows(personId: string, name: string, email: string): void {
+    this.data.update((all) => {
+      const next = all.map((business) => people.renameLogin(business, personId, name, email));
+      return next.some((business, i) => business !== all[i]) ? next : all;
+    });
+  }
+
   /** Whether the email is a row of any business, joined or invited (whatever its case): somebody the demo already knows by it. */
   isMemberEmail(email: string): boolean {
     const address = people.normalEmail(email);

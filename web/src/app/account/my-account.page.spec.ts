@@ -803,6 +803,12 @@ describe('MyAccountPage inside the app shell', () => {
     inShell('you-save')!.click();
     await sync();
     expect(text(inShell('person-menu'))).toBe('MK');
+    // Every business of hers has the name in her row, not only the open one.
+    expect(
+      demo.businesses.flatMap((b) =>
+        b.people.filter((m) => m.personId === 'p1').map((m) => m.name),
+      ),
+    ).toEqual(['Mara Klein', 'Mara Klein', 'Mara Klein']);
 
     await openPage('/settings', 'people-name-wd-m1');
     expect(text(inShell('people-name-wd-m1'))).toBe('Mara Klein (you)');
@@ -826,6 +832,13 @@ describe('MyAccountPage inside the app shell', () => {
     await sync();
     expect(accounts.person().email).toBe('sara.klein@example.com');
 
+    // The people of her businesses have the new address too: it has access, and the old one is free again.
+    expect(demo.isMemberEmail('sara.klein@example.com')).toBe(true);
+    expect(demo.isMemberEmail('sara@example.com')).toBe(false);
+    const people = demo.business().people;
+    expect(demo.invite('sara.klein@example.com', 'full')).toBe('hasAccess');
+    expect(demo.business().people).toBe(people);
+
     accounts.signOut();
     await openPage('/sign-in', 'sign-in-form');
     const email = document.querySelector<HTMLInputElement>('[data-testid="email"]')!;
@@ -833,10 +846,23 @@ describe('MyAccountPage inside the app shell', () => {
     const password = document.querySelector<HTMLInputElement>('[data-testid="password"]')!;
     password.value = 'anything';
     password.dispatchEvent(new Event('input', { bubbles: true }));
-    document
-      .querySelector('[data-testid="sign-in-form"]')!
-      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await sync();
+    const trySignIn = async (address: string) => {
+      email.value = address;
+      email.dispatchEvent(new Event('input', { bubbles: true }));
+      document
+        .querySelector('[data-testid="sign-in-form"]')!
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await sync();
+    };
+
+    // The old address is nobody's now: not even the people lists of her businesses know it any more.
+    await trySignIn('sara@example.com');
+    expect(text(document.querySelector('[data-testid="error-account"]'))).toContain(
+      'There is no account with this email',
+    );
+    expect(document.querySelector('[data-testid="code-form"]')).toBeNull();
+
+    await trySignIn('sara.klein@example.com');
     expect(document.querySelector('[data-testid="error-account"]')).toBeNull();
     expect(document.querySelector('[data-testid="code-form"]')).not.toBeNull();
   });
