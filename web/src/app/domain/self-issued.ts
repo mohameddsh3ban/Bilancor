@@ -1,5 +1,6 @@
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Booking, Business, Doc, SelfIssuedReason, Transaction } from '../data/models';
+import { namesAlike } from './document-matching';
 
 // Self-issued receipts (Eigenbeleg): what a person writes for a payment whose receipt is lost or was never given. Pure functions. A
 // self-issued receipt can't claim input VAT, so the payment it is written for is booked with 0 % VAT from then on (see `withoutVat`).
@@ -97,6 +98,22 @@ export function selfIssuedDocFor(business: Business, tx: Transaction, input: Sel
 /** Whether a self-issued receipt is linked to the payment. */
 export function hasSelfIssuedReceipt(business: Business, txId: string): boolean {
   return business.documents.some((doc) => doc.selfIssued !== null && doc.paymentId === txId);
+}
+
+/**
+ * The payment that already has a self-issued receipt and that a real receipt which turned up later is probably the receipt of: the document
+ * is received, waits (is read, and linked to no payment) and has the payment's amount and a name alike its payee's (see `namesAlike`).
+ * Null when there is none. Such a receipt can't be linked, because the payment has a receipt already.
+ */
+export function selfIssuedPaymentFor(business: Business, doc: Doc): Transaction | null {
+  if (doc.direction !== 'received' || doc.paymentId !== null || doc.reading || doc.selfIssued !== null) return null;
+  const { amountCents, name } = doc;
+  if (amountCents === null || name === null) return null;
+  return (
+    business.transactions.find(
+      (tx) => hasSelfIssuedReceipt(business, tx.id) && Math.abs(tx.amountCents) === amountCents && namesAlike(name, tx.counterparty),
+    ) ?? null
+  );
 }
 
 /**

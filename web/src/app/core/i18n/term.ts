@@ -11,6 +11,7 @@ export type TermKey =
   | 'euer'
   | 'kleinunternehmer'
   | 'skr03'
+  | 'eigenbeleg'
   | 'eingangsbeleg'
   | 'ausgangsbeleg'
   | 'freiberufler'

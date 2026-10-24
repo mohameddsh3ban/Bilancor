@@ -13,6 +13,7 @@ import { yearSummary } from '../domain/tax-year';
 import { periodFor, vatReturnFor } from '../domain/vat-return';
 import { DemoStateService } from './demo-state.service';
 import { ReceiptService } from './receipt.service';
+import { UNDO_MS } from './review.service';
 import { IMPORT_MS, StatementImportService } from './statement-import.service';
 
 const INPUT: SelfIssuedInput = { purpose: 'Parking at the client meeting', reason: 'machine', reasonText: null, address: null };
@@ -243,6 +244,84 @@ describe('ReceiptService', () => {
       expect(undoBlockedBy(demo.business(), imp, isClosed)).toBe('worked');
       expect(demo.undoImport(imp.id)).toBe(false);
       expect(payment('imp-1-r1').receipt).toBe('attached');
+    });
+  });
+  describe('the undo offer after a receipt written from the payment page', () => {
+    it('is offered for UNDO_MS, and gone after that', () => {
+      vi.useFakeTimers();
+      expect(service.justWritten()).toBeNull();
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      expect(service.justWritten()).toEqual({ txId: 'wd-t20', docId: 'doc-EB-2026-001', number: 'EB-2026-001' });
+
+      vi.advanceTimersByTime(UNDO_MS - 1);
+      expect(service.justWritten()).not.toBeNull();
+      vi.advanceTimersByTime(1);
+      expect(service.justWritten()).toBeNull();
+    });
+
+    it('undoWritten takes the receipt, the 0 % VAT and the number back', () => {
+      vi.useFakeTimers();
+      const apcoa = original('wd-t20');
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+
+      service.undoWritten();
+
+      expect(service.justWritten()).toBeNull();
+      expect(demo.documents().some((d) => d.selfIssued !== null)).toBe(false);
+      expect(payment('wd-t20')).toEqual(apcoa);
+      expect(service.createSelfIssued('wd-t20', INPUT, 'payment')).toBe('doc-EB-2026-001');
+    });
+
+    it('does nothing once the time is over, and a second undo does nothing either', () => {
+      vi.useFakeTimers();
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      vi.advanceTimersByTime(UNDO_MS);
+      service.undoWritten();
+      expect(payment('wd-t20').receipt).toBe('attached');
+
+      loseReceipt('wd-t3');
+      service.createSelfIssued('wd-t3', INPUT, 'payment');
+      service.undoWritten();
+      expect(payment('wd-t3').receipt).toBe('missing');
+      const after = demo.business();
+      service.undoWritten();
+      expect(demo.business()).toBe(after);
+    });
+
+    it('is not offered when the receipt came from the review inbox (it has its own Undo) or was refused', () => {
+      vi.useFakeTimers();
+      service.createSelfIssued('wd-t20', INPUT, 'inbox');
+      expect(service.justWritten()).toBeNull();
+      expect(service.createSelfIssued('wd-t1', INPUT, 'payment')).toBeNull(); // money in
+      expect(service.justWritten()).toBeNull();
+    });
+
+    it('goes with the data: a reset, or another business, ends the offer', () => {
+      vi.useFakeTimers();
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      demo.resetData();
+      expect(service.justWritten()).toBeNull();
+      service.undoWritten();
+      expect(demo.documents().some((d) => d.selfIssued !== null)).toBe(false);
+
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      demo.setBusiness('sara-yoga');
+      expect(service.justWritten()).toBeNull();
+    });
+
+    it('a newer receipt takes the offer over: undo takes back only the latest', () => {
+      vi.useFakeTimers();
+      loseReceipt('wd-t3');
+      service.createSelfIssued('wd-t20', INPUT, 'payment');
+      vi.advanceTimersByTime(4000);
+      service.createSelfIssued('wd-t3', INPUT, 'payment');
+      expect(service.justWritten()?.txId).toBe('wd-t3');
+
+      vi.advanceTimersByTime(4000); // the first timer would have run out by now
+      expect(service.justWritten()?.txId).toBe('wd-t3');
+      service.undoWritten();
+      expect(payment('wd-t3').receipt).toBe('missing');
+      expect(payment('wd-t20').receipt).toBe('attached');
     });
   });
 });

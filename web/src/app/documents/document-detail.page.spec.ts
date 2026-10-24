@@ -12,6 +12,7 @@ import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { UploadService } from '../state/upload.service';
 import { DocumentDetailPage } from './document-detail.page';
 import { DocumentsPage } from './documents.page';
@@ -1400,6 +1401,122 @@ describe('DocumentDetailPage', () => {
       expect(d('linked-payment')!.getAttribute('href')).toBe('/payments/wd-t19');
       expect(d('unlink-payment')).toBeNull();
       expect(d('remove-document')).toBeNull();
+    });
+  });
+
+  describe('a self-issued receipt', () => {
+    /** Writes the self-issued receipt for the APCOA Parking payment, as the form does, and returns the id of its document. */
+    function write(): string {
+      return TestBed.inject(ReceiptService).createSelfIssued(
+        'wd-t20',
+        { purpose: 'Parking', reason: 'machine', reasonText: null, address: null },
+        'payment',
+      )!;
+    }
+
+    it('documents shows Self-issued, locked', async () => {
+      const id = write();
+      await render(`/documents/${id}`);
+
+      expect(text(d('doc-status'))).toBe('Done · Self-issued');
+      expect(text(d('self-issued-box'))).toBe(
+        "Self-issued receipt (Eigenbeleg) You wrote this receipt, so it can't be changed or removed. Print it for your records or the tax office. Print",
+      );
+      const print = d('print-self-issued')!;
+      expect(print.tagName).toBe('A');
+      expect(text(print)).toBe('Print');
+      expect(print.getAttribute('href')).toBe(`/print/self-issued/${id}`);
+      expect(text(d('document-detail-name'))).toBe('APCOA Parking');
+      expect(text(d('document-detail-invoice'))).toBe('EB-2026-001');
+
+      // Locked like an invoice's document: nothing to edit, remove, re-categorise or unlink.
+      expect(d('edit-fields')).toBeNull();
+      expect(d('remove-document')).toBeNull();
+      expect(d('change-category')).toBeNull();
+      expect(d('unlink-payment')).toBeNull();
+      expect(d('linked-payment')!.getAttribute('href')).toBe('/payments/wd-t20');
+      expect(text(d('field-vat'))).toBe('No VAT');
+      expect(historyTexts()).toEqual([
+        `You linked it to the APCOA Parking payment`,
+        'You wrote the self-issued receipt EB-2026-001',
+      ]);
+    });
+
+    it('a document that is not self-issued has no such box, and keeps Print out', async () => {
+      await render('/documents/wd-d4');
+      expect(d('self-issued-box')).toBeNull();
+      expect(d('print-self-issued')).toBeNull();
+    });
+
+    it('still confirms the category of the payment: writing the receipt did not', async () => {
+      demo.updateTransaction('wd-t20', (t) => ({ ...t, confirmed: false }));
+      const id = write();
+      await render(`/documents/${id}`);
+      expect(tx('wd-t20').confirmed).toBe(false);
+
+      await click(d('confirm-booking'));
+
+      expect(tx('wd-t20').confirmed).toBe(true);
+      expect(tx('wd-t20').booking!.vatRate).toBe(0);
+    });
+
+    it('words follow the language', async () => {
+      const id = write();
+      TestBed.inject(LanguageService).setLang('de');
+      await render(`/documents/${id}`);
+      expect(text(d('doc-status'))).toBe(de.documents.status.doneSelfIssued);
+      expect(text(d('self-issued-box'))).toBe(
+        `Eigenbeleg ${de.documents.detail.selfIssued.hint} ${de.documents.detail.selfIssued.print}`,
+      );
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('self-issued-box'))).not.toContain('selfIssued');
+      expect(text(d('self-issued-box'))).toContain('Eigenbeleg');
+    });
+
+    describe('a real receipt that turns up later', () => {
+      /** The receipt of the parking, scanned later: waiting, received, the payment's amount and name. */
+      const turnUp = (): void =>
+        demo.updateDocument('wd-d4', (doc) => ({ ...doc, name: 'APCOA Parking GmbH', amountCents: 650 }));
+
+      it('a later real receipt says the payment already has one', async () => {
+        write();
+        turnUp();
+        await render('/documents/wd-d4');
+
+        expect(text(d('payment-self-issued'))).toBe(
+          'This payment already has a self-issued receipt.',
+        );
+        expect(inside(d('payment-section'), 'linked-payment')!.getAttribute('href')).toBe(
+          '/payments/wd-t20',
+        );
+        // It can't be linked to that payment: the payment is not offered as a match.
+        expect(da('payment-suggestion').map((s) => text(inside(s, 'suggestion-name')))).not.toContain(
+          'APCOA Parking',
+        );
+      });
+
+      it('says nothing before the receipt is written, or for another document', async () => {
+        turnUp();
+        await render('/documents/wd-d4');
+        expect(d('payment-self-issued')).toBeNull();
+        // The APCOA payment is an ordinary match then.
+        expect(da('payment-suggestion').map((s) => text(inside(s, 'suggestion-name')))).toContain(
+          'APCOA Parking',
+        );
+
+        write();
+        await render('/documents/wd-d1');
+        expect(d('payment-self-issued')).toBeNull();
+      });
+
+      it('goes in German too', async () => {
+        write();
+        turnUp();
+        TestBed.inject(LanguageService).setLang('de');
+        await render('/documents/wd-d4');
+        expect(text(d('payment-self-issued'))).toBe(de.documents.detail.payment.hasSelfIssued);
+      });
     });
   });
 

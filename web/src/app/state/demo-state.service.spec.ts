@@ -18,6 +18,7 @@ import { yearSummary } from '../domain/tax-year';
 import { currentVatReturn, periodFor, vatReturnFor } from '../domain/vat-return';
 import { AccountService } from './account.service';
 import { DemoStateService } from './demo-state.service';
+import { ReceiptService } from './receipt.service';
 import { businessOf, withConnection as setConnection, withRole } from './demo-state.testing';
 
 describe('DemoStateService', () => {
@@ -343,6 +344,24 @@ describe('DemoStateService', () => {
       }
       expect(state.business()).toBe(business);
       expect(state.documents().some((d) => d.id === 'wd-d2')).toBe(true);
+    });
+
+    it('unlink and removeDocument refuse a self-issued receipt: it stays linked and keeps its 0 % VAT', () => {
+      const state = TestBed.inject(DemoStateService);
+      const id = TestBed.inject(ReceiptService).createSelfIssued(
+        'wd-t20',
+        { purpose: 'Parking', reason: 'machine', reasonText: null, address: null },
+        'payment',
+      )!;
+      expect(doc(state, id).selfIssued).not.toBeNull();
+      const business = state.business();
+
+      state.unlink(id);
+      state.removeDocument(id);
+
+      expect(state.business()).toBe(business);
+      expect(doc(state, id).paymentId).toBe('wd-t20');
+      expect(payment(state, 'wd-t20')).toMatchObject({ receipt: 'attached', booking: { vatRate: 0 } });
     });
 
     it('editing documents never changes the shared sample data', () => {

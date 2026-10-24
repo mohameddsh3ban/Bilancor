@@ -24,6 +24,7 @@ import { changeCategory, confirmBooking } from '../domain/payment-actions';
 import { DemoStateService } from '../state/demo-state.service';
 import { BookingLabel } from '../payments/booking-label';
 import { CategoryPicker } from '../payments/category-picker';
+import { Term } from '../core/i18n/term';
 import { PaymentHistory } from '../payments/payment-history';
 import { parseDocAmount } from '../domain/amount-input';
 import { DocChanges } from './document-edit-form';
@@ -38,7 +39,9 @@ import { DocumentSteps } from './document-steps';
  * read, the header, the three steps, what was read with Edit, the booking, the payment, the history and Remove.
  * Typing in a field, booking and linking really change the sample data, and each change adds a history line. The document
  * of an invoice written in Invoices is locked: it says so, opens the invoice, and has no Edit, no category change and no
- * Remove (and no "Not this payment" once the invoice is paid), so a sent invoice can't change silently. Below `lg`
+ * Remove (and no "Not this payment" once the invoice is paid), so a sent invoice can't change silently. A self-issued receipt
+ * is locked the same way: it says it is a self-issued receipt (Eigenbeleg), offers Print, and has no Edit, category change, Remove or
+ * "Not this payment". Below `lg`
  * it is a page of its own; from `lg` it is the panel beside the list. When the document is not there (another
  * business opened, an unknown id, not shown in this setup state) it goes back to the list.
  */
@@ -58,6 +61,7 @@ import { DocumentSteps } from './document-steps';
     NgIcon,
     PaymentHistory,
     RouterLink,
+    Term,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideArrowLeft, lucideX })],
@@ -188,6 +192,28 @@ import { DocumentSteps } from './document-steps';
           </section>
         }
 
+        @if (doc.selfIssued) {
+          <section
+            class="bg-muted/50 border-border flex flex-col gap-2 rounded-lg border p-3"
+            data-testid="self-issued-box"
+          >
+            <h2 class="text-sm font-medium"><app-term key="eigenbeleg" /></h2>
+            <p class="text-muted-foreground text-sm">
+              {{ 'documents.detail.selfIssued.hint' | transloco }}
+            </p>
+            <a
+              hlmBtn
+              variant="outline"
+              size="lg"
+              class="self-start"
+              data-testid="print-self-issued"
+              [routerLink]="['/print/self-issued', doc.id]"
+            >
+              {{ 'documents.detail.selfIssued.print' | transloco }}
+            </a>
+          </section>
+        }
+
         <app-document-steps [doc]="doc" [payment]="payment()" />
 
         <app-document-fields [doc]="doc" [payment]="payment()" />
@@ -209,7 +235,7 @@ import { DocumentSteps } from './document-steps';
             </p>
           }
           <div class="flex flex-wrap items-center gap-2">
-            @if (!doc.reading && doc.invoice === null) {
+            @if (!doc.reading && doc.invoice === null && doc.selfIssued === null) {
               <app-category-picker [current]="booking()" (picked)="pick($event)" />
             }
             @if (needsConfirm()) {
@@ -235,7 +261,7 @@ import { DocumentSteps } from './document-steps';
           <app-payment-history [entries]="doc.history" [accounts]="accounts()" />
         </section>
 
-        @if (doc.paymentId === null && !doc.reading && doc.invoice === null) {
+        @if (doc.paymentId === null && !doc.reading && doc.invoice === null && doc.selfIssued === null) {
           <button
             hlmBtn
             variant="destructive"
@@ -383,10 +409,10 @@ export class DocumentDetailPage {
     }
   }
 
-  /** Takes a document that has no payment out of the list and goes back to it. The document of an invoice written in Invoices stays. */
+  /** Takes a document that has no payment out of the list and goes back to it. The document of an invoice written in Invoices stays, and so does a self-issued receipt. */
   protected remove(): void {
     const doc = this.doc();
-    if (doc === null || doc.paymentId !== null || doc.invoice !== null) return;
+    if (doc === null || doc.paymentId !== null || doc.invoice !== null || doc.selfIssued !== null) return;
     this.demo.removeDocument(doc.id);
     void this.router.navigateByUrl('/documents', { replaceUrl: true });
   }

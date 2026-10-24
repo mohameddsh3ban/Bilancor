@@ -37,7 +37,9 @@ import { invoiceOfPayment } from '../domain/invoices';
 import { isClosedDate } from '../domain/months';
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
+import { canWriteSelfIssued } from '../domain/self-issued';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService, type WrittenReceipt } from '../state/receipt.service';
 import { UploadService } from '../state/upload.service';
 import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
@@ -53,6 +55,8 @@ import { PaymentStatusChip } from './payment-status-chip';
  * the receipt pays the invoice (see `DemoStateService.link`). A payment that pays an invoice stays business, and says why;
  * a payment that another document links to can't be marked private either (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
  * the list.
+ * Money out with its receipt missing also offers "Write a self-issued receipt" (see `SelfIssuedPage`); once one is written the page says
+ * so and offers Undo for a few seconds (see `ReceiptService.justWritten`).
  * A payment dated in a closed month (see `isClosedDate`) keeps everything it shows and offers none of these actions;
  * it says why instead.
  * When the payment is not there (another business opened, an unknown id, no bank yet) it goes back to the list.
@@ -154,6 +158,27 @@ import { PaymentStatusChip } from './payment-status-chip';
           }
         </header>
 
+        <div role="status" class="empty:hidden">
+          @if (written(); as receipt) {
+            <p
+              class="bg-positive/10 border-positive/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+              data-testid="self-issued-undo"
+            >
+              <span class="min-w-0" data-testid="self-issued-undo-text">{{
+                'selfIssued.written' | transloco: { number: isolate(receipt.number) }
+              }}</span>
+              <button
+                type="button"
+                class="text-primary focus-visible:ring-ring/50 min-h-10 shrink-0 rounded-sm px-1 font-semibold underline underline-offset-4 outline-none focus-visible:ring-3"
+                data-testid="undo-self-issued"
+                (click)="undoWritten()"
+              >
+                {{ 'selfIssued.undo' | transloco }}
+              </button>
+            </p>
+          }
+        </div>
+
         <section class="flex flex-col gap-3" data-testid="receipt-section">
           <h2 class="text-muted-foreground text-sm font-medium">
             {{ 'payments.detail.receipt.title' | transloco }}
@@ -225,22 +250,24 @@ import { PaymentStatusChip } from './payment-status-chip';
                     }}
                   </button>
                   <app-document-picker [payment]="tx" (picked)="pickDocument($event)" />
-                  <a
-                    hlmBtn
-                    variant="outline"
-                    size="lg"
-                    data-testid="self-receipt"
-                    [routerLink]="['/soon', 'selfReceipt']"
-                    [hlmTooltip]="'terms.eigenbeleg.explain' | transloco"
-                  >
-                    <span>
-                      {{ 'terms.eigenbeleg.label' | transloco }}
-                      @if (showGerman()) {
-                        (<bdi dir="ltr">{{ 'terms.eigenbeleg.de' | transloco }}</bdi
-                        >)
-                      }
-                    </span>
-                  </a>
+                  @if (canSelfIssue()) {
+                    <a
+                      hlmBtn
+                      variant="outline"
+                      size="lg"
+                      data-testid="self-receipt"
+                      [routerLink]="['/payments', tx.id, 'self-issued']"
+                      [hlmTooltip]="'terms.eigenbeleg.explain' | transloco"
+                    >
+                      <span>
+                        {{ 'payments.detail.receipt.selfIssued' | transloco }}
+                        @if (showGerman()) {
+                          (<bdi dir="ltr">{{ 'terms.eigenbeleg.de' | transloco }}</bdi
+                          >)
+                        }
+                      </span>
+                    </a>
+                  }
                 </div>
               }
             }
@@ -400,6 +427,7 @@ export class PaymentDetailPage {
 
   private readonly demo = inject(DemoStateService);
   private readonly upload = inject(UploadService);
+  private readonly receipts = inject(ReceiptService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly language = inject(LanguageService);
@@ -437,6 +465,19 @@ export class PaymentDetailPage {
   protected readonly photoReading = computed(() => {
     const id = this.payment()?.id;
     return id !== undefined && this.upload.readingFor() === id;
+  });
+
+  /** Whether a self-issued receipt can be written for the open payment: money out with its receipt missing, not private, not in a closed month. */
+  protected readonly canSelfIssue = computed(() => {
+    const tx = this.payment();
+    const business = this.demo.business();
+    return tx !== null && canWriteSelfIssued(tx, (month) => isClosedDate(business, `${month}-01`));
+  });
+
+  /** The self-issued receipt just written for the open payment, while Undo is on offer. */
+  protected readonly written = computed<WrittenReceipt | null>(() => {
+    const written = this.receipts.justWritten();
+    return written !== null && written.txId === this.payment()?.id ? written : null;
   });
 
   /** Whether the open payment is dated in a closed month: it keeps what it shows and loses its actions. */
@@ -506,6 +547,11 @@ export class PaymentDetailPage {
   protected takePhoto(): void {
     const id = this.payment()?.id;
     if (id) void this.upload.addPhotoFor(id);
+  }
+
+  /** Undo, right after a self-issued receipt was written: the receipt and the 0 % VAT it took off go back. */
+  protected undoWritten(): void {
+    this.receipts.undoWritten();
   }
 
   private change(action: (tx: Transaction) => Transaction): void {

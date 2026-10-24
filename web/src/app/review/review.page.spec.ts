@@ -8,6 +8,7 @@ import { formatDate, formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { confirmBooking } from '../domain/payment-actions';
+import { reviewItems } from '../domain/review-queue';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService, UNDO_MS, type ReviewAnswerResult } from '../state/review.service';
 import { signInAsSara } from '../state/account.testing';
@@ -803,6 +804,57 @@ describe('ReviewPage', () => {
       answer();
       play(TICKED);
       expect(classes(host())).toContain('-translate-x-[110%]');
+    });
+  });
+
+  describe('the pop-up that writes a self-issued receipt', () => {
+    /** The pop-up sits in an overlay outside the page. */
+    const dialog = () =>
+      document.body.querySelector<HTMLElement>('[data-testid="self-issued-dialog"]');
+
+    /** The APCOA Parking card on its own: every other decision is settled first. */
+    async function openApcoa(): Promise<void> {
+      for (const item of reviewItems(demo.business(), demo.setup())) {
+        if (item.id !== 'wd-t20') settleItem(demo, item);
+      }
+      await render();
+      expect(name()).toBe('APCOA Parking');
+      q('answer-self-issued')!.click();
+      await settle();
+      expect(dialog()).not.toBeNull();
+    }
+
+    it('Escape closes the pop-up and leaves the inbox open', async () => {
+      await openApcoa();
+
+      dialog()!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      await settleHistory();
+
+      expect(dialog()).toBeNull();
+      expect(TestBed.inject(Router).url).toBe('/review');
+      expect(name()).toBe('APCOA Parking');
+    });
+
+    it('creating the receipt answers the card on the page: it counts as a receipt added, and the inbox is done', async () => {
+      await openApcoa();
+      const box = (testId: string) =>
+        dialog()!.querySelector<HTMLElement>(`[data-testid="${testId}"] input`)!;
+      box('reason-machine').click();
+      await settle();
+      box('form-confirm').click();
+      await settle();
+
+      vi.useFakeTimers();
+      dialog()!.querySelector<HTMLElement>('[data-testid="form-create"]')!.click();
+      harness.detectChanges();
+      play(TICKED);
+      play(SLIDE_MS);
+
+      expect(review.summary().receiptsAdded).toBe(1);
+      expect(q('review-finish')).not.toBeNull();
+      expect(demo.documents().some((d) => d.selfIssued !== null && d.paymentId === 'wd-t20')).toBe(true);
     });
   });
 });

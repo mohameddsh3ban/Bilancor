@@ -24,7 +24,7 @@ const CHIP_CLASSES: Record<DocStatus, string> = {
  * A document's status as a coloured word (never only an icon). A waiting document with a due date says when,
  * an overdue one says since when. The document of an invoice written in Invoices adds what is special about it: what is
  * left of a partly paid invoice, "Cancelled", or the number a cancellation invoice cancels. The pill may wrap onto a
- * second line rather than leave the space it sits in.
+ * second line rather than leave the space it sits in. A self-issued receipt written in the app reads "Done · Self-issued".
  */
 @Component({
   selector: 'app-document-status-chip',
@@ -53,6 +53,7 @@ export class DocumentStatusChip {
   protected readonly key = computed(() => {
     const status = this.status();
     const note = this.note();
+    if (status === 'done' && this.doc().selfIssued !== null) return 'doneSelfIssued';
     if (status === 'done' && note?.kind === 'cancelled') return 'doneCancelled';
     if (status === 'done' && note?.kind === 'cancellation') return 'cancellationOf';
     if (note?.kind === 'left' && status === 'waiting') return 'waitingLeft';

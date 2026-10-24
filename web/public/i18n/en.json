@@ -225,7 +225,6 @@
     "receipt": "Upload your first receipt",
     "account": "Account",
     "photo": "Take a photo",
-    "selfReceipt": "Self-issued receipt",
     "cashPayment": "Paid in cash or privately",
     "default": "This page"
   },
@@ -784,6 +783,7 @@
         "takePhoto": "Take photo",
         "reading": "Reading…",
         "pickDocument": "Pick from Documents",
+        "selfIssued": "Write a self-issued receipt",
         "openDocument": "Open document",
         "noReceiptNeeded": "No receipt needed"
       },
@@ -894,6 +894,7 @@
       "done": "Done",
       "waitingLeft": "Waiting for payment · {{left}} left",
       "overdueLeft": "Overdue since {{date}} · {{left}} left",
+      "doneSelfIssued": "Done · Self-issued",
       "doneCancelled": "Done · Cancelled",
       "cancellationOf": "Cancellation of {{number}}"
     },
@@ -991,6 +992,7 @@
         "payInInvoice": "Paid in cash? Mark it in the invoice",
         "partPaid": "Part paid so far:",
         "notThis": "Not this payment",
+        "hasSelfIssued": "This payment already has a self-issued receipt.",
         "closedCancelled": "This invoice was cancelled, so no payment is needed.",
         "closedCancellation": "A cancellation invoice needs no payment."
       },
@@ -1000,6 +1002,10 @@
         "empty": "No payments match"
       },
       "remove": "Remove",
+      "selfIssued": {
+        "hint": "You wrote this receipt, so it can't be changed or removed. Print it for your records or the tax office.",
+        "print": "Print"
+      },
       "written": {
         "title": "Written in Invoices",
         "hint": "This document can't be changed or removed here. Open the invoice to work with it.",
@@ -1357,6 +1363,42 @@
       "decisions": "Decisions"
     }
   },
+  "selfIssued": {
+    "back": "Back to the payment",
+    "intro": "No receipt for this payment? Write one yourself. It's kept with the payment, and you can print it.",
+    "purpose": {
+      "label": "What was it for?",
+      "error": "Say what the money was for."
+    },
+    "reason": {
+      "label": "Why is there no receipt?",
+      "lost": "It got lost",
+      "machine": "The machine gave none",
+      "tip": "It was a tip",
+      "sellerNone": "The seller gave none",
+      "other": "Something else…",
+      "otherLabel": "What happened?",
+      "error": "Choose why there is no receipt.",
+      "otherError": "Say what happened."
+    },
+    "paidTo": {
+      "label": "Paid to",
+      "address": "Address (optional)"
+    },
+    "note": {
+      "noVat": "No VAT can be claimed back with a self-issued receipt, so this payment's VAT won't count.",
+      "large": "For larger amounts, ask the seller for a copy first; tax offices question larger self-issued receipts more often."
+    },
+    "confirm": {
+      "text": "I confirm this is true",
+      "error": "Tick the box to confirm."
+    },
+    "create": "Create receipt",
+    "cancel": "Cancel",
+    "close": "Close",
+    "written": "Self-issued receipt {{number}} written",
+    "undo": "Undo"
+  },
   "review": {
     "title": "Review your decisions",
     "needsYouButton": "Needs you · {{count}}",
@@ -1388,6 +1430,7 @@
       "confirm": "Yes, that's right",
       "changeCategory": "Change category",
       "takePhoto": "Take a photo",
+      "writeReceipt": "Receipt lost? Write one yourself",
       "removeThis": "Remove this one",
       "yes": "Yes",
       "pickAnother": "Pick another"
@@ -1399,6 +1442,7 @@
       "private": "Marked as private",
       "receiptAdded": "Receipt added",
       "noReceipt": "Marked: no receipt needed",
+      "selfIssuedAdded": "Self-issued receipt added",
       "keptBoth": "Kept both",
       "removed": "Removed",
       "received": "Marked as received",

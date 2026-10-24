@@ -225,7 +225,6 @@
     "receipt": "Ersten Beleg hochladen",
     "account": "Konto",
     "photo": "Foto aufnehmen",
-    "selfReceipt": "Eigenbeleg",
     "cashPayment": "Bar oder privat bezahlt",
     "default": "Diese Seite"
   },
@@ -784,6 +783,7 @@
         "takePhoto": "Foto aufnehmen",
         "reading": "Wird gelesen…",
         "pickDocument": "Aus Dokumenten wählen",
+        "selfIssued": "Eigenbeleg erstellen",
         "openDocument": "Dokument öffnen",
         "noReceiptNeeded": "Kein Beleg nötig"
       },
@@ -894,6 +894,7 @@
       "done": "Erledigt",
       "waitingLeft": "Wartet auf Zahlung · {{left}} offen",
       "overdueLeft": "Überfällig seit {{date}} · {{left}} offen",
+      "doneSelfIssued": "Erledigt · Eigenbeleg",
       "doneCancelled": "Erledigt · Storniert",
       "cancellationOf": "Stornorechnung zu {{number}}"
     },
@@ -991,6 +992,7 @@
         "payInInvoice": "Bar bezahlt? In der Rechnung markieren",
         "partPaid": "Bisher teilweise bezahlt:",
         "notThis": "Nicht diese Zahlung",
+        "hasSelfIssued": "Für diese Zahlung gibt es schon einen Eigenbeleg.",
         "closedCancelled": "Diese Rechnung wurde storniert, deshalb ist keine Zahlung nötig.",
         "closedCancellation": "Eine Stornorechnung braucht keine Zahlung."
       },
@@ -1000,6 +1002,10 @@
         "empty": "Keine Zahlung passt"
       },
       "remove": "Entfernen",
+      "selfIssued": {
+        "hint": "Du hast diesen Beleg selbst geschrieben, deshalb lässt er sich nicht ändern oder entfernen. Druck ihn für deine Unterlagen oder das Finanzamt aus.",
+        "print": "Drucken"
+      },
       "written": {
         "title": "In Rechnungen geschrieben",
         "hint": "Dieses Dokument lässt sich hier nicht ändern oder entfernen. Öffne die Rechnung, um damit zu arbeiten.",
@@ -1357,6 +1363,42 @@
       "decisions": "Entscheidungen"
     }
   },
+  "selfIssued": {
+    "back": "Zurück zur Zahlung",
+    "intro": "Kein Beleg zu dieser Zahlung? Schreib selbst einen. Er wird bei der Zahlung gespeichert und du kannst ihn ausdrucken.",
+    "purpose": {
+      "label": "Wofür war das?",
+      "error": "Schreib, wofür das Geld war."
+    },
+    "reason": {
+      "label": "Warum gibt es keinen Beleg?",
+      "lost": "Er ist verloren gegangen",
+      "machine": "Der Automat hat keinen ausgegeben",
+      "tip": "Es war Trinkgeld",
+      "sellerNone": "Der Verkäufer hat keinen ausgestellt",
+      "other": "Etwas anderes…",
+      "otherLabel": "Was ist passiert?",
+      "error": "Wähle, warum es keinen Beleg gibt.",
+      "otherError": "Schreib, was passiert ist."
+    },
+    "paidTo": {
+      "label": "Bezahlt an",
+      "address": "Anschrift (optional)"
+    },
+    "note": {
+      "noVat": "Mit einem Eigenbeleg kannst du keine Vorsteuer zurückholen, deshalb zählt die Vorsteuer dieser Zahlung nicht.",
+      "large": "Bei größeren Beträgen frag zuerst den Verkäufer nach einer Kopie; das Finanzamt hinterfragt größere Eigenbelege öfter."
+    },
+    "confirm": {
+      "text": "Ich bestätige, dass das stimmt",
+      "error": "Setz den Haken, um zu bestätigen."
+    },
+    "create": "Beleg erstellen",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "written": "Eigenbeleg {{number}} erstellt",
+    "undo": "Rückgängig"
+  },
   "review": {
     "title": "Entscheidungen prüfen",
     "needsYouButton": "Braucht dich · {{count}}",
@@ -1388,6 +1430,7 @@
       "confirm": "Ja, stimmt",
       "changeCategory": "Kategorie ändern",
       "takePhoto": "Foto aufnehmen",
+      "writeReceipt": "Beleg verloren? Schreib selbst einen",
       "removeThis": "Diesen entfernen",
       "yes": "Ja",
       "pickAnother": "Andere wählen"
@@ -1399,6 +1442,7 @@
       "private": "Als privat markiert",
       "receiptAdded": "Beleg hinzugefügt",
       "noReceipt": "Markiert: kein Beleg nötig",
+      "selfIssuedAdded": "Eigenbeleg erstellt",
       "keptBoth": "Beide behalten",
       "removed": "Entfernt",
       "received": "Als empfangen markiert",

@@ -45,6 +45,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./payments/statement-import.page').then((m) => m.StatementImportPage),
       },
+      // Writing a self-issued receipt is a page of its own for one payment, so it is listed above payments, whose :id has no more to give.
+      {
+        path: 'payments/:id/self-issued',
+        loadComponent: () => import('./payments/self-issued.page').then((m) => m.SelfIssuedPage),
+      },
       {
         path: 'payments',
         loadComponent: () => import('./payments/payments.page').then((m) => m.PaymentsPage),
@@ -154,5 +159,11 @@ export const routes: Routes = [
     path: 'print/invoice/:id',
     canActivate: [signedInGuard],
     loadComponent: () => import('./print/invoice-print.page').then((m) => m.InvoicePrintPage),
+  },
+  {
+    path: 'print/self-issued/:docId',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./print/self-issued-print.page').then((m) => m.SelfIssuedPrintPage),
   },
 ];

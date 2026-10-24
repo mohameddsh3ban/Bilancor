@@ -325,7 +325,7 @@ describe('PaymentDetailPage', () => {
       expect(d('receipt-thumbnail')).not.toBeNull();
     });
 
-    it('missing receipt: no receipt needed, a photo, a picker for documents, and a coming-soon self-issued receipt', async () => {
+    it('missing receipt: no receipt needed, a photo, a picker for documents, and a self-issued receipt', async () => {
       await render('/payments/wd-t3');
       expect(text(d('receipt-state'))).toBe('Receipt missing');
       expect(d('no-receipt-needed')!.tagName).toBe('BUTTON');
@@ -334,19 +334,44 @@ describe('PaymentDetailPage', () => {
       expect(d('take-photo')!.hasAttribute('disabled')).toBe(false);
       expect(d('pick-document')!.tagName).toBe('BUTTON');
       expect(text(d('pick-document'))).toBe('Pick from Documents');
-      expect(d('self-receipt')!.getAttribute('href')).toBe('/soon/selfReceipt');
+      expect(d('self-receipt')!.getAttribute('href')).toBe('/payments/wd-t3/self-issued');
+    });
+
+    it('payment detail offers Write a self-issued receipt for APCOA, not in a closed month', async () => {
+      await render('/payments/wd-t20');
+      expect(text(d('receipt-state'))).toBe('Receipt missing');
+      expect(d('self-receipt')!.tagName).toBe('A');
+      expect(d('self-receipt')!.getAttribute('href')).toBe('/payments/wd-t20/self-issued');
+      expect(text(d('self-receipt'))).toBe('Write a self-issued receipt (Eigenbeleg)');
+      // No undo notice until a receipt was just written.
+      expect(d('self-issued-undo')).toBeNull();
+
+      // The same payment dated in a closed month (August is closed) offers none of it.
+      demo.updateTransaction('wd-t20', (tx) => ({ ...tx, date: '2026-08-20' }));
+      await settle();
+      expect(d('self-receipt')).toBeNull();
+      expect(d('no-receipt-needed')).toBeNull();
+      expect(d('closed-note')).not.toBeNull();
+    });
+
+    it('offers the self-issued receipt for money out only: a payment coming in that lacks its receipt has none', async () => {
+      demo.updateTransaction('wd-t1', (tx) => ({ ...tx, receipt: 'missing', receiptFile: null }));
+      await render('/payments/wd-t1');
+      expect(text(d('receipt-state'))).toBe('Receipt missing');
+      expect(d('no-receipt-needed')).not.toBeNull();
+      expect(d('self-receipt')).toBeNull();
     });
 
     it('names the self-issued receipt with its German term, Eigenbeleg, outside German', async () => {
       await render('/payments/wd-t3');
-      expect(text(d('self-receipt'))).toBe('Self-issued receipt (Eigenbeleg)');
+      expect(text(d('self-receipt'))).toBe('Write a self-issued receipt (Eigenbeleg)');
       expect(d('self-receipt')!.querySelector('bdi[dir="ltr"]')!.textContent).toBe('Eigenbeleg');
       TestBed.inject(LanguageService).setLang('ar');
       await settle();
-      expect(text(d('self-receipt'))).toBe(`${ar.terms.eigenbeleg.label} (Eigenbeleg)`);
+      expect(text(d('self-receipt'))).toBe(`${ar.payments.detail.receipt.selfIssued} (Eigenbeleg)`);
       TestBed.inject(LanguageService).setLang('de');
       await settle();
-      expect(text(d('self-receipt'))).toBe('Eigenbeleg');
+      expect(text(d('self-receipt'))).toBe('Eigenbeleg erstellen');
       expect(d('self-receipt')!.querySelector('bdi')).toBeNull();
     });
 

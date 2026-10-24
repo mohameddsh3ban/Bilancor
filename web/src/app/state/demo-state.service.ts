@@ -418,11 +418,12 @@ export class DemoStateService {
 
   /**
    * Removes a document of the open business; a document linked to a payment stays (unlink it first), and so does the
-   * document of an invoice written in Invoices: the invoice is on record, and it keeps its document.
+   * document of an invoice written in Invoices: the invoice is on record, and it keeps its document. A self-issued receipt
+   * stays too: its number can't be given away, and the payment keeps the 0 % VAT it took off.
    */
   removeDocument(id: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) =>
-      business.documents.some((d) => d.id === id && d.paymentId === null && d.invoice === null)
+      business.documents.some((d) => d.id === id && d.paymentId === null && d.invoice === null && d.selfIssued === null)
         ? { ...business, documents: business.documents.filter((d) => d.id !== id) }
         : business,
     );
@@ -458,13 +459,14 @@ export class DemoStateService {
 
   /**
    * Takes a document of the open business off its payment, putting the payment back as it was. Ignored when it is not linked,
-   * and for the document of an invoice written in Invoices: the payment stays the invoice's payment.
+   * for the document of an invoice written in Invoices (the payment stays the invoice's payment), and for a self-issued receipt
+   * (putting the payment back would give its VAT back, though the payment keeps the mark that it has none).
    */
   unlink(docId: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) => {
       const doc = business.documents.find((d) => d.id === docId);
       const tx = doc?.paymentId ? business.transactions.find((t) => t.id === doc.paymentId) : undefined;
-      if (!doc || !tx || doc.invoice !== null) return business;
+      if (!doc || !tx || doc.invoice !== null || doc.selfIssued !== null) return business;
       const unlinked = unlinkDocument(doc, tx);
       return {
         ...business,

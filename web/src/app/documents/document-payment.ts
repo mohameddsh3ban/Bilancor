@@ -12,6 +12,7 @@ import { accountName } from '../domain/bank-connection';
 import { paymentCandidates } from '../domain/document-matching';
 import { isClosedInvoice } from '../domain/document-status';
 import { invoiceDocNote, invoicePayments } from '../domain/invoices';
+import { selfIssuedPaymentFor } from '../domain/self-issued';
 import { DemoStateService } from '../state/demo-state.service';
 import { PaymentPicker } from './payment-picker';
 
@@ -24,7 +25,9 @@ const SUGGESTIONS = 3;
  * opens in Payments, and "Not this payment" to take the link away. While the document is still being read there is
  * nothing to link yet, so only "No payment yet." shows. For a cancelled invoice and a cancellation invoice no payment is
  * looked for: it says none is needed. The document of an invoice written in Invoices cannot be unlinked ("Not this
- * payment" is not there): the payment is the invoice's. Once part of the invoice is paid it lists the payments that came
+ * payment" is not there): the payment is the invoice's. Neither can a self-issued receipt: the payment keeps its 0 % VAT. A waiting
+ * receipt that is probably the real one of a payment that has a self-issued receipt says so, and can't be linked to it (the payment
+ * has a receipt already). Once part of the invoice is paid it lists the payments that came
  * in instead of looking for a first one, and in place of "Paid in cash or privately" (which is coming soon) it leads to the
  * invoice, where Mark as paid works. Each action does something only while it still applies, so a double tap writes one
  * history line on each side.
@@ -86,7 +89,7 @@ const SUGGESTIONS = 3;
 
       @if (payment(); as linked) {
         <ng-container *ngTemplateOutlet="paymentRow; context: { $implicit: linked }" />
-        @if (doc().invoice === null) {
+        @if (doc().invoice === null && doc().selfIssued === null) {
           <div class="flex flex-wrap gap-2">
             <button
               hlmBtn
@@ -109,6 +112,12 @@ const SUGGESTIONS = 3;
           {{ 'documents.detail.payment.' + closed | transloco }}
         </p>
       } @else {
+        @if (selfIssuedPayment(); as covered) {
+          <p class="text-sm" data-testid="payment-self-issued">
+            {{ 'documents.detail.payment.hasSelfIssued' | transloco }}
+          </p>
+          <ng-container *ngTemplateOutlet="paymentRow; context: { $implicit: covered }" />
+        }
         @if (received(); as paid) {
           <p class="text-sm" data-testid="payment-part">
             {{ 'documents.detail.payment.partPaid' | transloco }}
@@ -233,6 +242,10 @@ export class DocumentPayment {
     const payments = invoicePayments(invoice, business);
     return payments.length > 0 ? payments : null;
   });
+  /** The payment that already has a self-issued receipt and that this waiting document is probably the real receipt of; otherwise null. */
+  protected readonly selfIssuedPayment = computed<Transaction | null>(() =>
+    selfIssuedPaymentFor(this.demo.business(), this.doc()),
+  );
   /** For a cancelled invoice and a cancellation invoice, the text that says no payment is needed (no payment is looked for); otherwise null. */
   protected readonly closedKey = computed(() => {
     const doc = this.doc();

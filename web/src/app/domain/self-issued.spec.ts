@@ -1,6 +1,6 @@
 import { TRAVEL } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Business, Transaction } from '../data/models';
+import type { Business, Doc, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import {
   SELF_ISSUED_NOTE_CENTS,
@@ -11,6 +11,7 @@ import {
   nextSelfIssuedNumber,
   purposeSuggestion,
   selfIssuedDocFor,
+  selfIssuedPaymentFor,
   selfIssuedProblems,
   withoutVat,
   type SelfIssuedInput,
@@ -213,6 +214,53 @@ describe('hasSelfIssuedReceipt', () => {
     expect(hasSelfIssuedReceipt({ ...business, documents: [{ ...doc, paymentId: 'wd-t20' }, ...business.documents] }, 'wd-t2')).toBe(false);
     expect(hasSelfIssuedReceipt(business, 'wd-t2')).toBe(false);
     expect(hasSelfIssuedReceipt({ ...business, documents: [doc, ...business.documents] }, 'wd-t20')).toBe(false);
+  });
+});
+
+describe('selfIssuedPaymentFor', () => {
+  /** The business with a self-issued receipt written for APCOA Parking: the payment now has its receipt. */
+  function withApcoaReceipt(): Business {
+    const business = weber();
+    const receipt = { ...selfIssuedDocFor(business, apcoa(), INPUT, 'Sara Weber', DEMO_TODAY), paymentId: 'wd-t20' };
+    return {
+      ...business,
+      documents: [receipt, ...business.documents],
+      transactions: business.transactions.map((tx) => (tx.id === 'wd-t20' ? { ...tx, receipt: 'attached' as const, receiptFile: receipt.fileName } : tx)),
+    };
+  }
+  /** A real receipt that turned up later: received, waiting, not linked. */
+  const real = (patch: Partial<Doc> = {}): Doc => ({
+    ...weber().documents.find((d) => d.id === 'wd-d4')!,
+    name: 'APCOA Parking GmbH',
+    amountCents: 650,
+    ...patch,
+  });
+
+  it('finds the payment that already has a self-issued receipt when the amount and the name match', () => {
+    const business = withApcoaReceipt();
+    expect(selfIssuedPaymentFor(business, real())?.id).toBe('wd-t20');
+  });
+
+  it('finds nothing when the amount or the name differ', () => {
+    const business = withApcoaReceipt();
+    expect(selfIssuedPaymentFor(business, real({ amountCents: 700 }))).toBeNull();
+    expect(selfIssuedPaymentFor(business, real({ name: 'Deutsche Bahn' }))).toBeNull();
+    expect(selfIssuedPaymentFor(business, real({ name: null }))).toBeNull();
+    expect(selfIssuedPaymentFor(business, real({ amountCents: null }))).toBeNull();
+  });
+
+  it('finds nothing for a payment that has no self-issued receipt', () => {
+    expect(selfIssuedPaymentFor(weber(), real())).toBeNull();
+  });
+
+  it('is only for a received document that waits: not a sent one, a linked one, one still read, or a self-issued receipt itself', () => {
+    const business = withApcoaReceipt();
+    expect(selfIssuedPaymentFor(business, real({ direction: 'sent' }))).toBeNull();
+    expect(selfIssuedPaymentFor(business, real({ direction: null }))).toBeNull();
+    expect(selfIssuedPaymentFor(business, real({ paymentId: 'wd-t3' }))).toBeNull();
+    expect(selfIssuedPaymentFor(business, real({ reading: true }))).toBeNull();
+    const own = business.documents.find((d) => d.selfIssued !== null)!;
+    expect(selfIssuedPaymentFor(business, own)).toBeNull();
   });
 });
 

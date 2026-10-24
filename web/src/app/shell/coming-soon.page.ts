@@ -17,7 +17,6 @@ const FEATURES: readonly string[] = [
   'receipt',
   'account',
   'photo',
-  'selfReceipt',
   'cashPayment',
 ];
 

@@ -11,6 +11,7 @@ import { groupDocsByMonth } from '../domain/document-search';
 import { docNeedsYou } from '../domain/document-status';
 import { READING_MS, newReadingDoc } from '../domain/document-upload';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { UploadService } from '../state/upload.service';
@@ -486,6 +487,18 @@ describe('DocumentsPage', () => {
       expect(text(inside(row, 'doc-status'))).toBe('Waiting for payment');
       const done = qa('document-row').filter((r) => text(inside(r, 'doc-status')) === 'Done');
       expect(done.length).toBeGreaterThan(0);
+    });
+
+    it('a self-issued receipt is listed as Done · Self-issued', async () => {
+      TestBed.inject(ReceiptService).createSelfIssued(
+        'wd-t20',
+        { purpose: 'Parking', reason: 'machine', reasonText: null, address: null },
+        'payment',
+      );
+      await render();
+      const row = rowOf('APCOA Parking');
+      expect(text(inside(row, 'doc-status'))).toBe('Done · Self-issued');
+      expect(text(inside(row, 'document-meta'))).toBe(`Received · ${formatDate('2026-10-20', 'en')}`);
     });
 
     it('groups by month, newest first, with the month names', async () => {
