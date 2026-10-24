@@ -263,6 +263,16 @@ describe('AccountService', () => {
       expect(accounts.persons()[0].devices.map((d) => d.id)).toEqual(['d1']);
       expect(accounts.signedIn()).toBe(false);
     });
+
+    it("with nobody signed in, signing a device out or every other one out leaves Sara's devices as they are", () => {
+      // person() is Sara while nobody is signed in, but she is only the sample person then, not somebody who is in.
+      const accounts = TestBed.inject(AccountService);
+      const before = accounts.persons();
+      accounts.signOutDevice('d2');
+      accounts.signOutOtherDevices();
+      expect(accounts.persons()).toBe(before);
+      expect(accounts.persons()[0].devices.map((d) => d.id)).toEqual(['d1', 'd2']);
+    });
   });
 
   describe('backup codes', () => {
@@ -282,6 +292,17 @@ describe('AccountService', () => {
       }
       expect(accounts.useBackupCode('p1')).toBe(false);
       expect(accounts.person().backupCodesLeft).toBe(0);
+    });
+
+    it("with nobody signed in, makeBackupCodes gives nothing and leaves Sara's codes and the next set as they were", () => {
+      const accounts = TestBed.inject(AccountService);
+      const before = accounts.persons();
+      expect(accounts.makeBackupCodes()).toEqual([]);
+      expect(accounts.persons()).toBe(before);
+      expect(accounts.persons()[0].backupCodesLeft).toBe(6);
+      // The failed call used up no set: the first one made once somebody is in is still the first.
+      accounts.signIn('p1', false);
+      expect(accounts.makeBackupCodes()).toEqual(demoBackupCodes(1));
     });
 
     it('useBackupCode refuses a person nobody knows', () => {

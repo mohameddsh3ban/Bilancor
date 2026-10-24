@@ -102,6 +102,24 @@ describe('the routes', () => {
     expect(page.querySelector('app-add-business-page')).not.toBeNull();
   });
 
+  it('My account is inside the app shell: signed out it asks for signing in first', async () => {
+    const harness = await RouterTestingHarness.create('/account');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Faccount');
+    expect(nextOf()).toBe('/account');
+
+    signInAsSara();
+    await harness.navigateByUrl('/account');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect(
+        (harness.routeNativeElement as HTMLElement).querySelector('app-my-account-page'),
+      ).not.toBeNull();
+    });
+    expect(router.url).toBe('/account');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+  });
+
   it('signed in, the pages of the app open', async () => {
     signInAsSara();
     const harness = await RouterTestingHarness.create('/payments');

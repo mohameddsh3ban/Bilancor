@@ -103,6 +103,10 @@ export const routes: Routes = [
         loadComponent: () => import('./invoices/invoice.page').then((m) => m.InvoicePage),
       },
       {
+        path: 'account',
+        loadComponent: () => import('./account/my-account.page').then((m) => m.MyAccountPage),
+      },
+      {
         path: 'businesses/new',
         loadComponent: () =>
           import('./account/add-business.page').then((m) => m.AddBusinessPage),

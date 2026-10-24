@@ -1678,5 +1678,99 @@
         "digits": "The code has 6 digits."
       }
     }
+  },
+  "account": {
+    "title": "My account",
+    "change": "Change",
+    "cancel": "Cancel",
+    "close": "Close",
+    "you": {
+      "title": "You",
+      "save": "Save",
+      "saved": "Saved.",
+      "email": {
+        "hint": "A new address is confirmed by email first; the old one is told.",
+        "changeLabel": "Change your email",
+        "new": "New email",
+        "send": "Send the link",
+        "sent": {
+          "before": "We sent a link to ",
+          "after": ". It works for 24 hours. Your email stays the same until you confirm it."
+        },
+        "changed": "Email changed. The old address is told."
+      },
+      "mail": {
+        "subject": "Confirm your new email",
+        "body": "You asked to use this address for your account. Confirm it with the button below. The link works for 24 hours.",
+        "action": "Confirm my new email"
+      },
+      "error": {
+        "same": "This is already your email."
+      }
+    },
+    "language": {
+      "title": "Language",
+      "hint": "For the app and our emails to you. Tax returns, exports and invoices to German customers stay German.",
+      "buttons": "The language buttons in the top bar change this too."
+    },
+    "signingIn": {
+      "title": "Signing in",
+      "password": {
+        "changeLabel": "Change your password",
+        "changed": "Password changed. You're signed out on your other devices.",
+        "dialog": {
+          "title": "Change your password",
+          "demo": "Demo: your current password is filled in, and any new password of 10 characters or more works.",
+          "current": "Current password",
+          "note": "A new password signs you out on your other devices.",
+          "save": "Save password"
+        },
+        "error": {
+          "current": "Type your current password."
+        }
+      },
+      "twoStep": {
+        "label": "Two-step login",
+        "on": "On",
+        "hint": "Authenticator app. Always on: your account holds bank and tax data.",
+        "newPhone": "Use a new phone",
+        "done": "Your new phone is set up."
+      },
+      "backup": {
+        "label": "Backup codes",
+        "left": "{{left}} of {{total}} left",
+        "make": "Make new codes",
+        "dialog": {
+          "title": "Your new backup codes",
+          "old": "The old codes don't work any more.",
+          "done": "Done"
+        }
+      }
+    },
+    "devices": {
+      "title": "Where you're signed in",
+      "demo": "Demo: these devices are samples. The app doesn't read your browser.",
+      "device": "{{browser}} on {{system}}",
+      "thisDevice": "This device",
+      "now": "now",
+      "signOut": "Sign out",
+      "signOutLabel": "Sign out {{device}}",
+      "signOutOthers": "Sign out everywhere else",
+      "none": "You're not signed in anywhere else.",
+      "signedOut": "{{device}} is signed out.",
+      "signedOutOthers": "Signed out everywhere else."
+    },
+    "businesses": {
+      "title": "Your businesses",
+      "leave": "Leave",
+      "leaveLabel": "Leave {{business}}",
+      "ownerNote": "An owner can't leave: hand the business over in People with access first.",
+      "onlyOne": "This is your only business, so you can't leave it.",
+      "left": "You left {{business}}.",
+      "dialog": {
+        "title": "Leave {{business}}?",
+        "body": "You will no longer be able to open its books. The owner can invite you again."
+      }
+    }
   }
 }

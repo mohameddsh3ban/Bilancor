@@ -15,7 +15,7 @@ const TRUSTED_PREFIX = 'mockup.trusted.';
 const trustedKey = (personId: string): string => `${TRUSTED_PREFIX}${personId}`;
 
 /** A full set of backup codes. */
-const BACKUP_CODES = 8;
+export const BACKUP_CODES = 8;
 
 /**
  * The 8 backup codes the demo shows (`1234-5678`), the same every time for one round and a new set for each round. Round 0
@@ -145,25 +145,39 @@ export class AccountService {
     });
   }
 
-  /** Signs one other device of the signed-in person out: it leaves the list. This device stays, and so does an id nobody has. */
+  /**
+   * Signs one other device of the signed-in person out: it leaves the list. This device stays, and so does an id nobody has.
+   * Nothing happens while nobody is signed in (`person()` is then Sara, but only as the sample person).
+   */
   signOutDevice(deviceId: string): void {
-    this.updatePerson(this.person().id, (p) =>
+    const personId = this.signedInId();
+    if (personId === null) return;
+    this.updatePerson(personId, (p) =>
       p.devices.some((d) => d.id === deviceId && !d.current)
         ? { ...p, devices: p.devices.filter((d) => d.id !== deviceId) }
         : p,
     );
   }
 
-  /** Signs every device but this one out, for the signed-in person unless one is named (a new password is chosen while nobody is signed in). */
-  signOutOtherDevices(personId: string = this.person().id): void {
+  /**
+   * Signs every device but this one out, for the signed-in person unless one is named (a new password is chosen while
+   * nobody is signed in). Nothing happens while nobody is signed in and none is named.
+   */
+  signOutOtherDevices(personId: string | null = this.signedInId()): void {
+    if (personId === null) return;
     this.updatePerson(personId, (p) =>
       p.devices.every((d) => d.current) ? p : { ...p, devices: p.devices.filter((d) => d.current) },
     );
   }
 
-  /** Gives the signed-in person a new set of 8 backup codes (the old ones stop counting) and returns them, to be shown once. */
+  /**
+   * Gives the signed-in person a new set of 8 backup codes (the old ones stop counting) and returns them, to be shown
+   * once. While nobody is signed in it gives none, and uses up no set.
+   */
   makeBackupCodes(): string[] {
-    this.updatePerson(this.person().id, (p) =>
+    const personId = this.signedInId();
+    if (personId === null) return [];
+    this.updatePerson(personId, (p) =>
       p.backupCodesLeft === BACKUP_CODES ? p : { ...p, backupCodesLeft: BACKUP_CODES },
     );
     return demoBackupCodes(++this.codeRound);

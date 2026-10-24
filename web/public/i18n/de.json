@@ -1678,5 +1678,99 @@
         "digits": "Der Code hat 6 Ziffern."
       }
     }
+  },
+  "account": {
+    "title": "Mein Konto",
+    "change": "Ändern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "you": {
+      "title": "Du",
+      "save": "Speichern",
+      "saved": "Gespeichert.",
+      "email": {
+        "hint": "Eine neue Adresse wird zuerst per E-Mail bestätigt; die alte wird informiert.",
+        "changeLabel": "E-Mail-Adresse ändern",
+        "new": "Neue E-Mail-Adresse",
+        "send": "Link senden",
+        "sent": {
+          "before": "Wir haben einen Link an ",
+          "after": " geschickt. Er gilt 24 Stunden. Deine E-Mail-Adresse bleibt, bis du sie bestätigst."
+        },
+        "changed": "E-Mail-Adresse geändert. Die alte Adresse wird informiert."
+      },
+      "mail": {
+        "subject": "Bestätige deine neue E-Mail-Adresse",
+        "body": "Du möchtest diese Adresse für dein Konto nutzen. Bestätige sie mit dem Button unten. Der Link gilt 24 Stunden.",
+        "action": "Meine neue E-Mail bestätigen"
+      },
+      "error": {
+        "same": "Das ist schon deine E-Mail-Adresse."
+      }
+    },
+    "language": {
+      "title": "Sprache",
+      "hint": "Für die App und unsere E-Mails an dich. Steuererklärungen, Exporte und Rechnungen an deutsche Kunden bleiben auf Deutsch.",
+      "buttons": "Die Sprachbuttons oben in der Leiste ändern das ebenfalls."
+    },
+    "signingIn": {
+      "title": "Anmeldung",
+      "password": {
+        "changeLabel": "Passwort ändern",
+        "changed": "Passwort geändert. Auf deinen anderen Geräten bist du abgemeldet.",
+        "dialog": {
+          "title": "Passwort ändern",
+          "demo": "Demo: Dein aktuelles Passwort ist schon eingetragen, jedes neue Passwort mit mindestens 10 Zeichen funktioniert.",
+          "current": "Aktuelles Passwort",
+          "note": "Ein neues Passwort meldet dich auf deinen anderen Geräten ab.",
+          "save": "Passwort speichern"
+        },
+        "error": {
+          "current": "Gib dein aktuelles Passwort ein."
+        }
+      },
+      "twoStep": {
+        "label": "Anmeldung in zwei Schritten",
+        "on": "An",
+        "hint": "Authenticator-App. Immer an: Dein Konto enthält Bank- und Steuerdaten.",
+        "newPhone": "Neues Handy verwenden",
+        "done": "Dein neues Handy ist eingerichtet."
+      },
+      "backup": {
+        "label": "Backup-Codes",
+        "left": "{{left}} von {{total}} übrig",
+        "make": "Neue Codes erstellen",
+        "dialog": {
+          "title": "Deine neuen Backup-Codes",
+          "old": "Die alten Codes gelten nicht mehr.",
+          "done": "Fertig"
+        }
+      }
+    },
+    "devices": {
+      "title": "Wo du angemeldet bist",
+      "demo": "Demo: Diese Geräte sind Beispiele. Die App liest deinen Browser nicht.",
+      "device": "{{browser}} auf {{system}}",
+      "thisDevice": "Dieses Gerät",
+      "now": "jetzt",
+      "signOut": "Abmelden",
+      "signOutLabel": "{{device}} abmelden",
+      "signOutOthers": "Überall sonst abmelden",
+      "none": "Du bist sonst nirgends angemeldet.",
+      "signedOut": "{{device}} ist abgemeldet.",
+      "signedOutOthers": "Überall sonst abgemeldet."
+    },
+    "businesses": {
+      "title": "Deine Unternehmen",
+      "leave": "Verlassen",
+      "leaveLabel": "{{business}} verlassen",
+      "ownerNote": "Als Inhaber:in kannst du ein Unternehmen nicht verlassen: Übergib es zuerst unter „Personen mit Zugriff“ an jemand anderen.",
+      "onlyOne": "Das ist dein einziges Unternehmen, du kannst es nicht verlassen.",
+      "left": "Du hast {{business}} verlassen.",
+      "dialog": {
+        "title": "{{business}} verlassen?",
+        "body": "Du kannst die Bücher danach nicht mehr öffnen. Die Inhaber:in kann dich wieder einladen."
+      }
+    }
   }
 }
