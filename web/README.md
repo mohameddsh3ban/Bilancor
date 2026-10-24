@@ -1,6 +1,6 @@
 # Bookkeeping app mockup (web)
 
-Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page, the Invoices page, the review inbox, the setup steps with Settings, and the Taxes page with its tax reminder (en / de / ar). No backend.
+Clickable Angular mockup of the bookkeeping app: the homepage, the Payments page, the Documents page, the Invoices page, the review inbox, the setup steps with Settings, the Taxes page with its tax reminder, and sign-in and accounts: sign-in, sign-up, people with access and My account (en / de / ar). No backend.
 All data is sample data in `src/app/data/sample-data.ts`.
 
 ## Install
@@ -27,11 +27,11 @@ Windows may ask to allow Node.js on private networks; allow it so your phone can
 
 ## Demo toolbar
 
-The strip at the top of every page is demo-only:
+The strip at the top of every page inside the app is demo-only (the sign-in pages have none: their demo help is dashed boxes on the page itself):
 
 - **Setup state** (New client / Halfway / Active client) is a shortcut for the **open business only**: it sets that business's three setup steps (none / bank only / all three) and nothing else. Connected accounts, tax answers and documents stay as they are. The choice that matches the business's steps is highlighted, and none is when the steps are mixed. In "New client" no bank is connected yet, so Payments has no list.
-- **Business switcher** (in the top bar) changes which business is open.
-- **Reset demo** brings back every notice you dismissed and the sample payments, documents, bank accounts and tax answers, puts every business back to Active client, forgets what the review inbox learned (dismissals are remembered in the browser until you reset), and brings back the tax reminder, the VAT returns sent from Taxes, the sample invoices with their numbers, the payments they made and the invoice details.
+- **Business switcher** (in the top bar) changes which business is open. It lists only the businesses the signed-in person is in, with their role (Owner, Full access, …) beside each, and ends with **+ Add a business** (see Sign-in and accounts).
+- **Reset demo** signs out and opens the sign-in page with Sara's email filled in. It forgets the remembered sign-in and every trusted device, brings back Sara's people, invitations, support access, devices, backup codes and memberships, and removes the accounts and businesses made during the visit. It does not change the language. It also brings back every notice you dismissed and the sample payments, documents, bank accounts and tax answers, puts every business back to Active client, forgets what the review inbox learned (dismissals are remembered in the browser until you reset), and brings back the tax reminder, the VAT returns sent from Taxes, the sample invoices with their numbers, the payments they made and the invoice details.
 
 ## Payments
 
@@ -111,13 +111,13 @@ A new client sets up three steps, shown as the homepage checklist: connect the b
 - **I also take cash** adds a cash box without the bank flow. It shows in Settings and does not tick the bank step.
 - Switching business in the middle of the flow starts it again for the business now open.
 
-**Settings** (`/settings`, from the menu) has four sections: **Business and tax** (the saved answers in plain words, with **Edit**), **Invoice details** (see Invoices), **Bank accounts**, and **Documents inbox** (the forwarding address, with Copy).
+**Settings** (`/settings`, from the menu) has five sections: **Business and tax** (the saved answers in plain words, with **Edit**), **Invoice details** (see Invoices), **Bank accounts**, **People with access** (see Sign-in and accounts), and **Documents inbox** (the forwarding address, with Copy).
 
 - Bank accounts: **+ Connect a bank**, then one row per account with its masked IBAN and a status word: **Connected**, **Renew in N days** (the consent ends within 14 days), **Sign in again** (it ended or broke), **Statement import** (no bank connection) or **Cash**. **Renew** and **Sign in again** open the simulated sign-in for that bank only, then the status becomes Connected.
 - The homepage bank notices are calculated from the connections, so they go as soon as the connection is renewed: Weber Design shows "Qonto expires in 5 days" and Sara Weber Yoga shows "sign in again". Café Linde's Sparkasse shows Statement import in Settings and has no notice.
 - Every saved change to tax details or bank accounts (connecting, renewing, adding a cash box) adds a line to the business's history. It is stored but not shown yet.
 
-Coming soon (the button opens a placeholder page): importing a bank statement, for a bank that isn't listed or an account with no connection. Not built yet, and with no button anywhere: PayPal, Stripe and Amazon connections, users, and the list of rules the review inbox learned. Not built either: a real bank connection (the sign-in is a demo screen with no bank behind it) and a real tax-office lookup.
+Coming soon (the button opens a placeholder page): importing a bank statement, for a bank that isn't listed or an account with no connection. Not built yet, and with no button anywhere: PayPal, Stripe and Amazon connections, and the list of rules the review inbox learned. Not built either: a real bank connection (the sign-in is a demo screen with no bank behind it) and a real tax-office lookup.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample accounts, tax answers and setup steps.
 
@@ -146,7 +146,7 @@ The Taxes page (`/taxes`) shows the VAT return the business has to send next, an
 - The return moves to **Sent earlier** with today's date, its amount and a **Receipt** link: a printable receipt (Übertragungsprotokoll) at `/print/vat-return/<periodStart>`, outside the app shell, which opens the browser's Print dialog (choose Save as PDF to keep a file). It shows the figures and the tax office stored when the return was sent, so a later change of the tax number does not rewrite it. The next period then becomes the current return.
 - A return can't be sent while its period is still running (the button is off and the note under it says when it is ready) or while payments in it still need the person (the button reads "Fix N payments first" and opens the review inbox). A sent return can't be changed.
 
-**Tax reminder:** a pop-up when the app opens, and again after **Reset demo**, on top of whichever page opened (not on the print pages, which sit outside the app shell). It lists the businesses of the signed-in person whose current VAT return is due within 21 days or is overdue, each with its name, period and due date, and **Open taxes** (switches to that business and opens `/taxes`). A Kleinunternehmer has none, and neither has a business that files its VAT once a year or has not set its tax details yet.
+**Tax reminder:** a pop-up right after signing in, and when the app is reloaded while still signed in, on top of whichever page opened (not on the print pages, which sit outside the app shell, and never on the sign-in pages). It lists the businesses of the signed-in person whose current VAT return is due within 21 days or is overdue, each with its name, period and due date, and **Open taxes** (switches to that business and opens `/taxes`). A Kleinunternehmer has none, and neither has a business that files its VAT once a year or has not set its tax details yet.
 
 - **Got it, don't remind me again** stores an acknowledgement per person, business and due date, so the next deadline reminds again. **Not now**, ✕, Escape and a tap outside close it, and it shows again the next time the app is opened; **Open taxes** counts as Not now. A return that becomes due while the app is open (a changed tax answer) waits for the next open.
 - **Reset demo** clears the acknowledgements and restores the sent returns.
@@ -204,9 +204,63 @@ The Invoices page (`/invoices`) is where the business writes invoices, sends the
 
 Not built: quotes, recurring invoices, sending by post, a customers page, discounts, credit notes for paid invoices, private customers and public offices abroad, the EU summary report (Zusammenfassende Meldung), foreign currencies, a real logo ("Your logo" stands in), real e-invoice files, real email, and interest or fees on reminders.
 
-**Size:** the pages are lazy routes, but the invoices are part of the start-up sample data (the homepage card and the overdue notices need them), so the initial bundle is now 622 kB. The initial warning budget was therefore raised from 600 kB to 650 kB in `angular.json`. It is a warning threshold: the error limit stays at 1 MB.
+**Size:** the pages are lazy routes, but the invoices are part of the start-up sample data (the homepage card and the overdue notices need them), so the initial bundle is now 622 kB. The initial warning budget was therefore raised from 600 kB to 650 kB in `angular.json`. It is a warning threshold: the error limit stays at 1 MB. Since the app opens on the sign-in page, every page is a lazy route and the app shell and the sample data are no longer in the first load: the initial bundle is about 380 kB, and the budget stays at 650 kB.
 
 Changes live in memory only. A page reload, or **Reset demo** in the demo toolbar, restores the sample invoices, their numbers, the payments they made and the invoice details. The demo's "today" is 22 Oct 2026.
+
+## Sign-in and accounts
+
+The demo opens on a front door, like a client's app: the sign-in page (`/sign-in`). Its pages are **sign-in** with the code step, **forgot password** (`/forgot-password`), **sign-up** (`/sign-up`), the invited person's **join** page (`/join/:businessId/:memberId`), **Add a business** (`/businesses/new`), **People with access** (a card in Settings) and **My account** (`/account`). It works in English, German and Arabic; the sign-in, sign-up and join pages sit outside the app shell, have no demo toolbar and show the language the browser last used. Nothing is real: there are no accounts, passwords, codes, emails or sessions, and nothing leaves the browser. Every demo help is a dashed box on the page ("Demo: …"). The demo's "today" is 22 Oct 2026, so an invitation link works until 29 Oct and support access runs to 29 Oct.
+
+**The start:** the sign-in page has Sara's email filled in.
+
+- **Sign in:** **any password** works (it only has to be filled in), then the code step asks for **any 6 digits**, or **Use a backup code instead** (any code works and uses one up; Sara has 6 of 8, and with none left the page says so and points back to the app code). Two-step login can't be switched off. An empty field says what is missing, and an email typed with capitals or spaces is the same email. An email the demo knows only as a row on a business (Mia, Jana Hoffmann, Jonas Linde) says that in this demo only Sara's account and accounts you create can sign in. An email nobody has says so, with a link to create an account.
+- **Trusted device:** "Don't ask again on this device for 30 days" skips the code at the next sign-in. The demo never lets it run out; **Reset demo** and a new password (Forgot password) forget it.
+- **Every app page needs a signed-in person**, the print pages too. Opening one while signed out goes to `/sign-in?next=…` and, after signing in, to the page asked for (only a path inside the app is followed; anything else lands on the homepage). A signed-in person who opens a sign-in page lands on the homepage. The tax reminder pops up right after signing in.
+- **Forgot password** is four steps: the email, "Check your email" (it says a link was sent for any email, so it can't tell an account from a stranger; only a known email gets the demo box with the email, written in that person's language), "Choose a new password" (at least 10 characters) and "Password changed". The new password signs the person out on every other device and forgets this device's trust; it does not sign anybody in, and the code is still asked at the next sign-in.
+- **What is remembered in the browser:** only Sara's sign-in (a reload while signed in opens on the page that was open), the trusted devices, the browser's last language, and the dismissed notices and tax reminders as before. Everything else lives in memory. An account made with Create account is forgotten by a reload, which opens the sign-in page with Sara's email; Sara's own edits (name, email, language, devices) are forgotten too, and she is still signed in with the sample profile. Without browser storage (a private window) the demo opens on the sign-in page every time.
+
+**The language belongs to the person.** Signing in switches the app to the person's language. The language buttons in the top bar and the **Language** card on My account change it for whoever is signed in; the buttons on the sign-in pages only change the page, but a language tapped there before signing in wins and is saved as the person's. Sara starts with the browser's current language, so opening the demo never changes it, and Reset demo leaves it alone. Emails shown in the demo are in the person's language; an invitation is in the inviter's, with one line in each of the other two. Emails, codes, IBANs and amounts read left to right inside Arabic, and the German terms (Freiberufler, Gewerbe, Einzelunternehmen, GbR, AVV, Steuerberater:in) are explained on hover or tap.
+
+**Sign-up** is three steps on four screens, with a progress line:
+
+- **Account:** the language buttons, the price box (a placeholder: "€ — a month", "First 30 days free, no card needed"), email and password (at least 10 characters). An email that already has an account says so, with a link to sign in.
+- **Check your email:** "We sent a link to …", **Send it again**, **Change it** (back to the first screen with the fields kept), and a demo box with the email and **Confirm my email**.
+- **You and your business:** first and last name, the business's name, the kind of work (Freiberufler / Gewerbe) and just you or partners (Einzelunternehmen / GbR). "A GmbH can't sign up yet."
+- **Terms and a safe login:** a checkbox for the terms of use and the data processing agreement (AVV), whose links open a notice that the legal texts are not written yet, then **Protect your login**: a QR picture, a 6-digit code (any 6 digits work) and the 8 backup codes. **Finish** makes the person (in the language the page is in) and their business, signs them in and opens the homepage of a new client, with all three setup steps open and the person as its **Owner**. The tax details page starts with the kind of work already chosen.
+
+**Add a business** (from the switcher) is the business questions and the terms on one page. It makes another business of the same person as its Owner, in the New client state, with its own plan.
+
+**A new business's sample data.** A business made in the demo (by Create account or Add a business) has no bank, documents, tax details or invoices yet, and works with a generic set of sample data, the same for each one:
+
+- **Connect your bank:** any bank in the list finds one business account at that bank (an invented IBAN), and connecting it fetches eight October payments: two customers paying in (one booking waits for a confirmation), rent, a phone bill, software, a train ticket, an Amazon order the system can't sort and a transfer to the owner's private account. A new client has no receipts, so all eight are in the review inbox.
+- **Receipts:** the upload pool gives a Telekom and a Deutsche Bahn receipt that link themselves to their payments, then one whose direction is unclear, then two plain receipts that repeat.
+- **Taxes:** the year starts in October, so Year (EÜR) shows only October, and the income tax to set aside is €0.00. **Invoices** shows its empty state.
+
+**People with access** is a card in Settings, after Bank accounts, for the open business.
+
+- **The list:** each person with initials, name, email and "Joined 2 Sept 2026", and their role as a word. A waiting invitation shows the email, "Invited 20 Oct · the link works until 27 Oct" and **Waiting**. A line says that everyone is included in the price.
+- **Four roles:** **Owner**, **Full access** (a partner: everything the owner can, except people and the plan), **Receipts only** (an assistant: upload receipts and fix their own, no payments, bank balances, taxes or settings) and **Tax advisor** (Steuerberater:in: see everything and download receipts and exports, no changing bookings, connecting banks or sending returns). The role cards list what each can and can't do. There are no custom roles.
+- **Only the owner** invites, changes, removes and hands over; anyone else sees the list without the ⋮ menus and without **Invite someone**, and a line says who the owner is. The sample has Sara as Owner of Weber Design (with Jana Hoffmann as Tax advisor and a waiting invitation for `mia@example.com` as Receipts only) and of Sara Weber Yoga; at Café Linde GbR Jonas Linde is the Owner and Sara has Full access.
+- **Invite someone:** an email and one of the three role cards, then **Send invitation**. An empty or invalid email, an email that already has access and one that is already invited each say so, whatever the case or spaces, and so does a missing role. **Change what they can do** opens the role cards again, **Make owner** (only for Full access) asks first and makes the owner Full access, and **Remove** asks first. A waiting invitation has **Send again** (a fresh 7-day link) and **Cancel invitation**.
+- **Our support team** has no access unless the owner lets it look: **Let support look for 7 days** shows "Support can look until 29 Oct · Stop now". It is looking only; it never runs out in the demo, since today stays 22 Oct.
+- Inviting, joining, changing a role, removing, leaving, handing over and support access each add a line to the business's history, with who did it. The lines are stored, not shown yet.
+
+**Joining is a preview.** Sending or resending an invitation shows its email in a demo box (never sent), with **Accept the invitation**. That opens the join page: the role and what it can and can't do, then a name, a language, a password (at least 10 characters) and the same authenticator step as sign-up, and **Join**. "Already have a login? Sign in" is the same preview with any email and password. Finishing shows "Lena Vogel has joined Weber Design as Full access" and goes back to Settings, where the list shows the new person as joined. The person who invited stays signed in as themselves: invited and joined people are only rows on a business, not logins, so the demo never signs in as them. A join link whose invitation was cancelled, was used already, or never existed (or after Reset demo) says "This invitation no longer works", with a way back.
+
+**My account** (from the person menu) has five cards:
+
+- **You:** first and last name (**Save**) and the email. **Change** asks for the new address and shows the email that confirms it in a demo box; only **Confirm my new email** saves it, and the card says the old address is told. The address must be an email and not the person's own or another account's. A new name or email also shows in People with access and in the sign-in page's filled-in email.
+- **Language:** English, Deutsch, عربي.
+- **Signing in:** **Change** the password (the current one is filled in; the new one needs 10 characters; it signs out every other device), two-step login "On" (always) with **Use a new phone** (the QR step again, with new backup codes), and backup codes "6 of 8 left" with **Make new codes** (8 new ones, shown once; the old ones stop working).
+- **Where you're signed in:** sample rows, since the app doesn't read the browser: "Chrome on Windows · This device" and "Safari on iPhone · Berlin · 21 Oct 2026", each other device with **Sign out**, and **Sign out everywhere else**.
+- **Your businesses:** each with the person's role. **Leave** (not for an owner, and asks first) takes the business out of the list and the switcher, and opens another if it was the open one; a person always keeps at least one business. An owner can't leave: they hand the business over in People with access first.
+
+**The person menu** at the end of the top bar shows the person's initials; it opens their name and email, **My account** and **Sign out**, which opens the sign-in page with "You're signed out."
+
+Not built: **views per role** (after someone joins, the demo still shows the app as Sara sees it; a "View as" switch, with each page hiding what that role can't do, is a later step), a real login, password, code, email or session, a plan or billing page (the price is a placeholder, and each business has its own plan), closing a business or deleting an account (records have to be kept for up to 10 years, so an owner who is alone in a business can't leave it), GmbH sign-up, single sign-on, passkeys and SMS codes, the support team's side of support access, the legal texts, and showing the history lines.
+
+Changes live in memory only, apart from what is remembered in the browser (above). A page reload, or **Reset demo** in the demo toolbar, restores Sara's sample people and devices and forgets the accounts and businesses made during the visit.
 
 ## Translations
 
