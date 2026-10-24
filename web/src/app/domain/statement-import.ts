@@ -173,21 +173,21 @@ export function isDuplicate(row: StatementRow, tx: Transaction, accountId: strin
 }
 
 /**
- * What importing these rows into an account would do. A row the account has already (see `isDuplicate`) is a duplicate, in a
- * closed month too: it is here, so that is what it says. Each payment of the business matches one row only, so two equal
- * payments in a file stay two while the app has one of them. Any other row dated in a closed month (`isClosed` takes 'YYYY-MM')
- * is not imported, and the rest are new. `unreadable` is the number `readRows` could not read, carried into the preview.
+ * What importing these rows into the business would do. A row the business has already, in any of its accounts (see `isDuplicate`
+ * with no account: the same payment turns up in the other account of its bank, or in the main account a demo connection filled), is
+ * a duplicate, in a closed month too: it is here, so that is what it says. Each payment of the business matches one row only, so
+ * two equal payments in a file stay two while the app has one of them. Any other row dated in a closed month (`isClosed` takes
+ * 'YYYY-MM') is not imported, and the rest are new. `unreadable` is the number `readRows` could not read, carried into the preview.
  */
 export function previewImport(
   business: Business,
-  accountId: string,
   rows: StatementRow[],
   isClosed: (month: string) => boolean,
   unreadable = 0,
 ): ImportPreview {
   const matched = new Set<string>();
   const previewRows = rows.map((row): PreviewRow => {
-    const same = business.transactions.find((tx) => !matched.has(tx.id) && isDuplicate(row, tx, accountId));
+    const same = business.transactions.find((tx) => !matched.has(tx.id) && isDuplicate(row, tx, null));
     if (same) {
       matched.add(same.id);
       return { ...row, state: 'duplicate', duplicateOf: same.id };

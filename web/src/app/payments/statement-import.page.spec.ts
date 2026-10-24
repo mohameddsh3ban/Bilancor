@@ -5,8 +5,13 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
-import type { SampleStatement } from '../data/models';
+import { foundAccountsOf } from '../data/banks';
+import { DEMO_TODAY } from '../data/demo-date';
+import type { Account, SampleStatement } from '../data/models';
+import type { NewBusinessInput, NewOwner } from '../data/new-business-sample';
 import { sampleStatementFor } from '../data/sample-statements';
+import { PERSON } from '../data/sample-person';
+import { noConnection } from '../domain/bank-connection';
 import { isClosedDate } from '../domain/months';
 import { DemoStateService } from '../state/demo-state.service';
 import { IMPORT_MS, StatementImportService } from '../state/statement-import.service';
@@ -16,6 +21,21 @@ import { StatementImportPage } from './statement-import.page';
 
 @Component({ template: '<p data-testid="stub">stub</p>' })
 class Stub {}
+
+/** A statement account the person added, as "A new account…" makes it. */
+const statementAccount = (id: string, name = 'Volksbank'): Account => ({
+  id,
+  kind: 'bank',
+  name,
+  balanceCents: 0,
+  lastUpdate: DEMO_TODAY,
+  connection: noConnection('statement'),
+  product: 'business',
+  iban: 'DE02120300000000202051',
+});
+
+const OWNER: NewOwner = { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email };
+const VISIT: NewBusinessInput = { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' };
 
 describe('StatementImportPage', () => {
   let demo: DemoStateService;
@@ -184,6 +204,10 @@ describe('StatementImportPage', () => {
       expect(rows.map((row) => row.querySelector('a')!.getAttribute('href'))).toEqual([
         '/payments/cl-t3',
         '/payments/cl-t4',
+      ]);
+      expect(rows.map((row) => text(row.querySelector('[data-testid="which-match-label"]')))).toEqual([
+        'Already here · Sparkasse',
+        'Already here · Sparkasse',
       ]);
       expect(rows.map((row) => text(row.querySelector('[data-testid="which-match"]')))).toEqual([
         'Stadtwerke Hamburg 15 Oct ' + formatMoney(-28740, 'en', { signed: true }),
@@ -454,6 +478,59 @@ describe('StatementImportPage', () => {
       await click('use-sample');
       expect(text(q('count-new'))).toBe('New 0');
       expect(text(q('count-already'))).toBe('Already here, skipped 7');
+      expect(button('import-button').disabled).toBe(true);
+      expect(text(q('import-reason'))).toBe('Every payment in this file is here already.');
+    });
+
+    it("a second new account of Weber Design gets the same file, and all of it is in the first account already", async () => {
+      vi.useFakeTimers();
+      demo.setBusiness('weber-design');
+      demo.addAccount(statementAccount('weber-design-statement-1'));
+      const first = service.nextSample('weber-design-statement-1');
+      const done = service.import('weber-design-statement-1', first, first.mapping!);
+      await vi.advanceTimersByTimeAsync(IMPORT_MS);
+      await done;
+      demo.addAccount(statementAccount('weber-design-statement-2', 'Sparda-Bank'));
+
+      await render('/payments/import?account=weber-design-statement-2&from=settings');
+      await click('use-sample');
+      expect(text(q('count-new'))).toBe('New 0');
+      expect(text(q('count-already'))).toBe('Already here, skipped 4');
+      expect(button('import-button').disabled).toBe(true);
+      expect(text(q('import-reason'))).toBe('Every payment in this file is here already.');
+
+      // Each skipped payment says which account has it.
+      await click('see-which');
+      expect(qa('which-match-label').map((label) => text(label))).toEqual(Array(4).fill('Already here · Volksbank'));
+    });
+
+    it('a business that connected the demo bank and then adds a new account finds the same payments in its main account', async () => {
+      const id = demo.createBusiness(OWNER, VISIT);
+      demo.setBusiness(id);
+      demo.connectAccounts('qonto', foundAccountsOf(id, 'qonto'), '2026-01-01');
+      demo.addAccount(statementAccount(`${id}-statement-1`));
+
+      await render(`/payments/import?account=${id}-statement-1&from=settings`);
+      await click('use-sample');
+      expect(text(q('count-new'))).toBe('New 0');
+      expect(text(q('count-already'))).toBe('Already here, skipped 8');
+      expect(button('import-button').disabled).toBe(true);
+      expect(text(q('import-reason'))).toBe('Every payment in this file is here already.');
+      await click('see-which');
+      expect(qa('which-match-label').map((label) => text(label))).toEqual(Array(8).fill('Already here · Qonto'));
+    });
+
+    it('"Add older months" on a connected account reads its own payments again, so nothing is new', async () => {
+      demo.setBusiness('weber-design');
+      const own = payments().filter((tx) => tx.accountId === 'wd-qonto' && tx.date.startsWith('2026-10')).length;
+      await render('/payments/import?account=wd-qonto&from=payments');
+      await click('use-sample');
+      expect(text(q('format-chip'))).toBe('Recognised: Qonto CSV');
+      expect(text(q('read-file'))).toBe('File qonto-2026-10.csv');
+      expect(text(q('read-count'))).toBe(`${own} payments in the file`);
+      expect(text(q('count-new'))).toBe('New 0');
+      expect(text(q('count-already'))).toBe(`Already here, skipped ${own}`);
+      expect(q('columns')).toBeNull();
       expect(button('import-button').disabled).toBe(true);
       expect(text(q('import-reason'))).toBe('Every payment in this file is here already.');
     });

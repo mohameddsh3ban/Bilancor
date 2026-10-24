@@ -22,7 +22,7 @@ import { MoneyPipe } from '../core/format/money.pipe';
 import { Term } from '../core/i18n/term';
 import { pluralKey } from '../core/i18n/plural-key';
 import type { ColumnMapping, SampleStatement } from '../data/models';
-import { bankNameOf, maskIban } from '../domain/bank-connection';
+import { accountName, bankNameOf, maskIban } from '../domain/bank-connection';
 import { isClosedDate } from '../domain/months';
 import { guessMapping, mappingComplete, undoBlockedBy } from '../domain/statement-import';
 import { focusAfterRender } from '../settings/form-helpers';
@@ -411,8 +411,17 @@ interface FileRead {
                               </div>
                               @if (item.match; as match) {
                                 <div class="flex min-w-0 flex-col gap-0.5">
-                                  <p class="text-muted-foreground text-xs">
+                                  <p class="text-muted-foreground text-xs" data-testid="which-match-label">
                                     {{ 'statementImport.read.hereAlready' | transloco }}
+                                    @if (item.account; as owner) {
+                                      ·
+                                      <bdi dir="auto">{{
+                                        nameOf(
+                                          owner,
+                                          'settings.bank.product.' + owner.product | transloco
+                                        )
+                                      }}</bdi>
+                                    }
                                   </p>
                                   <p
                                     class="flex flex-wrap items-baseline gap-x-2 text-sm"
@@ -553,6 +562,7 @@ export class StatementImportPage {
 
   protected readonly termMark = TERM_MARK;
   protected readonly plural = pluralKey;
+  protected readonly nameOf = accountName;
   protected readonly importing = this.service.importing;
 
   /** Where the page was opened from: where Back leads (Settings when nothing is said). */
@@ -629,7 +639,7 @@ export class StatementImportPage {
     const read = this.file();
     const mapping = this.mapping();
     return account && read && mapping
-      ? this.service.preview(account.id, read.statement, mapping)
+      ? this.service.preview(read.statement, mapping)
       : null;
   });
   /** Whether the columns give a payment what it needs: nothing is counted or imported before. */
@@ -639,12 +649,15 @@ export class StatementImportPage {
   });
   protected readonly newCount = computed(() => this.preview()?.newCount ?? 0);
   protected readonly firstRows = computed(() => this.preview()?.rows.slice(0, FIRST_ROWS) ?? []);
-  /** The skipped payments, each with the payment of the account it matches. */
+  /** The skipped payments, each with the payment of the business it matches and the account that payment is in (not always this one). */
   protected readonly duplicates = computed(() => {
-    const transactions = this.demo.business().transactions;
+    const { transactions, accounts } = this.demo.business();
     return (this.preview()?.rows ?? [])
       .filter((row) => row.state === 'duplicate')
-      .map((row) => ({ row, match: transactions.find((tx) => tx.id === row.duplicateOf) ?? null }));
+      .map((row) => {
+        const match = transactions.find((tx) => tx.id === row.duplicateOf) ?? null;
+        return { row, match, account: accounts.find((account) => account.id === match?.accountId) ?? null };
+      });
   });
   protected readonly canImport = computed(
     () => this.complete() && this.newCount() > 0 && !this.importing(),

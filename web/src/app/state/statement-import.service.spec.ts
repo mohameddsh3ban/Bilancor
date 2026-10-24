@@ -10,7 +10,7 @@ import { noConnection } from '../domain/bank-connection';
 import { invoiceStatus } from '../domain/invoices';
 import { changeCategory } from '../domain/payment-actions';
 import { paymentStatus } from '../domain/payment-status';
-import { guessMapping, undoBlockedBy } from '../domain/statement-import';
+import { guessMapping, readRows, undoBlockedBy } from '../domain/statement-import';
 import { yearSummary } from '../domain/tax-year';
 import { DemoStateService } from './demo-state.service';
 import { businessOf } from './demo-state.testing';
@@ -73,7 +73,7 @@ describe('StatementImportService', () => {
 
     it('cafe preview: 5 new, 2 already here', () => {
       const statement = service.nextSample('cl-sparkasse');
-      const preview = service.preview('cl-sparkasse', statement, statement.mapping!);
+      const preview = service.preview(statement, statement.mapping!);
       expect(preview).toMatchObject({ newCount: 5, duplicateCount: 2, closedCount: 0, unreadable: 0, from: '2026-10-05', to: '2026-10-21' });
       expect(preview.rows.filter((row) => row.state === 'duplicate').map((row) => row.duplicateOf)).toEqual(['cl-t3', 'cl-t4']);
     });
@@ -144,7 +144,7 @@ describe('StatementImportService', () => {
       const after = demo.business();
 
       const statement = service.nextSample('cl-sparkasse'); // once its samples are used, the last again
-      expect(service.preview('cl-sparkasse', statement, statement.mapping!)).toMatchObject({ newCount: 0, duplicateCount: 7 });
+      expect(service.preview(statement, statement.mapping!)).toMatchObject({ newCount: 0, duplicateCount: 7 });
       const summary = await run('cl-sparkasse', statement);
 
       expect(summary).toEqual({ importId: '', added: 0, bookedAutomatically: 0, needsYou: 0, skipped: 7 });
@@ -270,6 +270,21 @@ describe('StatementImportService', () => {
       expect(doc('wd-d8').paymentId).toBe('imp-2-r1');
     });
 
+    it('a second new account gets the Volksbank file again, and all of it is here already: nothing comes in twice', async () => {
+      await run('wd-volksbank', service.nextSample('wd-volksbank'));
+      demo.addAccount(volksbank('weber-design-statement-2'));
+      const after = demo.business();
+
+      const statement = service.nextSample('weber-design-statement-2');
+      expect(statement.id).toBe('wd-volksbank-oktober');
+      expect(service.preview(statement, statement.mapping!)).toMatchObject({ newCount: 0, duplicateCount: 4 });
+      expect(await run('weber-design-statement-2', statement)).toEqual({ importId: '', added: 0, bookedAutomatically: 0, needsYou: 0, skipped: 4 });
+
+      expect(demo.business()).toBe(after);
+      expect(payments().filter((tx) => tx.counterparty === 'Bäckerei Lange' && tx.date === '2026-10-20')).toHaveLength(1);
+      expect(payments().filter((tx) => tx.counterparty === 'Druckerei Mayer' && tx.amountCents === -14280)).toHaveLength(1);
+    });
+
     it('undo is refused once the person worked on a payment that was matched on its own', async () => {
       await run('wd-volksbank', service.nextSample('wd-volksbank'));
       demo.updateTransaction('imp-1-r1', (tx) => changeCategory(tx, SUPPLIES)); // the Druckerei Mayer payment, matched to its receipt on its own
@@ -288,12 +303,12 @@ describe('StatementImportService', () => {
       expect(statement.mapping).toBeNull();
 
       const nothing: ColumnMapping = { roles: statement.header.map(() => 'ignore'), moneyOut: 'minus' };
-      expect(service.preview('sy-qonto', statement, nothing)).toMatchObject({ newCount: 0, unreadable: 4 });
+      expect(service.preview(statement, nothing)).toMatchObject({ newCount: 0, unreadable: 4 });
 
       const wrongDate: ColumnMapping = { ...guessMapping(statement), roles: guessMapping(statement).roles.map((role, i) => (i === 0 ? 'ignore' : i === 2 ? 'date' : role)) };
-      expect(service.preview('sy-qonto', statement, wrongDate)).toMatchObject({ newCount: 0, unreadable: 4 });
+      expect(service.preview(statement, wrongDate)).toMatchObject({ newCount: 0, unreadable: 4 });
 
-      expect(service.preview('sy-qonto', statement, guessMapping(statement))).toMatchObject({
+      expect(service.preview(statement, guessMapping(statement))).toMatchObject({
         newCount: 4,
         duplicateCount: 0,
         closedCount: 0,
@@ -329,7 +344,7 @@ describe('StatementImportService', () => {
         mapping: { roles: ['date', 'who', 'amount'], moneyOut: 'minus' },
         meta: [{ booking: 'bankFees', confirmed: true, receipt: 'notNeeded' }, { booking: 'bankFees', confirmed: true, receipt: 'notNeeded' }],
       };
-      expect(service.preview('sy-qonto', august, august.mapping!)).toMatchObject({ newCount: 1, closedCount: 1 });
+      expect(service.preview(august, august.mapping!)).toMatchObject({ newCount: 1, closedCount: 1 });
       expect(await run('sy-qonto', august)).toMatchObject({ added: 1, skipped: 0 });
       expect(payments().map((tx) => tx.counterparty)).toContain('Rechtzeitig');
       expect(payments().map((tx) => tx.counterparty)).not.toContain('Zu spät');
@@ -348,7 +363,7 @@ describe('StatementImportService', () => {
 
       const statement = service.nextSample(accountId);
       expect(statement.id).toBe(`generic-${id}`);
-      expect(service.preview(accountId, statement, statement.mapping!)).toMatchObject({ newCount: 8, duplicateCount: 0 });
+      expect(service.preview(statement, statement.mapping!)).toMatchObject({ newCount: 8, duplicateCount: 0 });
 
       // A new client has no receipts yet, so nothing is booked on its own.
       expect(await run(accountId, statement)).toEqual({ importId: 'imp-1', added: 8, bookedAutomatically: 0, needsYou: 8, skipped: 0 });
@@ -369,6 +384,23 @@ describe('StatementImportService', () => {
       expect(demo.business().accounts.map((a) => a.id)).toEqual([accountId, `${id}-main`]);
     });
 
+    it('a business that connected the demo bank and then adds a new account finds the generic statement here already', async () => {
+      const id = demo.createBusiness(OWNER, INPUT);
+      demo.setBusiness(id);
+      demo.connectAccounts('qonto', foundAccountsOf(id, 'qonto'), '2026-01-01');
+      expect(payments()).toHaveLength(8);
+      const accountId = `${id}-statement-1`;
+      demo.addAccount(volksbank(accountId));
+      const connected = demo.business();
+
+      const statement = service.nextSample(accountId);
+      expect(statement.id).toBe(`generic-${id}`);
+      expect(service.preview(statement, statement.mapping!)).toMatchObject({ newCount: 0, duplicateCount: 8 });
+      expect(await run(accountId, statement)).toEqual({ importId: '', added: 0, bookedAutomatically: 0, needsYou: 0, skipped: 8 });
+      expect(demo.business()).toBe(connected);
+      expect(payments()).toHaveLength(8);
+    });
+
     it('hands out the statement of each account in turn, in each data generation (no sample has a second statement yet, so the last repeats)', () => {
       const { id, accountId } = visitWithAccount();
       const counts = (): Record<string, number> => Object.fromEntries((service as unknown as { used: Map<string, number> }).used);
@@ -383,6 +415,26 @@ describe('StatementImportService', () => {
       demo.setBusiness('cafe-linde');
       service.nextSample('cl-sparkasse');
       expect(counts()[`1:cafe-linde:cl-sparkasse`]).toBe(1);
+    });
+  });
+
+  describe('"Add older months" on a connected account with no sample statement of its own', () => {
+    it.each([
+      ['Weber Design', 'weber-design', 'wd-qonto'],
+      ['Café Linde', 'cafe-linde', 'cl-qonto'],
+    ])("%s's Qonto: its own payments come back, all of them already here, and nothing is invented", async (_name, businessId, accountId) => {
+      demo.setBusiness(businessId);
+      const before = demo.business();
+      const statement = service.nextSample(accountId);
+      const { rows } = readRows(statement, statement.mapping!);
+      expect(rows.length).toBeGreaterThan(0);
+
+      const preview = service.preview(statement, statement.mapping!);
+      expect(preview).toMatchObject({ newCount: 0, duplicateCount: rows.length, closedCount: 0, unreadable: 0 });
+      expect(preview.rows.every((row) => before.transactions.find((tx) => tx.id === row.duplicateOf)?.accountId === accountId)).toBe(true);
+
+      expect(await run(accountId, statement)).toEqual({ importId: '', added: 0, bookedAutomatically: 0, needsYou: 0, skipped: rows.length });
+      expect(demo.business()).toBe(before);
     });
   });
 
@@ -443,10 +495,10 @@ describe('StatementImportService', () => {
     it('the preview follows the open business: its payments decide what is already here', () => {
       demo.setBusiness('cafe-linde');
       const statement = service.nextSample('cl-sparkasse');
-      expect(service.preview('cl-sparkasse', statement, statement.mapping!).duplicateCount).toBe(2);
+      expect(service.preview(statement, statement.mapping!).duplicateCount).toBe(2);
       demo.setBusiness('weber-design');
       // Weber has no account cl-sparkasse and none of these payments.
-      expect(service.preview('cl-sparkasse', statement, statement.mapping!).duplicateCount).toBe(0);
+      expect(service.preview(statement, statement.mapping!).duplicateCount).toBe(0);
     });
   });
 });

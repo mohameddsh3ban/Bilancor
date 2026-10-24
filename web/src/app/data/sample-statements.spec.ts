@@ -1,7 +1,7 @@
 import { noConnection } from '../domain/bank-connection';
 import { certainMatch } from '../domain/document-matching';
 import { isClosedDate } from '../domain/months';
-import { guessMapping, mappingComplete, readRows, statementText } from '../domain/statement-import';
+import { guessMapping, mappingComplete, previewImport, readRows, statementText } from '../domain/statement-import';
 import { ADVERTISING, CATEGORIES } from './categories';
 import { DEMO_TODAY } from './demo-date';
 import type { Account, Business, SampleStatement, Transaction } from './models';
@@ -227,12 +227,19 @@ describe('sampleStatementFor', () => {
     expect(sampleStatementFor(CAFE, added, 0).id).toBe('generic-cafe-linde');
   });
 
-  it('gives an account with no statement of its own the generic one: a sample business account, a found account, a visit business account', () => {
-    expect(sampleStatementFor(WEBER, accountOf('weber-design', 'wd-qonto'), 0).id).toBe('generic-weber-design');
-    expect(sampleStatementFor(CAFE, accountOf('cafe-linde', 'cl-qonto'), 0).id).toBe('generic-cafe-linde');
+  it('gives a statement account with no statement of its own the generic one: a found account that is not connected, a visit business account', () => {
     const found: Account = { ...VOLKSBANK, id: 'wd-savings' };
     expect(sampleStatementFor(WEBER, found, 0).id).toBe('generic-weber-design');
     expect(genericStatement().id).toBe('generic-new-1');
+  });
+
+  it('gives a connected account with no statement of its own its own payments, not the generic statement', () => {
+    expect(sampleStatementFor(WEBER, accountOf('weber-design', 'wd-qonto'), 0).id).toBe('own-wd-qonto-2026-10');
+    expect(sampleStatementFor(CAFE, accountOf('cafe-linde', 'cl-qonto'), 0).id).toBe('own-cl-qonto-2026-10');
+  });
+
+  it('keeps the statement of a connected account that has one of its own (Sara in the sample)', () => {
+    expect(saraStatement().id).toBe('sy-qonto-oktober');
   });
 
   it('the generic statement is the October payments of a business made during the visit, as the demo bank would bring them', () => {
@@ -251,6 +258,84 @@ describe('sampleStatementFor', () => {
 
   it("names the owner on the transfer to the private account", () => {
     expect(rowsOf(genericStatement()).map(([, , name]) => name)).toContain('Sara Weber');
+  });
+});
+
+describe("a connected account's own payments again", () => {
+  const WEBER_QONTO = accountOf('weber-design', 'wd-qonto');
+  const ownStatement = (owner = WEBER, account = WEBER_QONTO): SampleStatement => sampleStatementFor(owner, account, 0);
+  const paymentsOf = (owner: Business, accountId: string, month: string): Transaction[] =>
+    owner.transactions.filter((tx) => tx.accountId === accountId && tx.date.startsWith(month));
+
+  it("is the bank's CSV for the latest open month, named after the bank", () => {
+    expect(ownStatement()).toMatchObject({ id: 'own-wd-qonto-2026-10', fileName: 'qonto-2026-10.csv', format: 'bankCsv', bankLabel: 'Qonto CSV' });
+    expect(ownStatement(CAFE, accountOf('cafe-linde', 'cl-qonto'))).toMatchObject({ fileName: 'qonto-2026-10.csv', bankLabel: 'Qonto CSV' });
+  });
+
+  it("has one row for each payment of the account's month, newest first, and one meta for each row", () => {
+    const statement = ownStatement();
+    const payments = paymentsOf(WEBER, 'wd-qonto', '2026-10');
+    expect(payments.length).toBeGreaterThan(3);
+    expect(rowsOf(statement)).toEqual(
+      [...payments].sort((a, b) => b.date.localeCompare(a.date)).map((tx) => [tx.date, tx.amountCents, tx.counterparty]),
+    );
+    expect(statement.meta).toHaveLength(statement.cells.length);
+    for (const cells of statement.cells) expect(cells).toHaveLength(statement.header.length);
+  });
+
+  it('can be read in full, and is recognised: its own mapping is the one the headers give', () => {
+    const statement = ownStatement();
+    const { unreadable } = readRows(statement, statement.mapping!);
+    expect(unreadable).toBe(0);
+    expect(mappingComplete(statement.mapping!)).toBe(true);
+    expect(guessMapping(statement)).toEqual(statement.mapping);
+  });
+
+  it("says what the app decided about each payment: its category, whether it is confirmed and its receipt", () => {
+    const statement = ownStatement();
+    const rows = readRows(statement, statement.mapping!).rows;
+    const adobe = paymentsOf(WEBER, 'wd-qonto', '2026-10').find((tx) => tx.counterparty === 'Adobe')!;
+    const at = rows.findIndex((row) => row.counterparty === 'Adobe');
+    expect(statement.meta[at]).toEqual({ booking: adobe.booking!.labelKey, confirmed: adobe.confirmed, receipt: adobe.receipt });
+    const unclear = rows.findIndex((row) => row.counterparty === 'Amazon');
+    expect(statement.meta[unclear].booking).toBeNull();
+  });
+
+  it('writes out as a file with a line for each payment', () => {
+    const statement = ownStatement();
+    expect(statementText(statement).trim().split('\n')).toHaveLength(statement.cells.length + 1);
+  });
+
+  it('is all here already: no row of it is new', () => {
+    for (const [owner, accountId] of [[WEBER, 'wd-qonto'], [CAFE, 'cl-qonto']] as const) {
+      const statement = sampleStatementFor(owner, accountOf(owner.id, accountId), 0);
+      const preview = previewImport(owner, readRows(statement, statement.mapping!).rows, () => false);
+      expect(preview, owner.id).toMatchObject({ newCount: 0, duplicateCount: statement.cells.length });
+    }
+  });
+
+  it('is the same file however often it is handed out', () => {
+    expect(sampleStatementFor(WEBER, WEBER_QONTO, 3)).toEqual(ownStatement());
+  });
+
+  it('skips a month that is closed: the latest month that is open has its payments', () => {
+    // October is closed and September is open again (the sample closes August and September).
+    const septemberOpen: Business = { ...WEBER, closedMonths: [{ month: '2026-08', on: '2026-09-08', by: null }, { month: '2026-10', on: DEMO_TODAY, by: null }] };
+    const statement = sampleStatementFor(septemberOpen, WEBER_QONTO, 0);
+    expect(statement.id).toBe('own-wd-qonto-2026-09');
+    expect(rowsOf(statement)).toHaveLength(paymentsOf(WEBER, 'wd-qonto', '2026-09').length);
+    expect(rowsOf(statement).every(([date]) => date.startsWith('2026-09-'))).toBe(true);
+  });
+
+  it('is an empty file for a connected account with no payment in an open month, and still reads', () => {
+    const savings: Account = { ...WEBER_QONTO, id: 'wd-savings', name: 'Qonto Savings', product: 'savings' };
+    const statement = sampleStatementFor(WEBER, savings, 0);
+    expect(statement).toMatchObject({ id: 'own-wd-savings-2026-10', fileName: 'qonto-2026-10.csv', cells: [], meta: [] });
+    expect(readRows(statement, statement.mapping!)).toEqual({ rows: [], unreadable: 0 });
+  });
+
+  it('is not looked up by id: an import of it is never recorded, since nothing in it is new', () => {
+    expect(findSampleStatement(WEBER, 'own-wd-qonto-2026-10')).toBeNull();
   });
 });
 

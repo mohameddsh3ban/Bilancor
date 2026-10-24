@@ -1,6 +1,9 @@
+import { bankNameOf } from '../domain/bank-connection';
+import { isClosedDate } from '../domain/months';
 import { ownerOf } from '../domain/people';
 import { FOUND_ACCOUNTS } from './banks';
 import { ADVERTISING, BANK_FEES, GOODS_7, INSURANCE, RENT, REVENUE_19, REVENUE_KU, SUPPLIES, UTILITIES } from './categories';
+import { DEMO_TODAY } from './demo-date';
 import type { Account, Booking, Business, ColumnMapping, ReceiptState, RowMeta, SampleStatement } from './models';
 import { newBusinessAccount, newBusinessPayments } from './new-business-sample';
 import { BUSINESSES } from './sample-data';
@@ -10,7 +13,8 @@ import { BUSINESSES } from './sample-data';
 // raw text of the file, in the German formats banks write (dates as dd.mm.yyyy or ISO, amounts with a decimal comma);
 // each row also says what the demo's automatic booking would decide about it (see `RowMeta`).
 // Everything is invented. A statement only has payments of October 2026: months after the business's first sample payment
-// and not closed, so the year's opening line and the closed months are never touched.
+// and not closed, so the year's opening line and the closed months are never touched. The one exception brings nothing new:
+// a connected account with no sample of its own gets its own payments again (see `ownPaymentsStatement`).
 
 /** One row of a sample file: its raw cells, and what the demo decides about it. */
 type SampleRow = [cells: string[], meta: RowMeta];
@@ -140,6 +144,37 @@ function genericStatement(business: Business): SampleStatement {
   );
 }
 
+// --- a connected account: its own payments again ---
+
+/** A bank CSV with the columns most banks write: booking date, name, purpose, amount and currency, of which the first four are read. */
+const OWN_HEADER = ['Buchungsdatum', 'Name', 'Verwendungszweck', 'Betrag', 'Waehrung'];
+const OWN_MAPPING: ColumnMapping = { roles: ['date', 'who', 'purpose', 'amount', 'ignore'], moneyOut: 'minus' };
+
+/** An ISO date as a German bank file writes it: `dd.mm.yyyy`. */
+const germanDate = (date: string): string => `${date.slice(8, 10)}.${date.slice(5, 7)}.${date.slice(0, 4)}`;
+
+/**
+ * What a statement of a connected account holds: the payments the bank connection brought, so the statement says nothing new. An
+ * "Add older months" file of an account whose own sample the demo has none of is made from its own payments of the latest month that
+ * is not closed (newest first; none for an account with no payment in an open month), as the bank's CSV, so every row shows as already
+ * here and nothing is invented. Each row says what the app decided about the payment, as the generic statement's rows do. It is built from the
+ * business as it is, so it has no id `findSampleStatement` knows: it never has a new row, so no import of it is ever recorded.
+ */
+function ownPaymentsStatement(business: Business, account: Account): SampleStatement {
+  const open = business.transactions.filter((tx) => tx.accountId === account.id && !isClosedDate(business, tx.date));
+  const month = open.map((tx) => tx.date.slice(0, 7)).sort().at(-1) ?? DEMO_TODAY.slice(0, 7);
+  const payments = open.filter((tx) => tx.date.startsWith(month)).sort((a, b) => b.date.localeCompare(a.date));
+  const bank = bankNameOf(account) ?? account.name;
+  const slug = bank.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'konto';
+  return statement(
+    { id: `own-${account.id}-${month}`, fileName: `${slug}-${month}.csv`, format: 'bankCsv', bankLabel: `${bank} CSV`, header: OWN_HEADER, mapping: OWN_MAPPING },
+    payments.map((tx): SampleRow => [
+      [germanDate(tx.date), tx.counterparty, tx.reference, germanAmount(tx.amountCents), 'EUR'],
+      decided(tx.booking, tx.receipt, tx.confirmed),
+    ]),
+  );
+}
+
 /** The accounts a business has in the sample data and the ones the demo finds at its banks: every other account of the business was added by the person. */
 function sampleAccountIds(businessId: string): Set<string> {
   const own = BUSINESSES.find((business) => business.id === businessId)?.accounts ?? [];
@@ -149,14 +184,16 @@ function sampleAccountIds(businessId: string): Set<string> {
 
 /**
  * The statement the demo hands out for an account when `used` statements were handed out for it already. An account of the sample
- * businesses with statements of its own gets them in order; a statement account the business added itself (not one of its sample
- * accounts) gets the business's new-account statement (Weber Design: the Volksbank CAMT); every other account gets the business's generic
- * statement. After the last statement the last is handed out again, and everything in it then shows as already here.
+ * businesses with statements of its own gets them in order; any other connected account gets its own payments again, all of them
+ * already here (see `ownPaymentsStatement`); a statement account the business added itself (not one of its sample accounts) gets the
+ * business's new-account statement (Weber Design: the Volksbank CAMT); every other account gets the business's generic statement.
+ * After the last statement the last is handed out again, and everything in it then shows as already here.
  */
 export function sampleStatementFor(business: Business, account: Account, used: number): SampleStatement {
+  const own = ACCOUNT_STATEMENTS[account.id];
+  if (!own && account.connection.kind === 'connected') return ownPaymentsStatement(business, account);
   const statements =
-    ACCOUNT_STATEMENTS[account.id] ??
-    (sampleAccountIds(business.id).has(account.id) ? undefined : NEW_ACCOUNT_STATEMENTS[business.id]) ?? [genericStatement(business)];
+    own ?? (sampleAccountIds(business.id).has(account.id) ? undefined : NEW_ACCOUNT_STATEMENTS[business.id]) ?? [genericStatement(business)];
   return statements[Math.min(used, statements.length - 1)];
 }
 

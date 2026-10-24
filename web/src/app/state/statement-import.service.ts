@@ -26,10 +26,10 @@ export interface ImportSummary {
   skipped: number;
 }
 
-/** What importing the rows of a statement into an account would do, for a business that is not changed. */
-function previewOf(business: Business, accountId: string, statement: SampleStatement, mapping: ColumnMapping): ImportPreview {
+/** What importing the rows of a statement would do, for a business that is not changed. */
+function previewOf(business: Business, statement: SampleStatement, mapping: ColumnMapping): ImportPreview {
   const { rows, unreadable } = readRows(statement, mapping);
-  return previewImport(business, accountId, rows, (month) => isClosedDate(business, `${month}-01`), unreadable);
+  return previewImport(business, rows, (month) => isClosedDate(business, `${month}-01`), unreadable);
 }
 
 /**
@@ -69,9 +69,9 @@ export class StatementImportService {
     return sampleStatementFor(business, account, used);
   }
 
-  /** What importing the statement into the account, read with the mapping, would do to the open business. */
-  preview(accountId: string, statement: SampleStatement, mapping: ColumnMapping): ImportPreview {
-    return previewOf(this.demo.business(), accountId, statement, mapping);
+  /** What importing the statement, read with the mapping, would do to the open business: it is the same whichever account takes it, since a payment of any account is already here. */
+  preview(statement: SampleStatement, mapping: ColumnMapping): ImportPreview {
+    return previewOf(this.demo.business(), statement, mapping);
   }
 
   /**
@@ -104,7 +104,7 @@ export class StatementImportService {
   private finish(businessId: string, accountId: string, statement: SampleStatement, mapping: ColumnMapping): ImportSummary | null {
     const business = this.businessOf(businessId);
     if (!business?.accounts.some((account) => account.id === accountId)) return null;
-    const preview = previewOf(business, accountId, statement, mapping);
+    const preview = previewOf(business, statement, mapping);
     const skipped = preview.duplicateCount;
     if (preview.newCount === 0) return { importId: '', added: 0, bookedAutomatically: 0, needsYou: 0, skipped };
 

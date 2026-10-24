@@ -283,7 +283,7 @@ describe('isDuplicate', () => {
 describe('previewImport', () => {
   it('marks a row that is already here, with the payment it matches', () => {
     const b = business({ transactions: [existing()] });
-    const preview = previewImport(b, SPARKASSE.id, readRows(statement(), MINUS).rows, NOTHING_CLOSED);
+    const preview = previewImport(b, readRows(statement(), MINUS).rows, NOTHING_CLOSED);
     expect(preview.rows.map((r) => [r.index, r.state, r.duplicateOf])).toEqual([
       [0, 'duplicate', 'tx-1'],
       [1, 'new', null],
@@ -291,18 +291,30 @@ describe('previewImport', () => {
     ]);
   });
 
-  it("a payment of another account doesn't make a row a duplicate", () => {
+  it('a payment of another account of the business makes a row a duplicate too: the account is only where the file is imported', () => {
     const b = business({ transactions: [existing({ accountId: OTHER_BANK.id })] });
-    const preview = previewImport(b, SPARKASSE.id, readRows(statement(), MINUS).rows, NOTHING_CLOSED);
-    expect(preview.duplicateCount).toBe(0);
-    expect(preview.newCount).toBe(3);
+    const preview = previewImport(b, readRows(statement(), MINUS).rows, NOTHING_CLOSED);
+    expect(preview.rows.map((r) => [r.index, r.state, r.duplicateOf])).toEqual([
+      [0, 'duplicate', 'tx-1'],
+      [1, 'new', null],
+      [2, 'new', null],
+    ]);
+    expect(preview.duplicateCount).toBe(1);
+    expect(preview.newCount).toBe(2);
+  });
+
+  it('a file whose payments all sit in another account of the business has nothing new', () => {
+    const rows = readRows(statement(), MINUS).rows;
+    const others = rows.map((r, i) => existing({ id: `tx-${i}`, accountId: OTHER_BANK.id, date: r.date, amountCents: r.amountCents, counterparty: r.counterparty, reference: r.reference }));
+    const preview = previewImport(business({ transactions: others }), rows, NOTHING_CLOSED);
+    expect(preview).toMatchObject({ newCount: 0, duplicateCount: 3 });
   });
 
   it('matches each payment already in the app once, so two identical payments in a file stay two', () => {
     const twice = [row({ index: 0 }), row({ index: 1 })];
-    const one = previewImport(business({ transactions: [existing()] }), SPARKASSE.id, twice, NOTHING_CLOSED);
+    const one = previewImport(business({ transactions: [existing()] }), twice, NOTHING_CLOSED);
     expect(one.rows.map((r) => r.state)).toEqual(['duplicate', 'new']);
-    const two = previewImport(business({ transactions: [existing(), existing({ id: 'tx-2' })] }), SPARKASSE.id, twice, NOTHING_CLOSED);
+    const two = previewImport(business({ transactions: [existing(), existing({ id: 'tx-2' })] }), twice, NOTHING_CLOSED);
     expect(two.rows.map((r) => [r.state, r.duplicateOf])).toEqual([['duplicate', 'tx-1'], ['duplicate', 'tx-2']]);
   });
 
@@ -311,7 +323,7 @@ describe('previewImport', () => {
       row({ index: 0, date: '2026-09-30', counterparty: 'Alt' }),
       row({ index: 1, date: '2026-10-01', counterparty: 'Neu' }),
     ];
-    const preview = previewImport(business(), SPARKASSE.id, rows, (month) => month === '2026-09');
+    const preview = previewImport(business(), rows, (month) => month === '2026-09');
     expect(preview.rows.map((r) => r.state)).toEqual(['closedMonth', 'new']);
     expect(preview.closedCount).toBe(1);
     expect(preview.newCount).toBe(1);
@@ -320,26 +332,26 @@ describe('previewImport', () => {
   it('asks the closed-month check of Reports (isClosedDate) month by month', () => {
     const closed = business({ closedMonths: [{ month: '2026-09', on: '2026-10-02', by: 'Sara Weber' }] });
     const rows = [row({ index: 0, date: '2026-09-30', counterparty: 'Alt' }), row({ index: 1, date: '2026-10-01', counterparty: 'Neu' })];
-    const preview = previewImport(closed, SPARKASSE.id, rows, (month) => isClosedDate(closed, `${month}-01`));
+    const preview = previewImport(closed, rows, (month) => isClosedDate(closed, `${month}-01`));
     expect(preview.rows.map((r) => r.state)).toEqual(['closedMonth', 'new']);
   });
 
   it('a row that is already here is reported as already here, even in a closed month', () => {
     const b = business({ transactions: [existing({ date: '2026-09-30' })] });
-    const preview = previewImport(b, SPARKASSE.id, [row({ date: '2026-09-30' })], (month) => month === '2026-09');
+    const preview = previewImport(b, [row({ date: '2026-09-30' })], (month) => month === '2026-09');
     expect(preview.rows[0].state).toBe('duplicate');
   });
 
   it('counts each group and gives the date range of the whole file', () => {
     const b = business({ transactions: [existing()] });
     const rows = [...readRows(statement(), MINUS).rows, row({ index: 9, date: '2026-09-15', counterparty: 'Alt', reference: '' })];
-    const preview = previewImport(b, SPARKASSE.id, rows, (month) => month === '2026-09', 1);
+    const preview = previewImport(b, rows, (month) => month === '2026-09', 1);
     expect(preview).toMatchObject({ newCount: 2, duplicateCount: 1, closedCount: 1, unreadable: 1, from: '2026-09-15', to: '2026-10-07' });
     expect(preview.rows).toHaveLength(4);
   });
 
   it('has no date range and no rows for a file without readable rows', () => {
-    expect(previewImport(business(), SPARKASSE.id, [], NOTHING_CLOSED)).toEqual({
+    expect(previewImport(business(), [], NOTHING_CLOSED)).toEqual({
       rows: [],
       newCount: 0,
       duplicateCount: 0,
@@ -353,7 +365,7 @@ describe('previewImport', () => {
 
 describe('importTransactions', () => {
   const preview = (b: Business, s: SampleStatement = statement(), isClosed = NOTHING_CLOSED) =>
-    previewImport(b, SPARKASSE.id, readRows(s, s.mapping!).rows, isClosed);
+    previewImport(b, readRows(s, s.mapping!).rows, isClosed);
 
   it('builds only the new rows, with the booking, confirmation and receipt of their meta', () => {
     const b = business({ transactions: [existing()] });
@@ -463,7 +475,7 @@ describe('undoBlockedBy and canUndoImport', () => {
   /** A business holding the payments an import of the sample statement built, and that import's record. */
   const imported = (): { b: Business; record: StatementImport } => {
     const empty = business();
-    const built = importTransactions(empty, SPARKASSE.id, previewImport(empty, SPARKASSE.id, readRows(statement(), MINUS).rows, NOTHING_CLOSED), statement(), 'imp-1');
+    const built = importTransactions(empty, SPARKASSE.id, previewImport(empty, readRows(statement(), MINUS).rows, NOTHING_CLOSED), statement(), 'imp-1');
     const record = imp(built.map((t) => t.id));
     return { b: business({ transactions: built, imports: [record] }), record };
   };
@@ -504,7 +516,7 @@ describe('undoBlockedBy and canUndoImport', () => {
 
     const bare = statement({ meta: statement().meta.map((m) => ({ ...m, booking: null })) });
     const ruled = business({ categoryRules: [{ counterpartyKey: 'stadtwerke hamburg', booking: OFFICE }] });
-    const built = importTransactions(ruled, SPARKASSE.id, previewImport(ruled, SPARKASSE.id, readRows(bare, MINUS).rows, NOTHING_CLOSED), bare, 'imp-1');
+    const built = importTransactions(ruled, SPARKASSE.id, previewImport(ruled, readRows(bare, MINUS).rows, NOTHING_CLOSED), bare, 'imp-1');
     expect(built[0].history.map((h) => h.key)).toEqual(['bookedByRule', 'imported']);
     expect(undoBlockedBy(business({ transactions: built }), imp(built.map((t) => t.id)), NOTHING_CLOSED)).toBeNull();
   });
