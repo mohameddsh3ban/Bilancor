@@ -41,6 +41,26 @@ export function isAppCode(code: string): boolean {
   return /^\d{6}$/.test(code.replace(/\s/g, ''));
 }
 
+/** The first letter of the first and of the last word of a name, in capitals: "SW" for Sara Weber, "M" for Mia. A letter outside the basic alphabet, or an emoji, counts as one. */
+export function initialsOf(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const first = (word: string | undefined): string => Array.from(word ?? '')[0] ?? '';
+  return `${first(words[0])}${words.length > 1 ? first(words[words.length - 1]) : ''}`.toUpperCase();
+}
+
+/** A name to call somebody by who gave none, from their email: the words before the @, in capitals at the start ("jana.hoffmann@…" is "Jana Hoffmann"). The email itself when nothing is left of it. */
+export function nameFromEmail(email: string): string {
+  const words = normalEmail(email)
+    .split('@')[0]
+    .split(/[._+-]+/)
+    .filter(Boolean)
+    .map((word) => {
+      const [first = '', ...rest] = Array.from(word);
+      return `${first.toUpperCase()}${rest.join('')}`;
+    });
+  return words.length > 0 ? words.join(' ') : normalEmail(email);
+}
+
 /** The joined row of a login in the business; a waiting invitation is nobody's row yet. */
 export function memberOf(business: Business, personId: string): Member | undefined {
   return business.people.find((m) => m.status === 'joined' && m.personId === personId);

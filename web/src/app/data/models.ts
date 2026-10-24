@@ -57,7 +57,7 @@ export type HistoryKey =
   | 'paidInCash'
   | 'paysInvoice' // on a payment; params: number
   | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category
-  // On a business; `by` is the full name of who did it, `role` a Role id (shown with its "roles.<role>" word) and `until` an ISO date
+  // On a business; `by` is the full name of who did it, `role` a Role id (shown with its "roles.<role>.name" word) and `until` an ISO date
   | 'personInvited' // params: email, role, by
   | 'invitationCancelled' // params: email, by
   | 'personJoined' // params: name, role, by (the person who joined)

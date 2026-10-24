@@ -24,6 +24,16 @@ class Host {
   acted = 0;
 }
 
+@Component({
+  imports: [DemoEmail],
+  template: `
+    <app-demo-email subject="Invitation" body="You are invited." action="Accept" mailLang="en">
+      <p data-testid="extra-line" lang="de">Du bist eingeladen.</p>
+    </app-demo-email>
+  `,
+})
+class HostWithLines {}
+
 describe('DemoEmail', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -100,5 +110,19 @@ describe('DemoEmail', () => {
     expect(text(button)).toBe('Choose a new password');
     button.click();
     expect(fixture.componentInstance.acted).toBe(1);
+  });
+
+  it('shows what the page puts inside it between the text and the button, inside the email', () => {
+    const fixture = TestBed.createComponent(HostWithLines);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const box = el.querySelector<HTMLElement>('[data-testid="demo-email-text"]')!;
+    const extra = el.querySelector<HTMLElement>('[data-testid="extra-line"]')!;
+    expect(box.contains(extra)).toBe(true);
+    expect(text(extra)).toBe('Du bist eingeladen.');
+    const body = el.querySelector('[data-testid="demo-email-body"]')!;
+    const action = el.querySelector('[data-testid="demo-email-action"]')!;
+    expect(body.compareDocumentPosition(extra) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(extra.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

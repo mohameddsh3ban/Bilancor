@@ -10,6 +10,7 @@ import {
   cancelInvite,
   changeRole,
   invite,
+  initialsOf,
   inviteError,
   isEmail,
   isAppCode,
@@ -18,6 +19,7 @@ import {
   leave,
   makeOwner,
   memberOf,
+  nameFromEmail,
   normalEmail,
   ownerOf,
   removeMember,
@@ -76,6 +78,43 @@ describe('the password and the code', () => {
     for (const bad of ['', '12345', '1234567', '12345a', 'abcdef', '123-456', '１２３４５６']) {
       expect(isAppCode(bad), bad).toBe(false);
     }
+  });
+});
+
+describe('initialsOf', () => {
+  it('is the first letter of the first and of the last word, in capitals', () => {
+    expect(initialsOf('Sara Weber')).toBe('SW');
+    expect(initialsOf('Kanzlei Hoffmann')).toBe('KH');
+    expect(initialsOf('jana hoffmann')).toBe('JH');
+    expect(initialsOf('Anna Maria Schmidt')).toBe('AS');
+  });
+
+  it('ignores the spaces around and between the words', () => {
+    expect(initialsOf('  Sara   Weber ')).toBe('SW');
+  });
+
+  it('is one letter for one word, and nothing for no name', () => {
+    expect(initialsOf('Mia')).toBe('M');
+    expect(initialsOf('')).toBe('');
+    expect(initialsOf('   ')).toBe('');
+  });
+
+  it('counts a letter outside the basic alphabet, or an emoji, as one', () => {
+    expect(initialsOf('Émile Zola')).toBe('ÉZ');
+    expect(initialsOf('سارة ويبر')).toBe('سو');
+    expect(initialsOf('😀 Weber')).toBe('😀W');
+  });
+});
+
+describe('nameFromEmail', () => {
+  it('is the words before the @, each starting in a capital', () => {
+    expect(nameFromEmail('mia@example.com')).toBe('Mia');
+    expect(nameFromEmail('jana.hoffmann@kanzlei-hoffmann.example')).toBe('Jana Hoffmann');
+    expect(nameFromEmail('  Noah_Becker+demo@Example.COM ')).toBe('Noah Becker Demo');
+  });
+
+  it('is the email itself when nothing is left of it', () => {
+    expect(nameFromEmail('.@example.com')).toBe('.@example.com');
   });
 });
 

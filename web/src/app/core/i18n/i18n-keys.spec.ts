@@ -57,6 +57,19 @@ describe('translation files', () => {
     expect(en.history.supportOn).toContain('{{until}}');
   });
 
+  it('has a name for every role, and what the three roles that can be given can and can not do', () => {
+    for (const lang of [en, de, ar]) {
+      const roles = lang.roles as Record<string, Record<string, string>>;
+      for (const role of ['owner', 'full', 'receipts', 'advisor']) {
+        expect(roles[role]['name'], role).toBeTruthy();
+      }
+      for (const role of ['full', 'receipts', 'advisor']) {
+        expect(roles[role]['can'], role).toBeTruthy();
+        expect(roles[role]['cant'], role).toBeTruthy();
+      }
+    }
+  });
+
   it('has the German tax terms with label, de and explain', () => {
     const terms = [
       'ustva',

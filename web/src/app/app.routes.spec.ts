@@ -109,4 +109,22 @@ describe('the routes', () => {
     expect(router.url).toBe('/payments');
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
+
+  it('the join page sits outside the app shell: signed out it asks for signing in first, then opens with no top bar', async () => {
+    const harness = await RouterTestingHarness.create('/join/weber-design/wd-m3');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fjoin%2Fweber-design%2Fwd-m3');
+    expect(nextOf()).toBe('/join/weber-design/wd-m3');
+
+    signInAsSara();
+    await harness.navigateByUrl('/join/weber-design/wd-m3');
+    // The page itself is the route's element: there is no shell around it.
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).tagName).toBe('APP-JOIN-PAGE');
+    });
+    expect(router.url).toBe('/join/weber-design/wd-m3');
+    expect(document.querySelector('app-shell')).toBeNull();
+    expect(document.querySelector('app-top-bar')).toBeNull();
+  });
 });

@@ -2,13 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
+import { initialsOf } from '../domain/people';
 import { AccountService } from '../state/account.service';
-
-/** The first letter of the first and of the last name, in capitals: "SW" for Sara Weber. */
-function initialsOf(firstName: string, lastName: string): string {
-  const first = (name: string): string => Array.from(name.trim())[0] ?? '';
-  return `${first(firstName)}${first(lastName)}`.toUpperCase();
-}
 
 /**
  * The person menu at the end of the top bar: the person's initials, and under them their name and email, My account and
@@ -63,9 +58,7 @@ export class PersonMenu {
   protected readonly fullName = computed(
     () => `${this.person().firstName} ${this.person().lastName}`,
   );
-  protected readonly initials = computed(() =>
-    initialsOf(this.person().firstName, this.person().lastName),
-  );
+  protected readonly initials = computed(() => initialsOf(this.fullName()));
 
   /** Signs out and opens the sign-in page, which says "You're signed out." */
   protected signOut(): void {

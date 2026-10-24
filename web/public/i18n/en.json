@@ -230,13 +230,124 @@
       "name": "Owner"
     },
     "full": {
-      "name": "Full access"
+      "name": "Full access",
+      "example": "e.g. a partner",
+      "can": "Everything the owner can: payments, receipts, taxes, settings",
+      "cant": "Invite or remove people, change the plan"
     },
     "receipts": {
-      "name": "Receipts only"
+      "name": "Receipts only",
+      "example": "e.g. an assistant",
+      "can": "Upload receipts and fix the ones they added",
+      "cant": "Payments, bank balances, taxes, settings"
     },
     "advisor": {
-      "name": "Tax advisor"
+      "name": "Tax advisor",
+      "can": "See everything, download receipts and exports",
+      "cant": "Change bookings, connect banks, send returns"
+    }
+  },
+  "people": {
+    "title": "People with access",
+    "intro": "Only these people can open {{business}}'s books. Everyone is included in the price.",
+    "roleCards": {
+      "legend": "What can they do?",
+      "can": "Can:",
+      "cant": "Can't:"
+    },
+    "row": {
+      "you": "(you)",
+      "joined": "Joined",
+      "invited": "Invited",
+      "linkUntil": "the link works until",
+      "waiting": "Waiting",
+      "actions": "Actions for {{name}}"
+    },
+    "menu": {
+      "change": "Change what they can do",
+      "owner": "Make owner",
+      "remove": "Remove",
+      "resend": "Send again",
+      "cancel": "Cancel invitation"
+    },
+    "ownerNote": "Only {{owner}} (the owner) can invite or remove people.",
+    "invite": {
+      "button": "Invite someone",
+      "title": "Invite someone to {{business}}",
+      "email": "Their email",
+      "hint": "The link works for {{days}} days. They choose their own password.",
+      "send": "Send invitation",
+      "cancel": "Cancel",
+      "error": {
+        "missing": "Type their email.",
+        "invalid": "This doesn't look like an email address.",
+        "hasAccess": "This person already has access.",
+        "invited": "This email is already invited. Use Send again in the list.",
+        "role": "Choose what they can do."
+      }
+    },
+    "dialog": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "role": {
+        "title": "What can {{name}} do?",
+        "confirm": "Save"
+      },
+      "owner": {
+        "title": "Make {{name}} the owner?",
+        "body": "{{name}} will own {{business}} and decide who has access. You become Full access: you can't invite or remove people any more.",
+        "confirm": "Make owner"
+      },
+      "remove": {
+        "title": "Remove {{name}}?",
+        "body": "{{name}} can't open {{business}} any more. What they did stays in the history.",
+        "confirm": "Remove"
+      }
+    },
+    "support": {
+      "title": "Our support team",
+      "off": "No access. We can't see your books unless you let us in, for example when you ask us for help.",
+      "on": "Support can look until",
+      "lookOnly": "Looking only: support can't change anything.",
+      "allow": "Let support look for {{days}} days",
+      "stop": "Stop now"
+    },
+    "mail": {
+      "subject": "{{inviter}} invited you to {{business}}, as {{role}}",
+      "body": "Accept the invitation and choose your own password. The link works for {{days}} days.",
+      "action": "Accept the invitation",
+      "line": "{{inviter}} invited you to {{business}}, as {{role}}. Open the link to join."
+    },
+    "join": {
+      "title": "Join {{business}}",
+      "roleLabel": "Your role",
+      "name": "Your name",
+      "language": "Your language",
+      "hint": {
+        "password": "At least {{min}} characters."
+      },
+      "error": {
+        "name": "Type your name.",
+        "password": "Use at least {{min}} characters."
+      },
+      "submit": "Join",
+      "haveLogin": "Already have a login?",
+      "signIn": "Sign in",
+      "demo": "Demo: joining is a preview. You stay signed in as yourself, and the new person shows in your list.",
+      "signInTitle": "Sign in to join {{business}}",
+      "signInSubmit": "Sign in",
+      "signInDemo": "Demo: any email and password work.",
+      "newLogin": "Join with a new login",
+      "done": {
+        "title": "{{name}} has joined {{business}} as {{role}}",
+        "note": "In this demo you stay signed in as yourself. Seeing the app as someone else comes later.",
+        "back": "Back to Settings"
+      },
+      "gone": {
+        "title": "This invitation no longer works",
+        "body": "It was cancelled or used already, or its link ran out. Ask the owner to send it again.",
+        "back": "Back to Settings"
+      }
     }
   },
   "taxes": {

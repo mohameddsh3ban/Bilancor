@@ -230,13 +230,124 @@
       "name": "Inhaber:in"
     },
     "full": {
-      "name": "Voller Zugriff"
+      "name": "Voller Zugriff",
+      "example": "z. B. ein:e Partner:in",
+      "can": "Alles, was die Inhaber:in kann: Zahlungen, Belege, Steuern, Einstellungen",
+      "cant": "Personen einladen oder entfernen, den Tarif ändern"
     },
     "receipts": {
-      "name": "Nur Belege"
+      "name": "Nur Belege",
+      "example": "z. B. eine Assistenz",
+      "can": "Belege hochladen und die eigenen korrigieren",
+      "cant": "Zahlungen, Kontostände, Steuern, Einstellungen"
     },
     "advisor": {
-      "name": "Steuerberater:in"
+      "name": "Steuerberater:in",
+      "can": "Alles ansehen, Belege und Exporte herunterladen",
+      "cant": "Buchungen ändern, Banken verbinden, Erklärungen senden"
+    }
+  },
+  "people": {
+    "title": "Personen mit Zugriff",
+    "intro": "Nur diese Personen können die Buchhaltung von {{business}} öffnen. Alle sind im Preis enthalten.",
+    "roleCards": {
+      "legend": "Was darf die Person?",
+      "can": "Darf:",
+      "cant": "Darf nicht:"
+    },
+    "row": {
+      "you": "(du)",
+      "joined": "Beigetreten am",
+      "invited": "Eingeladen am",
+      "linkUntil": "der Link gilt bis",
+      "waiting": "Wartet",
+      "actions": "Aktionen für {{name}}"
+    },
+    "menu": {
+      "change": "Berechtigung ändern",
+      "owner": "Zur Inhaber:in machen",
+      "remove": "Entfernen",
+      "resend": "Erneut senden",
+      "cancel": "Einladung zurückziehen"
+    },
+    "ownerNote": "Nur {{owner}} (Inhaber:in) kann Personen einladen oder entfernen.",
+    "invite": {
+      "button": "Person einladen",
+      "title": "Jemanden zu {{business}} einladen",
+      "email": "E-Mail der Person",
+      "hint": "Der Link gilt {{days}} Tage. Die Person wählt ihr Passwort selbst.",
+      "send": "Einladung senden",
+      "cancel": "Abbrechen",
+      "error": {
+        "missing": "Gib die E-Mail der Person ein.",
+        "invalid": "Das sieht nicht nach einer E-Mail-Adresse aus.",
+        "hasAccess": "Diese Person hat schon Zugriff.",
+        "invited": "Diese E-Mail ist schon eingeladen. Nutze in der Liste „Erneut senden“.",
+        "role": "Wähle, was die Person darf."
+      }
+    },
+    "dialog": {
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "role": {
+        "title": "Was darf {{name}}?",
+        "confirm": "Speichern"
+      },
+      "owner": {
+        "title": "{{name}} zur Inhaber:in machen?",
+        "body": "{{name}} übernimmt {{business}} und entscheidet, wer Zugriff hat. Für dich gilt dann „Voller Zugriff“: Du kannst keine Personen mehr einladen oder entfernen.",
+        "confirm": "Zur Inhaber:in machen"
+      },
+      "remove": {
+        "title": "{{name}} entfernen?",
+        "body": "{{name}} kann {{business}} nicht mehr öffnen. Was die Person getan hat, bleibt im Verlauf.",
+        "confirm": "Entfernen"
+      }
+    },
+    "support": {
+      "title": "Unser Support-Team",
+      "off": "Kein Zugriff. Wir sehen deine Buchhaltung nur, wenn du uns hineinlässt, zum Beispiel wenn du uns um Hilfe bittest.",
+      "on": "Der Support darf ansehen bis",
+      "lookOnly": "Nur ansehen: Der Support ändert nichts.",
+      "allow": "Support für {{days}} Tage hineinlassen",
+      "stop": "Jetzt beenden"
+    },
+    "mail": {
+      "subject": "{{inviter}} hat dich zu {{business}} eingeladen (Rolle: {{role}})",
+      "body": "Nimm die Einladung an und wähle dein eigenes Passwort. Der Link gilt {{days}} Tage.",
+      "action": "Einladung annehmen",
+      "line": "{{inviter}} hat dich zu {{business}} eingeladen (Rolle: {{role}}). Öffne den Link, um beizutreten."
+    },
+    "join": {
+      "title": "{{business}} beitreten",
+      "roleLabel": "Deine Rolle",
+      "name": "Dein Name",
+      "language": "Deine Sprache",
+      "hint": {
+        "password": "Mindestens {{min}} Zeichen."
+      },
+      "error": {
+        "name": "Gib deinen Namen ein.",
+        "password": "Nimm mindestens {{min}} Zeichen."
+      },
+      "submit": "Beitreten",
+      "haveLogin": "Du hast schon ein Login?",
+      "signIn": "Anmelden",
+      "demo": "Demo: Das Beitreten ist eine Vorschau. Du bleibst als du selbst angemeldet, und die neue Person erscheint in deiner Liste.",
+      "signInTitle": "Anmelden und {{business}} beitreten",
+      "signInSubmit": "Anmelden",
+      "signInDemo": "Demo: Jede E-Mail und jedes Passwort funktioniert.",
+      "newLogin": "Mit neuem Login beitreten",
+      "done": {
+        "title": "{{name}} ist {{business}} beigetreten (Rolle: {{role}})",
+        "note": "In dieser Demo bleibst du als du selbst angemeldet. Die App als jemand anderes zu sehen, kommt später.",
+        "back": "Zurück zu den Einstellungen"
+      },
+      "gone": {
+        "title": "Diese Einladung funktioniert nicht mehr",
+        "body": "Sie wurde zurückgezogen oder schon genutzt, oder ihr Link ist abgelaufen. Bitte die Inhaber:in, sie erneut zu senden.",
+        "back": "Zurück zu den Einstellungen"
+      }
     }
   },
   "taxes": {

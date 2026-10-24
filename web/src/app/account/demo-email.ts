@@ -13,7 +13,8 @@ let nextEmailId = 0;
  * An email the demo cannot send, shown on the page instead: who it is to, its subject and text, and the button the email
  * would hold. The texts are passed in already translated, in the language of the person it is to (which is not always
  * the page's: `mailLang` then marks them with their own language and direction), and the button tells the page it was
- * pressed (`act`).
+ * pressed (`act`). What the page puts inside the element (more lines of the email, each with its own `lang` and `dir`
+ * when it is in another language) sits in the email between its text and its button.
  */
 @Component({
   selector: 'app-demo-email',
@@ -38,6 +39,7 @@ let nextEmailId = 0;
       >
         <p class="font-medium" data-testid="demo-email-subject">{{ subject() }}</p>
         <p class="text-muted-foreground" data-testid="demo-email-body">{{ body() }}</p>
+        <ng-content />
         <button
           hlmBtn
           type="button"

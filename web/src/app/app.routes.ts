@@ -19,6 +19,13 @@ export const routes: Routes = [
     canActivate: [signedOutGuard],
     loadComponent: () => import('./account/forgot-password.page').then((m) => m.ForgotPasswordPage),
   },
+  // The invited person's side sits outside the shell too, but it needs a signed-in person: joining is a preview for whoever
+  // sent the invitation (see JoinPage).
+  {
+    path: 'join/:businessId/:memberId',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./account/join.page').then((m) => m.JoinPage),
+  },
   {
     path: '',
     canActivate: [signedInGuard],
