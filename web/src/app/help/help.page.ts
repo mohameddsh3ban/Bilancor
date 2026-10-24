@@ -4,10 +4,10 @@ import {
   Signal,
   computed,
   inject,
-  signal,
+  linkedSignal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronRight, lucideSearch } from '@ng-icons/lucide';
 import { TranslocoPipe, translateObjectSignal, translateSignal } from '@jsverse/transloco';
@@ -15,6 +15,7 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { map } from 'rxjs';
 import { pluralKey } from '../core/i18n/plural-key';
+import { TermInfo } from '../core/i18n/term';
 import { TERM_KEYS, type TermKey } from '../core/i18n/term-keys';
 import { HELP_ANSWERS, HELP_TOPICS, type HelpPage as HelpPageName } from '../data/help';
 import { helpPageOf, normalizeForSearch, pageQuestions, searchHelp } from '../domain/help';
@@ -41,6 +42,11 @@ const TOPICS = HELP_TOPICS.map((id) => ({
  * homepage, or when Help is opened first, the section is Getting started. A Kleinunternehmer's Help with Taxes starts
  * with the limit. A topic opens its questions in place of the topics, at `?topic=<id>`. While there is something in the
  * search box, its results take the place of all of that; the search reads the texts of the language of the page.
+ *
+ * What is typed goes into the address as it is typed (`?q=<text>`, next to a topic), replacing the address instead of
+ * adding a step to the browser's history, so the back button from an answer or a term returns to the same results. An
+ * address without `q` (the menu's Help) starts with an empty box. One line only a screen reader hears, always on the
+ * page, says how many results there are or that nothing was found.
  */
 @Component({
   selector: 'app-help-page',
@@ -53,6 +59,7 @@ const TOPICS = HELP_TOPICS.map((id) => ({
     HlmCardImports,
     NgIcon,
     RouterLink,
+    TermInfo,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideChevronRight, lucideSearch })],
@@ -77,6 +84,17 @@ const TOPICS = HELP_TOPICS.map((id) => ({
         (input)="setQuery($event)"
       />
     </div>
+
+    <!-- Always on the page, so a screen reader hears it change as the person types. -->
+    <p class="sr-only" role="status" data-testid="help-found">
+      @if (searching()) {
+        @if (hits().length > 0) {
+          {{ plural('help.home.found', hits().length) | transloco: { count: hits().length } }}
+        } @else {
+          {{ 'help.home.nothingTitle' | transloco }}
+        }
+      }
+    </p>
 
     @if (searching()) {
       <app-help-results [hits]="hits()" [query]="query()" />
@@ -209,7 +227,11 @@ const TOPICS = HELP_TOPICS.map((id) => ({
             @let note = ('help.home.taxNote' | transloco: { term: termMark }).split(termMark);
             <p>
               {{ note[0] }}<bdi dir="ltr">{{ advisor() }}</bdi
-              >{{ note[1] }}
+              ><app-term-info
+                key="steuerberater"
+                class="-my-1.5 -ms-1 -me-1.5 align-middle"
+                data-testid="help-note-term"
+              />{{ note[1] }}
             </p>
             <a
               hlmBtn
@@ -231,6 +253,7 @@ export class HelpPage {
   private readonly demo = inject(DemoStateService);
   private readonly context = inject(HelpContextService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly plural = pluralKey;
   protected readonly topics = TOPICS;
@@ -240,8 +263,16 @@ export class HelpPage {
   /** The German word for a tax advisor, which the tax-advice note names in its own sentence. */
   protected readonly advisor = translateSignal('terms.steuerberater.de');
 
-  /** What is in the search box. Not in the address: a search is not a page to come back to. */
-  protected readonly query = signal('');
+  /** The search of the address (`?q=`), as it was typed; empty when there is none. */
+  private readonly queryParam = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
+    { initialValue: this.route.snapshot.queryParamMap.get('q') ?? '' },
+  );
+  /**
+   * What is in the search box. Typing sets it at once and then writes it to the address; an address that changes
+   * otherwise (the browser's back and forward, the menu's Help) sets it to the address's search.
+   */
+  protected readonly query = linkedSignal(() => this.queryParam());
   protected readonly searching = computed(() => normalizeForSearch(this.query()) !== '');
 
   /** The texts of the current language the search reads; they follow the language of the page. */
@@ -274,7 +305,18 @@ export class HelpPage {
     HELP_ANSWERS.filter((answer) => answer.topic === this.topic()).map((answer) => answer.id),
   );
 
+  /**
+   * Keeps what was typed, and puts it in the address next to a topic: in place of the current address, so typing adds
+   * no steps to the browser's history. An empty box takes `q` out of the address.
+   */
   protected setQuery(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+    const typed = (event.target as HTMLInputElement).value;
+    this.query.set(typed);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: typed === '' ? null : typed },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 }

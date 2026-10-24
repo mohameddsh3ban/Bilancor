@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -378,7 +379,31 @@ describe('HelpPage', () => {
       expect(text(write)).toBe('Write to us');
       // What was typed goes on, without the spaces around it.
       expect(write.getAttribute('href')).toBe('/help/contact?q=xyzzy%20plugh');
-      expect(q('help-found')).toBeNull();
+      // A screen reader hears it too.
+      expect(text(q('help-found'))).toBe('Nothing found');
+    });
+
+    it('has one line for a screen reader, always on the page, that says how many results there are or that nothing was found', async () => {
+      await render();
+      const found = q('help-found')!;
+      // There before anything is typed, so the first change is heard; quiet while there is no search.
+      expect(found).not.toBeNull();
+      expect(found.getAttribute('role')).toBe('status');
+      expect(found.classList).toContain('sr-only');
+      expect(text(found)).toBe('');
+
+      await search('Eigenbeleg');
+      expect(q('help-found')).toBe(found);
+      expect(text(found)).toBe(`${resultRows().length} results`);
+
+      await search('xyzzy');
+      expect(q('help-found')).toBe(found);
+      expect(text(found)).toBe('Nothing found');
+
+      await search('');
+      expect(q('help-found')).toBe(found);
+      expect(text(found)).toBe('');
+      expect(qa('help-found')).toHaveLength(1);
     });
 
     it('opens an answer from the results', async () => {
@@ -416,8 +441,81 @@ describe('HelpPage', () => {
       await search('limit');
       expect(q('help-topic')).toBeNull();
       expect(q('help-result-klein-limit')).not.toBeNull();
+      // The search goes in the address next to the topic.
+      expect(router().url).toBe('/help?topic=taxes&q=limit');
       await search('');
       expect(q('help-topic')).not.toBeNull();
+      expect(router().url).toBe('/help?topic=taxes');
+    });
+  });
+
+  describe('the search is in the address', () => {
+    /**
+     * The browser's back button, with the router following it as in the running app (in a spec it only listens to the
+     * browser once its initial navigation has run).
+     */
+    async function historyBack(): Promise<void> {
+      router().initialNavigation();
+      TestBed.inject(Location).back();
+      await new Promise((resolve) => setTimeout(resolve));
+      await settle();
+    }
+
+    it('typing writes ?q= as typed, in place of the current address, so it adds no step to the history', async () => {
+      const navigate = vi.spyOn(router(), 'navigate');
+      await render('/help', '/taxes');
+      const steps = window.history.length;
+      await search('ausgang');
+      await search('ausgangsbeleg ');
+      expect(router().url).toBe('/help?q=ausgangsbeleg%20');
+      expect(TestBed.inject(Location).path()).toBe('/help?q=ausgangsbeleg%20');
+      expect(navigate).toHaveBeenCalledTimes(2);
+      for (const [, extras] of navigate.mock.calls) expect(extras?.replaceUrl).toBe(true);
+      expect(window.history.length).toBe(steps);
+
+      // One step back leaves Help: typing made no steps of its own.
+      await historyBack();
+      expect(TestBed.inject(Location).path()).toBe('/taxes');
+      expect(router().url).toBe('/taxes');
+    });
+
+    it('opening /help?q=… shows the box filled in and the results, as the back button from a result does', async () => {
+      await render('/help?q=ausgangsbeleg');
+      expect((q('help-search') as HTMLInputElement).value).toBe('ausgangsbeleg');
+      expect(q('help-result-term-ausgangsbeleg')).not.toBeNull();
+      expect(q('help-for-page')).toBeNull();
+      expect(text(q('help-found'))).toBe(`${resultRows().length} results`);
+
+      // Open a result, then come back with the browser's back button: the same search.
+      q('help-result-term-ausgangsbeleg')!.click();
+      await settle();
+      expect(router().url).toBe('/help/terms#ausgangsbeleg');
+      await historyBack();
+      expect(router().url).toBe('/help?q=ausgangsbeleg');
+      expect((q('help-search') as HTMLInputElement).value).toBe('ausgangsbeleg');
+      expect(q('help-result-term-ausgangsbeleg')).not.toBeNull();
+    });
+
+    it('clearing the box takes q out of the address', async () => {
+      await render('/help?q=invoice');
+      expect(q('help-for-page')).toBeNull();
+      await search('');
+      expect(router().url).toBe('/help');
+      expect(q('help-for-page')).not.toBeNull();
+      expect(q('help-results')).toBeNull();
+    });
+
+    it("the menu's Help (/help, no q) starts with an empty box, also from a search", async () => {
+      await render('/help?q=invoice');
+      await render('/help');
+      expect((q('help-search') as HTMLInputElement).value).toBe('');
+      expect(q('help-results')).toBeNull();
+      expect(q('help-for-page')).not.toBeNull();
+    });
+
+    it("leaves Write to us's own ?q= alone: Nothing found carries what was typed to /help/contact", async () => {
+      await render('/help?q=xyzzy');
+      expect(q('help-nothing-write')!.getAttribute('href')).toBe('/help/contact?q=xyzzy');
     });
   });
 
@@ -451,6 +549,14 @@ describe('HelpPage', () => {
     );
     // The German word stays left to right inside the sentence.
     expect(note.querySelector('bdi[dir="ltr"]')?.textContent).toBe('Steuerberater:in');
+    // Its explanation is a small button right after the word, as where a term must stay plain text.
+    const info = q('help-note-term')!;
+    expect(info.previousElementSibling?.tagName.toLowerCase()).toBe('bdi');
+    const button = info.querySelector('button')!;
+    expect(button.getAttribute('aria-label')).toBe('What is Tax advisor?');
+    button.click();
+    await settle();
+    expect(document.body.textContent).toContain(en.terms.steuerberater.explain);
     const invite = q('help-invite-advisor')!;
     expect(text(invite)).toBe('Invite your tax advisor');
     expect(invite.getAttribute('href')).toBe('/settings#people');
@@ -524,6 +630,9 @@ describe('HelpPage', () => {
       await setLang('ar');
       expect(q('help-note')!.querySelector('bdi[dir="ltr"]')?.textContent).toBe('Steuerberater:in');
       expect(text(q('help-note'))).toContain(ar.help.home.taxNote.split('.')[0]);
+      expect(q('help-note-term')!.querySelector('button')!.getAttribute('aria-label')).toBe(
+        ar.terms.whatIs.replace('{{term}}', ar.terms.steuerberater.label),
+      );
       expect(q('help-invite-advisor')!.textContent?.trim()).toBe(ar.help.home.taxAction);
 
       await search('eigenbeleg');

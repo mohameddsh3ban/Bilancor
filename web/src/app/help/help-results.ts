@@ -5,14 +5,14 @@ import { lucideChevronRight } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
-import { pluralKey } from '../core/i18n/plural-key';
 import { TermText } from '../core/i18n/term';
 import type { HelpHit } from '../domain/help';
 
 /**
  * What a search found: the answers (with their topic) and the German terms (marked "Term", they open German terms A–Z at
  * the term), in the order the search gave them. When there is none, "Nothing found" and Write to us, which carries what
- * was typed into the message. A line only a screen reader hears says how many there are, as the list changes.
+ * was typed into the message. The line a screen reader hears about them (how many, or nothing found) is on the Help page
+ * itself, so it is there before the first result and is heard as the list changes.
  */
 @Component({
   selector: 'app-help-results',
@@ -22,9 +22,6 @@ import type { HelpHit } from '../domain/help';
   host: { class: 'block' },
   template: `
     @if (hits().length > 0) {
-      <p class="sr-only" role="status" data-testid="help-found">
-        {{ plural('help.home.found', hits().length) | transloco: { count: hits().length } }}
-      </p>
       <ul
         class="bg-card border-border divide-border divide-y overflow-hidden rounded-xl border"
         [attr.aria-label]="'help.home.results' | transloco"
@@ -104,6 +101,5 @@ export class HelpResults {
   /** What the person typed, as it will be carried into Write to us. */
   readonly query = input.required<string>();
 
-  protected readonly plural = pluralKey;
   protected readonly typed = computed(() => this.query().trim());
 }
