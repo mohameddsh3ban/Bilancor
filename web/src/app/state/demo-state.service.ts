@@ -13,6 +13,7 @@ import {
   SentVatReturn,
   SetupState,
   SetupSteps,
+  StatementImport,
   TaxProfile,
   Transaction,
 } from '../data/models';
@@ -26,12 +27,14 @@ import {
 } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection } from '../domain/bank-connection';
+import { lockedToReceipt } from '../domain/cash-payments';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
 import { invoiceOfPayment, invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
 import * as months from '../domain/months';
 import * as people from '../domain/people';
+import { canUndoImport, isDuplicate, type StatementRow } from '../domain/statement-import';
 import { AccountService } from './account.service';
 
 /** A fresh copy of the sample businesses, so edits never touch the shared sample data. */
@@ -50,6 +53,65 @@ function newCashBox(businessId: string): Account {
     connection: noConnection('cash'),
     product: 'cash',
     iban: null,
+  };
+}
+
+/** The Own money account of a business that has none: money the owner paid for the business privately. No payments of its own, no balance, no bank and no IBAN. */
+function newOwnMoneyAccount(businessId: string): Account {
+  return {
+    id: `${businessId}-own`,
+    kind: 'own',
+    name: 'Own money',
+    balanceCents: 0,
+    lastUpdate: DEMO_TODAY,
+    connection: noConnection('own'),
+    product: 'own',
+    iban: null,
+  };
+}
+
+/** The accounts with the added ones in front of the cash box, which stays last. */
+function beforeCashBox(accounts: readonly Account[], added: readonly Account[]): Account[] {
+  const cashAt = accounts.findIndex((account) => account.kind === 'cash');
+  return cashAt === -1 ? [...accounts, ...added] : [...accounts.slice(0, cashAt), ...added, ...accounts.slice(cashAt)];
+}
+
+/** A payment as a statement row, to ask whether a business has it already (see `isDuplicate`). */
+function asRow(tx: Transaction): StatementRow {
+  return { index: 0, date: tx.date, amountCents: tx.amountCents, counterparty: tx.counterparty, reference: tx.reference };
+}
+
+/**
+ * The business without the payments of a statement import, and with what automatic matching did to them taken back: a document
+ * that was linked to one waits again (without the line that linked it), an invoice one of them paid does not have the payment any
+ * more (nor the line that said it was paid), and the record of the import is gone. One `importUndone` line on the business.
+ */
+function withoutImport(business: Business, imp: StatementImport): Business {
+  const ids = new Set(imp.paymentIds);
+  const names = new Map(business.transactions.filter((tx) => ids.has(tx.id)).map((tx) => [tx.id, tx.counterparty]));
+  const unlinked = (doc: Doc): Doc => {
+    const name = doc.paymentId === null ? undefined : names.get(doc.paymentId);
+    if (name === undefined) return doc;
+    const linkedAt = doc.history.findIndex((line) => (line.key === 'linked' || line.key === 'linkedAuto') && line.params['name'] === name);
+    return { ...doc, paymentId: null, history: doc.history.filter((_, i) => i !== linkedAt) };
+  };
+  const unpaid = (invoice: Invoice): Invoice =>
+    invoice.paymentIds.some((id) => ids.has(id))
+      ? {
+          ...invoice,
+          paymentIds: invoice.paymentIds.filter((id) => !ids.has(id)),
+          history: invoice.history.filter(
+            (line) => !((line.key === 'invoicePaid' || line.key === 'invoicePartlyPaid') && ids.has(line.params['paymentId'] ?? '')),
+          ),
+        }
+      : invoice;
+  return {
+    ...business,
+    transactions: business.transactions.filter((tx) => !ids.has(tx.id)),
+    documents: business.documents.map(unlinked),
+    invoices: business.invoices.map(unpaid),
+    imports: business.imports.filter((i) => i.id !== imp.id),
+    history: [{ date: DEMO_TODAY, key: 'importUndone', params: { file: imp.fileName } }, ...business.history],
   };
 }
 
@@ -180,7 +242,8 @@ export class DemoStateService {
    * become statement accounts and keep their payments. The accounts it is given are never changed (they are shared sample data).
    *
    * The first time the business account of a business made during the visit is added, its eight October payments come
-   * in with it (newest first); it has them once, however often it is connected.
+   * in with it (newest first); it has them once, however often it is connected. A payment the business has already, in any
+   * of its accounts (an imported statement may have brought it, see `isDuplicate`), does not come a second time.
    */
   connectAccounts(bankId: string, accounts: readonly Account[], fetchFrom: string): void {
     const bankDone = this.setup().bank;
@@ -212,16 +275,19 @@ export class DemoStateService {
         .map(connect);
       if (added.length === 0 && kept.every((account, i) => account === business.accounts[i])) return business;
 
-      const cashAt = kept.findIndex((account) => account.kind === 'cash');
       const main = isVisitBusiness(business.id)
         ? added.find((account) => account.id === newBusinessAccountId(business.id))
         : undefined;
+      const arriving = main
+        ? newBusinessPayments(business.id, main, people.ownerOf(business).name ?? business.name).filter((tx) => {
+            const row = asRow(tx);
+            return !business.transactions.some((own) => isDuplicate(row, own, null));
+          })
+        : [];
       return {
         ...business,
-        accounts: cashAt === -1 ? [...kept, ...added] : [...kept.slice(0, cashAt), ...added, ...kept.slice(cashAt)],
-        transactions: main
-          ? [...newBusinessPayments(business.id, main, people.ownerOf(business).name ?? business.name), ...business.transactions]
-          : business.transactions,
+        accounts: beforeCashBox(kept, added),
+        transactions: arriving.length > 0 ? [...arriving, ...business.transactions] : business.transactions,
         history: [...lines.reverse(), ...business.history],
       };
     });
@@ -239,6 +305,62 @@ export class DemoStateService {
             history: [{ date: DEMO_TODAY, key: 'cashAdded', params: {} }, ...business.history],
           },
     );
+  }
+
+  /**
+   * Gives the open business the Own money account when it has none, in front of its cash box, with an `ownMoneyAdded` line: the account of
+   * what the owner paid for the business privately (see `paidFromReceiptFor`). It does not count as the bank step.
+   */
+  addOwnMoneyAccount(): void {
+    this.updateBusiness(this.businessIdSignal(), (business) =>
+      business.accounts.some((account) => account.kind === 'own')
+        ? business
+        : {
+            ...business,
+            accounts: beforeCashBox(business.accounts, [newOwnMoneyAccount(business.id)]),
+            history: [{ date: DEMO_TODAY, key: 'ownMoneyAdded', params: {} }, ...business.history],
+          },
+    );
+  }
+
+  /**
+   * Adds an account to a business (the open one unless named), in front of its cash box: a statement account of a bank the
+   * demo does not list, for instance. The business keeps its own copy. Ignored for an unknown business and for an id the business
+   * has already, so a repeated call does nothing. It writes no history line and does not tick the bank step: importing a statement does.
+   */
+  addAccount(account: Account, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) =>
+      business.accounts.some((a) => a.id === account.id)
+        ? business
+        : { ...business, accounts: beforeCashBox(business.accounts, [{ ...account, connection: { ...account.connection } }]) },
+    );
+  }
+
+  /**
+   * Remembers a statement import in a business (the open one unless named), in front of the earlier ones. Ignored for an unknown
+   * business and for an id the business has already. The payments themselves are added by the caller (`addTransaction`).
+   */
+  recordImport(imp: StatementImport, businessId: string = this.businessIdSignal()): void {
+    this.updateBusiness(businessId, (business) =>
+      business.imports.some((i) => i.id === imp.id)
+        ? business
+        : { ...business, imports: [{ ...imp, paymentIds: [...imp.paymentIds] }, ...business.imports] },
+    );
+  }
+
+  /**
+   * Undoes a statement import of the open business: its payments are removed and the links its automatic matching made are taken
+   * back (see `withoutImport`). The account it was made into, and the bank step, stay. False, with nothing changed, for an id the open
+   * business has no import with, and for one that can't be undone any more (see `canUndoImport`: a payment of it was worked on,
+   * or sits in a month that has been closed since).
+   */
+  undoImport(importId: string): boolean {
+    const before = this.data();
+    this.updateBusiness(this.businessIdSignal(), (business) => {
+      const imp = business.imports.find((i) => i.id === importId);
+      return imp && canUndoImport(business, imp, (month) => months.isClosedDate(business, `${month}-01`)) ? withoutImport(business, imp) : business;
+    });
+    return this.data() !== before;
   }
 
   /**
@@ -327,11 +449,12 @@ export class DemoStateService {
 
   /**
    * Removes a document of the open business; a document linked to a payment stays (unlink it first), and so does the
-   * document of an invoice written in Invoices: the invoice is on record, and it keeps its document.
+   * document of an invoice written in Invoices: the invoice is on record, and it keeps its document. A self-issued receipt
+   * stays too: its number can't be given away, and the payment keeps the 0 % VAT it took off.
    */
   removeDocument(id: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) =>
-      business.documents.some((d) => d.id === id && d.paymentId === null && d.invoice === null)
+      business.documents.some((d) => d.id === id && d.paymentId === null && d.invoice === null && d.selfIssued === null)
         ? { ...business, documents: business.documents.filter((d) => d.id !== id) }
         : business,
     );
@@ -367,13 +490,15 @@ export class DemoStateService {
 
   /**
    * Takes a document of the open business off its payment, putting the payment back as it was. Ignored when it is not linked,
-   * and for the document of an invoice written in Invoices: the payment stays the invoice's payment.
+   * for the document of an invoice written in Invoices (the payment stays the invoice's payment), for a self-issued receipt
+   * (putting the payment back would give its VAT back, though the payment keeps the mark that it has none), and for a payment
+   * made from its receipt as paid in cash or with the owner's own money (it is locked to the receipt, see `lockedToReceipt`).
    */
   unlink(docId: string): void {
     this.updateBusiness(this.businessIdSignal(), (business) => {
       const doc = business.documents.find((d) => d.id === docId);
       const tx = doc?.paymentId ? business.transactions.find((t) => t.id === doc.paymentId) : undefined;
-      if (!doc || !tx || doc.invoice !== null) return business;
+      if (!doc || !tx || doc.invoice !== null || doc.selfIssued !== null || lockedToReceipt(tx)) return business;
       const unlinked = unlinkDocument(doc, tx);
       return {
         ...business,
@@ -421,7 +546,9 @@ export class DemoStateService {
    * the invoice's revenue booking, and so does one booked with another VAT rate than the invoice, with a line that says so;
    * whether the booking is confirmed stays as it was) and says "Pays invoice …". The invoice says it was paid in full or in part, on the day
    * the money came in, and keeps the id of the payment in that line (`params.paymentId`), so the line can lead to it. Only the payment that completes the invoice is linked to its document, so Documents shows it as
-   * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically".
+   * waiting until it is fully paid; `auto` says whether the document's line reads "linked automatically". An automatic match
+   * also marks the payment's own lines (`paysInvoice`, `bookedByInvoice`) with the param `auto: 'true'`, so what the system did
+   * on its own can be told from the person confirming the match (a statement import's undo relies on it).
    *
    * Ignored for an unknown invoice or payment, money going out, an invoice that is a draft, paid or cancelled, and a payment
    * that pays an invoice or has a document already, so a repeated call does nothing.
@@ -443,6 +570,7 @@ export class DemoStateService {
       // reverse-charge or not-taxable invoice) is booked as the invoice says, or the VAT return would count VAT that was never charged.
       const invoiceBooking = revenueBookingFor(invoice, business.taxProfile);
       const rebooked = tx.booking !== null && tx.booking.vatRate !== invoiceBooking.vatRate;
+      const byUs: Record<string, string> = auto ? { auto: 'true' } : {};
       const linkedTx: Transaction = {
         ...tx,
         receipt: 'attached',
@@ -450,8 +578,8 @@ export class DemoStateService {
         booking: unbooked || rebooked ? invoiceBooking : tx.booking,
         confirmed: unbooked || tx.confirmed,
         history: [
-          ...(rebooked ? [{ date: DEMO_TODAY, key: 'bookedByInvoice' as const, params: { category: invoiceBooking.labelKey } }] : []),
-          { date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '' } },
+          ...(rebooked ? [{ date: DEMO_TODAY, key: 'bookedByInvoice' as const, params: { category: invoiceBooking.labelKey, ...byUs } }] : []),
+          { date: DEMO_TODAY, key: 'paysInvoice', params: { number: invoice.number ?? '', ...byUs } },
           ...tx.history,
         ],
       };

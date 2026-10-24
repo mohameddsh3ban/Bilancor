@@ -4,6 +4,7 @@ import { DEMO_TODAY } from '../data/demo-date';
 import type { Business, Doc, Invoice, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { connectionStatus } from '../domain/bank-connection';
+import { paymentFor } from '../domain/cash-payments';
 import { docStatus, visibleDocuments } from '../domain/document-status';
 import {
   effectiveVatRate,
@@ -638,6 +639,26 @@ describe('InvoiceService', () => {
       expect(invoice.history[0]).toEqual({ date: '2026-10-21', key: 'invoicePaid', params: { paymentId: tx.id } });
       expect(docOf('sy-d2', 'sara-yoga').paymentId).toBe(tx.id); // the payment that completes it
       expect(docStatus(docOf('sy-d2', 'sara-yoga'))).toBe('done');
+    });
+
+    it('invoice mark-as-paid still works through the shared builder: the payment is what `paymentFor` builds, linked to the invoice', () => {
+      const before = businessOf();
+      const cash = before.accounts.find((a) => a.kind === 'cash')!;
+      const paidLine = { date: '2026-10-20', key: 'paidInCash' as const, params: {} };
+      const built = paymentFor(before, invoiceOf('inv-wd-044'), cash.id, '2026-10-20', '', [paidLine]);
+
+      invoices.markPaidInCash('inv-wd-044', '2026-10-20');
+
+      const made = businessOf().transactions[0];
+      expect(made.id).toBe(built.id);
+      // What the builder makes, and what linking the invoice adds: its receipt, and the line that says it pays the invoice.
+      expect(made).toEqual({
+        ...built,
+        receipt: 'attached',
+        receiptFile: 'RE-2026-044.pdf',
+        history: [{ date: DEMO_TODAY, key: 'paysInvoice', params: { number: 'RE-2026-044' } }, paidLine],
+      });
+      expect(statusOf('inv-wd-044')).toBe('paid');
     });
 
     it('mark paid in cash uses the cash box a business has, and pays what is left', () => {

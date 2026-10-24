@@ -23,6 +23,13 @@ function normalizedName(name: string): string {
   return nameTokens(name).join(' ');
 }
 
+/** Whether two names are the same party: both have words (see `nameTokens`), and the words of one contain the words of the other, whatever the case and umlauts. */
+export function namesAlike(a: string, b: string): boolean {
+  const first = normalizedName(a);
+  const second = normalizedName(b);
+  return first !== '' && second !== '' && (first.includes(second) || second.includes(first));
+}
+
 /** Money out belongs to a received document, money in to a sent one. */
 function directionOfPayment(tx: Transaction): DocDirection | null {
   if (tx.amountCents < 0) return 'received';
@@ -96,16 +103,11 @@ export function certainMatch(doc: Doc, txs: readonly Transaction[]): Transaction
   if (doc.duplicateOf !== null) return null;
   const { amountCents, date, name } = doc;
   if (amountCents === null || date === null || name === null) return null;
-  const docName = normalizedName(name);
-  if (docName === '') return null;
-  const surely = paymentCandidates(doc, txs).filter((tx) => {
-    const payerName = normalizedName(tx.counterparty);
-    return (
+  const surely = paymentCandidates(doc, txs).filter(
+    (tx) =>
       Math.abs(tx.amountCents) === amountCents &&
       daysApart(date, tx.date) <= CERTAIN_DAYS &&
-      payerName !== '' &&
-      (payerName.includes(docName) || docName.includes(payerName))
-    );
-  });
+      namesAlike(name, tx.counterparty),
+  );
   return surely.length === 1 ? surely[0] : null;
 }

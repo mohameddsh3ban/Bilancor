@@ -68,12 +68,12 @@ describe('exportPeriods', () => {
 
 describe('exportSummary', () => {
   it('October at Weber Design counts its bookings, receipts and the payments that need Sara', () => {
-    // Eleven payments, none private. Three miss their receipt (Kern Studio, Deutsche Bahn, Schreibwaren Böttcher), Müller's is
-    // not confirmed, and two Amazon orders have no category: six need her. The other eight payments have their receipt.
+    // Twelve payments, none private. Four miss their receipt (Kern Studio, Deutsche Bahn, Schreibwaren Böttcher, APCOA Parking),
+    // Müller's is not confirmed, and two Amazon orders have no category: seven need her. The other eight payments have their receipt.
     expect(exportSummary(weber, periodOf(weber, 'month', '2026-10'), DEMO_TODAY)).toEqual({
-      bookings: 11,
+      bookings: 12,
       receipts: 8,
-      needsYou: 6,
+      needsYou: 7,
       state: 'running',
       empty: false,
     });
@@ -111,7 +111,7 @@ describe('exportSummary', () => {
       transactions: weber.transactions.map((tx) => (tx.id === 'wd-t3' ? { ...tx, receipt: 'notNeeded' as const } : tx)),
     };
     const october = periodOf(noReceiptNeeded, 'month', '2026-10');
-    expect(exportSummary(noReceiptNeeded, october, DEMO_TODAY)).toMatchObject({ bookings: 11, receipts: 8, needsYou: 5 });
+    expect(exportSummary(noReceiptNeeded, october, DEMO_TODAY)).toMatchObject({ bookings: 12, receipts: 8, needsYou: 6 });
     expect(exportRows(noReceiptNeeded, october).find((row) => row.counterparty === 'Deutsche Bahn')).toMatchObject({
       receipt: 'notNeeded',
       open: false,
@@ -233,7 +233,7 @@ describe('exportRows', () => {
     const october = exportRows(weber, periodOf(weber, 'month', '2026-10'));
     expect(october.map((row) => row.date)).toEqual([...october.map((row) => row.date)].sort());
     const open = october.filter((row) => row.open).map((row) => row.counterparty);
-    expect(open.sort()).toEqual(['Amazon', 'Amazon', 'Deutsche Bahn', 'Kern Studio Berlin', 'Müller GmbH', 'SCHREIBWAREN BOETTCHER']);
+    expect(open.sort()).toEqual(['APCOA Parking', 'Amazon', 'Amazon', 'Deutsche Bahn', 'Kern Studio Berlin', 'Müller GmbH', 'SCHREIBWAREN BOETTCHER']);
     expect(october.filter((row) => !row.open && row.receipt === 'missing')).toEqual([]);
   });
 

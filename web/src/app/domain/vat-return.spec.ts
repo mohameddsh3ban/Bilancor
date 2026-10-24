@@ -186,8 +186,8 @@ describe('the current return', () => {
   });
 
   it('needsYou counts the payments of the period that are not booked', () => {
-    // wd-t1 (confirm), wd-t3, wd-t17 and wd-t19 (no receipt), wd-t4 and wd-t18 (unclear).
-    expect(viewOf(weber).needsYouCount).toBe(6);
+    // wd-t1 (confirm), wd-t3, wd-t17, wd-t19 and wd-t20 (no receipt), wd-t4 and wd-t18 (unclear).
+    expect(viewOf(weber).needsYouCount).toBe(7);
     expect(vatReturnFor(weber, periodFor('2026-09-01', 'monthly')).needsYouCount).toBe(0);
   });
 
@@ -273,7 +273,7 @@ describe('the current return', () => {
     const wdT1 = weber.transactions.find((tx) => tx.id === 'wd-t1')!;
     const confirmed = { ...weber, transactions: weber.transactions.map((tx) => (tx === wdT1 ? { ...tx, confirmed: true } : tx)) };
     expect(viewOf(confirmed).chargedCents).toBe(47500 + 23950);
-    expect(viewOf(confirmed).needsYouCount).toBe(5);
+    expect(viewOf(confirmed).needsYouCount).toBe(6);
   });
 
   describe('the state', () => {

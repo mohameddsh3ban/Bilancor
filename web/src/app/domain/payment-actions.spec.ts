@@ -1,8 +1,9 @@
-import { PRIVATE_IN, PRIVATE_OUT, TRAVEL } from '../data/categories';
+import { OFFICE, PRIVATE_IN, PRIVATE_OUT, TRAVEL } from '../data/categories';
 import { Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { changeCategory, confirmBooking, markNoReceiptNeeded, setPrivate } from './payment-actions';
 import { paymentStatus } from './payment-status';
+import { withoutVat } from './self-issued';
 
 function sample(id: string): Transaction {
   for (const business of BUSINESSES) {
@@ -39,6 +40,22 @@ describe('payment actions', () => {
     expect(next.confirmed).toBe(true);
     expect(paymentStatus(next)).toBe('booked');
     expect(next.history[0]).toEqual({ date: '2026-10-22', key: 'categoryChanged', params: { category: 'travel' } });
+  });
+
+  it('category change keeps 0 % VAT on a payment a self-issued receipt took the VAT from', () => {
+    const noVat = withoutVat(sample('wd-t3'));
+    expect(noVat.booking).toEqual({ ...TRAVEL, vatRate: 0 });
+
+    const next = changeCategory(noVat, OFFICE);
+
+    expect(next.booking).toEqual({ ...OFFICE, vatRate: 0 });
+    expect(next.confirmed).toBe(true);
+    expect(next.history[0]).toEqual({ date: '2026-10-22', key: 'categoryChanged', params: { category: 'office' } });
+    expect(OFFICE.vatRate).toBe(19);
+  });
+
+  it('category change gives the category its usual VAT on every other payment', () => {
+    expect(changeCategory(sample('wd-t3'), OFFICE).booking).toBe(OFFICE);
   });
 
   it('actions return a new payment and leave the old one alone', () => {

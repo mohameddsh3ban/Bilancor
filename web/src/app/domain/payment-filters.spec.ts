@@ -53,7 +53,7 @@ describe('payment filters', () => {
     const result = filterPayments(weber, filter({ quick: 'needsYou' }));
     expect(result.length).toBeGreaterThan(0);
     expect(result.every((t) => paymentStatus(t) !== 'booked')).toBe(true);
-    expect(result.map((t) => t.id)).toEqual(['wd-t19', 'wd-t1', 'wd-t3', 'wd-t4', 'wd-t17', 'wd-t18']);
+    expect(result.map((t) => t.id)).toEqual(['wd-t19', 'wd-t1', 'wd-t20', 'wd-t3', 'wd-t4', 'wd-t17', 'wd-t18']);
   });
 
   it('in/out split by sign', () => {
@@ -91,9 +91,9 @@ describe('payment filters', () => {
     const groups = groupByMonth(weber);
     expect(groups.map((g) => g.month)).toEqual(['2026-10', '2026-09', '2026-08']);
     const october = groups[0];
-    expect(october.payments).toHaveLength(11);
+    expect(october.payments).toHaveLength(12);
     expect(october.inCents).toBe(150000 + 297500 + 238000);
-    expect(october.outCents).toBe(-(3995 + 12000 + 4900 + 5949 + 5508 + 35700 + 2380 + 2390));
+    expect(october.outCents).toBe(-(3995 + 12000 + 4900 + 5949 + 5508 + 35700 + 2380 + 2390 + 650));
     expect(october.payments.map((t) => t.date)).toEqual([...october.payments.map((t) => t.date)].sort().reverse());
     const total = groups.reduce((s, g) => s + g.inCents + g.outCents, 0);
     expect(total).toBe(weber.reduce((s, t) => s + t.amountCents, 0));

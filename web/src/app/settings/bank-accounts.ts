@@ -16,6 +16,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../core/format/date.pipe';
+import { Term } from '../core/i18n/term';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account } from '../data/models';
 import {
@@ -25,6 +26,7 @@ import {
   type ConnectionStatus,
 } from '../domain/bank-connection';
 import { DemoStateService } from '../state/demo-state.service';
+import { AccountImports } from './account-imports';
 import { BankApproval } from './bank-approval';
 import { BankTile } from './bank-tile';
 
@@ -35,6 +37,7 @@ const TONES: Record<ConnectionStatus['kind'], string> = {
   signInAgain: 'bg-negative/10 text-negative',
   statement: 'bg-muted text-muted-foreground',
   cash: 'bg-muted text-muted-foreground',
+  own: 'bg-muted text-muted-foreground',
 };
 
 /** The button each status has, if any. */
@@ -44,6 +47,7 @@ const ACTIONS: Record<ConnectionStatus['kind'], AccountRow['action']> = {
   signInAgain: 'signIn',
   statement: 'import',
   cash: null,
+  own: null,
 };
 
 /** The words for a status, as a translation key under `settings.bank.status` and its parameters. */
@@ -58,13 +62,13 @@ function statusWords(status: ConnectionStatus): { key: string; params: { days: n
 /** What a row of the list shows about one account. */
 interface AccountRow {
   account: Account;
-  /** The bank behind the account; null for the cash box. */
+  /** The bank behind the account; null for the cash box and the Own money account. */
   bank: string | null;
   status: ConnectionStatus;
   statusKey: string;
   statusParams: { days: number } | null;
   tone: string;
-  /** The button of the row: Renew and Sign in again open the sign-in, Import statement leaves for its page; null for none. */
+  /** The button of the row: Renew and Sign in again open the sign-in, Import statement leaves for the import of the account; null for none. */
   action: 'renew' | 'signIn' | 'import' | null;
   /** The button's accessible name: its own words and then the account's name, so every Renew says which account. */
   actionLabelledBy: string;
@@ -82,13 +86,18 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
  * Settings › Bank accounts: **Connect a bank**, then one row per money account with its initials tile, bank and
  * product, masked IBAN, last fetch, a status word and the button that goes with it. Renew and Sign in again open the
  * bank's (simulated) sign-in inside the row, one at a time; approving renews the connection and puts the cursor on the
- * row's new status, cancelling closes it and puts the cursor back there. Statement import goes to its coming-soon
- * page. Before the bank step is done the page says so and offers **Connect your bank**, with only the cash box listed.
+ * row's new status, cancelling closes it and puts the cursor back there. Import statement opens the import of that
+ * account (`/payments/import`, back to Settings). A row of an account that has imports ends with their list, with Download
+ * and Undo (see `AccountImports`). Before the bank step is done the page says so and offers **Connect your
+ * bank**, with only the cash box and the Own money account listed (the accounts the person made, not banks). The Own money account says
+ * it is money the person paid for the business privately (an owner's deposit, Privateinlage); like the cash box it has no button and
+ * no imports.
  */
 @Component({
   selector: 'app-bank-accounts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AccountImports,
     AppDatePipe,
     BankApproval,
     BankTile,
@@ -96,6 +105,7 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
     HlmCardImports,
     NgIcon,
     RouterLink,
+    Term,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideBanknote, lucidePlus })],
@@ -168,6 +178,10 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
                     >
                       @if (row.account.kind === 'cash') {
                         {{ 'settings.bank.cashLine' | transloco }}
+                      } @else if (row.account.kind === 'own') {
+                        @let ownLine =
+                          ('settings.bank.ownLine' | transloco: { term: termMark }).split(termMark);
+                        {{ ownLine[0] }}<app-term key="privateinlage" />{{ ownLine[1] }}
                       } @else {
                         @if (row.iban; as iban) {
                           <bdi dir="ltr" [attr.data-testid]="'bank-iban-' + row.account.id">{{
@@ -206,7 +220,8 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
                         hlmBtn
                         variant="outline"
                         size="sm"
-                        [routerLink]="['/soon', 'statementImport']"
+                        routerLink="/payments/import"
+                        [queryParams]="{ account: row.account.id, from: 'settings' }"
                         [id]="'bank-action-' + row.account.id"
                         [attr.aria-labelledby]="row.actionLabelledBy"
                         [attr.data-testid]="'bank-action-' + row.account.id"
@@ -246,6 +261,7 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
                     />
                   </div>
                 }
+                <app-account-imports [accountId]="row.account.id" />
               </li>
             }
           </ul>
@@ -261,15 +277,17 @@ export class BankAccounts {
   private readonly approvals = viewChildren<ElementRef<HTMLElement>>('approval');
 
   protected readonly connectPage = '/settings/bank/connect';
+  /** Stands where the term goes in the Own money line, so the term can be a button of its own with its explanation. */
+  protected readonly termMark = '\u0001';
 
   protected readonly bankDone = computed(() => this.demo.setup().bank);
 
-  /** The rows: every account once the bank step is done, only the cash box before. */
+  /** The rows: every account once the bank step is done, before it only those that are not banks (the cash box, Own money). */
   protected readonly rows = computed<AccountRow[]>(() => {
     const bankDone = this.bankDone();
     return this.demo
       .business()
-      .accounts.filter((account) => bankDone || account.kind === 'cash')
+      .accounts.filter((account) => bankDone || account.kind !== 'bank')
       .map((account) => {
         const status = connectionStatus(account);
         const words = statusWords(status);
@@ -297,11 +315,19 @@ export class BankAccounts {
   });
 
   /**
+   * The business and data the open sign-in belongs to: a key of its own, so that only another business or a reset closes it, not every
+   * change of the data (a plain function reading `business()` would, as the business is a new object each time: an Undo import in the
+   * same card would close the panel).
+   */
+  private readonly scope = computed(
+    () => `${this.demo.business().id}|${this.demo.dataGeneration()}`,
+  );
+  /**
    * The account whose sign-in is open. It belongs to the business and the data it was opened for: another business, or
    * a reset, closes it.
    */
   private readonly openId = linkedSignal<string, string | null>({
-    source: () => `${this.demo.business().id}|${this.demo.dataGeneration()}`,
+    source: this.scope,
     computation: () => null,
   });
   /** The open sign-in, as long as its account still needs one (it closes by itself once the connection is renewed). */

@@ -27,6 +27,7 @@ import { LanguageService } from '../core/i18n/language.service';
 import { Term } from '../core/i18n/term';
 import { Account, Booking, Doc, Invoice, Transaction } from '../data/models';
 import { accountName } from '../domain/bank-connection';
+import { lockedToReceipt } from '../domain/cash-payments';
 import {
   changeCategory,
   confirmBooking,
@@ -37,7 +38,9 @@ import { invoiceOfPayment } from '../domain/invoices';
 import { isClosedDate } from '../domain/months';
 import { paymentStatus } from '../domain/payment-status';
 import { vatRateShown } from '../domain/tax-rules';
+import { canWriteSelfIssued, hasSelfIssuedReceipt } from '../domain/self-issued';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService, type WrittenReceipt } from '../state/receipt.service';
 import { UploadService } from '../state/upload.service';
 import { BookingLabel } from './booking-label';
 import { CategoryPicker } from './category-picker';
@@ -53,6 +56,8 @@ import { PaymentStatusChip } from './payment-status-chip';
  * the receipt pays the invoice (see `DemoStateService.link`). A payment that pays an invoice stays business, and says why;
  * a payment that another document links to can't be marked private either (the document has to be unlinked first). Below `lg` it is a page of its own; from `lg` it is the panel beside
  * the list.
+ * Money out with its receipt missing also offers "Write a self-issued receipt" (see `SelfIssuedPage`); once one is written the page says
+ * so and offers Undo for a few seconds (see `ReceiptService.justWritten`).
  * A payment dated in a closed month (see `isClosedDate`) keeps everything it shows and offers none of these actions;
  * it says why instead.
  * When the payment is not there (another business opened, an unknown id, no bank yet) it goes back to the list.
@@ -154,6 +159,27 @@ import { PaymentStatusChip } from './payment-status-chip';
           }
         </header>
 
+        <div role="status" class="empty:hidden">
+          @if (written(); as receipt) {
+            <p
+              class="bg-positive/10 border-positive/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+              data-testid="self-issued-undo"
+            >
+              <span class="min-w-0" data-testid="self-issued-undo-text">{{
+                'selfIssued.written' | transloco: { number: isolate(receipt.number) }
+              }}</span>
+              <button
+                type="button"
+                class="text-primary focus-visible:ring-ring/50 min-h-10 shrink-0 rounded-sm px-1 font-semibold underline underline-offset-4 outline-none focus-visible:ring-3"
+                data-testid="undo-self-issued"
+                (click)="undoWritten()"
+              >
+                {{ 'selfIssued.undo' | transloco }}
+              </button>
+            </p>
+          }
+        </div>
+
         <section class="flex flex-col gap-3" data-testid="receipt-section">
           <h2 class="text-muted-foreground text-sm font-medium">
             {{ 'payments.detail.receipt.title' | transloco }}
@@ -225,22 +251,24 @@ import { PaymentStatusChip } from './payment-status-chip';
                     }}
                   </button>
                   <app-document-picker [payment]="tx" (picked)="pickDocument($event)" />
-                  <a
-                    hlmBtn
-                    variant="outline"
-                    size="lg"
-                    data-testid="self-receipt"
-                    [routerLink]="['/soon', 'selfReceipt']"
-                    [hlmTooltip]="'terms.eigenbeleg.explain' | transloco"
-                  >
-                    <span>
-                      {{ 'terms.eigenbeleg.label' | transloco }}
-                      @if (showGerman()) {
-                        (<bdi dir="ltr">{{ 'terms.eigenbeleg.de' | transloco }}</bdi
-                        >)
-                      }
-                    </span>
-                  </a>
+                  @if (canSelfIssue()) {
+                    <a
+                      hlmBtn
+                      variant="outline"
+                      size="lg"
+                      data-testid="self-receipt"
+                      [routerLink]="['/payments', tx.id, 'self-issued']"
+                      [hlmTooltip]="'terms.eigenbeleg.explain' | transloco"
+                    >
+                      <span>
+                        {{ 'payments.detail.receipt.selfIssued' | transloco }}
+                        @if (showGerman()) {
+                          (<bdi dir="ltr">{{ 'terms.eigenbeleg.de' | transloco }}</bdi
+                          >)
+                        }
+                      </span>
+                    </a>
+                  }
                 </div>
               }
             }
@@ -305,6 +333,15 @@ import { PaymentStatusChip } from './payment-status-chip';
               <p class="text-muted-foreground text-sm" data-testid="private-blocked">
                 {{ 'payments.detail.booking.privateBlockedInvoice' | transloco }}
               </p>
+            } @else if (lockedReceipt(); as locked) {
+              <p class="text-muted-foreground text-sm" data-testid="private-blocked">
+                {{
+                  (locked === 'paid'
+                    ? 'payments.detail.booking.privateBlockedPaid'
+                    : 'payments.detail.booking.privateBlockedSelfIssued'
+                  ) | transloco
+                }}
+              </p>
             } @else if (linkedDoc()) {
               <p class="text-muted-foreground text-sm" data-testid="private-blocked">
                 {{ 'payments.detail.booking.privateBlocked' | transloco }}
@@ -351,7 +388,7 @@ import { PaymentStatusChip } from './payment-status-chip';
             {{ 'payments.detail.bank.title' | transloco }}
           </h2>
           <dl class="flex flex-col gap-3 text-sm">
-            @if (account?.kind !== 'cash') {
+            @if (account?.kind !== 'cash' && tx.counterpartyIban) {
               <div class="flex flex-col gap-0.5">
                 <dt class="text-muted-foreground">{{ 'payments.detail.bank.iban' | transloco }}</dt>
                 <dd class="font-medium">
@@ -400,6 +437,7 @@ export class PaymentDetailPage {
 
   private readonly demo = inject(DemoStateService);
   private readonly upload = inject(UploadService);
+  private readonly receipts = inject(ReceiptService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly language = inject(LanguageService);
@@ -427,6 +465,18 @@ export class PaymentDetailPage {
     return id ? (this.demo.documents().find((doc) => doc.paymentId === id) ?? null) : null;
   });
 
+  /**
+   * Why the open payment's receipt can't be unlinked, when it is not just a link the person made: the payment was made from its receipt
+   * (paid in cash or with own money), or has a self-issued receipt. Either way the payment stays business, and the page says that
+   * instead of "Unlink it first". Null for a payment with no such receipt.
+   */
+  protected readonly lockedReceipt = computed<'paid' | 'selfIssued' | null>(() => {
+    const tx = this.payment();
+    if (!tx) return null;
+    if (lockedToReceipt(tx)) return 'paid';
+    return hasSelfIssuedReceipt(this.demo.business(), tx.id) ? 'selfIssued' : null;
+  });
+
   /** The invoice the open payment pays (it is one of the invoice's payments), if any: a part payment of it as well. */
   protected readonly paidInvoice = computed<Invoice | null>(() => {
     const id = this.payment()?.id;
@@ -437,6 +487,19 @@ export class PaymentDetailPage {
   protected readonly photoReading = computed(() => {
     const id = this.payment()?.id;
     return id !== undefined && this.upload.readingFor() === id;
+  });
+
+  /** Whether a self-issued receipt can be written for the open payment: money out with its receipt missing, not private, not in a closed month. */
+  protected readonly canSelfIssue = computed(() => {
+    const tx = this.payment();
+    const business = this.demo.business();
+    return tx !== null && canWriteSelfIssued(tx, (month) => isClosedDate(business, `${month}-01`));
+  });
+
+  /** The self-issued receipt just written for the open payment, while Undo is on offer. */
+  protected readonly written = computed<WrittenReceipt | null>(() => {
+    const written = this.receipts.justWritten();
+    return written !== null && written.txId === this.payment()?.id ? written : null;
   });
 
   /** Whether the open payment is dated in a closed month: it keeps what it shows and loses its actions. */
@@ -506,6 +569,11 @@ export class PaymentDetailPage {
   protected takePhoto(): void {
     const id = this.payment()?.id;
     if (id) void this.upload.addPhotoFor(id);
+  }
+
+  /** Undo, right after a self-issued receipt was written: the receipt and the 0 % VAT it took off go back. */
+  protected undoWritten(): void {
+    this.receipts.undoWritten();
   }
 
   private change(action: (tx: Transaction) => Transaction): void {

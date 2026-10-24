@@ -112,6 +112,7 @@ describe('newReadingDoc', () => {
       paymentId: null,
       history: [{ date: DEMO_TODAY, key: 'addedFile', params: {} }],
       invoice: null,
+      selfIssued: null,
     });
   });
 

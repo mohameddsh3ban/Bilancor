@@ -22,8 +22,10 @@ import { changeDocCategory, confirmDocBooking, editDocument } from '../domain/do
 import { missingField, visibleDocuments } from '../domain/document-status';
 import { changeCategory, confirmBooking } from '../domain/payment-actions';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService, type PaidReceipt } from '../state/receipt.service';
 import { BookingLabel } from '../payments/booking-label';
 import { CategoryPicker } from '../payments/category-picker';
+import { Term } from '../core/i18n/term';
 import { PaymentHistory } from '../payments/payment-history';
 import { parseDocAmount } from '../domain/amount-input';
 import { DocChanges } from './document-edit-form';
@@ -32,13 +34,18 @@ import { DocumentPaper } from './document-paper';
 import { DocumentPayment } from './document-payment';
 import { DocumentStatusChip } from './document-status-chip';
 import { DocumentSteps } from './document-steps';
+import { SelfIssuedPaper } from './self-issued-paper';
 
 /**
- * One document of the open business, top to bottom: the scan (a drawn page), a box to type in what could not be
+ * One document of the open business, top to bottom: the scan (a drawn page; for a self-issued receipt the receipt itself), a box to type in what could not be
  * read, the header, the three steps, what was read with Edit, the booking, the payment, the history and Remove.
  * Typing in a field, booking and linking really change the sample data, and each change adds a history line. The document
  * of an invoice written in Invoices is locked: it says so, opens the invoice, and has no Edit, no category change and no
- * Remove (and no "Not this payment" once the invoice is paid), so a sent invoice can't change silently. Below `lg`
+ * Remove (and no "Not this payment" once the invoice is paid), so a sent invoice can't change silently. A self-issued receipt
+ * is locked the same way: it says it is a self-issued receipt (Eigenbeleg), offers Print, and has no Edit, category change, Remove or
+ * "Not this payment". A received receipt that waits for its payment offers "Paid in cash or with my own money" (see `DocumentPayment`);
+ * once it is done the page says so and offers Undo for a few seconds (see `ReceiptService.justPaid`), and the receipt stays with its
+ * payment ("Not this payment" is not there). Below `lg`
  * it is a page of its own; from `lg` it is the panel beside the list. When the document is not there (another
  * business opened, an unknown id, not shown in this setup state) it goes back to the list.
  */
@@ -58,6 +65,8 @@ import { DocumentSteps } from './document-steps';
     NgIcon,
     PaymentHistory,
     RouterLink,
+    SelfIssuedPaper,
+    Term,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideArrowLeft, lucideX })],
@@ -77,7 +86,14 @@ import { DocumentSteps } from './document-steps';
         class="bg-card border-border flex flex-col gap-6 rounded-xl border p-4"
         data-testid="document-detail"
       >
-        <app-document-paper [doc]="doc" />
+        @if (doc.selfIssued) {
+          <!-- The receipt the person wrote is the scan: the placeholder would show the payee and a number as if the payee had issued it. -->
+          <div class="bg-muted/50 rounded-lg p-3" aria-hidden="true" data-testid="self-issued-scan">
+            <app-self-issued-paper [doc]="doc" [business]="business()" [compact]="true" />
+          </div>
+        } @else {
+          <app-document-paper [doc]="doc" />
+        }
 
         @if (fixField(); as field) {
           <form
@@ -166,6 +182,27 @@ import { DocumentSteps } from './document-steps';
           </span>
         </header>
 
+        <div role="status" class="empty:hidden">
+          @if (paid(); as made) {
+            <p
+              class="bg-positive/10 border-positive/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+              data-testid="paid-undo"
+            >
+              <span class="min-w-0" data-testid="paid-undo-text">{{
+                'documents.detail.paid.' + made.how | transloco
+              }}</span>
+              <button
+                type="button"
+                class="text-primary focus-visible:ring-ring/50 min-h-10 shrink-0 rounded-sm px-1 font-semibold underline underline-offset-4 outline-none focus-visible:ring-3"
+                data-testid="undo-paid"
+                (click)="undoPaid(made.txId)"
+              >
+                {{ 'documents.detail.paid.undo' | transloco }}
+              </button>
+            </p>
+          }
+        </div>
+
         @if (doc.invoice; as written) {
           <section
             class="bg-muted/50 border-border flex flex-col gap-2 rounded-lg border p-3"
@@ -184,6 +221,28 @@ import { DocumentSteps } from './document-steps';
               [routerLink]="['/invoices', written.id]"
             >
               {{ 'documents.detail.written.open' | transloco }}
+            </a>
+          </section>
+        }
+
+        @if (doc.selfIssued) {
+          <section
+            class="bg-muted/50 border-border flex flex-col gap-2 rounded-lg border p-3"
+            data-testid="self-issued-box"
+          >
+            <h2 class="text-sm font-medium"><app-term key="eigenbeleg" /></h2>
+            <p class="text-muted-foreground text-sm">
+              {{ 'documents.detail.selfIssued.hint' | transloco }}
+            </p>
+            <a
+              hlmBtn
+              variant="outline"
+              size="lg"
+              class="self-start"
+              data-testid="print-self-issued"
+              [routerLink]="['/print/self-issued', doc.id]"
+            >
+              {{ 'documents.detail.selfIssued.print' | transloco }}
             </a>
           </section>
         }
@@ -209,7 +268,7 @@ import { DocumentSteps } from './document-steps';
             </p>
           }
           <div class="flex flex-wrap items-center gap-2">
-            @if (!doc.reading && doc.invoice === null) {
+            @if (!doc.reading && doc.invoice === null && doc.selfIssued === null) {
               <app-category-picker [current]="booking()" (picked)="pick($event)" />
             }
             @if (needsConfirm()) {
@@ -235,7 +294,7 @@ import { DocumentSteps } from './document-steps';
           <app-payment-history [entries]="doc.history" [accounts]="accounts()" />
         </section>
 
-        @if (doc.paymentId === null && !doc.reading && doc.invoice === null) {
+        @if (doc.paymentId === null && !doc.reading && doc.invoice === null && doc.selfIssued === null) {
           <button
             hlmBtn
             variant="destructive"
@@ -253,6 +312,7 @@ import { DocumentSteps } from './document-steps';
 })
 export class DocumentDetailPage {
   private readonly demo = inject(DemoStateService);
+  private readonly receipts = inject(ReceiptService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -282,6 +342,14 @@ export class DocumentDetailPage {
   });
 
   protected readonly accounts = computed(() => this.demo.business().accounts);
+  /** The open business: the one that writes a self-issued receipt, for the receipt's own page (its name and address). */
+  protected readonly business = this.demo.business;
+
+  /** The payment just made from the open document (Paid in cash or with my own money), while Undo is on offer. */
+  protected readonly paid = computed<PaidReceipt | null>(() => {
+    const paid = this.receipts.justPaid();
+    return paid !== null && paid.docId === this.doc()?.id ? paid : null;
+  });
 
   /**
    * The field of the document that could not be read and is asked for in the box under the scan. A document that is
@@ -335,6 +403,11 @@ export class DocumentDetailPage {
 
   // Each action changes the document or the payment only while it still applies, so a double tap never writes a second history line.
 
+  /** Undo, right after the receipt was marked as paid in cash or with the person's own money: the payment is gone and the receipt waits again. */
+  protected undoPaid(txId: string): void {
+    this.receipts.undoPaid(txId);
+  }
+
   /** Types in the field that could not be read; a value that does not fit (an amount of 0 or less, an empty text) is refused. */
   protected saveFix(event: Event): void {
     event.preventDefault();
@@ -383,10 +456,10 @@ export class DocumentDetailPage {
     }
   }
 
-  /** Takes a document that has no payment out of the list and goes back to it. The document of an invoice written in Invoices stays. */
+  /** Takes a document that has no payment out of the list and goes back to it. The document of an invoice written in Invoices stays, and so does a self-issued receipt. */
   protected remove(): void {
     const doc = this.doc();
-    if (doc === null || doc.paymentId !== null || doc.invoice !== null) return;
+    if (doc === null || doc.paymentId !== null || doc.invoice !== null || doc.selfIssued !== null) return;
     this.demo.removeDocument(doc.id);
     void this.router.navigateByUrl('/documents', { replaceUrl: true });
   }

@@ -8,6 +8,7 @@ import { READING_MS } from '../domain/document-upload';
 import { invoiceStatus, owedSummary } from '../domain/invoices';
 import { reviewItems } from '../domain/review-queue';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { ReviewService } from '../state/review.service';
 import { UploadService } from '../state/upload.service';
 import { type PaymentItem, PaymentCard } from './payment-card';
@@ -98,7 +99,7 @@ describe('PaymentCard', () => {
     it('unclear Amazon: choosing a suggestion books it, learns, and books wd-t18 too', () => {
       vi.useFakeTimers();
       show('wd-t4'); // wd-t18, the older Amazon payment, is skipped
-      expect(queueLength()).toBe(7);
+      expect(queueLength()).toBe(8);
 
       click(all('answer-suggestion')[0]);
 
@@ -114,7 +115,7 @@ describe('PaymentCard', () => {
         { counterpartyKey: 'amazon', booking: OFFICE },
       ]);
       // Both leave the queue: one answer, two fewer decisions.
-      expect(queueLength()).toBe(5);
+      expect(queueLength()).toBe(6);
       expect(review.answered()).toBe(1);
       expect(review.lastAnswer()).toMatchObject({
         labelKey: 'review.result.booked',
@@ -280,7 +281,7 @@ describe('PaymentCard', () => {
       expect(tx('wd-t4')).toEqual(before);
       expect(review.answered()).toBe(0);
       expect(review.canUndo()).toBe(false);
-      expect(queueLength()).toBe(7);
+      expect(queueLength()).toBe(8);
     });
   });
 
@@ -322,6 +323,24 @@ describe('PaymentCard', () => {
       play(SAVING_MS);
       expect(text(q('tick-text'))).toBe('Category changed');
       expect(all('tick-note')).toHaveLength(0);
+    });
+
+    it('Change category on a payment with a self-issued receipt keeps its VAT at 0 %', async () => {
+      demo.updateTransaction('wd-t20', (t) => ({ ...t, confirmed: false })); // the booking still waits to be confirmed
+      TestBed.inject(ReceiptService).createSelfIssued('wd-t20', { purpose: 'Parking', reason: 'machine', reasonText: null, address: null }, 'payment');
+      show('wd-t20');
+      expect(text(q('card-kind'))).toBe('Payment · please confirm');
+      click(q('change-category'));
+      await settle();
+
+      const option = optionStartingWith('Office supplies');
+      vi.useFakeTimers();
+      option.click();
+      fixture.detectChanges();
+
+      expect(tx('wd-t20').booking).toEqual({ ...OFFICE, vatRate: 0 });
+      expect(tx('wd-t20').confirmed).toBe(true);
+      expect(tx('wd-t20').history[0].key).toBe('categoryChanged');
     });
 
     it('choosing the category it already has counts as yes', async () => {
@@ -571,12 +590,160 @@ describe('PaymentCard', () => {
     it('does not offer to add a document when none fits: that would leave the review', async () => {
       demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d8', (d) => ({ ...d, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d7', (d) => ({ ...d, paymentId: 'wd-t2' }));
       show('wd-t17');
       click(q('pick-document'));
       await settle();
 
       expect(inBody('document-picker-empty')).toHaveLength(1);
       expect(inBody('document-picker-add')).toHaveLength(0);
+    });
+
+    describe('Receipt lost? Write one yourself', () => {
+      /** What the pop-up holds is in an overlay outside the card, so it is read from the document. */
+      const dialog = () => document.body.querySelector<HTMLElement>('[data-testid="self-issued-dialog"]');
+      const inDialog = (testId: string) =>
+        dialog()?.querySelector<HTMLElement>(`[data-testid="${testId}"]`) ?? null;
+      const boxIn = (testId: string) => inDialog(testId)!.querySelector<HTMLInputElement>('input')!;
+
+      /** Opens the form, chooses a reason and ticks the box, as the person does. */
+      async function open(): Promise<void> {
+        click(q('answer-self-issued'));
+        await settle();
+        expect(dialog()).not.toBeNull();
+      }
+      async function fill(reason = 'reason-machine'): Promise<void> {
+        boxIn(reason).click();
+        await settle();
+        boxIn('form-confirm').click();
+        await settle();
+      }
+
+      it('is a small link under the answers, for money out only', () => {
+        show('wd-t3');
+        expect(text(q('answer-self-issued'))).toBe('Receipt lost? Write one yourself');
+        expect(q('answer-self-issued')!.tagName).toBe('BUTTON');
+        // Not one of the answers: it sits under them.
+        expect(all('answer-self-issued')).toHaveLength(1);
+        expect(q('answer-no-receipt')!.compareDocumentPosition(q('answer-self-issued')!)).toBe(
+          Node.DOCUMENT_POSITION_FOLLOWING,
+        );
+
+        // Money coming in has no self-issued receipt: the card of the Kern payment (an invoice match) has no link.
+        show('wd-t19');
+        expect(text(q('card-question'))).toContain('Is this the payment for invoice');
+        expect(q('answer-self-issued')).toBeNull();
+      });
+
+      it('is only on the receipt question: not on a card that asks what the payment was for or to confirm it', () => {
+        show('wd-t4');
+        expect(q('answer-self-issued')).toBeNull();
+        show('wd-t1');
+        expect(q('answer-self-issued')).toBeNull();
+      });
+
+      it('review card link opens the form; creating answers the card', async () => {
+        show('wd-t20');
+        await open();
+        expect(text(inDialog('form-title'))).toBe('Self-issued receipt (Eigenbeleg)');
+        expect(inDialog('form-title')!.tagName).toBe('H2');
+        expect((inDialog('form-purpose') as HTMLInputElement).value).toBe(
+          'Reisekosten Unternehmer: Parkhaus Zentrum, Automat',
+        );
+        expect(review.answered()).toBe(0);
+
+        await fill();
+        vi.useFakeTimers();
+        inDialog('form-create')!.click();
+        fixture.detectChanges();
+
+        // The receipt is written from the inbox, and the card is answered with it.
+        const receipt = demo.documents().find((d) => d.selfIssued !== null)!;
+        expect(receipt).toMatchObject({ paymentId: 'wd-t20', invoiceNo: 'EB-2026-001' });
+        expect(tx('wd-t20')).toMatchObject({ receipt: 'attached', booking: { vatRate: 0 } });
+        expect(review.answered()).toBe(1);
+        expect(review.summary().receiptsAdded).toBe(1);
+        expect(review.lastAnswer()?.labelKey).toBe('review.result.selfIssuedAdded');
+        play(SAVING_MS);
+        expect(text(q('tick-text'))).toBe('Self-issued receipt added');
+        vi.useRealTimers();
+        await settle();
+        expect(dialog()).toBeNull();
+      });
+
+      it("the review inbox's Undo takes the receipt back", async () => {
+        show('wd-t20');
+        await open();
+        await fill();
+        inDialog('form-create')!.click();
+        fixture.detectChanges();
+        expect(demo.documents().some((d) => d.selfIssued !== null)).toBe(true);
+
+        review.undo();
+
+        expect(demo.documents().some((d) => d.selfIssued !== null)).toBe(false);
+        expect(tx('wd-t20')).toMatchObject({ receipt: 'missing', booking: { vatRate: 19 } });
+        expect(review.answered()).toBe(0);
+        expect(review.summary().receiptsAdded).toBe(0);
+      });
+
+      it('an incomplete form answers nothing and stays open', async () => {
+        show('wd-t20');
+        await open();
+        inDialog('form-create')!.click();
+        await settle();
+        expect(dialog()).not.toBeNull();
+        expect(inDialog('form-error-reason')).not.toBeNull();
+        expect(review.answered()).toBe(0);
+        expect(demo.documents().some((d) => d.selfIssued !== null)).toBe(false);
+      });
+
+      it('Cancel closes the form and leaves the card and the payment as they were', async () => {
+        show('wd-t20');
+        const before = demo.business();
+        await open();
+        const purpose = inDialog('form-purpose') as HTMLInputElement;
+        purpose.value = 'Something else';
+        purpose.dispatchEvent(new Event('input', { bubbles: true }));
+        await fill('reason-tip');
+        inDialog('form-cancel')!.click();
+        await settle();
+        expect(dialog()).toBeNull();
+        expect(demo.business()).toBe(before);
+        expect(review.answered()).toBe(0);
+        expect(q('card-tick')).toBeNull();
+        expect(text(q('card-question'))).toBe("There's no receipt for this payment yet.");
+
+        // It opens empty again: what was typed and chosen is gone.
+        await open();
+        expect((inDialog('form-purpose') as HTMLInputElement).value).toBe(
+          'Reisekosten Unternehmer: Parkhaus Zentrum, Automat',
+        );
+        expect(boxIn('reason-tip').checked).toBe(false);
+        expect(boxIn('form-confirm').checked).toBe(false);
+      });
+
+      it('does not look at closed months, as the rest of the inbox does not', async () => {
+        // A payment of August (closed) that lost its receipt: the inbox still asks about it, and a receipt can be written here.
+        demo.updateTransaction('wd-t14', (t) => ({ ...t, receipt: 'missing', receiptFile: null }));
+        show('wd-t14');
+        await open();
+        await fill('reason-lost');
+        inDialog('form-create')!.click();
+        fixture.detectChanges();
+        expect(tx('wd-t14')).toMatchObject({ receipt: 'attached', booking: { vatRate: 0 } });
+        expect(demo.documents().some((d) => d.selfIssued !== null && d.paymentId === 'wd-t14')).toBe(true);
+      });
+
+      it('words follow the language', async () => {
+        TestBed.inject(LanguageService).setLang('de');
+        show('wd-t3');
+        expect(text(q('answer-self-issued'))).toBe('Beleg verloren? Schreib selbst einen');
+        await open();
+        expect(text(inDialog('form-title'))).toBe('Eigenbeleg');
+        expect(text(inDialog('form-create'))).toBe('Beleg erstellen');
+      });
     });
 
     describe('take a photo', () => {
@@ -645,6 +812,34 @@ describe('PaymentCard', () => {
         // The photo stays as a document of its own, not linked to anything.
         const photo = demo.documents().find((d) => d.source === 'photo');
         expect(photo?.paymentId).toBeNull();
+      });
+
+      it('keeps the self-issued link off while the photo is read: its answer would be dropped and the typed form lost', async () => {
+        vi.useFakeTimers();
+        show('wd-t3');
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(false);
+
+        click(q('answer-photo'));
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(true);
+        click(q('answer-self-issued'));
+        expect(document.body.querySelector('[data-testid="self-issued-dialog"]')).toBeNull();
+
+        await vi.advanceTimersByTimeAsync(READING_MS);
+        fixture.detectChanges();
+        expect(review.summary().receiptsAdded).toBe(1);
+      });
+
+      it('keeps it off when the photo was taken elsewhere too, and back on once it is read', async () => {
+        vi.useFakeTimers();
+        show('wd-t3');
+        void TestBed.inject(UploadService).addPhotoFor('wd-t3');
+        fixture.detectChanges();
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(true);
+
+        demo.resetData(); // the photo is taken away while it is read
+        await vi.advanceTimersByTimeAsync(READING_MS);
+        fixture.detectChanges();
+        expect(q('answer-self-issued')!.hasAttribute('disabled')).toBe(false);
       });
 
       it('shows Reading… also when the photo was taken elsewhere', async () => {

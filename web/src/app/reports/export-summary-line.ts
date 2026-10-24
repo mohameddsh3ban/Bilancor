@@ -17,7 +17,7 @@ const STATE_CLASSES: Record<ExportState, string> = {
 };
 
 /**
- * What one export holds, in one line: "October: 11 bookings, 8 receipts · Running · 6 payments still need you". The state is
+ * What one export holds, in one line: "October: 12 bookings, 8 receipts · Running · 7 payments still need you". The state is
  * a word (Closed, Not closed, Running, Partly closed), and the payments that still need the person are named only when
  * there are some. The export card and its printable summary both show it, so the two always agree.
  */

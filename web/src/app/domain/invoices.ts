@@ -451,6 +451,7 @@ export function invoiceDocFor(invoice: Invoice, business: Business): Doc {
     paymentId: null,
     history: [{ date: sentOn, key: 'invoiceSent', params: { email: invoice.customer.email } }],
     invoice: { id: invoice.id, role, cancelled: invoice.cancelledBy !== null },
+    selfIssued: null,
   };
 }
 

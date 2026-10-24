@@ -1,7 +1,7 @@
 import type { Business, Doc, Transaction } from '../data/models';
 import { BUSINESSES } from '../data/sample-data';
 import { UPLOAD_POOLS } from '../data/sample-documents';
-import { certainMatch, documentCandidates, nameTokens, paymentCandidates } from './document-matching';
+import { certainMatch, documentCandidates, nameTokens, namesAlike, paymentCandidates } from './document-matching';
 
 function business(id: string): Business {
   return structuredClone(BUSINESSES.find((b) => b.id === id)!);
@@ -36,6 +36,7 @@ function docFromPool(poolIndex: number): Doc {
     paymentId: null,
     history: [],
     invoice: null,
+    selfIssued: null,
   };
 }
 
@@ -142,8 +143,8 @@ describe('paymentCandidates', () => {
 });
 
 describe('documentCandidates', () => {
-  it('offers the Böttcher receipt first for wd-t17, then the unread photo', () => {
-    expect(ids(documentCandidates(tx(weber, 'wd-t17'), weber.documents))).toEqual(['wd-d4', 'wd-d1']);
+  it('offers the Böttcher receipt first for wd-t17, then the nearer receipts (wd-d8, of the sample statement; wd-d7, the Copyshop receipt for a cash payment), then the unread photo', () => {
+    expect(ids(documentCandidates(tx(weber, 'wd-t17'), weber.documents))).toEqual(['wd-d4', 'wd-d8', 'wd-d7', 'wd-d1']);
   });
 
   it('leaves out linked, reading and duplicate documents', () => {
@@ -194,6 +195,22 @@ describe('documentCandidates', () => {
   it('still offers a document whose name, amount and date are not read yet', () => {
     const unnamed = freeDoc({ id: 'unnamed', name: null, amountCents: null, date: null });
     expect(ids(documentCandidates(tx(weber, 'wd-t17'), [unnamed]))).toEqual(['unnamed']);
+  });
+});
+
+describe('namesAlike', () => {
+  it('is true for the same name, and for a name that contains the other, whatever the case, umlauts and short words', () => {
+    expect(namesAlike('APCOA Parking', 'APCOA Parking')).toBe(true);
+    expect(namesAlike('apcoa parking', 'APCOA PARKING GmbH')).toBe(true);
+    expect(namesAlike('Deutsche Bahn AG Fernverkehr', 'Deutsche Bahn')).toBe(true);
+    expect(namesAlike('Bäckerei Lange', 'Baeckerei Lange')).toBe(true);
+  });
+
+  it('is false for different names, and for a name with no word of three letters or more', () => {
+    expect(namesAlike('APCOA Parking', 'Deutsche Bahn')).toBe(false);
+    expect(namesAlike('APCOA Parking', 'Parkhaus Zentrum')).toBe(false);
+    expect(namesAlike('AB', 'AB')).toBe(false);
+    expect(namesAlike('', 'APCOA')).toBe(false);
   });
 });
 

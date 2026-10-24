@@ -23,6 +23,7 @@ const base: Doc = {
   paymentId: null,
   history: [],
   invoice: null,
+  selfIssued: null,
 };
 const doc = (patch: Partial<Doc>): Doc => ({ ...base, ...patch });
 

@@ -48,6 +48,8 @@ export const INSURANCE: Booking = { skr03: '4360', nameDe: 'Versicherungen', lab
 export const TRAINING: Booking = { skr03: '4945', nameDe: 'Fortbildungskosten', labelKey: 'training', vatRate: 19 };
 export const OFFICE: Booking = { skr03: '4930', nameDe: 'Bürobedarf', labelKey: 'office', vatRate: 19 };
 export const CONSULTING: Booking = { skr03: '4950', nameDe: 'Rechts- und Beratungskosten', labelKey: 'consulting', vatRate: 19 };
+/** Account fees and the like: a bank charges no VAT on them. */
+export const BANK_FEES: Booking = { skr03: '4970', nameDe: 'Nebenkosten des Geldverkehrs', labelKey: 'bankFees', vatRate: 0 };
 
 /** Private money taken out of or put into the business; never VAT, never part of the books' results. */
 export const PRIVATE_OUT: Booking = { skr03: '1800', nameDe: 'Privatentnahmen allgemein', labelKey: 'privateOut', vatRate: 0 };
@@ -72,4 +74,5 @@ export const CATEGORIES: Booking[] = [
   TRAINING,
   OFFICE,
   CONSULTING,
+  BANK_FEES,
 ];

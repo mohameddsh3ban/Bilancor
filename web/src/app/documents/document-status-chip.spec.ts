@@ -28,6 +28,7 @@ const base: Doc = {
   paymentId: null,
   history: [],
   invoice: null,
+  selfIssued: null,
 };
 const doc = (patch: Partial<Doc>): Doc => ({ ...base, ...patch });
 
@@ -64,6 +65,25 @@ describe('DocumentStatusChip', () => {
     expect(word(doc({ name: null }))).toBe('Check name');
     expect(word(doc({}))).toBe('Waiting for payment');
     expect(word(doc({ paymentId: 'wd-t2' }))).toBe('Done');
+  });
+
+  it('a self-issued receipt is Done · Self-issued, in the Done colour, and in German too', () => {
+    const receipt = doc({
+      paymentId: 'wd-t20',
+      selfIssued: {
+        number: 'EB-2026-001',
+        reason: 'lost',
+        reasonText: null,
+        purpose: 'Parking',
+        address: null,
+        confirmedBy: 'Sara Weber',
+        issuedOn: '2026-10-22',
+      },
+    });
+    expect(word(receipt)).toBe('Done · Self-issued');
+    expect(render(receipt).classList).toContain('text-positive');
+    TestBed.inject(LanguageService).setLang('de');
+    expect(word(receipt)).toBe('Erledigt · Eigenbeleg');
   });
 
   it('waiting shows the due date when there is one', () => {

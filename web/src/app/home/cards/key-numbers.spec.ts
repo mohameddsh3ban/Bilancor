@@ -43,9 +43,9 @@ describe('KeyNumbers', () => {
     const el = render();
     const t = tile(el, 'decisions')!;
     const count = decisionCount(demo.business(), demo.setup());
-    expect(count).toBe(7);
+    expect(count).toBe(8);
     expect(t.querySelector('p')?.textContent?.trim()).toBe(String(count));
-    expect(t.textContent).toContain('about 7 minutes');
+    expect(t.textContent).toContain('about 8 minutes');
     const start = t.querySelector('a')!;
     expect(start.textContent).toContain('Start');
     expect(start.getAttribute('href')).toBe('/review');
@@ -66,6 +66,16 @@ describe('KeyNumbers', () => {
     expect(t.textContent).toContain(formatMoney(1248020, 'en'));
     expect(t.textContent).toContain('Cash box');
     expect(t.textContent).toContain(formatMoney(15000, 'en'));
+  });
+
+  it("does not list the Own money account under the total, which it does not change", () => {
+    demo.addOwnMoneyAccount();
+    const t = tile(render(), 'balances')!;
+    expect(t.textContent).not.toContain('Own money');
+    expect(t.querySelectorAll('li')).toHaveLength(2);
+    expect(t.querySelector('[data-testid="tile-balances-total"]')?.textContent?.trim()).toBe(
+      formatMoney(1263020, 'en'),
+    );
   });
 
   it('names a connected savings account by the bank and the product in the language of the page', () => {

@@ -380,8 +380,9 @@ describe('sample invoices', () => {
     });
   });
 
-  it('decision counts become weber 7 / sara 3 / café 0', () => {
-    expect(decisionCount(business('weber-design'), steps)).toBe(7);
+  it('decision counts become weber 8 / sara 3 / café 0', () => {
+    // Weber 7 + the APCOA parking payment waiting for its receipt (wd-t20).
+    expect(decisionCount(business('weber-design'), steps)).toBe(8);
     expect(decisionCount(business('sara-yoga'), steps)).toBe(3);
     expect(decisionCount(business('cafe-linde'), steps)).toBe(0);
   });

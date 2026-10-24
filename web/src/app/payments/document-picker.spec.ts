@@ -125,26 +125,29 @@ describe('DocumentPicker', () => {
   it('lists the documents that fit, the one with the same amount first', async () => {
     await render('wd-t17');
     await open();
-    expect(names()).toEqual(['Böttcher Bürobedarf', 'Bürobedarf Schulz']);
+    // Druckerei Mayer (14 Oct, 142,80 €) is the sample statement's receipt and Copyshop Kreuzberg (19 Oct, 18,50 €) the receipt of a cash payment; both are unlinked and received, so they fit any payment out.
+    expect(names()).toEqual(['Böttcher Bürobedarf', 'Druckerei Mayer', 'Copyshop Kreuzberg', 'Bürobedarf Schulz']);
   });
 
   it('shows each document with its name, date, amount and file name', async () => {
     await render('wd-t17');
     await open();
-    const [first, second] = options();
+    const [first, second, third] = options();
     expect(inside(first, 'picker-name')!.getAttribute('dir')).toBe('auto');
     expect(text(inside(first, 'picker-meta'))).toBe('8 Oct');
     expect(text(inside(first, 'picker-amount'))).toBe(formatMoney(2380, 'en'));
     expect(inside(first, 'picker-amount')!.closest('bdi')!.getAttribute('dir')).toBe('ltr');
     expect(text(inside(first, 'picker-file'))).toBe('boettcher-quittung.pdf');
     expect(inside(first, 'picker-file')!.closest('bdi')!.getAttribute('dir')).toBe('ltr');
-    expect(text(inside(second, 'picker-file'))).toBe('IMG_2041.jpg');
+    expect(text(inside(second, 'picker-file'))).toBe('druckerei-mayer-rechnung.pdf');
+    expect(text(inside(third, 'picker-file'))).toBe('IMG_2049.jpg');
   });
 
   it('says in words what reading could not find, and says nothing about a document that was read', async () => {
     await render('wd-t17');
     await open();
-    const [read, unread] = options();
+    const read = options()[0];
+    const unread = options().find((o) => text(inside(o, 'picker-name')) === 'Bürobedarf Schulz')!;
     expect(text(inside(unread, 'picker-amount'))).toBe('—');
     expect(text(inside(unread, 'doc-status'))).toBe('Check amount');
     expect(inside(read, 'doc-status')).toBeNull();
@@ -181,7 +184,7 @@ describe('DocumentPicker', () => {
   it('offers only received documents for money out, and only sent ones for money in', async () => {
     await render('wd-t3');
     await open();
-    expect(names()).toEqual(['Bürobedarf Schulz', 'Böttcher Bürobedarf']);
+    expect(names()).toEqual(['Copyshop Kreuzberg', 'Bürobedarf Schulz', 'Druckerei Mayer', 'Böttcher Bürobedarf']);
     fixture.destroy();
 
     await render('wd-t1');
@@ -192,6 +195,8 @@ describe('DocumentPicker', () => {
   it('leaves out documents that are linked, being read, or possible duplicates', async () => {
     demo.updateDocument('wd-d1', (d) => ({ ...d, reading: true }));
     demo.updateDocument('wd-d4', (d) => ({ ...d, duplicateOf: 'doc-wd-t2' }));
+    demo.updateDocument('wd-d8', (d) => ({ ...d, duplicateOf: 'doc-wd-t2' }));
+    demo.updateDocument('wd-d7', (d) => ({ ...d, duplicateOf: 'doc-wd-t2' }));
     await render('wd-t3');
     await open();
     // Nothing is left: the documents linked to other payments are not offered either.
@@ -226,6 +231,8 @@ describe('DocumentPicker', () => {
   it('with no document that fits, says so and offers to add one', async () => {
     demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
     demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));
+    demo.updateDocument('wd-d8', (d) => ({ ...d, paymentId: 'wd-t2' }));
+    demo.updateDocument('wd-d7', (d) => ({ ...d, paymentId: 'wd-t2' }));
     await render('wd-t17');
     await open();
     expect(
@@ -239,6 +246,8 @@ describe('DocumentPicker', () => {
   it('with no document that fits, offers no way to add one when the page says it must not leave', async () => {
     demo.updateDocument('wd-d1', (d) => ({ ...d, paymentId: 'wd-t2' }));
     demo.updateDocument('wd-d4', (d) => ({ ...d, paymentId: 'wd-t2' }));
+    demo.updateDocument('wd-d8', (d) => ({ ...d, paymentId: 'wd-t2' }));
+    demo.updateDocument('wd-d7', (d) => ({ ...d, paymentId: 'wd-t2' }));
     await render('wd-t17', { canAdd: false });
     await open();
     expect(
@@ -280,7 +289,7 @@ describe('DocumentPicker', () => {
     await settle();
     await open();
     expect((inBody('document-picker-search') as HTMLInputElement).value).toBe('');
-    expect(options()).toHaveLength(2);
+    expect(options()).toHaveLength(4);
   });
 
   it('is named in the language of the page', async () => {

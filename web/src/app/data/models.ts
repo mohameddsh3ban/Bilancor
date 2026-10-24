@@ -4,23 +4,23 @@ export type SetupState = 'new' | 'halfway' | 'active';
 /** The three setup steps of a business, each done or not. */
 export interface SetupSteps { bank: boolean; tax: boolean; receipt: boolean }
 export type TxStatus = 'booked' | 'confirm' | 'noReceipt' | 'unclear';
-/** How an account gets its payments: a bank connection (with a consent that ends), imported statements, or the cash box. */
+/** How an account gets its payments: a bank connection (with a consent that ends), imported statements, the cash box, or the Own money account (payments made from receipts). */
 export interface AccountConnection {
-  kind: 'connected' | 'statement' | 'cash';
+  kind: 'connected' | 'statement' | 'cash' | 'own';
   consentUntil: string | null; // ISO date; the day the bank consent ends (connected only)
   lastFetched: string | null; // ISO date-time, local demo time, e.g. '2026-10-22T06:12' (connected only)
   fetchFrom: string | null; // ISO date; the first day payments were asked for. Stored, filters nothing in the mockup
   broken: boolean; // the bank says the connection no longer works
 }
 export interface Account {
-  id: string; kind: 'bank' | 'cash'; name: string; balanceCents: number; lastUpdate: string; // ISO date
-  connection: AccountConnection; product: 'business' | 'savings' | 'card' | 'cash';
-  iban: string | null; // null for the cash box
+  id: string; kind: 'bank' | 'cash' | 'own'; name: string; balanceCents: number; lastUpdate: string; // ISO date
+  connection: AccountConnection; product: 'business' | 'savings' | 'card' | 'cash' | 'own';
+  iban: string | null; // null for the cash box and the Own money account
 }
 export type ReceiptState = 'attached' | 'missing' | 'notNeeded';
 export interface Booking { skr03: string; nameDe: string; labelKey: string; vatRate: 0 | 7 | 19 } // labelKey -> i18n "booking.<labelKey>"
 export type HistoryKey =
-  | 'imported'
+  | 'imported' // params: account (its name), and file (the name of the statement file) when a statement import brought it in
   | 'autoBooked'
   | 'confirmed'
   | 'receiptNotNeeded'
@@ -46,6 +46,7 @@ export type HistoryKey =
   | 'bankConnected' // params: bank, account
   | 'bankRenewed' // params: bank
   | 'cashAdded'
+  | 'ownMoneyAdded' // on a business, when it first got its Own money account (money the owner paid for the business privately)
   | 'invoiceCreated'
   | 'invoiceSent' // params: email (the address it went to)
   | 'invoiceReminded' // params: level ('1' or '2')
@@ -54,9 +55,12 @@ export type HistoryKey =
   | 'invoiceCancelled' // params: number (of the cancellation invoice)
   | 'invoiceCancellation' // params: number (of the invoice it cancels)
   | 'invoiceDuplicated' // params: number (of the invoice it was copied from)
-  | 'paidInCash'
-  | 'paysInvoice' // on a payment; params: number
-  | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category
+  | 'paidInCash' // on a payment (and a sent invoice) marked as paid in cash
+  | 'paidWithOwnMoney' // on a payment made from a received receipt with the owner's own money (see `paidFromReceiptFor`)
+  | 'paysInvoice' // on a payment; params: number, and auto ('true') when the system matched it on its own
+  | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category, and auto ('true') as above
+  | 'selfIssued' // on the document of a self-issued receipt (Eigenbeleg); params: number
+  | 'vatRemovedSelfIssued' // on a payment a self-issued receipt was written for: its VAT is 0 % from then on, whatever category it gets
   // On a business; `by` is the full name of who did it, `role` a Role id (shown with its "roles.<role>.name" word) and `until` an ISO date
   | 'personInvited' // params: email, role, by
   | 'invitationCancelled' // params: email, by
@@ -70,7 +74,8 @@ export type HistoryKey =
   // On a business, when one of its months is closed. `month` is always the raw 'YYYY-MM' (a screen that shows the line formats it
   // as a month name in the person's language); `by` is the full name of who closed it
   | 'monthClosed' // params: month, by
-  | 'monthClosedByReturn'; // params: month (no person: sending its VAT return closed it)
+  | 'monthClosedByReturn' // params: month (no person: sending its VAT return closed it)
+  | 'importUndone'; // on a business, when a statement import is undone; params: file (the import's file name)
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
@@ -88,6 +93,17 @@ export type DocDirection = 'received' | 'sent';
 export type DocSource = 'photo' | 'file' | 'email';
 export type DocField = 'amount' | 'date' | 'name';
 export type DocStatus = 'reading' | 'duplicate' | 'direction' | 'checkAmount' | 'checkDate' | 'checkName' | 'waiting' | 'overdue' | 'done';
+/** Why a payment has no receipt, as the person says it on a self-issued receipt; `other` comes with a text of their own. */
+export type SelfIssuedReason = 'lost' | 'machine' | 'tip' | 'sellerNone' | 'other';
+/** What a self-issued receipt (Eigenbeleg) says besides the payment it is for: its number, why there is no receipt, what the money was for, and who confirmed it on which day. */
+export interface SelfIssued {
+  number: string; // 'EB-2026-001'
+  reason: SelfIssuedReason; reasonText: string | null; // reasonText: only with `other`, else null
+  purpose: string; // what the money was for
+  address: string | null; // the payee's address, when the person gave one
+  confirmedBy: string; // the full name of the person who confirmed it is true
+  issuedOn: string; // ISO date
+}
 export interface Doc {
   id: string; fileName: string; source: DocSource; addedOn: string; fromUpload: boolean; reading: boolean;
   name: string | null; direction: DocDirection | null; invoiceNo: string;
@@ -97,6 +113,7 @@ export interface Doc {
   paymentId: string | null;
   history: HistoryEntry[]; // newest first
   invoice: { id: string; role: 'invoice' | 'cancellation'; cancelled: boolean } | null; // set on the sent document of an invoice written in the app; null on every other document
+  selfIssued: SelfIssued | null; // set on a self-issued receipt written in the app; null on every other document
 } // the status is calculated by docStatus(), never stored
 /** A ready-made reading result for a simulated upload; `plain` marks the receipts a pool repeats. */
 export type PoolResult = Pick<Doc, 'name' | 'direction' | 'invoiceNo' | 'date' | 'dueDate' | 'amountCents' | 'vatRate' | 'duplicateOf' | 'booking'> & { plain: boolean };
@@ -194,6 +211,26 @@ export interface Business {
   history: HistoryEntry[]; // changes to the tax details, bank accounts, people and support access, newest first: stored, not shown yet
   people: Member[]; // everyone with access, and the invitations waiting; exactly one joined member is the owner
   supportUntil: string | null; // ISO date; the last day our support team can look at the books, null while it can't
+  imports: StatementImport[]; // the statement imports so far; empty until one is made (see statement-import.ts)
+}
+/** What a column of a bank statement holds: `amountOut` is a separate column for money going out; `ignore` is read by nothing. */
+export type ColumnRole = 'date' | 'amount' | 'amountOut' | 'who' | 'purpose' | 'ignore';
+/** Which column holds what (one role per column, in the file's order), and how money out is shown: with a minus sign, or in its own `amountOut` column. */
+export interface ColumnMapping { roles: ColumnRole[]; moneyOut: 'minus' | 'column' }
+/** What the demo says about one statement row, because the mockup reads no real file: the category (a `Booking` labelKey, null: none), whether it is confirmed, and the receipt it needs. */
+export interface RowMeta { booking: string | null; confirmed: boolean; receipt: ReceiptState }
+/** A sample bank file standing in for the one the person drops: its raw text cells (German formats), how the demo reads it, and what it says about each row. */
+export interface SampleStatement {
+  id: string; fileName: string;
+  format: 'bankCsv' | 'camt' | 'unknownCsv'; bankLabel: string | null; // bankLabel: e.g. 'Sparkasse CSV'; null for an unknown layout
+  header: string[]; cells: string[][];
+  mapping: ColumnMapping | null; // null: the person matches the columns
+  meta: RowMeta[]; // one per row of `cells`
+}
+/** A statement import an account remembers: the file, the day, the payments it brought in (their ids) and the rows it skipped. The sample file is found again by `statementId`. */
+export interface StatementImport {
+  id: string; accountId: string; statementId: string; fileName: string; importedOn: string; // importedOn: ISO date
+  paymentIds: string[]; skippedCount: number;
 }
 /** A browser or phone where the person is signed in; sample rows, never read from the real browser. */
 export interface Device { id: string; browser: string; system: string; place: string; lastSeen: string | null; current: boolean } // lastSeen null: now

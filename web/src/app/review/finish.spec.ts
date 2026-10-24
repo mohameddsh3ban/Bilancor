@@ -74,26 +74,26 @@ describe('ReviewFinish', () => {
     answerAll({ 1: 'receipt', 5: 'duplicateRemoved' });
     render();
 
-    expect(text(q('finish-summary'))).toBe('7 decisions · 1 receipt added · 1 duplicate removed');
+    expect(text(q('finish-summary'))).toBe('8 decisions · 1 receipt added · 1 duplicate removed');
   });
 
   it('counts in the plural', () => {
     answerAll({ 0: 'receipt', 1: 'receipt', 4: 'duplicateRemoved', 5: 'duplicateRemoved' });
     render();
 
-    expect(text(q('finish-summary'))).toBe('7 decisions · 2 receipts added · 2 duplicates removed');
+    expect(text(q('finish-summary'))).toBe('8 decisions · 2 receipts added · 2 duplicates removed');
   });
 
   it('leaves out the receipts when there are none', () => {
     answerAll({ 2: 'duplicateRemoved' });
     render();
-    expect(text(q('finish-summary'))).toBe('7 decisions · 1 duplicate removed');
+    expect(text(q('finish-summary'))).toBe('8 decisions · 1 duplicate removed');
   });
 
   it('leaves out the duplicates when there are none', () => {
     answerAll({ 3: 'receipt' });
     render();
-    expect(text(q('finish-summary'))).toBe('7 decisions · 1 receipt added');
+    expect(text(q('finish-summary'))).toBe('8 decisions · 1 receipt added');
   });
 
   it('says one decision in the singular', () => {
@@ -243,7 +243,7 @@ describe('ReviewFinish', () => {
     expect(text(q('finish-title'))).toBe(
       'Alles erledigt — deine Buchhaltung ist auf dem neuesten Stand',
     );
-    expect(text(q('finish-summary'))).toBe('7 Entscheidungen · 1 Beleg hinzugefügt');
+    expect(text(q('finish-summary'))).toBe('8 Entscheidungen · 1 Beleg hinzugefügt');
     expect(text(q('finish-vat'))).toBe(
       `UStVA · als Nächstes fällig am ${formatDate('2026-11-10', 'de')}`,
     );
@@ -255,7 +255,7 @@ describe('ReviewFinish', () => {
     expect(text(q('finish-vat'))).toBe(
       `إقرار ضريبة القيمة المضافة (UStVA) · الموعد القادم: ${formatDate('2026-11-10', 'ar')}`,
     );
-    expect(text(q('finish-summary'))).toContain('7 قرارات');
+    expect(text(q('finish-summary'))).toContain('8 قرارات');
   });
 
   it('says a late return in German and Arabic', () => {

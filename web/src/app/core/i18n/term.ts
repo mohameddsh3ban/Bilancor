@@ -11,6 +11,7 @@ export type TermKey =
   | 'euer'
   | 'kleinunternehmer'
   | 'skr03'
+  | 'eigenbeleg'
   | 'eingangsbeleg'
   | 'ausgangsbeleg'
   | 'freiberufler'
@@ -43,7 +44,11 @@ export type TermKey =
   | 'reverseCharge'
   | 'bwa'
   | 'gdpdu'
-  | 'festschreibung';
+  | 'festschreibung'
+  | 'camt'
+  | 'kontoauszug'
+  | 'kasse'
+  | 'privateinlage';
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({

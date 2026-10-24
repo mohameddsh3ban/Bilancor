@@ -85,6 +85,7 @@ export function newBusiness(id: string, input: NewBusinessInput, owner: NewOwner
       },
     ],
     supportUntil: null,
+    imports: [],
   };
 }
 

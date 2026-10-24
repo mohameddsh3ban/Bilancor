@@ -31,6 +31,10 @@ const NOTE_TEXT: Record<TaxNote, InvoiceTextKey> = {
   notTaxable: 'noteNotTaxable',
 };
 
+/** The look of a paper sheet: white, with a thin border and a shadow on screen, and bare on the printed page. The paper of a self-issued receipt has the same. */
+export const PAPER_SHEET_CLASS =
+  'flex flex-col gap-6 rounded-lg border border-neutral-200 bg-white p-4 text-xs text-neutral-900 shadow-sm sm:p-8 sm:text-sm print:rounded-none print:border-0 print:p-0 print:shadow-none';
+
 const filled = (text: string | null): text is string => text !== null && text.trim() !== '';
 
 /** One row of the sums: a label with its amount. */
@@ -59,7 +63,7 @@ interface Sum {
     @let v = view();
     <article
       dir="ltr"
-      class="flex flex-col gap-6 rounded-lg border border-neutral-200 bg-white p-4 text-xs text-neutral-900 shadow-sm sm:p-8 sm:text-sm print:rounded-none print:border-0 print:p-0 print:shadow-none"
+      [class]="sheetClass"
       data-testid="invoice-paper"
       [attr.lang]="v.lang"
     >
@@ -183,6 +187,8 @@ export class InvoicePaper {
   readonly invoice = input.required<Invoice>();
   /** The business that wrote it: its details for a draft (a sent invoice has its own copy), its tax details for the VAT, and the invoice a cancellation invoice cancels. */
   readonly business = input.required<Business>();
+
+  protected readonly sheetClass = PAPER_SHEET_CLASS;
 
   /** Every word and figure on the sheet, already in the language of the invoice. */
   protected readonly view = computed(() => {

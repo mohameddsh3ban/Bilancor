@@ -10,7 +10,7 @@ import { MoneyPipe } from '../../core/format/money.pipe';
 import { Term } from '../../core/i18n/term';
 import { accountName } from '../../domain/bank-connection';
 import { homeCards } from '../../domain/home-cards';
-import { decisionCount, decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
+import { balanceAccounts, decisionCount, decisionMinutes, totalAvailableCents } from '../../domain/home-figures';
 import { currentVatReturn, resultWording } from '../../domain/vat-return';
 import { DemoStateService } from '../../state/demo-state.service';
 import { RevenueTracker } from './revenue-tracker';
@@ -77,7 +77,7 @@ import { RevenueTracker } from './revenue-tracker';
             <bdi dir="ltr" data-testid="tile-balances-total">{{ total() | money }}</bdi>
           </p>
           <ul class="border-border flex flex-col border-t pt-1">
-            @for (account of business().accounts; track account.id) {
+            @for (account of accounts(); track account.id) {
               <li class="flex items-baseline justify-between gap-3 py-1.5 text-sm">
                 <span class="min-w-0 truncate">{{
                   nameOf(account, 'settings.bank.product.' + account.product | transloco)
@@ -158,7 +158,9 @@ export class KeyNumbers {
   protected readonly cards = computed(() => homeCards(this.demo.setup(), this.demo.business()));
   protected readonly decisions = computed(() => decisionCount(this.business(), this.demo.setup()));
   protected readonly minutes = computed(() => decisionMinutes(this.decisions()));
-  protected readonly total = computed(() => totalAvailableCents(this.business().accounts));
+  /** The accounts that hold the business's money (not Own money). */
+  protected readonly accounts = computed(() => balanceAccounts(this.business().accounts));
+  protected readonly total = computed(() => totalAvailableCents(this.accounts()));
   protected readonly wording = resultWording;
   /** The open business's current VAT return (the same as the phone's tax card): its date and amount, "yearly only", or null. */
   protected readonly vat = computed(() => currentVatReturn(this.business()));

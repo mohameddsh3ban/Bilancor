@@ -4,6 +4,7 @@ import { BUSINESSES } from '../data/sample-data';
 import { applyRuleToUnclear, counterpartyKey, followCategoryChange, type CategoryRule } from './category-rules';
 import { changeCategory } from './payment-actions';
 import { paymentStatus } from './payment-status';
+import { withoutVat } from './self-issued';
 
 const weberPayments = (): Transaction[] => structuredClone(BUSINESSES.find((b) => b.id === 'weber-design')!.transactions);
 const payment = (txs: readonly Transaction[], id: string): Transaction => txs.find((t) => t.id === id)!;
@@ -69,6 +70,17 @@ describe('applyRuleToUnclear', () => {
     applyRuleToUnclear(txs, AMAZON_OFFICE, 'wd-t4');
     expect(txs).toEqual(copy);
   });
+
+  it('books an unclear payment a self-issued receipt took the VAT from at 0 %, not at the rule\'s VAT', () => {
+    const unclear = withoutVat(payment(weberPayments(), 'wd-t18'));
+    expect(paymentStatus(unclear)).toBe('unclear');
+
+    const result = applyRuleToUnclear([unclear], AMAZON_OFFICE, 'none');
+
+    expect(result.bookedIds).toEqual(['wd-t18']);
+    expect(result.txs[0].booking).toEqual({ ...OFFICE, vatRate: 0 });
+    expect(AMAZON_OFFICE.booking.vatRate).toBe(19);
+  });
 });
 
 describe('followCategoryChange', () => {
@@ -94,6 +106,13 @@ describe('followCategoryChange', () => {
   it('a payment that had no category and gets one also updates the rule', () => {
     const next = followCategoryChange([{ counterpartyKey: 'amazon', booking: SOFTWARE }], before, changeCategory(before, OFFICE));
     expect(next).toEqual([AMAZON_OFFICE]);
+  });
+
+  it('a rule keeps the category\'s usual VAT when the payment that changed it has none (a self-issued receipt took it)', () => {
+    const noVat = withoutVat(changeCategory(before, SOFTWARE));
+    const next = followCategoryChange([{ counterpartyKey: 'amazon', booking: SOFTWARE }], noVat, changeCategory(noVat, OFFICE));
+    expect(next).toEqual([{ counterpartyKey: 'amazon', booking: OFFICE }]);
+    expect(next[0].booking.vatRate).toBe(19);
   });
 
   it('leaves the rules as they are when the booking is cleared', () => {

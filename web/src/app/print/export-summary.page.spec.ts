@@ -70,22 +70,22 @@ describe('ExportSummaryPage', () => {
     expect(text(q('export-range'))).toBe('1 Oct 2026 – 22 Oct 2026');
     expect(q('export-range')!.matches('bdi[dir="ltr"]')).toBe(true);
     expect(text(q('export-summary'))).toBe(
-      'October: 11 bookings, 8 receipts · Running · 6 payments still need you',
+      'October: 12 bookings, 8 receipts · Running · 7 payments still need you',
     );
 
     // One row per booking, oldest first, as the rules calculate them.
     const business = demo.business();
     const october = exportPeriods(business, 'month', DEMO_TODAY)[0];
     const expected = exportRows(business, october);
-    expect(expected).toHaveLength(11);
+    expect(expected).toHaveLength(12);
     expect(rows().map((row) => cell(row, 'row-counterparty'))).toEqual(
       expected.map((row) => row.counterparty),
     );
     expect(rows().map((row) => cell(row, 'row-status'))).toEqual(
       expected.map((row) => (row.open ? 'Open' : 'Booked')),
     );
-    expect(rows().filter((row) => cell(row, 'row-status') === 'Open')).toHaveLength(6);
-    expect(exportSummary(business, october, DEMO_TODAY).needsYou).toBe(6);
+    expect(rows().filter((row) => cell(row, 'row-status') === 'Open')).toHaveLength(7);
+    expect(exportSummary(business, october, DEMO_TODAY).needsYou).toBe(7);
 
     // Kern Studio: booked, but its receipt is missing, so it is open.
     const kern = rowOf('Kern Studio Berlin', '21 Oct');
@@ -129,7 +129,7 @@ describe('ExportSummaryPage', () => {
   it('shows what the app shows now: a payment fixed after the export was asked for is booked', async () => {
     demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
     await render('/print/export/2026-10');
-    expect(text(q('export-summary'))).toContain('5 payments still need you');
+    expect(text(q('export-summary'))).toContain('6 payments still need you');
   });
 
   it('says Yes, No or Not needed for the receipt, so a payment that needs none is not a missing one', async () => {
@@ -145,7 +145,7 @@ describe('ExportSummaryPage', () => {
     expect(cell(bahn, 'row-status')).toBe('Booked');
     // The summary line still counts attached receipts only.
     expect(text(q('export-summary'))).toBe(
-      'October: 11 bookings, 8 receipts · Running · 5 payments still need you',
+      'October: 12 bookings, 8 receipts · Running · 6 payments still need you',
     );
   });
 

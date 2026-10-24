@@ -14,6 +14,7 @@ import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection as setConnection } from '../state/demo-state.testing';
+import { ReceiptService } from '../state/receipt.service';
 import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
@@ -520,7 +521,7 @@ describe('SettingsPage', () => {
       expect(text(q('bank-name-cl-sparkasse'))).toBe('Sparkasse · Business account');
       expect(status('cl-sparkasse')).toBe('Statement import');
       expect(text(action('cl-sparkasse'))).toBe('Import statement');
-      expect(action('cl-sparkasse')!.getAttribute('href')).toBe('/soon/statementImport');
+      expect(action('cl-sparkasse')!.getAttribute('href')).toBe('/payments/import?account=cl-sparkasse&from=settings');
       expect(text(q('bank-line-cl-sparkasse'))).toContain('Payments come from imported statements');
       expect(q('bank-fetched-cl-sparkasse')).toBeNull();
     });
@@ -549,6 +550,47 @@ describe('SettingsPage', () => {
       expect(q('bank-iban-wd-cash')).toBeNull();
       expect(q('bank-fetched-wd-cash')).toBeNull();
       expect(q('bank-row-wd-cash')!.querySelector('app-bank-tile')).toBeNull();
+    });
+
+    it('settings shows the own-money row: money paid privately for the business, with the German word explained, and no button, no bank and no imports', async () => {
+      TestBed.inject(ReceiptService).markPaid('wd-d7', 'own', '2026-10-19');
+      await render();
+      expect(rowIds()).toEqual(['wd-qonto', 'weber-design-own', 'wd-cash']); // in front of the cash box
+      expect(text(q('bank-name-weber-design-own'))).toBe('Own money');
+      expect(text(q('bank-line-weber-design-own'))).toBe(
+        "Money you paid for the business privately: an owner's deposit (Privateinlage)",
+      );
+      expect(q('bank-line-weber-design-own')!.querySelector('app-term')).not.toBeNull();
+      expect(status('weber-design-own')).toBe('Private');
+      expect(action('weber-design-own')).toBeNull();
+      expect(q('bank-iban-weber-design-own')).toBeNull();
+      expect(q('bank-fetched-weber-design-own')).toBeNull();
+      const row = q('bank-row-weber-design-own')!;
+      expect(row.querySelector('app-bank-tile')).toBeNull();
+      expect(row.querySelector('[data-testid^="imports-"]')).toBeNull();
+      expect(row.querySelector('button[data-testid^="bank-action-"], a[data-testid^="bank-action-"]')).toBeNull();
+      expect(q('bank-status-weber-design-own')!.className).toContain('text-muted-foreground');
+
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(q('bank-name-weber-design-own'))).toBe('Eigenes Geld');
+      expect(text(q('bank-line-weber-design-own'))).toBe(
+        'Geld, das du privat für das Geschäft bezahlt hast: eine Privateinlage',
+      );
+      expect(status('weber-design-own')).toBe('Privat');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(q('bank-name-weber-design-own'))).toBe(ar.settings.bank.product.own);
+      expect(text(q('bank-line-weber-design-own'))).toContain('Privateinlage');
+      expect(q('bank-line-weber-design-own')!.querySelector('bdi')!.getAttribute('dir')).toBe('ltr');
+    });
+
+    it('the own-money row is there before the bank step too: the person made it, it is not a bank', async () => {
+      demo.setSetup('new');
+      demo.addOwnMoneyAccount();
+      await render();
+      expect(rowIds()).toEqual(['weber-design-own', 'wd-cash']);
+      expect(q('bank-connect-first')).not.toBeNull();
     });
 
     it('IBANs are masked', async () => {
@@ -654,6 +696,52 @@ describe('SettingsPage', () => {
       demo.setBusiness('sara-yoga');
       await settle();
       expect(rowIds()).toEqual(['sy-qonto']);
+    });
+
+    it('an account that has imports ends its row with their list, and the others show none', async () => {
+      demo.setBusiness('cafe-linde');
+      demo.recordImport({
+        id: 'imp-1',
+        accountId: 'cl-sparkasse',
+        statementId: 'cl-sparkasse-oktober',
+        fileName: 'sparkasse-oktober.csv',
+        importedOn: '2026-10-22',
+        paymentIds: ['a', 'b', 'c'],
+        skippedCount: 0,
+      });
+      await render();
+
+      const area = q('bank-row-cl-sparkasse')!.querySelector('app-account-imports');
+      expect(text(area?.querySelector('button'))).toBe('Imports (1)');
+      expect(q('bank-row-cl-qonto')!.querySelector('[data-testid^="imports-"]')).toBeNull();
+      expect(q('bank-row-cl-cash')!.querySelector('[data-testid^="imports-"]')).toBeNull();
+
+      await click('imports-toggle-cl-sparkasse');
+      expect(text(q('import-line-imp-1'))).toBe('22 Oct · sparkasse-oktober.csv · 3 payments');
+      expect(text(q('import-undo-imp-1'))).toBe('Undo import');
+    });
+
+    it('undoing an import in the row takes it out of the list', async () => {
+      demo.setBusiness('cafe-linde');
+      demo.recordImport({
+        id: 'imp-1',
+        accountId: 'cl-sparkasse',
+        statementId: 'cl-sparkasse-oktober',
+        fileName: 'sparkasse-oktober.csv',
+        importedOn: '2026-10-22',
+        paymentIds: ['a', 'b'],
+        skippedCount: 0,
+      });
+      await render();
+      await click('imports-toggle-cl-sparkasse');
+      await click('import-undo-imp-1');
+
+      expect(demo.business().imports).toEqual([]);
+      expect(q('imports-toggle-cl-sparkasse')).toBeNull();
+      expect(text(q('imports-status-cl-sparkasse'))).toBe(
+        'Import undone. 2 payments were taken out again.',
+      );
+      expect(q('bank-row-cl-sparkasse')).not.toBeNull();
     });
   });
 
@@ -790,6 +878,35 @@ describe('SettingsPage', () => {
       await settle();
       expect(approval()).toBeNull();
       expect(status('wd-qonto')).toBe('Renew in 5 days');
+    });
+
+    it('stays open when other data changes: undoing an import in the same card does not close it', async () => {
+      demo.setBusiness('sara-yoga');
+      demo.recordImport({
+        id: 'imp-1',
+        accountId: 'sy-qonto',
+        statementId: 'sy-qonto-oktober',
+        fileName: 'export_2026-10.csv',
+        importedOn: '2026-10-22',
+        paymentIds: ['a', 'b'],
+        skippedCount: 0,
+      });
+      await render();
+      await click('bank-action-sy-qonto');
+      expect(q('bank-approval-sy-qonto')).not.toBeNull();
+
+      await click('imports-toggle-sy-qonto');
+      await click('import-undo-imp-1');
+      expect(demo.business().imports).toEqual([]);
+      expect(q('bank-approval-sy-qonto')).not.toBeNull();
+      expect(status('sy-qonto')).toBe('Sign in again');
+
+      // Any other change of the data leaves it open too, and it is still the one that approves.
+      demo.updateTransaction('sy-t1', (tx) => ({ ...tx, confirmed: !tx.confirmed }));
+      await settle();
+      expect(q('bank-approval-sy-qonto')).not.toBeNull();
+      await click('approve');
+      expect(status('sy-qonto')).toBe('Connected');
     });
 
     it('closes when the account no longer needs it', async () => {

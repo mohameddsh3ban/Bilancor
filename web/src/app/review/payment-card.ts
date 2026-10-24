@@ -22,15 +22,18 @@ import {
   setPrivate,
 } from '../domain/payment-actions';
 import type { ReviewItem } from '../domain/review-queue';
+import { canWriteSelfIssued, type SelfIssuedInput } from '../domain/self-issued';
 import { categoriesFor } from '../domain/tax-rules';
 import { CategoryPicker } from '../payments/category-picker';
 import { DocumentPicker } from '../payments/document-picker';
 import { isolateText } from '../payments/payment-history';
 import { DemoStateService } from '../state/demo-state.service';
 import { InvoiceService } from '../state/invoice.service';
+import { ReceiptService } from '../state/receipt.service';
 import { ReviewService, reviewItemKey, type ReviewAnswerResult } from '../state/review.service';
 import { UploadService } from '../state/upload.service';
 import { ANSWERS_CLASS, ReviewCard, type TickNote } from './review-card';
+import { SelfIssuedDialog } from './self-issued-dialog';
 
 /** A payment waiting for the person's decision. */
 export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
@@ -45,14 +48,23 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
  *
  * A payment that is missing its receipt and probably pays one open invoice (see `invoiceGuess`) is asked that first, "Is
  * this the payment for invoice …?": Yes pays the invoice, Pick another opens the list of documents, and No receipt needed
- * is as it always was.
+ * is as it always was. Money out also has "Receipt lost? Write one yourself" under the answers, which opens the form of a self-issued
+ * receipt on top of the card (see `SelfIssuedDialog`); creating the receipt answers the card.
  *
  * Only a category chosen for an Unclear payment teaches the app: it makes a rule for that counterparty (see `choose`).
  */
 @Component({
   selector: 'app-payment-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CategoryPicker, DocumentPicker, HlmButton, NgIcon, ReviewCard, TranslocoPipe],
+  imports: [
+    CategoryPicker,
+    DocumentPicker,
+    HlmButton,
+    NgIcon,
+    ReviewCard,
+    SelfIssuedDialog,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons({ lucideCamera, lucideLoaderCircle })],
   host: { class: 'block' },
   template: `
@@ -191,6 +203,23 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
                 {{ 'payments.detail.receipt.noReceiptNeeded' | transloco }}
               </button>
             </div>
+            <!-- Money out can have a receipt written by the person: a small link under the answers, which opens the form on top of the card. It waits while a photo is read: an answer is not taken then, so the form's would be lost. -->
+            @if (canWriteReceipt()) {
+              <button
+                type="button"
+                class="text-primary focus-visible:ring-ring/50 mx-auto min-h-10 rounded-sm px-1 text-sm underline underline-offset-4 outline-none focus-visible:ring-3 disabled:opacity-50"
+                data-testid="answer-self-issued"
+                [disabled]="reading()"
+                (click)="selfIssuedOpen.set(true)"
+              >
+                {{ 'review.a.writeReceipt' | transloco }}
+              </button>
+              <app-self-issued-dialog
+                [payment]="tx"
+                [(open)]="selfIssuedOpen"
+                (created)="writeReceipt($event)"
+              />
+            }
           }
         }
       }
@@ -200,6 +229,7 @@ export type PaymentItem = Extract<ReviewItem, { kind: 'payment' }>;
 export class PaymentCard {
   private readonly demo = inject(DemoStateService);
   private readonly invoices = inject(InvoiceService);
+  private readonly receipts = inject(ReceiptService);
   private readonly review = inject(ReviewService);
   private readonly upload = inject(UploadService);
   private readonly transloco = inject(TranslocoService);
@@ -254,6 +284,15 @@ export class PaymentCard {
 
   /** What names this card to the review service, so an answer given here never lands on another card. */
   private readonly key = computed(() => reviewItemKey(this.item()));
+
+  /** Whether the pop-up that writes a self-issued receipt is open. */
+  protected readonly selfIssuedOpen = signal(false);
+
+  /** A self-issued receipt can be written for this payment: money out, receipt missing, not private (the inbox does not look at closed months). */
+  protected readonly canWriteReceipt = computed(() => {
+    const tx = this.payment();
+    return tx !== undefined && canWriteSelfIssued(tx, () => false);
+  });
 
   /** A photo is being read for this payment (taken here, or on the payment's own page). */
   protected readonly reading = computed(() => this.upload.readingFor() === this.item().id);
@@ -350,6 +389,21 @@ export class PaymentCard {
     const tx = this.payment();
     if (!tx) return;
     this.answer(() => this.demo.link(docId, tx.id), 'review.result.receiptAdded', 'receipt');
+  }
+
+  /**
+   * The person wrote a self-issued receipt for the payment (see `ReceiptService.createSelfIssued`, from the inbox): it counts as a receipt
+   * added, like one picked from Documents. Writing the receipt does not confirm the payment's category: that question stays.
+   */
+  protected writeReceipt(input: SelfIssuedInput): void {
+    const tx = this.payment();
+    if (!tx) return;
+    this.selfIssuedOpen.set(false);
+    this.answer(
+      () => void this.receipts.createSelfIssued(tx.id, input, 'inbox'),
+      'review.result.selfIssuedAdded',
+      'receipt',
+    );
   }
 
   /**

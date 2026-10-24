@@ -183,6 +183,8 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       // Studio Kern's payment for RE-2026-044, with no invoice number in it and no receipt: the review inbox asks whether it pays that invoice.
       pay({ id: 'wd-t19', date: '2026-10-21', who: 'Kern Studio Berlin', acct: WD_QONTO, cents: 238000, booking: REVENUE_19, receipt: 'missing', iban: 'DE16120300000987654321', ref: 'Danke für die Zusammenarbeit' }),
       pay({ id: 'wd-t1', date: '2026-10-20', who: 'Müller GmbH', acct: WD_QONTO, cents: 150000, booking: REVENUE_19, confirmed: false, iban: 'DE68210501700012345678', ref: 'RE-2026-041' }),
+      // The self-issued receipt demo: the parking machine gave no receipt. Parking carries 19 % VAT, unlike the train tickets TRAVEL is set up for (7 %).
+      pay({ id: 'wd-t20', date: '2026-10-20', who: 'APCOA Parking', acct: WD_QONTO, cents: -650, booking: { ...TRAVEL, vatRate: 19 }, receipt: 'missing', iban: 'DE62100100100034567890', ref: 'Parkhaus Zentrum, Automat' }),
       pay({ id: 'wd-t2', date: '2026-10-19', who: 'Telekom', acct: WD_QONTO, cents: -3995, booking: PHONE, iban: 'DE12370501980012345601', ref: 'Rechnung 8841 0712, Mobilfunk Oktober', file: 'telekom-rechnung-oktober.pdf' }),
       pay({ id: 'wd-t3', date: '2026-10-17', who: 'Deutsche Bahn', acct: WD_QONTO, cents: -12000, booking: TRAVEL, receipt: 'missing', iban: 'DE35100100100098765432', ref: 'Fahrkarte Berlin-Hamburg, Buchung 8841' }),
       pay({ id: 'wd-t4', date: '2026-10-15', who: 'Amazon', acct: WD_QONTO, cents: -4900, booking: null, iban: 'DE91300209000123400567', ref: 'Bestellung 302-1182733-5561', file: 'amazon-bestellung-5561.pdf', suggestions: AMAZON_SUGGESTIONS }),
@@ -244,6 +246,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       { id: 'wd-m3', personId: null, name: null, email: 'mia@example.com', role: 'receipts', status: 'invited', invitedOn: '2026-10-20', expiresOn: '2026-10-27', joinedOn: null },
     ],
     supportUntil: null,
+    imports: [],
   },
   {
     id: 'sara-yoga',
@@ -305,6 +308,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
     history: [],
     people: [sara('sy-m1', 'owner', '2026-01-02')],
     supportUntil: null,
+    imports: [],
   },
   {
     id: 'cafe-linde',
@@ -377,6 +381,7 @@ const BUSINESS_SPECS: BusinessSpec[] = [
       sara('cl-m2', 'full', '2026-03-16'),
     ],
     supportUntil: null,
+    imports: [],
   },
 ];
 

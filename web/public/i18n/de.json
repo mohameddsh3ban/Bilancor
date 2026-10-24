@@ -185,6 +185,26 @@
       "de": "GDPdU",
       "explain": "Das festgelegte Format, in dem das Finanzamt bei einer Prüfung deine Bücher in digitaler Form anfordern kann. Deine Steuerberater:in weiß meist, was zu übergeben ist."
     },
+    "camt": {
+      "label": "CAMT",
+      "de": "CAMT",
+      "explain": "Die Standarddatei, die deutsche Banken für Kontoauszüge anbieten (CAMT.053). Sie enthält dieselben Zahlungen wie eine CSV-Datei, aber in einem Aufbau, den jede Bank gleich schreibt, sodass keine Spalte zugeordnet werden muss."
+    },
+    "kontoauszug": {
+      "label": "Kontoauszug",
+      "de": "Kontoauszug",
+      "explain": "Die Liste der Zahlungen, die deine Bank dir für einen Zeitraum schickt, als Datei oder PDF. Du lädst sie in deinem Online-Banking herunter."
+    },
+    "kasse": {
+      "label": "Kasse",
+      "de": "Kasse",
+      "explain": "Das Bargeld des Geschäfts, zum Beispiel in einer Kassenschublade, nicht auf einem Bankkonto. Barzahlungen für das Geschäft werden hier gebucht."
+    },
+    "privateinlage": {
+      "label": "Privateinlage",
+      "de": "Privateinlage",
+      "explain": "Geld, das du aus deinem Privatvermögen ins Geschäft gibst, zum Beispiel wenn du eine Geschäftsausgabe mit deiner eigenen Karte bezahlst. Es ist kein Einkommen; den Beleg für die Ausgabe behält das Geschäft."
+    },
     "festschreibung": {
       "label": "Festschreibung",
       "de": "Festschreibung",
@@ -215,9 +235,6 @@
     "receipt": "Ersten Beleg hochladen",
     "account": "Konto",
     "photo": "Foto aufnehmen",
-    "selfReceipt": "Eigenbeleg",
-    "cashPayment": "Bar oder privat bezahlt",
-    "statementImport": "Kontoauszug importieren",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -643,6 +660,7 @@
   },
   "booking": {
     "advertising": "Werbekosten",
+    "bankFees": "Bankgebühren",
     "consulting": "Rechts- und Beratungskosten",
     "goods7": "Wareneinkauf (7 % USt)",
     "insurance": "Versicherungen",
@@ -691,6 +709,7 @@
     "bankConnected": "Du hast {{account}} bei {{bank}} verbunden",
     "bankRenewed": "Du hast die Verbindung zu {{bank}} erneuert",
     "cashAdded": "Du hast eine Kasse hinzugefügt",
+    "ownMoneyAdded": "Du hast das Konto Eigenes Geld hinzugefügt",
     "invoiceCreated": "Du hast die Rechnung erstellt",
     "invoiceSent": "Du hast sie per E-Mail an {{email}} gesendet",
     "invoiceReminded": "Du hast Erinnerung {{level}} von 2 per E-Mail gesendet",
@@ -700,8 +719,11 @@
     "invoiceCancellation": "Du hast sie erstellt, um die Rechnung {{number}} zu stornieren",
     "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
     "paidInCash": "Du hast sie als bar bezahlt markiert",
+    "paidWithOwnMoney": "Du hast sie als mit eigenem Geld bezahlt markiert",
     "paysInvoice": "Bezahlt die Rechnung {{number}}",
     "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht",
+    "selfIssued": "Du hast den Eigenbeleg {{number}} erstellt",
+    "vatRemovedSelfIssued": "Vorsteuer entfernt: Eigenbeleg",
     "personInvited": "{{by}} hat {{email}} als {{role}} eingeladen",
     "invitationCancelled": "{{by}} hat die Einladung an {{email}} zurückgezogen",
     "personJoined": "{{name}} ist als {{role}} beigetreten",
@@ -712,7 +734,8 @@
     "supportOn": "{{by}} hat dem Support bis {{until}} Einblick gegeben",
     "supportOff": "{{by}} hat den Zugriff des Supports beendet",
     "monthClosed": "{{month}} wurde von {{by}} abgeschlossen",
-    "monthClosedByReturn": "{{month}} wurde durch die Umsatzsteuer-Voranmeldung abgeschlossen"
+    "monthClosedByReturn": "{{month}} wurde durch die Umsatzsteuer-Voranmeldung abgeschlossen",
+    "importUndone": "Der Import von {{file}} wurde rückgängig gemacht"
   },
   "payments": {
     "title": "Zahlungen",
@@ -741,6 +764,8 @@
     },
     "clearAll": "Alle zurücksetzen",
     "reviewThem": "Jetzt durchgehen",
+    "more": "Weitere Aktionen",
+    "import": "Kontoauszug importieren",
     "download": "Monat herunterladen",
     "monthIn": "Eingang",
     "monthOut": "Ausgang",
@@ -771,6 +796,7 @@
         "takePhoto": "Foto aufnehmen",
         "reading": "Wird gelesen…",
         "pickDocument": "Aus Dokumenten wählen",
+        "selfIssued": "Eigenbeleg erstellen",
         "openDocument": "Dokument öffnen",
         "noReceiptNeeded": "Kein Beleg nötig"
       },
@@ -787,7 +813,9 @@
         "business": "Geschäftlich",
         "private": "Privat",
         "privateBlocked": "Diese Zahlung hat ein Dokument. Löse zuerst die Verknüpfung.",
-        "privateBlockedInvoice": "Diese Zahlung bezahlt eine Rechnung, deshalb bleibt sie geschäftlich."
+        "privateBlockedInvoice": "Diese Zahlung bezahlt eine Rechnung, deshalb bleibt sie geschäftlich.",
+        "privateBlockedPaid": "Diese Zahlung wurde aus ihrem Beleg erstellt, deshalb bleibt sie geschäftlich.",
+        "privateBlockedSelfIssued": "Diese Zahlung hat einen Eigenbeleg, deshalb bleibt sie geschäftlich."
       },
       "picker": {
         "search": "Kategorien durchsuchen",
@@ -881,6 +909,7 @@
       "done": "Erledigt",
       "waitingLeft": "Wartet auf Zahlung · {{left}} offen",
       "overdueLeft": "Überfällig seit {{date}} · {{left}} offen",
+      "doneSelfIssued": "Erledigt · Eigenbeleg",
       "doneCancelled": "Erledigt · Storniert",
       "cancellationOf": "Stornorechnung zu {{number}}"
     },
@@ -974,12 +1003,32 @@
         "noMatch": "Noch keine passenden Zahlungen",
         "thisOne": "Diese",
         "searchAll": "Alle Zahlungen durchsuchen",
-        "cash": "Bar oder privat bezahlt",
+        "cash": "Bar oder mit eigenem Geld bezahlt",
         "payInInvoice": "Bar bezahlt? In der Rechnung markieren",
         "partPaid": "Bisher teilweise bezahlt:",
         "notThis": "Nicht diese Zahlung",
+        "hasSelfIssued": "Für diese Zahlung gibt es schon einen Eigenbeleg.",
+        "lockedHint": "Diese Zahlung wurde aus diesem Beleg erstellt, die beiden bleiben zusammen.",
         "closedCancelled": "Diese Rechnung wurde storniert, deshalb ist keine Zahlung nötig.",
         "closedCancellation": "Eine Stornorechnung braucht keine Zahlung."
+      },
+      "paid": {
+        "cash": "Als bar bezahlt markiert",
+        "own": "Als mit eigenem Geld bezahlt markiert",
+        "undo": "Rückgängig"
+      },
+      "paidDialog": {
+        "title": "Wie wurde bezahlt?",
+        "close": "Schließen",
+        "cash": "Bar, aus der {{term}}",
+        "own": "Mit eigenem Geld",
+        "ownHint": "Private Karte oder eigenes Bargeld",
+        "howError": "Wähle, wie bezahlt wurde.",
+        "date": "Bezahlt am",
+        "dateError": "Wähle einen Tag vom Belegdatum bis heute.",
+        "hint": "Die Zahlung wird erfasst und zählt wie jede andere in deiner Buchhaltung.",
+        "done": "Fertig",
+        "cancel": "Abbrechen"
       },
       "picker": {
         "search": "Zahlungen durchsuchen",
@@ -987,6 +1036,10 @@
         "empty": "Keine Zahlung passt"
       },
       "remove": "Entfernen",
+      "selfIssued": {
+        "hint": "Du hast diesen Beleg selbst geschrieben, deshalb lässt er sich nicht ändern oder entfernen. Druck ihn für deine Unterlagen oder das Finanzamt aus.",
+        "print": "Drucken"
+      },
       "written": {
         "title": "In Rechnungen geschrieben",
         "hint": "Dieses Dokument lässt sich hier nicht ändern oder entfernen. Öffne die Rechnung, um damit zu arbeiten.",
@@ -1345,6 +1398,42 @@
       "decisions": "Entscheidungen"
     }
   },
+  "selfIssued": {
+    "back": "Zurück zur Zahlung",
+    "intro": "Kein Beleg zu dieser Zahlung? Schreib selbst einen. Er wird bei der Zahlung gespeichert und du kannst ihn ausdrucken.",
+    "purpose": {
+      "label": "Wofür war das?",
+      "error": "Schreib, wofür das Geld war."
+    },
+    "reason": {
+      "label": "Warum gibt es keinen Beleg?",
+      "lost": "Er ist verloren gegangen",
+      "machine": "Der Automat hat keinen ausgegeben",
+      "tip": "Es war Trinkgeld",
+      "sellerNone": "Der Verkäufer hat keinen ausgestellt",
+      "other": "Etwas anderes…",
+      "otherLabel": "Was ist passiert?",
+      "error": "Wähle, warum es keinen Beleg gibt.",
+      "otherError": "Schreib, was passiert ist."
+    },
+    "paidTo": {
+      "label": "Bezahlt an",
+      "address": "Anschrift (optional)"
+    },
+    "note": {
+      "noVat": "Mit einem Eigenbeleg kannst du keine Vorsteuer zurückholen, deshalb zählt die Vorsteuer dieser Zahlung nicht.",
+      "large": "Bei größeren Beträgen frag zuerst den Verkäufer nach einer Kopie; das Finanzamt hinterfragt größere Eigenbelege öfter."
+    },
+    "confirm": {
+      "text": "Ich bestätige, dass das stimmt",
+      "error": "Setz den Haken, um zu bestätigen."
+    },
+    "create": "Beleg erstellen",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "written": "Eigenbeleg {{number}} erstellt",
+    "undo": "Rückgängig"
+  },
   "review": {
     "title": "Entscheidungen prüfen",
     "needsYouButton": "Braucht dich · {{count}}",
@@ -1376,6 +1465,7 @@
       "confirm": "Ja, stimmt",
       "changeCategory": "Kategorie ändern",
       "takePhoto": "Foto aufnehmen",
+      "writeReceipt": "Beleg verloren? Schreib selbst einen",
       "removeThis": "Diesen entfernen",
       "yes": "Ja",
       "pickAnother": "Andere wählen"
@@ -1387,6 +1477,7 @@
       "private": "Als privat markiert",
       "receiptAdded": "Beleg hinzugefügt",
       "noReceipt": "Markiert: kein Beleg nötig",
+      "selfIssuedAdded": "Eigenbeleg erstellt",
       "keptBoth": "Beide behalten",
       "removed": "Entfernt",
       "received": "Als empfangen markiert",
@@ -1500,7 +1591,7 @@
       "noMatch": "Wir haben keine Bank namens „{{search}}“ gefunden.",
       "notListed": {
         "title": "Meine Bank steht nicht in der Liste",
-        "body": "Importiere stattdessen einen Kontoauszug deiner Bank. Kommt bald."
+        "body": "Importiere stattdessen einen Kontoauszug deiner Bank."
       },
       "cash": {
         "title": "Ich nehme auch Bargeld ein",
@@ -1600,6 +1691,118 @@
     },
     "save": "Speichern"
   },
+  "statementImport": {
+    "title": "Kontoauszug importieren",
+    "intro": "Füge Zahlungen aus dem {{term}} deines Online-Bankings hinzu. Zahlungen, die schon da sind, werden übersprungen.",
+    "back": {
+      "home": "Zurück zur Startseite",
+      "payments": "Zurück zu den Zahlungen",
+      "settings": "Zurück zu den Einstellungen"
+    },
+    "into": "Ins Konto:",
+    "change": "Konto wechseln",
+    "chooser": {
+      "title": "Für welches Konto?",
+      "statement": "Zahlungen kommen aus Kontoauszügen",
+      "connected": "Ältere Monate nachtragen",
+      "new": "Ein neues Konto…",
+      "newBody": "Für eine Bank, die hier nicht angebunden ist"
+    },
+    "new": {
+      "title": "Ein neues Konto",
+      "intro": "Gib dem Konto einen Namen und seine IBAN. Danach kannst du seinen Kontoauszug importieren.",
+      "name": "Kontoname",
+      "namePlaceholder": "z. B. Volksbank",
+      "nameError": "Gib dem Konto einen Namen.",
+      "iban": "IBAN",
+      "ibanHint": "Du findest sie auf dem Kontoauszug oder in deinem Online-Banking.",
+      "ibanError": "Das sieht nicht wie eine IBAN aus. Prüfe sie und versuche es noch einmal.",
+      "ibanExists": "Du hast schon ein Konto mit dieser IBAN.",
+      "continue": "Weiter"
+    },
+    "file": {
+      "drop": "Zieh die Datei aus deinem Online-Banking hierher",
+      "or": "oder",
+      "choose": "wähle eine Datei",
+      "sample": "Beispiel-Kontoauszug verwenden",
+      "demo": "Demo: Egal welche Datei du gibst, wir lesen den Beispiel-Kontoauszug dieses Kontos."
+    },
+    "read": {
+      "title": "Das haben wir gelesen",
+      "file": "Datei",
+      "recognised": "Erkannt: {{format}}",
+      "unknown": "Unbekanntes Layout",
+      "payments": {
+        "one": "1 Zahlung in der Datei",
+        "many": "{{count}} Zahlungen in der Datei"
+      },
+      "new": "Neu",
+      "already": "Schon da, übersprungen",
+      "closed": "In einem abgeschlossenen Monat, nicht importiert",
+      "unreadable": "Nicht lesbar, nicht importiert",
+      "seeWhich": "Welche?",
+      "hideWhich": "Liste ausblenden",
+      "inFile": "In der Datei",
+      "hereAlready": "Schon da"
+    },
+    "rows": {
+      "title": "Die ersten Zahlungen",
+      "already": "Schon da",
+      "closed": "Abgeschlossener Monat"
+    },
+    "columns": {
+      "title": "Spalten zuordnen",
+      "intro": "Dieses Layout kennen wir noch nicht. Wir haben geraten, was jede Spalte enthält: Prüfe es.",
+      "moneyOut": "Ausgaben stehen",
+      "minus": "Mit einem Minuszeichen",
+      "column": "In einer eigenen Spalte",
+      "unnamed": "Spalte {{number}}",
+      "role": {
+        "date": "Datum",
+        "amount": "Betrag",
+        "amountIn": "Einnahmen",
+        "amountOut": "Ausgaben",
+        "who": "Wer",
+        "purpose": "Wofür",
+        "ignore": "Ignorieren"
+      },
+      "need": "Wähle, welche Spalte das Datum, den Betrag und den Zahlungspartner enthält.",
+      "needOut": "Wähle auch die Spalte mit den Ausgaben."
+    },
+    "import": {
+      "one": "1 Zahlung importieren",
+      "many": "{{count}} Zahlungen importieren",
+      "none": "Zahlungen importieren",
+      "running": "Wird importiert…",
+      "allHere": "Jede Zahlung in dieser Datei ist schon da.",
+      "nothingNew": "In dieser Datei gibt es keine neuen Zahlungen."
+    },
+    "summary": {
+      "title": "Import fertig",
+      "added": "{{count}} hinzugefügt",
+      "booked": "{{count}} automatisch gebucht",
+      "needs": {
+        "one": "{{count}} braucht dich",
+        "many": "{{count}} brauchen dich"
+      },
+      "skipped": {
+        "one": "1 Zahlung war schon da und wurde übersprungen.",
+        "many": "{{count}} Zahlungen waren schon da und wurden übersprungen."
+      },
+      "nothing": "Es wurde nichts hinzugefügt: Jede Zahlung der Datei war schon da.",
+      "start": "Starten",
+      "payments": "Zahlungen ansehen",
+      "undo": "Import rückgängig machen",
+      "undoBlocked": {
+        "worked": "Dieser Import lässt sich nicht mehr rückgängig machen: Einige Zahlungen wurden schon bearbeitet.",
+        "closed": "Dieser Import lässt sich nicht mehr rückgängig machen: Ein Monat mit einigen seiner Zahlungen wurde abgeschlossen."
+      }
+    },
+    "undone": {
+      "one": "Import rückgängig gemacht. 1 Zahlung wurde wieder entfernt.",
+      "many": "Import rückgängig gemacht. {{count}} Zahlungen wurden wieder entfernt."
+    }
+  },
   "settings": {
     "title": "Einstellungen",
     "tax": {
@@ -1633,6 +1836,7 @@
       "connectFirst": "Verbinde deine Bank",
       "before": "Verbinde deine Bank, dann erscheinen hier deine Konten mit ihren Zahlungen.",
       "cashLine": "Die Zahlungen kommen aus deinen Belegen",
+      "ownLine": "Geld, das du privat für das Geschäft bezahlt hast: eine {{term}}",
       "statementLine": "Die Zahlungen kommen aus importierten Kontoauszügen",
       "lastFetchedToday": "zuletzt abgerufen heute, {{time}}",
       "lastFetched": "zuletzt abgerufen am {{date}}, {{time}}",
@@ -1643,7 +1847,8 @@
         "renewToday": "Heute erneuern",
         "signInAgain": "Erneut anmelden",
         "statement": "Kontoauszug-Import",
-        "cash": "Kasse"
+        "cash": "Kasse",
+        "own": "Privat"
       },
       "action": {
         "renew": "Erneuern",
@@ -1654,7 +1859,21 @@
         "business": "Geschäftskonto",
         "savings": "Sparkonto",
         "card": "Kreditkarte",
-        "cash": "Kasse"
+        "cash": "Kasse",
+        "own": "Eigenes Geld"
+      },
+      "imports": {
+        "title": "Importe",
+        "payment": {
+          "one": "Zahlung",
+          "many": "Zahlungen"
+        },
+        "download": "Datei herunterladen",
+        "undo": "Import rückgängig machen",
+        "blocked": {
+          "worked": "Lässt sich nicht rückgängig machen: Einige Zahlungen wurden schon bearbeitet",
+          "closed": "Lässt sich nicht rückgängig machen: Ein Monat, den der Import berührt, ist abgeschlossen"
+        }
       }
     },
     "inbox": {

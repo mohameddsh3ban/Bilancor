@@ -51,6 +51,7 @@ describe('the routes', () => {
       '/print/month',
       '/print/vat-return/2026-09-01',
       '/print/invoice/wd-i1',
+      '/print/self-issued/doc-EB-2026-001',
       '/print/export/2026-10',
     ];
     for (const url of pages) {
@@ -135,6 +136,55 @@ describe('the routes', () => {
     });
     expect(router.url).toBe('/reports');
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+  });
+
+  it('Import a bank statement is inside the app shell, and is not a payment called "import": signed out it asks for signing in first', async () => {
+    const harness = await RouterTestingHarness.create('/payments/import');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fpayments%2Fimport');
+
+    signInAsSara();
+    await harness.navigateByUrl('/payments/import');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-statement-import-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/payments/import');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-payment-detail-page')).toBeNull();
+
+    // A payment still opens under Payments.
+    await harness.navigateByUrl('/payments/wd-t3');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-payment-detail-page')).not.toBeNull();
+    });
+  });
+
+  it('Write a self-issued receipt is inside the app shell, and is not a payment: signed out it asks for signing in first', async () => {
+    const harness = await RouterTestingHarness.create('/payments/wd-t20/self-issued');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fpayments%2Fwd-t20%2Fself-issued');
+
+    signInAsSara();
+    await harness.navigateByUrl('/payments/wd-t20/self-issued');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-self-issued-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/payments/wd-t20/self-issued');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-payment-detail-page')).toBeNull();
+  });
+
+  it('the print page of a self-issued receipt opens outside the app shell for a signed-in person', async () => {
+    signInAsSara();
+    const harness = await RouterTestingHarness.create('/print/self-issued/nope');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).tagName).toBe('APP-SELF-ISSUED-PRINT-PAGE');
+    });
+    expect(document.querySelector('app-shell')).toBeNull();
   });
 
   it('signed in, the pages of the app open', async () => {

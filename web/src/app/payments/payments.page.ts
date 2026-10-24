@@ -35,8 +35,8 @@ type EmptyKind = 'new' | 'allClear' | 'noMatch' | null;
 const isMonth = (value: string): boolean => /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 
 /**
- * Every payment of the open business, newest first, grouped by month, with search and filters.
- * A payment opens beside the list (from `lg`) or on its own (below `lg`) through the child route.
+ * Every payment of the open business, newest first, grouped by month, with search and filters. `?month=` and `?account=` start
+ * the list on that month and account. A payment opens beside the list (from `lg`) or on its own (below `lg`) through the child route.
  */
 @Component({
   selector: 'app-payments-page',
@@ -175,6 +175,12 @@ export class PaymentsPage {
     { initialValue: this.route.snapshot.queryParamMap.get('month') },
   );
 
+  /** The `account` in the address (`?account=wd-cash`, from the statement import's summary), whatever it says; null when there is none. */
+  private readonly accountParam = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('account'))),
+    { initialValue: this.route.snapshot.queryParamMap.get('account') },
+  );
+
   /** The payment open through the child route, if any. */
   protected readonly selectedId = toSignal(
     this.router.events.pipe(
@@ -205,14 +211,21 @@ export class PaymentsPage {
   });
 
   constructor() {
-    // The month opens the list on that month once, and the address is cleaned at once: the filters live here, so a
-    // reload or the back button does not set it again. Something that is not a month is dropped.
+    // The month and the account open the list on that month and account once, and the address is cleaned at once: the
+    // filters live here, so a reload or the back button does not set them again. Something that is not a month, and an
+    // account the open business does not have, is dropped.
     effect(() => {
       const month = this.monthParam();
-      if (month === null) return;
-      if (isMonth(month)) untracked(() => this.filter.update((f) => ({ ...f, month })));
+      const account = this.accountParam();
+      if (month === null && account === null) return;
+      untracked(() => {
+        if (month !== null && isMonth(month)) this.filter.update((f) => ({ ...f, month }));
+        if (account !== null && this.accounts().some((a) => a.id === account)) {
+          this.filter.update((f) => ({ ...f, accountId: account }));
+        }
+      });
       void this.router.navigate([], {
-        queryParams: { month: null },
+        queryParams: { month: null, account: null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });

@@ -10,6 +10,7 @@ import { invoiceStatus } from '../domain/invoices';
 import { DocumentDetailPage } from '../documents/document-detail.page';
 import { DocumentsPage } from '../documents/documents.page';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { PaymentDetailPage } from './payment-detail.page';
 import { PaymentsPage } from './payments.page';
 import ar from '../../../public/i18n/ar.json';
@@ -145,11 +146,11 @@ describe('PaymentDetailPage', () => {
   describe('actions', () => {
     it('confirm turns Müller into booked and lowers Needs you', async () => {
       await render('/payments/wd-t1');
-      expect(text(q('needs-you-count'))).toBe('6');
+      expect(text(q('needs-you-count'))).toBe('7');
       await click('confirm-booking');
       expect(status()).toBe('Booked');
       expect(d('confirm-booking')).toBeNull();
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
       expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
       expect(text(d('history-date'))).toBe('22 Oct');
       const row = Array.from(el.querySelectorAll('[data-testid="payment-row"]')).find((r) =>
@@ -170,13 +171,13 @@ describe('PaymentDetailPage', () => {
     it('no receipt needed books Deutsche Bahn', async () => {
       await render('/payments/wd-t3');
       expect(status()).toBe('Receipt missing');
-      expect(text(q('needs-you-count'))).toBe('6');
+      expect(text(q('needs-you-count'))).toBe('7');
       await click('no-receipt-needed');
       expect(status()).toBe('Booked');
       expect(text(d('receipt-state'))).toBe('No receipt needed');
       expect(d('no-receipt-needed')).toBeNull();
       expect(d('take-photo')).toBeNull();
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
       expect(historyTexts()[0]).toBe('You marked: no receipt needed');
     });
 
@@ -194,7 +195,7 @@ describe('PaymentDetailPage', () => {
       expect(text(d('booking-vat'))).toBe('19%');
       expect(d('change-category')!.textContent?.trim()).toBe('Change');
       expect(historyTexts()[0]).toBe('You changed the category to Software & maintenance');
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
     });
 
     it('choosing the category a payment already has changes nothing when it is booked', async () => {
@@ -219,14 +220,14 @@ describe('PaymentDetailPage', () => {
     it('choosing the suggested category of a payment that needs confirming confirms it', async () => {
       await render('/payments/wd-t1');
       expect(status()).toBe('Please confirm');
-      expect(text(q('needs-you-count'))).toBe('6');
+      expect(text(q('needs-you-count'))).toBe('7');
       await choose('Revenue (19% VAT)');
       expect(status()).toBe('Booked');
       expect(d('confirm-booking')).toBeNull();
       expect(historyTexts()[0]).toBe('You confirmed Revenue (19% VAT)');
       expect(historyTexts().filter((t) => t.startsWith('You'))).toHaveLength(1);
       expect(options()).toHaveLength(0);
-      expect(text(q('needs-you-count'))).toBe('5');
+      expect(text(q('needs-you-count'))).toBe('6');
     });
 
     it('choosing the suggested category of a payment that needs confirming and has no receipt leaves the receipt to do', async () => {
@@ -325,7 +326,7 @@ describe('PaymentDetailPage', () => {
       expect(d('receipt-thumbnail')).not.toBeNull();
     });
 
-    it('missing receipt: no receipt needed, a photo, a picker for documents, and a coming-soon self-issued receipt', async () => {
+    it('missing receipt: no receipt needed, a photo, a picker for documents, and a self-issued receipt', async () => {
       await render('/payments/wd-t3');
       expect(text(d('receipt-state'))).toBe('Receipt missing');
       expect(d('no-receipt-needed')!.tagName).toBe('BUTTON');
@@ -334,19 +335,44 @@ describe('PaymentDetailPage', () => {
       expect(d('take-photo')!.hasAttribute('disabled')).toBe(false);
       expect(d('pick-document')!.tagName).toBe('BUTTON');
       expect(text(d('pick-document'))).toBe('Pick from Documents');
-      expect(d('self-receipt')!.getAttribute('href')).toBe('/soon/selfReceipt');
+      expect(d('self-receipt')!.getAttribute('href')).toBe('/payments/wd-t3/self-issued');
+    });
+
+    it('payment detail offers Write a self-issued receipt for APCOA, not in a closed month', async () => {
+      await render('/payments/wd-t20');
+      expect(text(d('receipt-state'))).toBe('Receipt missing');
+      expect(d('self-receipt')!.tagName).toBe('A');
+      expect(d('self-receipt')!.getAttribute('href')).toBe('/payments/wd-t20/self-issued');
+      expect(text(d('self-receipt'))).toBe('Write a self-issued receipt (Eigenbeleg)');
+      // No undo notice until a receipt was just written.
+      expect(d('self-issued-undo')).toBeNull();
+
+      // The same payment dated in a closed month (August is closed) offers none of it.
+      demo.updateTransaction('wd-t20', (tx) => ({ ...tx, date: '2026-08-20' }));
+      await settle();
+      expect(d('self-receipt')).toBeNull();
+      expect(d('no-receipt-needed')).toBeNull();
+      expect(d('closed-note')).not.toBeNull();
+    });
+
+    it('offers the self-issued receipt for money out only: a payment coming in that lacks its receipt has none', async () => {
+      demo.updateTransaction('wd-t1', (tx) => ({ ...tx, receipt: 'missing', receiptFile: null }));
+      await render('/payments/wd-t1');
+      expect(text(d('receipt-state'))).toBe('Receipt missing');
+      expect(d('no-receipt-needed')).not.toBeNull();
+      expect(d('self-receipt')).toBeNull();
     });
 
     it('names the self-issued receipt with its German term, Eigenbeleg, outside German', async () => {
       await render('/payments/wd-t3');
-      expect(text(d('self-receipt'))).toBe('Self-issued receipt (Eigenbeleg)');
+      expect(text(d('self-receipt'))).toBe('Write a self-issued receipt (Eigenbeleg)');
       expect(d('self-receipt')!.querySelector('bdi[dir="ltr"]')!.textContent).toBe('Eigenbeleg');
       TestBed.inject(LanguageService).setLang('ar');
       await settle();
-      expect(text(d('self-receipt'))).toBe(`${ar.terms.eigenbeleg.label} (Eigenbeleg)`);
+      expect(text(d('self-receipt'))).toBe(`${ar.payments.detail.receipt.selfIssued} (Eigenbeleg)`);
       TestBed.inject(LanguageService).setLang('de');
       await settle();
-      expect(text(d('self-receipt'))).toBe('Eigenbeleg');
+      expect(text(d('self-receipt'))).toBe('Eigenbeleg erstellen');
       expect(d('self-receipt')!.querySelector('bdi')).toBeNull();
     });
 
@@ -468,13 +494,14 @@ describe('PaymentDetailPage', () => {
     it('lists the documents that fit the payment, best match first', async () => {
       await render('/payments/wd-t17');
       await click('pick-document');
-      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Bürobedarf Schulz']);
+      // Druckerei Mayer is the receipt of the sample statement's Volksbank payment and Copyshop Kreuzberg the receipt of a cash payment: unlinked and received, so they fit any payment out.
+      expect(optionNames()).toEqual(['Böttcher Bürobedarf', 'Druckerei Mayer', 'Copyshop Kreuzberg', 'Bürobedarf Schulz']);
     });
 
     it('the picker offers only received documents for money out', async () => {
       await render('/payments/wd-t3');
       await click('pick-document');
-      expect(optionNames()).toEqual(['Bürobedarf Schulz', 'Böttcher Bürobedarf']);
+      expect(optionNames()).toEqual(['Copyshop Kreuzberg', 'Bürobedarf Schulz', 'Druckerei Mayer', 'Böttcher Bürobedarf']);
     });
 
     it('and only sent documents for money in', async () => {
@@ -487,12 +514,58 @@ describe('PaymentDetailPage', () => {
     it('with no document that fits, says so and offers to add one', async () => {
       demo.updateDocument('wd-d1', (x) => ({ ...x, paymentId: 'wd-t2' }));
       demo.updateDocument('wd-d4', (x) => ({ ...x, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d8', (x) => ({ ...x, paymentId: 'wd-t2' }));
+      demo.updateDocument('wd-d7', (x) => ({ ...x, paymentId: 'wd-t2' }));
       await render('/payments/wd-t17');
       await click('pick-document');
       expect(text(inBody('document-picker-empty'))).toContain(
         'No unlinked documents fit this payment',
       );
       expect(inBody('document-picker-add')!.getAttribute('href')).toBe('/documents?add=1');
+    });
+
+    it('a payment made from a receipt (paid with own money) shows its account, its receipt and its line, and stays business', async () => {
+      TestBed.inject(ReceiptService).markPaid('wd-d7', 'own', '2026-10-19');
+      await render('/payments/paid-wd-d7');
+
+      expect(text(d('detail-meta'))).toBe('19 Oct · Own money');
+      expect(status()).toBe('Booked');
+      expect(text(d('receipt-state'))).toBe('IMG_2049.jpg');
+      expect(d('open-document')!.getAttribute('href')).toBe('/documents/wd-d7');
+      expect(d('bank-iban')).toBeNull(); // there is no bank behind it
+      // It can't be unlinked, so it doesn't say to unlink the document: it says why the payment stays business.
+      expect(text(d('private-blocked'))).toBe('This payment was made from its receipt, so it stays business.');
+      expect(d('kind-private')).toBeNull();
+      expect(historyTexts()).toEqual(['You marked it as paid with your own money']);
+    });
+
+    it('a payment paid in cash says the same, in every language', async () => {
+      TestBed.inject(ReceiptService).markPaid('wd-d7', 'cash', '2026-10-19');
+      await render('/payments/paid-wd-d7');
+      expect(text(d('private-blocked'))).toBe('This payment was made from its receipt, so it stays business.');
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlockedPaid);
+      expect(text(d('private-blocked'))).not.toBe(de.payments.detail.booking.privateBlocked);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlockedPaid);
+    });
+
+    it('a payment with a self-issued receipt stays business, and does not say to unlink the receipt that cannot be unlinked, in every language', async () => {
+      const receipts = TestBed.inject(ReceiptService);
+      expect(receipts.createSelfIssued('wd-t20', { purpose: 'Parken beim Kunden', reason: 'machine', reasonText: null, address: null }, 'payment')).not.toBeNull();
+      await render('/payments/wd-t20');
+      expect(d('open-document')).not.toBeNull();
+      expect(text(d('private-blocked'))).toBe('This payment has a self-issued receipt, so it stays business.');
+      expect(d('kind-private')).toBeNull();
+      expect(d('kind-business')).toBeNull();
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(de.payments.detail.booking.privateBlockedSelfIssued);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(d('private-blocked'))).toBe(ar.payments.detail.booking.privateBlockedSelfIssued);
     });
 
     it('choosing a document twice writes one history line on each side', async () => {
@@ -734,6 +807,14 @@ describe('PaymentDetailPage', () => {
       await render('/payments/wd-t15');
       expect(d('bank-iban')).toBeNull();
       expect(text(d('bank-reference'))).toBe('Einkauf bar');
+    });
+
+    it('an imported payment has no IBAN of the other party, so no empty IBAN row, but keeps its reference', async () => {
+      demo.updateTransaction('wd-t2', (t) => ({ ...t, counterpartyIban: '' }));
+      await render('/payments/wd-t2');
+      expect(d('bank-iban')).toBeNull();
+      expect(d('bank-section')!.textContent).not.toContain('IBAN');
+      expect(text(d('bank-reference'))).toBe('Rechnung 8841 0712, Mobilfunk Oktober');
     });
   });
 

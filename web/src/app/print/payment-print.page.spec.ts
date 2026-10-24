@@ -139,6 +139,13 @@ describe('PaymentPrintPage', () => {
     ]);
   });
 
+  it('leaves out the IBAN of an imported payment, which has none, but keeps the reference', async () => {
+    demo.updateTransaction('wd-t2', (t) => ({ ...t, counterpartyIban: '' }));
+    await render('/print/payment/wd-t2');
+    expect(q('print-iban')).toBeNull();
+    expect(text(q('print-reference'))).toBe('Rechnung 8841 0712, Mobilfunk Oktober');
+  });
+
   it('follows the language and direction of the app', async () => {
     TestBed.inject(LanguageService).setLang('ar');
     await render('/print/payment/wd-t3');

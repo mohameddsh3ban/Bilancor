@@ -160,7 +160,12 @@ const ROW_CLASS =
 
           <ul class="flex flex-col gap-2">
             <li>
-              <a [class]="rowClass" data-testid="not-listed" [routerLink]="['/soon', 'statementImport']">
+              <a
+                [class]="rowClass"
+                data-testid="not-listed"
+                routerLink="/payments/import"
+                [queryParams]="{ new: 1, from: from() }"
+              >
                 <ng-icon name="lucideFileUp" size="20" class="text-muted-foreground shrink-0" aria-hidden="true" />
                 <span class="flex min-w-0 flex-1 flex-col">
                   <span class="font-medium">{{ 'bankConnect.pick.notListed.title' | transloco }}</span>
