@@ -281,8 +281,7 @@ export class DemoStateService {
    * running month, one that is closed already, one of the earlier months, one with a payment that needs the person).
    */
   closeMonth(month: string): boolean {
-    const role = this.myRole();
-    if (role !== 'owner' && role !== 'full') return false;
+    if (!months.canCloseMonths(this.myRole())) return false;
     const person = this.person;
     const before = this.data();
     this.updateBusiness(this.businessIdSignal(), (b) => months.closeMonth(b, month, `${person.firstName} ${person.lastName}`, DEMO_TODAY));

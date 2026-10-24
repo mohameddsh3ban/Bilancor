@@ -70,6 +70,10 @@ export const routes: Routes = [
         loadComponent: () => import('./taxes/taxes.page').then((m) => m.TaxesPage),
       },
       {
+        path: 'reports',
+        loadComponent: () => import('./reports/reports.page').then((m) => m.ReportsPage),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./settings/settings.page').then((m) => m.SettingsPage),
       },

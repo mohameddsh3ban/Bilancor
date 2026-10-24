@@ -123,6 +123,12 @@ describe('formatMonthRange', () => {
     expect(formatMonthRange('2026-01', '2026-01', 'en')).toBe('January');
     expect(formatMonthRange('2026-03', '2026-03', 'de')).toBe('März');
   });
+
+  it('can name the months short, for a narrow place', () => {
+    expect(formatMonthRange('2026-01', '2026-07', 'en', { short: true })).toBe('Jan–Jul');
+    expect(formatMonthRange('2026-01', '2026-06', 'de', { short: true })).toBe('Jan–Jun');
+    expect(formatMonthRange('2026-03', '2026-03', 'de', { short: true })).toBe('Mär');
+  });
 });
 
 describe('countryName', () => {

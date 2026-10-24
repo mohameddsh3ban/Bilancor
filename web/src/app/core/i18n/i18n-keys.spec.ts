@@ -114,6 +114,9 @@ describe('translation files', () => {
       'mahnung',
       'leitwegId',
       'reverseCharge',
+      'bwa',
+      'gdpdu',
+      'festschreibung',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

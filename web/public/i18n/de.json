@@ -175,6 +175,21 @@
       "de": "Steuerberater:in",
       "explain": "Eine Person mit staatlicher Zulassung, die in Steuerfragen berät und Steuererklärungen für andere abgibt. Diese App gibt keine persönliche Steuerberatung, das tun Steuerberater:innen."
     },
+    "bwa": {
+      "label": "BWA",
+      "de": "BWA",
+      "explain": "Die monatliche Übersicht über deine Einnahmen, Ausgaben und deinen Gewinn (Betriebswirtschaftliche Auswertung). Steuerberater:innen und Banken fragen oft danach."
+    },
+    "gdpdu": {
+      "label": "GDPdU",
+      "de": "GDPdU",
+      "explain": "Das festgelegte Format, in dem das Finanzamt bei einer Prüfung deine Bücher in digitaler Form anfordern kann. Deine Steuerberater:in weiß meist, was zu übergeben ist."
+    },
+    "festschreibung": {
+      "label": "Festschreibung",
+      "de": "Festschreibung",
+      "explain": "Sind die Buchungen eines Monats festgeschrieben, lassen sie sich nicht mehr ändern oder löschen. Eine spätere Korrektur wird im laufenden Monat gebucht."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -192,7 +207,6 @@
   "soon": {
     "home": "Start",
     "payments": "Zahlungen",
-    "reports": "Auswertungen",
     "help": "Hilfe",
     "more": "Mehr",
     "terms": "Bedingungen der Bankanbindung",
@@ -445,6 +459,87 @@
       "returns": "Erklärungen zum Jahresende",
       "due": "fällig am",
       "prepared": "Diese werden am Jahresende vorbereitet."
+    }
+  },
+  "reports": {
+    "title": "Auswertungen",
+    "connect": {
+      "title": "Verbinde deine Bank, um deine Monate zu sehen",
+      "body": "Deine Monate erscheinen hier, sobald deine Bank verbunden ist.",
+      "action": "Bank verbinden"
+    },
+    "needs": {
+      "title": {
+        "one": "1 Zahlung braucht dich noch",
+        "many": "{{count}} Zahlungen brauchen dich noch"
+      },
+      "note": {
+        "one": "Sie steckt noch nicht in diesen Zahlen und Exporten.",
+        "many": "Sie stecken noch nicht in diesen Zahlen und Exporten."
+      },
+      "start": "Starten"
+    },
+    "months": {
+      "title": "Monat für Monat",
+      "net": "Einnahmen und Ausgaben ohne Umsatzsteuer, aus den gebuchten Zahlungen. Immer auf dem neuesten Stand.",
+      "gross": "Einnahmen und Ausgaben wie gezahlt, aus den gebuchten Zahlungen. Immer auf dem neuesten Stand.",
+      "income": "Einnahmen",
+      "costs": "Ausgaben",
+      "profit": "Gewinn",
+      "earlier": "frühere Monate",
+      "until": "bis {{date}}",
+      "state": {
+        "closed": "Abgeschlossen",
+        "notClosed": "Nicht abgeschlossen",
+        "running": "Läuft"
+      },
+      "close": "Abschließen",
+      "closeMonth": "{{month}} abschließen",
+      "readyFrom": "Abschließen ab {{date}} möglich",
+      "total": "Bisher im Jahr",
+      "byReturn": {
+        "one": "{{months}} wurde von selbst abgeschlossen, als die Umsatzsteuer-Voranmeldung gesendet wurde",
+        "many": "{{months}} wurden von selbst abgeschlossen, als die Umsatzsteuer-Voranmeldungen gesendet wurden"
+      },
+      "onlyFull": "Nur die Inhaber:in und Personen mit vollem Zugriff können einen Monat abschließen."
+    },
+    "close": {
+      "title": "{{month}} abschließen?",
+      "cross": "Fenster schließen",
+      "locks": "Beim Abschließen werden die Buchungen gesperrt: Sie lassen sich nicht mehr ändern. Das nennt man {{term}}.",
+      "check": {
+        "paid": "Jede Zahlung ist gebucht und hat ihren Beleg",
+        "unclear": {
+          "one": "1 unklar",
+          "many": "{{count}} unklar"
+        },
+        "confirm": "{{count}} zu bestätigen",
+        "noReceipt": {
+          "one": "1 Beleg fehlt",
+          "many": "{{count}} Belege fehlen"
+        },
+        "join": ", ",
+        "start": "Starten",
+        "noDuplicates": "Nichts sieht nach einer Dublette aus",
+        "duplicates": {
+          "one": "1 Dokument sieht nach einer Dublette aus",
+          "many": "{{count}} Dokumente sehen nach Dubletten aus"
+        },
+        "show": "Anzeigen",
+        "matches": "Stimmt mit der Bank überein",
+        "statement": "Prüfe es mit deinem Kontoauszug"
+      },
+      "confirm": "{{month}} abschließen",
+      "notYet": "Noch nicht"
+    },
+    "audit": {
+      "title": "Für eine Betriebsprüfung",
+      "body": "Wenn das Finanzamt dich prüft, kann es deine Bücher in einem festen Format verlangen. Frag zuerst deine Steuerberater:in: Meist reicht deren Export.",
+      "download": "Prüfungsexport (ZIP) herunterladen"
+    },
+    "demo": {
+      "label": "Demo",
+      "noFile": "In der Demo wird keine Datei erstellt. Sie hieße"
     }
   },
   "taxReminder": {

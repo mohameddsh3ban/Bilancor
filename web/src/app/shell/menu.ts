@@ -31,14 +31,14 @@ export interface MenuItem {
   icon: string;
 }
 
-/** The main menu, in display order. Home, Payments, Documents, Invoices, Taxes and Settings are real pages; the rest open "coming soon". */
+/** The main menu, in display order. Home, Payments, Documents, Invoices, Taxes, Reports and Settings are real pages; the rest open "coming soon". */
 export const MENU_ITEMS: MenuItem[] = [
   { id: 'home', route: '/', icon: 'lucideHouse' },
   { id: 'payments', route: '/payments', icon: 'lucideCreditCard' },
   { id: 'documents', route: '/documents', icon: 'lucideFileText' },
   { id: 'invoices', route: '/invoices', icon: 'lucideReceipt' },
   { id: 'taxes', route: '/taxes', icon: 'lucideLandmark' },
-  { id: 'reports', route: '/soon/reports', icon: 'lucideChartColumn' },
+  { id: 'reports', route: '/reports', icon: 'lucideChartColumn' },
   { id: 'settings', route: '/settings', icon: 'lucideSettings' },
   { id: 'help', route: '/soon/help', icon: 'lucideCircleQuestionMark' },
 ];

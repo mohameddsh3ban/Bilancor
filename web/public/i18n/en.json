@@ -175,6 +175,21 @@
       "de": "Steuerberater:in",
       "explain": "A licensed professional in Germany who advises on taxes and files tax returns for others. This app does not give personal tax advice; a Steuerberater:in does."
     },
+    "bwa": {
+      "label": "Monthly business report",
+      "de": "BWA",
+      "explain": "The monthly overview of your income, costs and profit (Betriebswirtschaftliche Auswertung). Tax advisors and banks often ask for it."
+    },
+    "gdpdu": {
+      "label": "Tax audit data format",
+      "de": "GDPdU",
+      "explain": "The set format in which the tax office can ask for your books in digital form during an audit. Your tax advisor usually knows what to hand over."
+    },
+    "festschreibung": {
+      "label": "Locking the books",
+      "de": "Festschreibung",
+      "explain": "Once the bookings of a month are locked, they can't be changed or deleted any more. A later fix is made as a correction in the current month."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -192,7 +207,6 @@
   "soon": {
     "home": "Home",
     "payments": "Payments",
-    "reports": "Reports",
     "help": "Help",
     "more": "More",
     "terms": "Bank connection terms",
@@ -445,6 +459,87 @@
       "returns": "Returns at the end of the year",
       "due": "due",
       "prepared": "These are prepared at the end of the year."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "connect": {
+      "title": "Connect your bank to see your months",
+      "body": "Your months show up here as soon as your bank is connected.",
+      "action": "Connect your bank"
+    },
+    "needs": {
+      "title": {
+        "one": "1 payment still needs you",
+        "many": "{{count}} payments still need you"
+      },
+      "note": {
+        "one": "It isn't in these figures or exports yet.",
+        "many": "They aren't in these figures or exports yet."
+      },
+      "start": "Start"
+    },
+    "months": {
+      "title": "Month by month",
+      "net": "Income and costs without VAT, from the booked payments. Always up to date.",
+      "gross": "Income and costs as paid, from the booked payments. Always up to date.",
+      "income": "Income",
+      "costs": "Costs",
+      "profit": "Profit",
+      "earlier": "earlier months",
+      "until": "until {{date}}",
+      "state": {
+        "closed": "Closed",
+        "notClosed": "Not closed",
+        "running": "Running"
+      },
+      "close": "Close",
+      "closeMonth": "Close {{month}}",
+      "readyFrom": "Ready to close from {{date}}",
+      "total": "Year so far",
+      "byReturn": {
+        "one": "{{months}} closed by itself when its VAT return was sent",
+        "many": "{{months}} closed by themselves when their VAT returns were sent"
+      },
+      "onlyFull": "Only the owner and people with full access can close a month."
+    },
+    "close": {
+      "title": "Close {{month}}?",
+      "cross": "Close window",
+      "locks": "Closing locks its bookings: they can't be changed any more. This is called {{term}}.",
+      "check": {
+        "paid": "Every payment is booked and has its receipt",
+        "unclear": {
+          "one": "1 unclear",
+          "many": "{{count}} unclear"
+        },
+        "confirm": "{{count}} to confirm",
+        "noReceipt": {
+          "one": "1 receipt missing",
+          "many": "{{count}} receipts missing"
+        },
+        "join": ", ",
+        "start": "Start",
+        "noDuplicates": "Nothing looks like a duplicate",
+        "duplicates": {
+          "one": "1 document looks like a duplicate",
+          "many": "{{count}} documents look like duplicates"
+        },
+        "show": "Show",
+        "matches": "Matches the bank",
+        "statement": "Check it against your statement"
+      },
+      "confirm": "Close {{month}}",
+      "notYet": "Not yet"
+    },
+    "audit": {
+      "title": "For a tax audit",
+      "body": "If the tax office audits you, it may ask for your books in a set format. Ask your tax advisor first: usually their export is enough.",
+      "download": "Download the audit export (ZIP)"
+    },
+    "demo": {
+      "label": "Demo",
+      "noFile": "No file is made in the demo. Its name would be"
     }
   },
   "taxReminder": {

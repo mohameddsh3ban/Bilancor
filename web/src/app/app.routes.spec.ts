@@ -121,6 +121,21 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
 
+  it('Reports is inside the app shell: signed out it asks for signing in first, signed in it opens the page', async () => {
+    const harness = await RouterTestingHarness.create('/reports');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Freports');
+
+    signInAsSara();
+    await harness.navigateByUrl('/reports');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-reports-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/reports');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+  });
+
   it('signed in, the pages of the app open', async () => {
     signInAsSara();
     const harness = await RouterTestingHarness.create('/payments');

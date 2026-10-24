@@ -14,7 +14,7 @@ describe('menu', () => {
     ]);
   });
 
-  it('Home, Payments, Documents, Invoices, Taxes and Settings are real pages; everything else opens coming soon', () => {
+  it('Home, Payments, Documents, Invoices, Taxes, Reports and Settings are real pages; everything else opens coming soon', () => {
     for (const item of MENU_ITEMS) {
       const real: Record<string, string> = {
         home: '/',
@@ -22,6 +22,7 @@ describe('menu', () => {
         documents: '/documents',
         invoices: '/invoices',
         taxes: '/taxes',
+        reports: '/reports',
         settings: '/settings',
       };
       expect(item.route).toBe(real[item.id] ?? `/soon/${item.id}`);
@@ -45,6 +46,11 @@ describe('menu', () => {
   it('menu and homepage open /taxes: the menu entry, also from the more sheet', () => {
     expect(MENU_ITEMS.find((i) => i.id === 'taxes')?.route).toBe('/taxes');
     expect(MORE_ITEMS.find((i) => i.id === 'taxes')?.route).toBe('/taxes');
+  });
+
+  it('the menu opens /reports, also from the more sheet', () => {
+    expect(MENU_ITEMS.find((i) => i.id === 'reports')?.route).toBe('/reports');
+    expect(MORE_ITEMS.find((i) => i.id === 'reports')?.route).toBe('/reports');
   });
 
   it('menu Settings goes to /settings, also from the more sheet', () => {

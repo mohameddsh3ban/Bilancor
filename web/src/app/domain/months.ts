@@ -1,4 +1,6 @@
-import type { Business, HistoryEntry, Transaction, TxStatus } from '../data/models';
+import { DEMO_TODAY } from '../data/demo-date';
+import type { Business, HistoryEntry, Role, Transaction, TxStatus } from '../data/models';
+import { connectionStatus } from './bank-connection';
 import { docStatus } from './document-status';
 import { paymentStatus } from './payment-status';
 import { paymentFigure } from './tax-year';
@@ -114,13 +116,17 @@ export interface CloseCheck {
   confirm: number; // payments of the month whose booking is not confirmed
   noReceipt: number; // payments of the month still missing their receipt
   duplicateDocIds: string[]; // documents dated in the month that look like a duplicate (a warning only)
-  // every account but the cash box: it matches the bank (connected), or the person checks it against the statement
+  // every account but the cash box: it matches the bank (a connection that works), or the person checks it against the statement
   accounts: { accountId: string; result: 'matches' | 'statement' }[];
   blocked: boolean; // a payment of the month needs the person
 }
 
-/** The check before closing a month (see `CloseCheck`). A payment needs the person by the app's one rule, `paymentStatus`. */
-export function closeCheck(business: Business, month: string): CloseCheck {
+/**
+ * The check before closing a month (see `CloseCheck`). A payment needs the person by the app's one rule, `paymentStatus`.
+ * An account matches the bank while its connection works (`connectionStatus` on `today`, an ISO date): one whose consent has
+ * ended or that the bank reports as broken, a statement account and the like are checked against the statement.
+ */
+export function closeCheck(business: Business, month: string, today: string = DEMO_TODAY): CloseCheck {
   const inMonth = business.transactions.filter((tx) => monthOf(tx.date) === month);
   const count = (status: TxStatus): number => inMonth.filter((tx) => paymentStatus(tx) === status).length;
   const unclear = count('unclear');
@@ -135,10 +141,10 @@ export function closeCheck(business: Business, month: string): CloseCheck {
       .map((doc) => doc.id),
     accounts: business.accounts
       .filter((account) => account.kind === 'bank')
-      .map((account) => ({
-        accountId: account.id,
-        result: account.connection.kind === 'connected' ? 'matches' : 'statement',
-      })),
+      .map((account) => {
+        const { kind } = connectionStatus(account, today);
+        return { accountId: account.id, result: kind === 'connected' || kind === 'renewSoon' ? 'matches' : 'statement' };
+      }),
     blocked: unclear + confirm + noReceipt > 0,
   };
 }
@@ -160,6 +166,11 @@ function withClosedMonths(business: Business, months: readonly string[], by: str
     closedMonths: closed.sort((a, b) => a.month.localeCompare(b.month)),
     history: [...lines.reverse(), ...business.history],
   };
+}
+
+/** Whether a person with this role (null: none in the business) may close a month: the owner and Full access, not Receipts only or the tax advisor. */
+export function canCloseMonths(role: Role | null): boolean {
+  return role === 'owner' || role === 'full';
 }
 
 /**

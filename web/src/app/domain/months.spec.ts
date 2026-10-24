@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { REVENUE_19, SOFTWARE } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
-import type { Business, Doc, Transaction } from '../data/models';
+import type { Account, Business, Doc, Transaction } from '../data/models';
 import { newBusiness } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { DemoStateService } from '../state/demo-state.service';
 import { InvoiceService } from '../state/invoice.service';
-import { closeCheck, closeMonth, closeMonthsOf, isClosedDate, monthRows, yearTotals, type MonthRow } from './months';
+import { canCloseMonths, closeCheck, closeMonth, closeMonthsOf, isClosedDate, monthRows, yearTotals, type MonthRow } from './months';
 import { changeCategory, confirmBooking, setPrivate } from './payment-actions';
 import { yearSummary } from './tax-year';
 
@@ -274,8 +274,43 @@ describe('closeCheck', () => {
     expect(closeCheck(weber, '2026-09').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
   });
 
+  /** The business with one account's connection changed, as the bank would report it. */
+  const withConnection = (b: Business, accountId: string, change: Partial<Account['connection']>): Business => ({
+    ...b,
+    accounts: b.accounts.map((a) => (a.id === accountId ? { ...a, connection: { ...a.connection, ...change } } : a)),
+  });
+
+  it('a connected account whose consent has ended, or that the bank reports as broken, says to check it too', () => {
+    // Sara Weber Yoga's Qonto: the consent ended on 20 Oct, so September's balance can't be read from the bank any more.
+    expect(sara.accounts.find((a) => a.id === 'sy-qonto')!.connection.consentUntil).toBe('2026-10-20');
+    expect(closeCheck(sara, '2026-09').accounts).toEqual([{ accountId: 'sy-qonto', result: 'statement' }]);
+    expect(closeCheck(withConnection(weber, 'wd-qonto', { broken: true }), '2026-09').accounts).toEqual([
+      { accountId: 'wd-qonto', result: 'statement' },
+    ]);
+    expect(closeCheck(withConnection(weber, 'wd-qonto', { consentUntil: '2026-10-21' }), '2026-09').accounts).toEqual([
+      { accountId: 'wd-qonto', result: 'statement' },
+    ]);
+  });
+
+  it('a connection that only ends soon still matches the bank, until the day it ends', () => {
+    const endsSoon = withConnection(weber, 'wd-qonto', { consentUntil: '2026-11-01' });
+    expect(closeCheck(endsSoon, '2026-09').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
+    expect(closeCheck(endsSoon, '2026-09', '2026-11-01').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
+    expect(closeCheck(endsSoon, '2026-09', '2026-11-02').accounts).toEqual([{ accountId: 'wd-qonto', result: 'statement' }]);
+  });
+
   it('a business with no account has none to check', () => {
     expect(closeCheck({ ...weber, accounts: [] }, '2026-09').accounts).toEqual([]);
+  });
+});
+
+describe('canCloseMonths', () => {
+  it('only the owner and someone with full access can close a month', () => {
+    expect(canCloseMonths('owner')).toBe(true);
+    expect(canCloseMonths('full')).toBe(true);
+    expect(canCloseMonths('receipts')).toBe(false);
+    expect(canCloseMonths('advisor')).toBe(false);
+    expect(canCloseMonths(null)).toBe(false); // no access to the business at all
   });
 });
 
