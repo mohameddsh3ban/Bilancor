@@ -252,6 +252,19 @@ describe('searchHelp', () => {
   it('leaves out an answer that has no text in the language', () => {
     expect(searchHelp('return', texts({}))).toEqual([]);
   });
+
+  it('leaves out a term with no text yet, as before the translation file has arrived (an empty object)', () => {
+    const none = { answers: {}, terms: {} } as unknown as SearchTexts;
+    expect(() => searchHelp('ustva', none)).not.toThrow();
+    expect(searchHelp('ustva', none)).toEqual([]);
+
+    // Only some terms are here: those are still found.
+    const some = {
+      answers: {},
+      terms: { ustva: en.terms.ustva },
+    } as unknown as SearchTexts;
+    expect(searchHelp('UStVA', some)).toEqual([{ kind: 'term', key: 'ustva' }]);
+  });
 });
 
 describe('termsAZ', () => {

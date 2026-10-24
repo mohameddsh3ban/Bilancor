@@ -73,7 +73,7 @@ export type HelpHit =
  * (all in the language of the page), ignoring case, spaces and the spelling of umlauts and accents. The hits come in
  * this order: answers whose question matches, answers whose text matches, terms whose label or German word matches,
  * terms whose explanation matches; within each group in the order of the data. A blank query finds nothing, and an
- * answer with no text in `texts` is left out.
+ * answer or a term with no text in `texts` is left out (the translation file may still be on its way).
  */
 export function searchHelp(
   query: string,
@@ -99,6 +99,7 @@ export function searchHelp(
   const byExplanation: HelpHit[] = [];
   for (const key of TERM_KEYS) {
     const term = texts.terms[key];
+    if (!term) continue;
     if (has(term.label) || has(term.de)) byName.push({ kind: 'term', key });
     else if (has(term.explain)) byExplanation.push({ kind: 'term', key });
   }
