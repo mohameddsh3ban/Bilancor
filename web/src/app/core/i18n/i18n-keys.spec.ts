@@ -176,6 +176,17 @@ describe('translation files', () => {
     }
   });
 
+  it('an answer that talks about the VAT return says it is for a business that charges VAT', () => {
+    // The same Help for everyone, and a Kleinunternehmer has no VAT return: the condition is said in words.
+    const answers = helpOf(en).answers ?? {};
+    for (const { id } of HELP_ANSWERS) {
+      const text = String(answers[id]?.a ?? '');
+      if (/VAT return/.test(text)) {
+        expect(text, `en ${id}`).toMatch(/if your business charges VAT/i);
+      }
+    }
+  });
+
   it('every answer names its German terms by their German word, in all three languages', () => {
     for (const [lang, file] of Object.entries({ en, de, ar })) {
       const help = helpOf(file);

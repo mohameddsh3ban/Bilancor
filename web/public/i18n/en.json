@@ -2174,7 +2174,7 @@
       },
       "change-language": {
         "q": "How do I change the app's language?",
-        "a": "Tap EN, DE or عربي in the top bar, or choose a language on the Language card in My account (open it from your initials at the end of the top bar). The language is yours: it sets the app and our emails to you, and others in the same business keep their own.\n\nTax returns, exports and invoices to German customers stay German, whatever you choose. Each invoice can be in German or English; the default is in Settings › Invoice details."
+        "a": "Tap EN, DE or عربي in the top bar, or choose a language on the Language card in My account (open it from your initials at the end of the top bar). The language is yours: it sets the app and our emails to you, and others in the same business keep their own.\n\nTax returns and exports are always in German, whatever language you choose. Each invoice has a language of its own, German or English, whatever the app's language; the default is in Settings › Invoice details."
       },
       "connect-bank": {
         "q": "How do I connect my bank?",
@@ -2186,11 +2186,11 @@
       },
       "payment-needs": {
         "q": "What does a payment need from me?",
-        "a": "Every business payment needs a category, a confirmed booking and a receipt. The app does most of it: it books what it can and links the receipts it finds. What it can't decide waits for you under Needs you.\n\nTap Needs you in the top bar to go through them one card at a time: say what an unclear payment was for, confirm a booking, add a missing receipt with Take a photo or Pick from Documents, or choose No receipt needed. Receipt lost? For money out, you can write a self-issued receipt (Eigenbeleg).\n\nA payment that still needs you isn't in your VAT return or your figures yet."
+        "a": "Every business payment needs a category, a confirmed booking and a receipt. The app does most of it: it books what it can and links the receipts it finds. What it can't decide waits for you under Needs you.\n\nTap Needs you in the top bar to go through them one card at a time: say what an unclear payment was for, confirm a booking, add a missing receipt with Take a photo or Pick from Documents, or choose No receipt needed. Receipt lost? For money out, you can write a self-issued receipt (Eigenbeleg).\n\nA payment that still needs you isn't in your figures yet (or in your VAT return, if your business charges VAT)."
       },
       "private-payment": {
         "q": "What if a payment was private?",
-        "a": "Open the payment and switch This payment is from Business to Private, or choose Private, not for the business in Needs you. A private payment needs no receipt and is left out of your VAT return and your profit. Private money coming in, such as money from your own account, is booked as an owner's deposit (Privateinlage).\n\nA payment with a document linked to it can't be made private until you unlink the document, and a payment that pays an invoice stays business.\n\nPaid a business cost with your own card or cash? Open its receipt in Documents, choose Paid in cash or with my own money, then With my own money. The payment goes into the Own money account, and the cost counts for the business."
+        "a": "Open the payment and switch This payment is from Business to Private, or choose Private, not for the business in Needs you. A private payment needs no receipt and is left out of your profit (and of your VAT return, if your business charges VAT). Private money coming in, such as money from your own account, is booked as an owner's deposit (Privateinlage).\n\nA payment with a document linked to it can't be made private until you unlink the document, and a payment that pays an invoice stays business.\n\nPaid a business cost with your own card or cash? Open its receipt in Documents, choose Paid in cash or with my own money, then With my own money. The payment goes into the Own money account, and the cost counts for the business."
       },
       "add-receipt-phone": {
         "q": "How do I add a receipt with my phone?",
@@ -2222,11 +2222,11 @@
       },
       "send-return": {
         "q": "What happens when I send my VAT return?",
-        "a": "On Taxes, Send to the tax office first shows a check: the period, the VAT you charged, the VAT you paid and the result. Send passes your VAT return (UStVA) to the tax office through ELSTER, its official online channel.\n\nYou then get a transfer receipt (Übertragungsprotokoll) to print or save as a PDF; it stays under Sent earlier with the date and amount. A sent return can't be changed, and the next period becomes your current return.\n\nSending also closes the months of the period: their payments can't be changed after that."
+        "a": "If your business charges VAT, Taxes has Send to the tax office. It first shows a check: the period, the VAT you charged, the VAT you paid and the result. Send passes your VAT return (UStVA) to the tax office through ELSTER, its official online channel.\n\nYou then get a transfer receipt (Übertragungsprotokoll) to print or save as a PDF; it stays under Sent earlier with the date and amount. A sent return can't be changed, and the next period becomes your current return.\n\nSending also closes the months of the period: their payments can't be changed after that."
       },
       "payment-blocks-send": {
         "q": "Why does a payment stop me sending my VAT return?",
-        "a": "Your VAT return (UStVA) counts only booked payments. While a payment of the period still needs you (it isn't sorted, isn't confirmed or has no receipt), the return would leave it out, so the button reads Fix 1 payment first, or however many there are.\n\nChoose it to open Needs you and answer the cards. Once every payment of the period is booked, the button is Send to the tax office again.\n\nThe button is also off while the period is still running; the note under it says from when you can send."
+        "a": "If your business charges VAT, its VAT return (UStVA) counts only booked payments. While a payment of the period still needs you (it isn't sorted, isn't confirmed or has no receipt), the return would leave it out, so the button on Taxes reads Fix 1 payment first, or however many there are.\n\nChoose it to open Needs you and answer the cards. Once every payment of the period is booked, the button is Send to the tax office again.\n\nThe button is also off while the period is still running; the note under it says from when you can send."
       },
       "klein-limit": {
         "q": "What is the Kleinunternehmer limit?",
@@ -2234,7 +2234,7 @@
       },
       "close-month": {
         "q": "What happens when I close a month?",
-        "a": "On Reports, Month by month shows each month's income, costs and profit: your monthly business report (BWA). A finished month that isn't closed yet has a Close button.\n\nFirst the app checks the month: every payment must be booked and have its receipt, or the month can't be closed yet. It also warns about possible duplicates and about bank accounts to check against your statement. Only the owner and people with full access can close a month.\n\nClosing locks the month's bookings (Festschreibung): they can't be changed any more. Sending a VAT return closes the months of its period by itself."
+        "a": "On Reports, Month by month shows each month's income, costs and profit: your monthly business report (BWA). A finished month that isn't closed yet has a Close button.\n\nFirst the app checks the month: every payment must be booked and have its receipt, or the month can't be closed yet. It also warns about possible duplicates and about bank accounts to check against your statement. Only the owner and people with full access can close a month.\n\nClosing locks the month's bookings (Festschreibung): they can't be changed any more. If your business charges VAT, sending a VAT return also closes the months of its period by itself."
       },
       "export-advisor": {
         "q": "How do I send my books to my tax advisor?",
