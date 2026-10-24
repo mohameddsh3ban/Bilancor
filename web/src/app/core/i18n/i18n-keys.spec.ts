@@ -1,6 +1,7 @@
 import en from '../../../../public/i18n/en.json';
 import de from '../../../../public/i18n/de.json';
 import ar from '../../../../public/i18n/ar.json';
+import { TERM_KEYS } from './term-keys';
 
 function flatten(obj: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(obj).flatMap(([key, value]) =>
@@ -99,51 +100,7 @@ describe('translation files', () => {
   });
 
   it('has the German tax terms with label, de and explain', () => {
-    const terms = [
-      'ustva',
-      'euer',
-      'kleinunternehmer',
-      'skr03',
-      'eigenbeleg',
-      'eingangsbeleg',
-      'ausgangsbeleg',
-      'freiberufler',
-      'gewerbe',
-      'einzelunternehmen',
-      'gbr',
-      'avv',
-      'steuerberater',
-      'dauerfristverlaengerung',
-      'istVersteuerung',
-      'sollVersteuerung',
-      'steuernummer',
-      'ustIdNr',
-      'finanzamt',
-      'umsatzsteuer',
-      'vorsteuer',
-      'elster',
-      'einkommensteuererklaerung',
-      'feststellungserklaerung',
-      'umsatzsteuererklaerung',
-      'uebertragungsprotokoll',
-      'rechnung',
-      'stornorechnung',
-      'eRechnung',
-      'zugferd',
-      'xrechnung',
-      'zahlungserinnerung',
-      'mahnung',
-      'leitwegId',
-      'reverseCharge',
-      'bwa',
-      'gdpdu',
-      'festschreibung',
-      'camt',
-      'kontoauszug',
-      'kasse',
-      'privateinlage',
-    ];
-    for (const term of terms) {
+    for (const term of TERM_KEYS) {
       for (const part of ['label', 'de', 'explain']) {
         expect(enKeys).toContain(`terms.${term}.${part}`);
       }

@@ -5,50 +5,10 @@ import { TranslocoPipe, translateSignal } from '@jsverse/transloco';
 import { HlmPopoverImports } from '@spartan-ng/helm/popover';
 import { HlmTooltip } from '@spartan-ng/helm/tooltip';
 import { LanguageService } from './language.service';
+import type { TermKey } from './term-keys';
 
-export type TermKey =
-  | 'ustva'
-  | 'euer'
-  | 'kleinunternehmer'
-  | 'skr03'
-  | 'eigenbeleg'
-  | 'eingangsbeleg'
-  | 'ausgangsbeleg'
-  | 'freiberufler'
-  | 'gewerbe'
-  | 'einzelunternehmen'
-  | 'gbr'
-  | 'avv'
-  | 'steuerberater'
-  | 'dauerfristverlaengerung'
-  | 'istVersteuerung'
-  | 'sollVersteuerung'
-  | 'steuernummer'
-  | 'ustIdNr'
-  | 'finanzamt'
-  | 'umsatzsteuer'
-  | 'vorsteuer'
-  | 'elster'
-  | 'einkommensteuererklaerung'
-  | 'feststellungserklaerung'
-  | 'umsatzsteuererklaerung'
-  | 'uebertragungsprotokoll'
-  | 'rechnung'
-  | 'stornorechnung'
-  | 'eRechnung'
-  | 'zugferd'
-  | 'xrechnung'
-  | 'zahlungserinnerung'
-  | 'mahnung'
-  | 'leitwegId'
-  | 'reverseCharge'
-  | 'bwa'
-  | 'gdpdu'
-  | 'festschreibung'
-  | 'camt'
-  | 'kontoauszug'
-  | 'kasse'
-  | 'privateinlage';
+// The keys live in `term-keys.ts`, away from the components, so data and rules can use them without pulling these in.
+export type { TermKey };
 
 /** The words of a German tax term as plain text: the translation, and the German original next to it (not in German). */
 @Component({

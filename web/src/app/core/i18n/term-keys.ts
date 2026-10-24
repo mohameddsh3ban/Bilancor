@@ -1,0 +1,51 @@
+/**
+ * Every German tax term the app explains: the keys under `terms.*` in the translation files, except `whatIs` (the label of
+ * the info button, not a term). The type of a term's key, the count of terms and the German terms A–Z all come from this
+ * one list, so a new term is added here and in the three translation files, and shows up everywhere.
+ */
+export const TERM_KEYS = [
+  'ustva',
+  'euer',
+  'kleinunternehmer',
+  'skr03',
+  'eigenbeleg',
+  'eingangsbeleg',
+  'ausgangsbeleg',
+  'freiberufler',
+  'gewerbe',
+  'einzelunternehmen',
+  'gbr',
+  'avv',
+  'steuerberater',
+  'dauerfristverlaengerung',
+  'istVersteuerung',
+  'sollVersteuerung',
+  'steuernummer',
+  'ustIdNr',
+  'finanzamt',
+  'umsatzsteuer',
+  'vorsteuer',
+  'elster',
+  'einkommensteuererklaerung',
+  'feststellungserklaerung',
+  'umsatzsteuererklaerung',
+  'uebertragungsprotokoll',
+  'rechnung',
+  'stornorechnung',
+  'eRechnung',
+  'zugferd',
+  'xrechnung',
+  'zahlungserinnerung',
+  'mahnung',
+  'leitwegId',
+  'reverseCharge',
+  'bwa',
+  'gdpdu',
+  'festschreibung',
+  'camt',
+  'kontoauszug',
+  'kasse',
+  'privateinlage',
+] as const;
+
+export type TermKey = (typeof TERM_KEYS)[number];
