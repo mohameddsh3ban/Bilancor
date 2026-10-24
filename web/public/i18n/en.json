@@ -155,6 +155,26 @@
       "de": "Steuerschuldnerschaft des Leistungsempfängers",
       "explain": "For a business customer in another EU country, you do not charge German VAT. Your customer pays the VAT in their own country, and the invoice says so."
     },
+    "einzelunternehmen": {
+      "label": "Sole trader",
+      "de": "Einzelunternehmen",
+      "explain": "A business owned and run by one person. You and the business are the same in law, so you are liable with everything you own."
+    },
+    "gbr": {
+      "label": "Partnership",
+      "de": "GbR",
+      "explain": "A partnership of two or more people who run a business together without registering a company. All partners are liable for its debts."
+    },
+    "avv": {
+      "label": "Data processing agreement",
+      "de": "AVV",
+      "explain": "The Auftragsverarbeitungsvertrag: a contract that data protection law requires when one company handles personal data for another. It sets out what may be done with the data and how it is kept safe."
+    },
+    "steuerberater": {
+      "label": "Tax advisor",
+      "de": "Steuerberater:in",
+      "explain": "A licensed professional in Germany who advises on taxes and files tax returns for others. This app does not give personal tax advice; a Steuerberater:in does."
+    },
     "whatIs": "What is {{term}}?"
   },
   "menu": {
@@ -199,7 +219,136 @@
     "mainMenu": "Main menu",
     "logo": "Your logo",
     "needsAction": "Needs action",
-    "earlier": "Earlier"
+    "earlier": "Earlier",
+    "account": "Account: {{name}}",
+    "myAccount": "My account",
+    "signOut": "Sign out",
+    "addBusiness": "Add a business"
+  },
+  "roles": {
+    "owner": {
+      "name": "Owner"
+    },
+    "full": {
+      "name": "Full access",
+      "example": "e.g. a partner",
+      "can": "Everything the owner can: payments, receipts, taxes, settings",
+      "cant": "Invite or remove people, change the plan"
+    },
+    "receipts": {
+      "name": "Receipts only",
+      "example": "e.g. an assistant",
+      "can": "Upload receipts and fix the ones they added",
+      "cant": "Payments, bank balances, taxes, settings"
+    },
+    "advisor": {
+      "name": "Tax advisor",
+      "can": "See everything, download receipts and exports",
+      "cant": "Change bookings, connect banks, send returns"
+    }
+  },
+  "people": {
+    "title": "People with access",
+    "intro": "Only these people can open {{business}}'s books. Everyone is included in the price.",
+    "roleCards": {
+      "legend": "What can they do?",
+      "can": "Can:",
+      "cant": "Can't:"
+    },
+    "row": {
+      "you": "(you)",
+      "joined": "Joined",
+      "invited": "Invited",
+      "linkUntil": "the link works until",
+      "waiting": "Waiting",
+      "actions": "Actions for {{name}}"
+    },
+    "menu": {
+      "change": "Change what they can do",
+      "owner": "Make owner",
+      "remove": "Remove",
+      "resend": "Send again",
+      "cancel": "Cancel invitation"
+    },
+    "ownerNote": "Only {{owner}} (the owner) can invite or remove people.",
+    "invite": {
+      "button": "Invite someone",
+      "title": "Invite someone to {{business}}",
+      "email": "Their email",
+      "hint": "The link works for {{days}} days. They choose their own password.",
+      "send": "Send invitation",
+      "cancel": "Cancel",
+      "error": {
+        "missing": "Type their email.",
+        "invalid": "This doesn't look like an email address.",
+        "hasAccess": "This person already has access.",
+        "invited": "This email is already invited. Use Send again in the list.",
+        "role": "Choose what they can do."
+      }
+    },
+    "dialog": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "role": {
+        "title": "What can {{name}} do?",
+        "confirm": "Save"
+      },
+      "owner": {
+        "title": "Make {{name}} the owner?",
+        "body": "{{name}} will own {{business}} and decide who has access. You become Full access: you can't invite or remove people any more.",
+        "confirm": "Make owner"
+      },
+      "remove": {
+        "title": "Remove {{name}}?",
+        "body": "{{name}} can't open {{business}} any more. What they did stays in the history.",
+        "confirm": "Remove"
+      }
+    },
+    "support": {
+      "title": "Our support team",
+      "off": "No access. We can't see your books unless you let us in, for example when you ask us for help.",
+      "on": "Support can look until",
+      "lookOnly": "Looking only: support can't change anything.",
+      "allow": "Let support look for {{days}} days",
+      "stop": "Stop now"
+    },
+    "mail": {
+      "subject": "{{inviter}} invited you to {{business}}, as {{role}}",
+      "body": "Accept the invitation and choose your own password. The link works for {{days}} days.",
+      "action": "Accept the invitation",
+      "line": "{{inviter}} invited you to {{business}}, as {{role}}. Open the link to join."
+    },
+    "join": {
+      "title": "Join {{business}}",
+      "roleLabel": "Your role",
+      "name": "Your name",
+      "language": "Your language",
+      "hint": {
+        "password": "At least {{min}} characters."
+      },
+      "error": {
+        "name": "Type your name.",
+        "password": "Use at least {{min}} characters."
+      },
+      "submit": "Join",
+      "haveLogin": "Already have a login?",
+      "signIn": "Sign in",
+      "demo": "Demo: joining is a preview. You stay signed in as yourself, and the new person shows in your list.",
+      "signInTitle": "Sign in to join {{business}}",
+      "signInSubmit": "Sign in",
+      "signInDemo": "Demo: any email and password work.",
+      "newLogin": "Join with a new login",
+      "done": {
+        "title": "{{name}} has joined {{business}} as {{role}}",
+        "note": "In this demo you stay signed in as yourself. Seeing the app as someone else comes later.",
+        "back": "Back to Settings"
+      },
+      "gone": {
+        "title": "This invitation no longer works",
+        "body": "It was cancelled or used already, or its link ran out. Ask the owner to send it again.",
+        "back": "Back to Settings"
+      }
+    }
   },
   "taxes": {
     "title": "Taxes",
@@ -409,7 +558,16 @@
     "invoiceDuplicated": "You copied it from invoice {{number}}",
     "paidInCash": "You marked it as paid in cash",
     "paysInvoice": "Pays invoice {{number}}",
-    "bookedByInvoice": "Booked as {{category}} to match the invoice"
+    "bookedByInvoice": "Booked as {{category}} to match the invoice",
+    "personInvited": "{{by}} invited {{email}} as {{role}}",
+    "invitationCancelled": "{{by}} cancelled the invitation for {{email}}",
+    "personJoined": "{{name}} joined as {{role}}",
+    "roleChanged": "{{by}} changed {{name}} to {{role}}",
+    "personRemoved": "{{by}} removed {{name}}",
+    "personLeft": "{{name}} left the business",
+    "ownerChanged": "{{by}} handed the business over to {{name}}",
+    "supportOn": "{{by}} let support look until {{until}}",
+    "supportOff": "{{by}} stopped support access"
   },
   "payments": {
     "title": "Payments",
@@ -1342,6 +1500,277 @@
       "title": "Documents inbox",
       "text": "Forward receipts and invoices to",
       "sorted": "We work out whether each one is received or sent."
+    }
+  },
+  "auth": {
+    "demo": {
+      "shown": "Demo: shown here instead of sent",
+      "to": "To:"
+    },
+    "field": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "error": {
+      "emailMissing": "Type your email.",
+      "passwordMissing": "Type your password."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "signedOut": "You're signed out.",
+      "forgot": "Forgot password?",
+      "submit": "Sign in",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "demo": "Demo: Sara's email is filled in and any password works.",
+      "error": {
+        "member": "In this demo, only Sara's account and accounts you create can sign in. Seeing the app as someone else comes later.",
+        "unknown": "There is no account with this email."
+      }
+    },
+    "code": {
+      "app": {
+        "title": "Enter your code",
+        "hint": "From your authenticator app.",
+        "label": "6-digit code",
+        "switch": "Use a backup code instead",
+        "demo": "Demo: any 6 digits work."
+      },
+      "backup": {
+        "title": "Enter a backup code",
+        "hint": "Each backup code works once. Use one when you can't reach your authenticator app.",
+        "label": "Backup code",
+        "switch": "Use the code from your authenticator app instead",
+        "demo": "Demo: any backup code works, and it is used up."
+      },
+      "trust": "Don't ask again on this device for 30 days",
+      "submit": "Sign in",
+      "back": "Back",
+      "error": {
+        "digits": "The code has 6 digits.",
+        "backupMissing": "Type one of your backup codes.",
+        "noBackups": "You have no backup codes left. Use the code from your authenticator app."
+      }
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "We email you a link. It works for 1 hour.",
+      "note": "A new password signs you out on your other devices. Your code is still asked when you sign in.",
+      "submit": "Send the link",
+      "back": "Back to sign in",
+      "sent": {
+        "title": "Check your email",
+        "before": "If there is an account for ",
+        "after": ", we sent a link. It works for 1 hour.",
+        "wrong": "Wrong address?",
+        "change": "Change it"
+      },
+      "mail": {
+        "subject": "Reset your password",
+        "body": "Someone asked to reset the password of your account. If it was you, choose a new password with the button below. The link works for 1 hour.",
+        "action": "Choose a new password"
+      },
+      "new": {
+        "title": "Choose a new password",
+        "label": "New password",
+        "hint": "At least 10 characters.",
+        "submit": "Save password",
+        "error": "Use at least 10 characters."
+      },
+      "done": {
+        "title": "Password changed",
+        "body": "You're signed out on your other devices.",
+        "signIn": "Sign in"
+      }
+    },
+    "signUp": {
+      "title": "Your books, kept for you",
+      "step": {
+        "account": "Step 1 of 3",
+        "checkEmail": "Step 1 of 3 · Confirm your email",
+        "business": "Step 2 of 3",
+        "finish": "Step 3 of 3"
+      },
+      "price": {
+        "title": "One price, everything included",
+        "amount": "€ — a month",
+        "trial": "First 30 days free, no card needed",
+        "perBusiness": "Each business has its own plan"
+      },
+      "passwordHint": "At least 10 characters.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "error": {
+        "emailInvalid": "This doesn't look like an email address.",
+        "emailTaken": "There is already an account with this email.",
+        "passwordShort": "Use at least 10 characters.",
+        "firstName": "Type your first name.",
+        "lastName": "Type your last name."
+      },
+      "checkEmail": {
+        "title": "Check your email",
+        "before": "We sent a link to ",
+        "after": ". It works for 24 hours.",
+        "again": "Send it again",
+        "sentAgain": "Sent again",
+        "wrong": "Wrong address?",
+        "change": "Change it"
+      },
+      "mail": {
+        "subject": "Confirm your email",
+        "body": "Welcome! Confirm your email address to finish creating your account. The link works for 24 hours.",
+        "action": "Confirm my email"
+      },
+      "business": {
+        "title": "You and your business",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "name": "Business name",
+        "kind": "What kind of work?",
+        "legalForm": "Just you, or with partners?",
+        "sole": "Just me",
+        "partners": "Partners",
+        "noGmbh": "A GmbH can't sign up yet.",
+        "continue": "Continue",
+        "error": {
+          "name": "Type the name of your business.",
+          "kind": "Choose the kind of work.",
+          "legalForm": "Choose one: just you, or with partners."
+        }
+      },
+      "finish": {
+        "title": "Terms and a safe login",
+        "protect": "Protect your login",
+        "submit": "Finish"
+      }
+    },
+    "addBusiness": {
+      "back": "Back to the homepage",
+      "title": "Add a business",
+      "intro": "Each business has its own plan, its own books and its own people. You are its owner.",
+      "about": "About the business",
+      "terms": "Terms",
+      "submit": "Add the business"
+    },
+    "terms": {
+      "accept": "I accept the {{terms}} and the {{avv}}",
+      "termsLink": "Terms of use",
+      "binding": "The German version is binding; the others are for reading.",
+      "books": "You keep your own books and send your own returns: the app does the work, you confirm.",
+      "error": "Tick the box to continue.",
+      "notice": {
+        "title": "The legal texts aren't written yet",
+        "body": "The terms of use, the privacy policy and the data processing agreement (AVV) will be written before the app opens to clients. The German version will be the binding one; English and Arabic come as translations for reading.",
+        "close": "Close"
+      }
+    },
+    "twoStep": {
+      "scan": "Scan with an authenticator app, then type its 6-digit code.",
+      "keyIntro": "Can't scan? Type this key into the app:",
+      "code": "6-digit code",
+      "demo": "Demo: any 6 digits work.",
+      "codesTitle": "Your backup codes",
+      "codesHint": "Save these 8 codes somewhere safe. Each one works once, for when you can't use your phone.",
+      "save": "I've saved them",
+      "saved": "Two-step login is set up.",
+      "error": {
+        "digits": "The code has 6 digits."
+      }
+    }
+  },
+  "account": {
+    "title": "My account",
+    "change": "Change",
+    "cancel": "Cancel",
+    "close": "Close",
+    "you": {
+      "title": "You",
+      "save": "Save",
+      "saved": "Saved.",
+      "email": {
+        "hint": "A new address is confirmed by email first; the old one is told.",
+        "changeLabel": "Change your email",
+        "new": "New email",
+        "send": "Send the link",
+        "sent": {
+          "before": "We sent a link to ",
+          "after": ". It works for 24 hours. Your email stays the same until you confirm it."
+        },
+        "changed": "Email changed. The old address is told."
+      },
+      "mail": {
+        "subject": "Confirm your new email",
+        "body": "You asked to use this address for your account. Confirm it with the button below. The link works for 24 hours.",
+        "action": "Confirm my new email"
+      },
+      "error": {
+        "same": "This is already your email."
+      }
+    },
+    "language": {
+      "title": "Language",
+      "hint": "For the app and our emails to you. Tax returns, exports and invoices to German customers stay German.",
+      "buttons": "The language buttons in the top bar change this too."
+    },
+    "signingIn": {
+      "title": "Signing in",
+      "password": {
+        "changeLabel": "Change your password",
+        "changed": "Password changed. You're signed out on your other devices.",
+        "dialog": {
+          "title": "Change your password",
+          "demo": "Demo: your current password is filled in, and any new password of 10 characters or more works.",
+          "current": "Current password",
+          "note": "A new password signs you out on your other devices.",
+          "save": "Save password"
+        },
+        "error": {
+          "current": "Type your current password."
+        }
+      },
+      "twoStep": {
+        "label": "Two-step login",
+        "on": "On",
+        "hint": "Authenticator app. Always on: your account holds bank and tax data.",
+        "newPhone": "Use a new phone",
+        "done": "Your new phone is set up."
+      },
+      "backup": {
+        "label": "Backup codes",
+        "left": "{{left}} of {{total}} left",
+        "make": "Make new codes",
+        "dialog": {
+          "title": "Your new backup codes",
+          "old": "The old codes don't work any more.",
+          "done": "Done"
+        }
+      }
+    },
+    "devices": {
+      "title": "Where you're signed in",
+      "demo": "Demo: these devices are samples. The app doesn't read your browser.",
+      "device": "{{browser}} on {{system}}",
+      "thisDevice": "This device",
+      "now": "now",
+      "signOut": "Sign out",
+      "signOutLabel": "Sign out {{device}}",
+      "signOutOthers": "Sign out everywhere else",
+      "none": "You're not signed in anywhere else.",
+      "signedOut": "{{device}} is signed out.",
+      "signedOutOthers": "Signed out everywhere else."
+    },
+    "businesses": {
+      "title": "Your businesses",
+      "leave": "Leave",
+      "leaveLabel": "Leave {{business}}",
+      "ownerNote": "An owner can't leave: hand the business over in People with access first.",
+      "onlyOne": "This is your only business, so you can't leave it.",
+      "left": "You left {{business}}.",
+      "dialog": {
+        "title": "Leave {{business}}?",
+        "body": "You will no longer be able to open its books. The owner can invite you again."
+      }
     }
   }
 }

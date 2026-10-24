@@ -26,7 +26,7 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { AppDatePipe } from '../core/format/date.pipe';
 import { MoneyPipe } from '../core/format/money.pipe';
-import { BANKS, FOUND_ACCOUNTS, SAMPLE_BANKS } from '../data/banks';
+import { BANKS, banksOf, foundAccountsOf } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import { connectionStatus, isAlreadyConnected, maskIban } from '../domain/bank-connection';
 import { DemoStateService } from '../state/demo-state.service';
@@ -422,11 +422,14 @@ export class ConnectBankPage {
   protected readonly hasCashBox = computed(() => this.demo.business().accounts.some((a) => a.kind === 'cash'));
 
   protected readonly bankName = computed(() => BANKS.find((bank) => bank.id === this.bankId())?.name ?? '');
-  /** The bank whose accounts the demo finds: the one picked when the business banks there, else its first bank. */
+  /**
+   * The bank whose accounts the demo finds: the one picked when the business banks there, else its first bank. A business
+   * made during the visit banks anywhere, so it is always the one picked.
+   */
   private readonly accountsBank = computed(() => {
-    const own = SAMPLE_BANKS[this.demo.business().id] ?? [];
+    const own = banksOf(this.demo.business().id);
     const picked = this.bankId();
-    const id = picked !== null && own.includes(picked) ? picked : own[0];
+    const id = own === null || (picked !== null && own.includes(picked)) ? picked : own[0];
     return BANKS.find((bank) => bank.id === id);
   });
   protected readonly accountsBankName = computed(() => this.accountsBank()?.name ?? '');
@@ -439,7 +442,7 @@ export class ConnectBankPage {
    */
   protected readonly rows = computed(() => {
     const bank = this.accountsBank();
-    const found = bank ? (FOUND_ACCOUNTS[this.demo.business().id]?.[bank.id] ?? []) : [];
+    const found = bank ? foundAccountsOf(this.demo.business().id, bank.id) : [];
     const have = this.demo.business().accounts;
     const bankDone = this.demo.setup().bank;
     const chosen = this.chosen();

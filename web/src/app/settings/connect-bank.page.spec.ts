@@ -7,7 +7,9 @@ import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { BANKS, FOUND_ACCOUNTS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
+import type { NewOwner } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
+import { PERSON } from '../data/sample-person';
 import { bankInitials, maskIban } from '../domain/bank-connection';
 import { HomePage } from '../home/home.page';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
@@ -837,6 +839,75 @@ describe('ConnectBankPage', () => {
       await click('continue');
       expect(text(q('demo-label'))).toContain('DEMO');
       expect(q('bank-approval')!.querySelectorAll('input')).toHaveLength(0);
+    });
+  });
+
+  describe('a business made during the visit', () => {
+    const sara: NewOwner = { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email };
+    let id: string;
+
+    beforeEach(() => {
+      id = demo.createBusiness(sara, { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' });
+      demo.setBusiness(id);
+    });
+
+    it('is at whatever bank is picked: no demo note, and the one business account there, ticked', async () => {
+      await render();
+      for (const [bankId, name] of [['commerzbank', 'Commerzbank'], ['revolut', 'Revolut'], ['qonto', 'Qonto']]) {
+        await click(`bank-${bankId}`);
+        await click('continue');
+        expect(q('approval-note'), bankId).toBeNull();
+        await click('approve');
+        expect(rowIds(), bankId).toEqual([`${id}-main`]);
+        expect(ticked(`${id}-main`), bankId).toBe(true);
+        expect(text(q(`account-${id}-main`)), bankId).toContain(`Business account ${name} · DE89 … 3000`);
+        expect(text(q('connect')), bankId).toBe('Connect 1 account');
+        await click('other-bank');
+        expect(step()).toBe('pick');
+      }
+    });
+
+    it('connecting brings the account named after the bank and the eight October payments, then goes back', async () => {
+      vi.useFakeTimers();
+      await render('/settings/bank/connect?from=payments');
+      await toAccounts('commerzbank');
+      await click('connect');
+      expect(step()).toBe('fetching');
+
+      await advance(FETCH_MS);
+      expect(router.url).toBe('/payments');
+      expect(demo.setup().bank).toBe(true);
+      expect(demo.business().accounts).toMatchObject([
+        { id: `${id}-main`, name: 'Commerzbank', connection: { kind: 'connected', fetchFrom: '2026-01-01' } },
+      ]);
+      expect(demo.business().transactions.map((t) => t.id)).toEqual(
+        [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `${id}-t${n}`),
+      );
+      expect(el.querySelectorAll('[data-testid="payment-row"]')).toHaveLength(8);
+    });
+
+    it('the whole flow once more connects nothing and adds no payment', async () => {
+      vi.useFakeTimers();
+      await render('/settings/bank/connect?from=home');
+      await toAccounts('ing');
+      await click('connect');
+      await advance(FETCH_MS);
+      const business = demo.business();
+
+      await render('/settings/bank/connect?from=home');
+      await toAccounts('ing');
+      expect(text(q(`account-${id}-main`))).toContain('Already connected');
+      expect((q('connect') as HTMLButtonElement).disabled).toBe(true);
+      expect(demo.business()).toBe(business);
+    });
+
+    it('a sample business keeps showing the demo note for a bank it does not use', async () => {
+      demo.setBusiness('weber-design');
+      demo.setSetup('new');
+      await render();
+      await click('bank-commerzbank');
+      await click('continue');
+      expect(text(q('approval-note'))).toBe("Demo: this business banks with Qonto, so Qonto's accounts are shown.");
     });
   });
 });

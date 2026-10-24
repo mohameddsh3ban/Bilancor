@@ -1,5 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { BANKS, FOUND_ACCOUNTS } from '../data/banks';
+import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { BANKS, foundAccountsOf } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import {
   Account,
@@ -9,24 +9,33 @@ import {
   Invoice,
   InvoiceProfile,
   Person,
+  Role,
   SentVatReturn,
   SetupState,
   SetupSteps,
   TaxProfile,
   Transaction,
 } from '../data/models';
-import { BUSINESSES, PERSON } from '../data/sample-data';
+import {
+  isVisitBusiness,
+  newBusiness,
+  newBusinessAccountId,
+  newBusinessPayments,
+  type NewBusinessInput,
+  type NewOwner,
+} from '../data/new-business-sample';
+import { BUSINESSES } from '../data/sample-data';
 import { bankNameOf, isAlreadyConnected, isRenewed, newConnection, noConnection } from '../domain/bank-connection';
 import { applyRuleToUnclear, followCategoryChange, type CategoryRule } from '../domain/category-rules';
 import { linkDocument, unlinkDocument } from '../domain/document-actions';
 import { ALL_DONE, presetSteps } from '../domain/home-cards';
 import { invoiceOfPayment, invoiceStatus, leftCents, revenueBookingFor } from '../domain/invoices';
-
-const DEFAULT_BUSINESS_ID = 'weber-design';
+import * as people from '../domain/people';
+import { AccountService } from './account.service';
 
 /** A fresh copy of the sample businesses, so edits never touch the shared sample data. */
 function freshBusinesses(): Business[] {
-  return structuredClone(BUSINESSES).filter((b) => PERSON.businessIds.includes(b.id));
+  return structuredClone(BUSINESSES);
 }
 
 /** The cash box of a business that has none: no payments, no balance, and no bank behind it. */
@@ -49,22 +58,35 @@ function sameTaxProfile(a: TaxProfile, b: TaxProfile): boolean {
   return keys.length === Object.keys(b).length && keys.every((key) => a[key] === b[key]);
 }
 
-/** The demo's "who is signed in, which business is open, how far setup is" state, plus the editable sample data. */
+/** The demo's "which business is open, how far setup is" state for whoever is signed in, plus the editable sample data. */
 @Injectable({ providedIn: 'root' })
 export class DemoStateService {
-  readonly person: Person = PERSON;
+  private readonly accounts = inject(AccountService);
 
   /** The working copy of the sample data; every edit replaces objects, never changes them in place. */
   private readonly data = signal<Business[]>(freshBusinesses());
-  private readonly businessIdSignal = signal(DEFAULT_BUSINESS_ID);
+  /** The business each person had open last, by person id; a person with none here opens their first. */
+  private readonly openByPerson = signal<Record<string, string>>({});
+  private readonly personId = computed(() => this.accounts.person().id);
+  /** The businesses where the person is a joined member: a waiting invitation is not a way in. */
+  private readonly mine = computed<Business[]>(() => {
+    const personId = this.personId();
+    return this.data().filter((b) => people.memberOf(b, personId) !== undefined);
+  });
   /** The setup steps of each business that was ever changed; a business with no entry has every step done. */
   private readonly stepsByBusiness = signal<Record<string, SetupSteps>>({});
   private readonly generationSignal = signal(0);
+  /** Never goes back, so the id of a business made during the visit is never used twice, not even after a reset. */
+  private visitCounter = 0;
+  /** The last number given to an invitation row of each business, so a row's id is not used twice, not even after it is cancelled. */
+  private readonly lastMemberNumber = new Map<string, number>();
 
+  /** The open business: the one the person had open last, else their first (also when they have just left the one they had open). */
   readonly business = computed<Business>(() => {
-    const all = this.data();
-    return all.find((b) => b.id === this.businessIdSignal()) ?? all[0];
+    const mine = this.mine();
+    return mine.find((b) => b.id === this.openByPerson()[this.personId()]) ?? mine[0];
   });
+  private readonly businessIdSignal = computed(() => this.business().id);
   /** The open business's documents as they are now, unfiltered. */
   readonly documents = computed<Doc[]>(() => this.business().documents);
   /** The open business's setup steps. */
@@ -74,13 +96,40 @@ export class DemoStateService {
   /** Whether the person has connected a bank yet; until then there are no payments to show. */
   readonly bankConnected = computed(() => this.setup().bank);
 
-  /** The person's businesses as they are now (including edits). */
-  get businesses(): Business[] {
-    return this.data();
+  /** The signed-in person (the sample person while nobody is). */
+  get person(): Person {
+    return this.accounts.person();
   }
 
+  /** The person's businesses as they are now (including edits): only those where they are a joined member. */
+  get businesses(): Business[] {
+    return this.mine();
+  }
+
+  /** What the person can do in the open business. */
+  readonly myRole: Signal<Role | null> = computed(() => people.roleOf(this.business(), this.personId()));
+
+  /** What the person can do in any business of theirs; null where they have no access (or for an id nobody has). */
+  roleIn(businessId: string): Role | null {
+    const business = this.data().find((b) => b.id === businessId);
+    return business ? people.roleOf(business, this.personId()) : null;
+  }
+
+  /** Opens one of the person's businesses, and remembers it for them; ignored for any other id. */
   setBusiness(id: string): void {
-    if (this.data().some((b) => b.id === id)) this.businessIdSignal.set(id);
+    if (!this.mine().some((b) => b.id === id)) return;
+    this.openByPerson.update((all) => ({ ...all, [this.personId()]: id }));
+  }
+
+  /**
+   * Makes a business for the person, as a new client (all three setup steps open, no bank, documents or tax details), and
+   * returns its id, `new-<n>`. It is not opened: that is the caller's (`setBusiness`). Reset demo drops it.
+   */
+  createBusiness(owner: NewOwner, input: NewBusinessInput): string {
+    const id = `new-${++this.visitCounter}`;
+    this.data.update((all) => [...all, newBusiness(id, input, owner)]);
+    this.stepsByBusiness.update((all) => ({ ...all, [id]: presetSteps('new') }));
+    return id;
   }
 
   /** Sets the open business's steps to one of the demo toolbar's shortcuts; other businesses, accounts and answers stay as they are. */
@@ -128,6 +177,9 @@ export class DemoStateService {
    * An account that is connected already (bank step done) stays as it is, with no line, so a second call with the same
    * accounts changes nothing. The sample business accounts of that bank that are left out are not connected: they
    * become statement accounts and keep their payments. The accounts it is given are never changed (they are shared sample data).
+   *
+   * The first time the business account of a business made during the visit is added, its eight October payments come
+   * in with it (newest first); it has them once, however often it is connected.
    */
   connectAccounts(bankId: string, accounts: readonly Account[], fetchFrom: string): void {
     const bankDone = this.setup().bank;
@@ -135,7 +187,7 @@ export class DemoStateService {
     this.updateBusiness(this.businessIdSignal(), (business) => {
       const chosen = new Set(accounts.map((account) => account.id));
       const sample = new Set(
-        (FOUND_ACCOUNTS[business.id]?.[bankId] ?? [])
+        foundAccountsOf(business.id, bankId)
           .filter((account) => account.product === 'business')
           .map((account) => account.id),
       );
@@ -160,9 +212,15 @@ export class DemoStateService {
       if (added.length === 0 && kept.every((account, i) => account === business.accounts[i])) return business;
 
       const cashAt = kept.findIndex((account) => account.kind === 'cash');
+      const main = isVisitBusiness(business.id)
+        ? added.find((account) => account.id === newBusinessAccountId(business.id))
+        : undefined;
       return {
         ...business,
         accounts: cashAt === -1 ? [...kept, ...added] : [...kept.slice(0, cashAt), ...added, ...kept.slice(cashAt)],
+        transactions: main
+          ? [...newBusinessPayments(business.id, main, people.ownerOf(business).name ?? business.name), ...business.transactions]
+          : business.transactions,
         history: [...lines.reverse(), ...business.history],
       };
     });
@@ -432,6 +490,91 @@ export class DemoStateService {
     return bookedIds;
   }
 
+  /**
+   * Invites an email to the open business with a role (see `people.invite`): returns why it can't be invited, or null when
+   * it was. Nothing happens, and null comes back, unless the person is the owner. The row's id is `<businessId>-m<n>`.
+   */
+  invite(email: string, role: people.GrantedRole): people.InviteError | null {
+    const business = this.business();
+    if (!this.isOwnerOf(business)) return null;
+    const error = people.inviteError(business, email);
+    if (error === null) {
+      const id = this.nextMemberId(business);
+      this.asOwner((b, by) => people.invite(b, email, role, id, by, DEMO_TODAY));
+    }
+    return error;
+  }
+
+  /** Gives a waiting invitation of the open business a fresh link. Owner only. */
+  resendInvite(memberId: string): void {
+    this.asOwner((b) => people.resendInvite(b, memberId, DEMO_TODAY));
+  }
+
+  /** Takes a waiting invitation of the open business back. Owner only. */
+  cancelInvite(memberId: string): void {
+    this.asOwner((b, by) => people.cancelInvite(b, memberId, by, DEMO_TODAY));
+  }
+
+  /** Gives a joined person of the open business (not the owner) another role. Owner only. */
+  changeRole(memberId: string, role: people.GrantedRole): void {
+    this.asOwner((b, by) => people.changeRole(b, memberId, role, by, DEMO_TODAY));
+  }
+
+  /** Takes a joined person (not the owner) out of the open business. Owner only. */
+  removeMember(memberId: string): void {
+    this.asOwner((b, by) => people.removeMember(b, memberId, by, DEMO_TODAY));
+  }
+
+  /** Hands the open business to a joined person with full access; the person becomes one with full access. Owner only. */
+  makeOwner(memberId: string): void {
+    this.asOwner((b, by) => people.makeOwner(b, memberId, by, DEMO_TODAY));
+  }
+
+  /** Lets our support team look at the open business for 7 days, or stops it. Owner only. */
+  setSupportAccess(on: boolean): void {
+    this.asOwner((b, by) => people.setSupport(b, on, by, DEMO_TODAY));
+  }
+
+  /**
+   * An invited person joins (any business, not just the open one, and whoever is signed in: joining is a preview) under
+   * the name they gave. False, with nothing changed, for an unknown business or invitation, one that was accepted or
+   * cancelled already, and one whose link has run out.
+   */
+  acceptInvite(businessId: string, memberId: string, name: string): boolean {
+    const before = this.data();
+    this.updateBusiness(businessId, (b) => people.acceptInvite(b, memberId, name, DEMO_TODAY));
+    return this.data() !== before;
+  }
+
+  /**
+   * The person leaves a business of theirs. Ignored for the owner (who hands it over first), for a business that isn't
+   * theirs, and when it is their last one: a person always keeps a business to open. When it was the open one, their
+   * first other business opens.
+   */
+  leaveBusiness(businessId: string): void {
+    if (!this.mine().some((b) => b.id !== businessId)) return;
+    const personId = this.personId();
+    this.updateBusiness(businessId, (b) => people.leave(b, personId, DEMO_TODAY));
+  }
+
+  /**
+   * Gives the login's rows in every business the name and email it has now (My account changed them), so the people
+   * lists, the invitation check and `isMemberEmail` follow the account. No history line; nothing changes when the rows
+   * already say this.
+   */
+  updateLoginRows(personId: string, name: string, email: string): void {
+    this.data.update((all) => {
+      const next = all.map((business) => people.renameLogin(business, personId, name, email));
+      return next.some((business, i) => business !== all[i]) ? next : all;
+    });
+  }
+
+  /** Whether the email is a row of any business, joined or invited (whatever its case): somebody the demo already knows by it. */
+  isMemberEmail(email: string): boolean {
+    const address = people.normalEmail(email);
+    return this.data().some((b) => b.people.some((m) => people.normalEmail(m.email) === address));
+  }
+
   /** A deep copy of the open business as it is now. Keep it to `restore` its payments, documents and rules (Undo). */
   snapshot(): Business {
     return structuredClone(this.business());
@@ -454,11 +597,36 @@ export class DemoStateService {
     }));
   }
 
-  /** Puts every edited payment and document back to the sample data, and every business back to all steps done (demo only). */
+  /**
+   * Puts every edited payment and document back to the sample data (people, invitations and support access too, and Sara's
+   * memberships), every business back to all steps done, and takes away the businesses made during the visit (demo only).
+   * It forgets which business each person had open, so everyone opens their first again.
+   */
   resetData(): void {
     this.data.set(freshBusinesses());
+    this.openByPerson.set({});
     this.stepsByBusiness.set({});
     this.generationSignal.update((n) => n + 1);
+  }
+
+  private isOwnerOf(business: Business): boolean {
+    return people.roleOf(business, this.personId()) === 'owner';
+  }
+
+  /** Applies `change` to the open business, as the person who is its owner and by their full name; nothing happens for anyone else. */
+  private asOwner(change: (business: Business, by: string) => Business): void {
+    const business = this.business();
+    if (!this.isOwnerOf(business)) return;
+    const person = this.person;
+    this.updateBusiness(business.id, (b) => change(b, `${person.firstName} ${person.lastName}`));
+  }
+
+  /** The next id for a row of a business, `<businessId>-m<n>`: past every number its rows have, and every one it has given out. */
+  private nextMemberId(business: Business): string {
+    const used = business.people.map((m) => Number(/-m(\d+)$/.exec(m.id)?.[1] ?? 0));
+    const next = Math.max(0, ...used, this.lastMemberNumber.get(business.id) ?? 0) + 1;
+    this.lastMemberNumber.set(business.id, next);
+    return `${business.id}-m${next}`;
   }
 
   /** Applies `change` to one business; when it returns the same object, nothing changes at all. */

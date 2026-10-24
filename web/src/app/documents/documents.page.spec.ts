@@ -11,6 +11,7 @@ import { groupDocsByMonth } from '../domain/document-search';
 import { docNeedsYou } from '../domain/document-status';
 import { READING_MS, newReadingDoc } from '../domain/document-upload';
 import { DemoStateService } from '../state/demo-state.service';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { UploadService } from '../state/upload.service';
 import { DocumentDetailPage } from './document-detail.page';
@@ -144,6 +145,7 @@ describe('DocumentsPage', () => {
       TestBed.configureTestingModule({
         providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
       });
+      signInAsSara();
       harness = await RouterTestingHarness.create('/');
       el = harness.routeNativeElement as HTMLElement;
       const link = Array.from(el.querySelectorAll<HTMLAnchorElement>('aside nav a')).find(
@@ -785,6 +787,7 @@ describe('DocumentsPage', () => {
       TestBed.configureTestingModule({
         providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
       });
+      signInAsSara();
       harness = await RouterTestingHarness.create('/');
       el = harness.routeNativeElement as HTMLElement;
     }

@@ -185,10 +185,12 @@ export class YearTab {
 
   /**
    * The months before the business's first payment of the year, named ("January–July"): the stored opening line covers
-   * them. Null when the first payment is in January, as there are no earlier months then.
+   * them. Null when the first payment is in January, as there are no earlier months then, and when nothing is stored for
+   * them (a business that started this year, such as one made during the visit): the year shows only what came since.
    */
   protected readonly earlierMonths = computed(() => {
-    const since = this.summary().paymentsSince;
+    const { paymentsSince: since, openingIncomeCents, openingCostsCents } = this.summary();
+    if (openingIncomeCents === 0 && openingCostsCents === 0) return null;
     const month = Number(since.slice(5, 7));
     if (month <= 1) return null;
     const year = since.slice(0, 4);

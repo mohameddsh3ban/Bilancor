@@ -10,6 +10,7 @@ import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { confirmBooking } from '../domain/payment-actions';
 import { DemoStateService } from '../state/demo-state.service';
 import { ReviewService, UNDO_MS, type ReviewAnswerResult } from '../state/review.service';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ReviewCard, SAVING_MS, TICK_MS } from './review-card';
 import { SLIDE_MS } from './review-stage';
@@ -38,6 +39,7 @@ describe('ReviewPage', () => {
         provideNoTaxReminder(),
       ],
     });
+    signInAsSara();
     demo = TestBed.inject(DemoStateService);
     // The shell's "Needs you" button starts the session early; here the test does.
     review = TestBed.inject(ReviewService);
@@ -287,6 +289,7 @@ describe('ReviewPage', () => {
       TestBed.configureTestingModule({
         providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
       });
+      signInAsSara();
       TestBed.inject(ReviewService);
       await render();
       TestBed.inject(Router).initialNavigation();

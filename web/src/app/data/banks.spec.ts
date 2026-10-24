@@ -1,4 +1,5 @@
-import { BANKS, FOUND_ACCOUNTS, GERMAN_STATES, SAMPLE_BANKS, TAX_OFFICES } from './banks';
+import { BANKS, FOUND_ACCOUNTS, GERMAN_STATES, SAMPLE_BANKS, TAX_OFFICES, banksOf, foundAccountsOf } from './banks';
+import { newBusinessAccount } from './new-business-sample';
 import { BUSINESSES } from './sample-data';
 
 describe('BANKS', () => {
@@ -178,5 +179,51 @@ describe('FOUND_ACCOUNTS', () => {
       ),
     ];
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('banksOf', () => {
+  it("is the sample business's own banks, in the order SAMPLE_BANKS has them", () => {
+    expect(banksOf('weber-design')).toEqual(['qonto']);
+    expect(banksOf('cafe-linde')).toEqual(['qonto', 'sparkasse']);
+  });
+
+  it('is null for a business made during the visit: any bank is its bank', () => {
+    expect(banksOf('new-1')).toBeNull();
+    expect(banksOf('new-14')).toBeNull();
+  });
+
+  it('is empty for an id that is neither', () => {
+    expect(banksOf('nowhere')).toEqual([]);
+  });
+});
+
+describe('foundAccountsOf', () => {
+  it('is FOUND_ACCOUNTS for a sample business: its own accounts at its own banks, none anywhere else', () => {
+    expect(foundAccountsOf('weber-design', 'qonto')).toBe(FOUND_ACCOUNTS['weber-design']['qonto']);
+    expect(foundAccountsOf('cafe-linde', 'sparkasse').map((a) => a.id)).toEqual(['cl-sparkasse']);
+    expect(foundAccountsOf('weber-design', 'commerzbank')).toEqual([]);
+  });
+
+  it('is one business account named after the bank for a business made during the visit, whichever bank it is', () => {
+    for (const bank of BANKS) {
+      expect(foundAccountsOf('new-2', bank.id), bank.id).toEqual([newBusinessAccount('new-2', bank.name)]);
+    }
+    expect(foundAccountsOf('new-2', 'commerzbank')[0]).toMatchObject({
+      id: 'new-2-main',
+      name: 'Commerzbank',
+      product: 'business',
+      kind: 'bank',
+    });
+  });
+
+  it('finds the account under the id of the business, so each business has its own', () => {
+    expect(foundAccountsOf('new-2', 'qonto')[0].id).toBe('new-2-main');
+    expect(foundAccountsOf('new-7', 'qonto')[0].id).toBe('new-7-main');
+  });
+
+  it('finds nothing at a bank that is not in the list, and nothing for an id that is neither', () => {
+    expect(foundAccountsOf('new-2', 'nowhere')).toEqual([]);
+    expect(foundAccountsOf('nowhere', 'qonto')).toEqual([]);
   });
 });

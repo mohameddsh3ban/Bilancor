@@ -4,7 +4,9 @@ import en from '../../../public/i18n/en.json';
 import { formatMoney } from '../core/format/format';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { foundAccountsOf } from '../data/banks';
 import { BUSINESSES } from '../data/sample-data';
+import { PERSON } from '../data/sample-person';
 import { yearSummary } from '../domain/tax-year';
 import { DemoStateService } from '../state/demo-state.service';
 import { YearTab } from './year-tab';
@@ -87,6 +89,62 @@ describe('YearTab', () => {
     renderFirstPaymentOn('2026-01-05');
     expect(q('year-earlier')).toBeNull();
     expect(text(q('year-since-label'))).toBe('From 5 Jan');
+  });
+
+  describe('a business that started this year', () => {
+    /** A business made during the visit, with its bank connected: eight payments from 2 October on, and nothing stored before them. */
+    function madeAndConnected(): string {
+      const id = demo.createBusiness(
+        { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email },
+        { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' },
+      );
+      demo.setBusiness(id);
+      demo.connectAccounts('qonto', foundAccountsOf(id, 'qonto'), '2026-01-01');
+      return id;
+    }
+
+    it("a new business's Year tab has no earlier months row: the year shows only October", () => {
+      render(madeAndConnected());
+      expect(yearSummary(demo.business())).toMatchObject({ openingIncomeCents: 0, openingCostsCents: 0 });
+      expect(q('year-earlier')).toBeNull();
+      expect(text(q('year-since-label'))).toBe('From 2 Oct');
+      expect(text(q('year-total-income'))).toBe(euro(0));
+      expect(text(q('year-total-costs'))).toBe(euro(0));
+      expect(text(q('year-profit'))).toBe(euro(0));
+    });
+
+    it('has no earlier months row before its bank is connected either', () => {
+      const id = demo.createBusiness(
+        { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email },
+        { name: 'Atelier Neu', kind: 'trade', legalForm: 'gbr' },
+      );
+      render(id);
+      expect(q('year-earlier')).toBeNull();
+    });
+
+    it('every sample business has something stored before its first payment, so each keeps its earlier months row', () => {
+      for (const sample of BUSINESSES) {
+        expect(sample.yearOpening.incomeCents + sample.yearOpening.costsCents, sample.id).toBeGreaterThan(0);
+        render(sample.id);
+        expect(q('year-earlier'), sample.id).not.toBeNull();
+      }
+    });
+
+    it('a business with stored costs but no stored income keeps the row', () => {
+      const sara = BUSINESSES.find((b) => b.id === 'sara-yoga')!;
+      const business = { ...sara, yearOpening: { ...sara.yearOpening, incomeCents: 0 } };
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideTranslocoTesting(),
+          provideRouter([]),
+          { provide: DemoStateService, useValue: { business: () => business } },
+        ],
+      });
+      fixture = TestBed.createComponent(YearTab);
+      fixture.detectChanges();
+      expect(q('year-earlier')).not.toBeNull();
+    });
   });
 
   it('shows income and costs from the first payment, each linked to Payments', () => {

@@ -56,7 +56,17 @@ export type HistoryKey =
   | 'invoiceDuplicated' // params: number (of the invoice it was copied from)
   | 'paidInCash'
   | 'paysInvoice' // on a payment; params: number
-  | 'bookedByInvoice'; // on a payment that pays an invoice taxed differently from how it was booked; params: category
+  | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category
+  // On a business; `by` is the full name of who did it, `role` a Role id (shown with its "roles.<role>.name" word) and `until` an ISO date
+  | 'personInvited' // params: email, role, by
+  | 'invitationCancelled' // params: email, by
+  | 'personJoined' // params: name, role, by (the person who joined)
+  | 'roleChanged' // params: name, role (the new one), by
+  | 'personRemoved' // params: name, by
+  | 'personLeft' // params: name, by (the person who left)
+  | 'ownerChanged' // params: name (the new owner), by
+  | 'supportOn' // params: until, by
+  | 'supportOff'; // params: by
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey
@@ -148,6 +158,14 @@ export interface InvoiceProfile {
   numberPattern: string; // e.g. 'RE-{YYYY}-{NNN}'
   paymentTermDays: number; language: 'de' | 'en';
 }
+/** What a person can do in one business: the owner has everything; the others are Full access, Receipts only and Tax advisor (Steuerberater:in), chosen when inviting. */
+export type Role = 'owner' | 'full' | 'receipts' | 'advisor';
+/** A person with access to a business, or an invitation waiting. A row with a `personId` is a login (Sara, or an account made in the demo); one with null is only a row of the demo. */
+export interface Member {
+  id: string; personId: string | null; // the login behind the row; null for people who are only rows in the demo
+  name: string | null; email: string; role: Role; status: 'joined' | 'invited'; // name: null while waiting
+  invitedOn: string | null; expiresOn: string | null; joinedOn: string | null; // ISO dates; expiresOn is the last day the invitation link works
+}
 export interface Business {
   id: string; name: string; inboxEmail: string; taxProfile: TaxProfile; accounts: Account[]; transactions: Transaction[]; documents: Doc[];
   vatReturns: SentVatReturn[]; // the returns sent so far; the next one is calculated (see vat-return.ts), never stored
@@ -160,6 +178,11 @@ export interface Business {
   incomeTaxReserveCents: number;
   invoices: Invoice[]; invoiceProfile: InvoiceProfile; // the invoices written in the app (drafts included), and how they are printed and numbered
   notices: Notice[]; noticeHistory: Notice[]; categoryRules: CategoryRule[];
-  history: HistoryEntry[]; // changes to the tax details and bank accounts, newest first: stored, not shown yet
+  history: HistoryEntry[]; // changes to the tax details, bank accounts, people and support access, newest first: stored, not shown yet
+  people: Member[]; // everyone with access, and the invitations waiting; exactly one joined member is the owner
+  supportUntil: string | null; // ISO date; the last day our support team can look at the books, null while it can't
 }
-export interface Person { id: string; firstName: string; lastName: string; businessIds: string[] }
+/** A browser or phone where the person is signed in; sample rows, never read from the real browser. */
+export interface Device { id: string; browser: string; system: string; place: string; lastSeen: string | null; current: boolean } // lastSeen null: now
+/** A login: who signs in, in which language, from which devices, and how many backup codes are left. */
+export interface Person { id: string; firstName: string; lastName: string; email: string; lang: Lang | null; devices: Device[]; backupCodesLeft: number } // lang null: not chosen yet

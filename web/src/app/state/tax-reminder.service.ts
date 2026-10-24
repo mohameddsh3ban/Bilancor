@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, linkedSignal, signal, untracked }
 import { Router } from '@angular/router';
 import { SafeStorage } from '../core/storage/safe-storage';
 import { DUE_SOON_DAYS, currentVatReturn, type VatReturnView } from '../domain/vat-return';
+import { AccountService } from './account.service';
 import { DemoStateService } from './demo-state.service';
 
 /** Every acknowledgement is stored under this prefix, so Reset demo can clear them all at once. */
@@ -22,6 +23,7 @@ export interface TaxReminderItem {
 @Injectable({ providedIn: 'root' })
 export class TaxReminderService {
   private readonly demo = inject(DemoStateService);
+  private readonly accounts = inject(AccountService);
   private readonly storage = inject(SafeStorage);
   private readonly router = inject(Router);
 
@@ -44,12 +46,12 @@ export class TaxReminderService {
   });
 
   /**
-   * Whether the pop-up is showing. It opens when the app starts and again after Reset demo (a new data generation), but
-   * only when something is due then: a return that becomes due while the app is open (a changed tax answer) waits for
-   * the next start.
+   * Whether the pop-up is showing. It opens when the person signs in (the app opens for them) and again after Reset demo
+   * (a new data generation), but only when something is due then: a return that becomes due while the app is open (a
+   * changed tax answer) waits for the next sign-in.
    */
-  private readonly openSignal = linkedSignal<number, boolean>({
-    source: this.demo.dataGeneration,
+  private readonly openSignal = linkedSignal<{ generation: number; signIns: number }, boolean>({
+    source: () => ({ generation: this.demo.dataGeneration(), signIns: this.accounts.signIns() }),
     computation: () => untracked(this.due).length > 0,
   });
   readonly open = this.openSignal.asReadonly();

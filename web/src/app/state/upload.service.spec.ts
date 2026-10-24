@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { foundAccountsOf } from '../data/banks';
 import type { Doc, Transaction } from '../data/models';
+import type { NewOwner } from '../data/new-business-sample';
+import { PERSON } from '../data/sample-person';
 import { docNeedsYou, docStatus } from '../domain/document-status';
 import { READING_MS } from '../domain/document-upload';
 import { paymentStatus } from '../domain/payment-status';
@@ -586,6 +589,82 @@ describe('UploadService', () => {
       expect(upload.readingFor()).toBeNull();
       expect(paymentOf('wd-t3').receipt).toBe('attached');
       expect(paymentOf('wd-t17').receipt).toBe('attached');
+    });
+  });
+
+  describe('a business made during the visit', () => {
+    const sara: NewOwner = { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email };
+    let id: string;
+
+    /** The business is made, opened and its bank connected, as at the end of the setup. */
+    beforeEach(() => {
+      id = demo.createBusiness(sara, { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' });
+      demo.setBusiness(id);
+      demo.connectAccounts('qonto', foundAccountsOf(id, 'qonto'), '2026-01-01');
+    });
+
+    const upload1Of = (): Doc => docsOf(id).find((d) => d.id === 'up-1')!;
+
+    it('its first upload links itself to the Telekom payment', () => {
+      expect(paymentStatus(paymentOf(`${id}-t3`))).toBe('noReceipt');
+
+      upload.add([file('telekom.pdf')], 'file');
+      vi.advanceTimersByTime(READING_MS);
+
+      expect(upload1Of()).toMatchObject({ name: 'Telekom', amountCents: 3995, paymentId: `${id}-t3` });
+      expect(upload1Of().history[0].key).toBe('linkedAuto');
+      expect(paymentOf(`${id}-t3`)).toMatchObject({ receipt: 'attached', receiptFile: 'telekom.pdf' });
+      expect(paymentOf(`${id}-t3`).history[0].key).toBe('receiptLinkedAuto');
+      expect(demo.setup().receipt).toBe(true);
+    });
+
+    it('the next files take the train ticket, the receipt that cannot be sorted, and then the plain receipts again and again', () => {
+      upload.add(Array.from({ length: 7 }, (_, i) => file(`beleg-${i}.pdf`)), 'file');
+      vi.advanceTimersByTime(READING_MS);
+
+      const names = docsOf(id)
+        .filter((d) => d.fromUpload)
+        .sort((a, b) => Number(a.id.slice(3)) - Number(b.id.slice(3)))
+        .map((d) => d.name);
+      expect(names).toEqual([
+        'Telekom',
+        'Deutsche Bahn',
+        'Bürobedarf Klein',
+        'Copyshop Mitte',
+        'Parkhaus Zentrum',
+        'Copyshop Mitte',
+        'Parkhaus Zentrum',
+      ]);
+      expect(docsOf(id).find((d) => d.id === 'up-2')!.paymentId).toBe(`${id}-t5`);
+      expect(docsOf(id).find((d) => d.id === 'up-3')).toMatchObject({ direction: null, paymentId: null });
+      expect(docsOf(id).find((d) => d.id === 'up-4')!.paymentId).toBeNull();
+    });
+
+    it('before its bank is connected a receipt is read and waits: there is no payment to link it to', () => {
+      const fresh = demo.createBusiness(sara, { name: 'Zweites Büro', kind: 'trade', legalForm: 'gbr' });
+      demo.setBusiness(fresh);
+      upload.add([file('telekom.pdf')], 'file');
+      vi.advanceTimersByTime(READING_MS);
+      expect(docsOf(fresh).find((d) => d.id === 'up-1')).toMatchObject({ name: 'Telekom', paymentId: null, reading: false });
+      expect(demo.setup()).toEqual({ bank: false, tax: false, receipt: true });
+    });
+
+    it('every business has a pool of its own, which starts over for it', () => {
+      upload.add([file('a.pdf')], 'file');
+      vi.advanceTimersByTime(READING_MS);
+      const other = demo.createBusiness(sara, { name: 'Zweites Büro', kind: 'trade', legalForm: 'gbr' });
+      demo.setBusiness(other);
+      demo.connectAccounts('ing', foundAccountsOf(other, 'ing'), '2026-01-01');
+      upload.add([file('b.pdf')], 'file');
+      vi.advanceTimersByTime(READING_MS);
+      expect(docsOf(other).find((d) => d.fromUpload)).toMatchObject({ name: 'Telekom', paymentId: `${other}-t3` });
+    });
+
+    it('a sample business keeps its own pool', () => {
+      demo.setBusiness('weber-design');
+      upload.add([file('ticket.pdf')], 'file');
+      vi.advanceTimersByTime(READING_MS);
+      expect(docsOf('weber-design').find((d) => d.id === 'up-1')!.name).toBe('Deutsche Bahn');
     });
   });
 });

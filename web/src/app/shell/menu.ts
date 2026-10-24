@@ -10,6 +10,7 @@ import {
   lucideFileText,
   lucideHouse,
   lucideLandmark,
+  lucidePlus,
   lucideReceipt,
   lucideSettings,
 } from '@ng-icons/lucide';
@@ -90,6 +91,7 @@ export const SHELL_ICONS = {
   lucideFileText,
   lucideHouse,
   lucideLandmark,
+  lucidePlus,
   lucideReceipt,
   lucideSettings,
 };

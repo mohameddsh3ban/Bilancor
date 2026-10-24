@@ -155,6 +155,26 @@
       "de": "Steuerschuldnerschaft des Leistungsempfängers",
       "explain": "Bei einem Geschäftskunden in einem anderen EU-Land berechnest du keine deutsche Umsatzsteuer. Dein Kunde zahlt die Steuer in seinem Land, und die Rechnung sagt das."
     },
+    "einzelunternehmen": {
+      "label": "Einzelunternehmen",
+      "de": "Einzelunternehmen",
+      "explain": "Ein Unternehmen, das einer Person gehört und von ihr geführt wird. Du und das Unternehmen seid rechtlich dieselbe Person, du haftest also mit allem, was du besitzt."
+    },
+    "gbr": {
+      "label": "GbR",
+      "de": "GbR",
+      "explain": "Ein Zusammenschluss von zwei oder mehr Personen, die gemeinsam ein Unternehmen führen, ohne eine Firma einzutragen. Alle Gesellschafter haften für die Schulden."
+    },
+    "avv": {
+      "label": "AVV",
+      "de": "AVV",
+      "explain": "Der Auftragsverarbeitungsvertrag: ein Vertrag, den das Datenschutzrecht verlangt, wenn ein Unternehmen personenbezogene Daten für ein anderes verarbeitet. Er regelt, was mit den Daten geschehen darf und wie sie geschützt werden."
+    },
+    "steuerberater": {
+      "label": "Steuerberater:in",
+      "de": "Steuerberater:in",
+      "explain": "Eine Person mit staatlicher Zulassung, die in Steuerfragen berät und Steuererklärungen für andere abgibt. Diese App gibt keine persönliche Steuerberatung, das tun Steuerberater:innen."
+    },
     "whatIs": "Was ist {{term}}?"
   },
   "menu": {
@@ -199,7 +219,136 @@
     "mainMenu": "Hauptmenü",
     "logo": "Dein Logo",
     "needsAction": "Zu erledigen",
-    "earlier": "Früher"
+    "earlier": "Früher",
+    "account": "Konto: {{name}}",
+    "myAccount": "Mein Konto",
+    "signOut": "Abmelden",
+    "addBusiness": "Unternehmen hinzufügen"
+  },
+  "roles": {
+    "owner": {
+      "name": "Inhaber:in"
+    },
+    "full": {
+      "name": "Voller Zugriff",
+      "example": "z. B. ein:e Partner:in",
+      "can": "Alles, was die Inhaber:in kann: Zahlungen, Belege, Steuern, Einstellungen",
+      "cant": "Personen einladen oder entfernen, den Tarif ändern"
+    },
+    "receipts": {
+      "name": "Nur Belege",
+      "example": "z. B. eine Assistenz",
+      "can": "Belege hochladen und die eigenen korrigieren",
+      "cant": "Zahlungen, Kontostände, Steuern, Einstellungen"
+    },
+    "advisor": {
+      "name": "Steuerberater:in",
+      "can": "Alles ansehen, Belege und Exporte herunterladen",
+      "cant": "Buchungen ändern, Banken verbinden, Erklärungen senden"
+    }
+  },
+  "people": {
+    "title": "Personen mit Zugriff",
+    "intro": "Nur diese Personen können die Buchhaltung von {{business}} öffnen. Alle sind im Preis enthalten.",
+    "roleCards": {
+      "legend": "Was darf die Person?",
+      "can": "Darf:",
+      "cant": "Darf nicht:"
+    },
+    "row": {
+      "you": "(du)",
+      "joined": "Beigetreten am",
+      "invited": "Eingeladen am",
+      "linkUntil": "der Link gilt bis",
+      "waiting": "Wartet",
+      "actions": "Aktionen für {{name}}"
+    },
+    "menu": {
+      "change": "Berechtigung ändern",
+      "owner": "Zur Inhaber:in machen",
+      "remove": "Entfernen",
+      "resend": "Erneut senden",
+      "cancel": "Einladung zurückziehen"
+    },
+    "ownerNote": "Nur {{owner}} (Inhaber:in) kann Personen einladen oder entfernen.",
+    "invite": {
+      "button": "Person einladen",
+      "title": "Jemanden zu {{business}} einladen",
+      "email": "E-Mail der Person",
+      "hint": "Der Link gilt {{days}} Tage. Die Person wählt ihr Passwort selbst.",
+      "send": "Einladung senden",
+      "cancel": "Abbrechen",
+      "error": {
+        "missing": "Gib die E-Mail der Person ein.",
+        "invalid": "Das sieht nicht nach einer E-Mail-Adresse aus.",
+        "hasAccess": "Diese Person hat schon Zugriff.",
+        "invited": "Diese E-Mail ist schon eingeladen. Nutze in der Liste „Erneut senden“.",
+        "role": "Wähle, was die Person darf."
+      }
+    },
+    "dialog": {
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "role": {
+        "title": "Was darf {{name}}?",
+        "confirm": "Speichern"
+      },
+      "owner": {
+        "title": "{{name}} zur Inhaber:in machen?",
+        "body": "{{name}} übernimmt {{business}} und entscheidet, wer Zugriff hat. Für dich gilt dann „Voller Zugriff“: Du kannst keine Personen mehr einladen oder entfernen.",
+        "confirm": "Zur Inhaber:in machen"
+      },
+      "remove": {
+        "title": "{{name}} entfernen?",
+        "body": "{{name}} kann {{business}} nicht mehr öffnen. Was die Person getan hat, bleibt im Verlauf.",
+        "confirm": "Entfernen"
+      }
+    },
+    "support": {
+      "title": "Unser Support-Team",
+      "off": "Kein Zugriff. Wir sehen deine Buchhaltung nur, wenn du uns hineinlässt, zum Beispiel wenn du uns um Hilfe bittest.",
+      "on": "Der Support darf ansehen bis",
+      "lookOnly": "Nur ansehen: Der Support ändert nichts.",
+      "allow": "Support für {{days}} Tage hineinlassen",
+      "stop": "Jetzt beenden"
+    },
+    "mail": {
+      "subject": "{{inviter}} hat dich zu {{business}} eingeladen (Rolle: {{role}})",
+      "body": "Nimm die Einladung an und wähle dein eigenes Passwort. Der Link gilt {{days}} Tage.",
+      "action": "Einladung annehmen",
+      "line": "{{inviter}} hat dich zu {{business}} eingeladen (Rolle: {{role}}). Öffne den Link, um beizutreten."
+    },
+    "join": {
+      "title": "{{business}} beitreten",
+      "roleLabel": "Deine Rolle",
+      "name": "Dein Name",
+      "language": "Deine Sprache",
+      "hint": {
+        "password": "Mindestens {{min}} Zeichen."
+      },
+      "error": {
+        "name": "Gib deinen Namen ein.",
+        "password": "Nimm mindestens {{min}} Zeichen."
+      },
+      "submit": "Beitreten",
+      "haveLogin": "Du hast schon ein Login?",
+      "signIn": "Anmelden",
+      "demo": "Demo: Das Beitreten ist eine Vorschau. Du bleibst als du selbst angemeldet, und die neue Person erscheint in deiner Liste.",
+      "signInTitle": "Anmelden und {{business}} beitreten",
+      "signInSubmit": "Anmelden",
+      "signInDemo": "Demo: Jede E-Mail und jedes Passwort funktioniert.",
+      "newLogin": "Mit neuem Login beitreten",
+      "done": {
+        "title": "{{name}} ist {{business}} beigetreten (Rolle: {{role}})",
+        "note": "In dieser Demo bleibst du als du selbst angemeldet. Die App als jemand anderes zu sehen, kommt später.",
+        "back": "Zurück zu den Einstellungen"
+      },
+      "gone": {
+        "title": "Diese Einladung funktioniert nicht mehr",
+        "body": "Sie wurde zurückgezogen oder schon genutzt, oder ihr Link ist abgelaufen. Bitte die Inhaber:in, sie erneut zu senden.",
+        "back": "Zurück zu den Einstellungen"
+      }
+    }
   },
   "taxes": {
     "title": "Steuern",
@@ -409,7 +558,16 @@
     "invoiceDuplicated": "Du hast sie aus der Rechnung {{number}} kopiert",
     "paidInCash": "Du hast sie als bar bezahlt markiert",
     "paysInvoice": "Bezahlt die Rechnung {{number}}",
-    "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht"
+    "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht",
+    "personInvited": "{{by}} hat {{email}} als {{role}} eingeladen",
+    "invitationCancelled": "{{by}} hat die Einladung an {{email}} zurückgezogen",
+    "personJoined": "{{name}} ist als {{role}} beigetreten",
+    "roleChanged": "{{by}} hat {{name}} auf {{role}} umgestellt",
+    "personRemoved": "{{by}} hat {{name}} entfernt",
+    "personLeft": "{{name}} hat das Unternehmen verlassen",
+    "ownerChanged": "{{by}} hat das Unternehmen an {{name}} übergeben",
+    "supportOn": "{{by}} hat dem Support bis {{until}} Einblick gegeben",
+    "supportOff": "{{by}} hat den Zugriff des Supports beendet"
   },
   "payments": {
     "title": "Zahlungen",
@@ -1342,6 +1500,277 @@
       "title": "Beleg-Postfach",
       "text": "Schicke Belege und Rechnungen an",
       "sorted": "Wir finden selbst heraus, ob sie erhalten oder gesendet wurden."
+    }
+  },
+  "auth": {
+    "demo": {
+      "shown": "Demo: hier gezeigt, statt gesendet",
+      "to": "An:"
+    },
+    "field": {
+      "email": "E-Mail",
+      "password": "Passwort"
+    },
+    "error": {
+      "emailMissing": "Gib deine E-Mail-Adresse ein.",
+      "passwordMissing": "Gib dein Passwort ein."
+    },
+    "signIn": {
+      "title": "Anmelden",
+      "signedOut": "Du bist abgemeldet.",
+      "forgot": "Passwort vergessen?",
+      "submit": "Anmelden",
+      "newHere": "Neu hier?",
+      "createAccount": "Konto erstellen",
+      "demo": "Demo: Saras E-Mail ist schon eingetragen, jedes Passwort funktioniert.",
+      "error": {
+        "member": "In dieser Demo können sich nur Saras Konto und Konten anmelden, die du selbst erstellst. Die App aus Sicht einer anderen Person zu sehen, kommt später.",
+        "unknown": "Zu dieser E-Mail-Adresse gibt es kein Konto."
+      }
+    },
+    "code": {
+      "app": {
+        "title": "Gib deinen Code ein",
+        "hint": "Aus deiner Authenticator-App.",
+        "label": "6-stelliger Code",
+        "switch": "Stattdessen einen Backup-Code verwenden",
+        "demo": "Demo: Jeder 6-stellige Code funktioniert."
+      },
+      "backup": {
+        "title": "Gib einen Backup-Code ein",
+        "hint": "Jeder Backup-Code gilt nur einmal. Nimm einen, wenn du deine Authenticator-App nicht erreichst.",
+        "label": "Backup-Code",
+        "switch": "Stattdessen den Code aus deiner Authenticator-App verwenden",
+        "demo": "Demo: Jeder Backup-Code funktioniert und wird verbraucht."
+      },
+      "trust": "Auf diesem Gerät 30 Tage lang nicht mehr fragen",
+      "submit": "Anmelden",
+      "back": "Zurück",
+      "error": {
+        "digits": "Der Code hat 6 Ziffern.",
+        "backupMissing": "Gib einen deiner Backup-Codes ein.",
+        "noBackups": "Du hast keine Backup-Codes mehr. Nimm den Code aus deiner Authenticator-App."
+      }
+    },
+    "forgot": {
+      "title": "Passwort zurücksetzen",
+      "intro": "Wir schicken dir einen Link per E-Mail. Er gilt 1 Stunde.",
+      "note": "Ein neues Passwort meldet dich auf deinen anderen Geräten ab. Der Code wird bei der nächsten Anmeldung weiterhin abgefragt.",
+      "submit": "Link senden",
+      "back": "Zurück zur Anmeldung",
+      "sent": {
+        "title": "Schau in dein Postfach",
+        "before": "Wenn es ein Konto für ",
+        "after": " gibt, haben wir einen Link geschickt. Er gilt 1 Stunde.",
+        "wrong": "Falsche Adresse?",
+        "change": "Ändern"
+      },
+      "mail": {
+        "subject": "Passwort zurücksetzen",
+        "body": "Jemand möchte das Passwort für dein Konto zurücksetzen. Wenn du das warst, wähle mit der Schaltfläche unten ein neues Passwort. Der Link gilt 1 Stunde.",
+        "action": "Neues Passwort wählen"
+      },
+      "new": {
+        "title": "Neues Passwort wählen",
+        "label": "Neues Passwort",
+        "hint": "Mindestens 10 Zeichen.",
+        "submit": "Passwort speichern",
+        "error": "Nimm mindestens 10 Zeichen."
+      },
+      "done": {
+        "title": "Passwort geändert",
+        "body": "Du bist auf deinen anderen Geräten abgemeldet.",
+        "signIn": "Anmelden"
+      }
+    },
+    "signUp": {
+      "title": "Deine Buchhaltung, für dich geführt",
+      "step": {
+        "account": "Schritt 1 von 3",
+        "checkEmail": "Schritt 1 von 3 · E-Mail bestätigen",
+        "business": "Schritt 2 von 3",
+        "finish": "Schritt 3 von 3"
+      },
+      "price": {
+        "title": "Ein Preis, alles inklusive",
+        "amount": "€ — im Monat",
+        "trial": "Die ersten 30 Tage gratis, ohne Karte",
+        "perBusiness": "Jedes Unternehmen hat seinen eigenen Tarif"
+      },
+      "passwordHint": "Mindestens 10 Zeichen.",
+      "submit": "Konto erstellen",
+      "haveAccount": "Du hast schon ein Konto?",
+      "signIn": "Anmelden",
+      "error": {
+        "emailInvalid": "Das sieht nicht nach einer E-Mail-Adresse aus.",
+        "emailTaken": "Zu dieser E-Mail-Adresse gibt es schon ein Konto.",
+        "passwordShort": "Nimm mindestens 10 Zeichen.",
+        "firstName": "Gib deinen Vornamen ein.",
+        "lastName": "Gib deinen Nachnamen ein."
+      },
+      "checkEmail": {
+        "title": "Schau in dein Postfach",
+        "before": "Wir haben einen Link an ",
+        "after": " geschickt. Er gilt 24 Stunden.",
+        "again": "Nochmal senden",
+        "sentAgain": "Nochmal gesendet",
+        "wrong": "Falsche Adresse?",
+        "change": "Ändern"
+      },
+      "mail": {
+        "subject": "Bestätige deine E-Mail-Adresse",
+        "body": "Willkommen! Bestätige deine E-Mail-Adresse, um dein Konto fertig einzurichten. Der Link gilt 24 Stunden.",
+        "action": "Meine E-Mail bestätigen"
+      },
+      "business": {
+        "title": "Du und dein Unternehmen",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "name": "Name des Unternehmens",
+        "kind": "Welche Art von Arbeit?",
+        "legalForm": "Nur du oder mit Partnern?",
+        "sole": "Nur ich",
+        "partners": "Mit Partnern",
+        "noGmbh": "Eine GmbH kann sich noch nicht anmelden.",
+        "continue": "Weiter",
+        "error": {
+          "name": "Gib den Namen deines Unternehmens ein.",
+          "kind": "Wähle die Art der Arbeit.",
+          "legalForm": "Wähle eins: nur du oder mit Partnern."
+        }
+      },
+      "finish": {
+        "title": "Bedingungen und ein sicherer Login",
+        "protect": "Schütze deinen Login",
+        "submit": "Abschließen"
+      }
+    },
+    "addBusiness": {
+      "back": "Zurück zur Startseite",
+      "title": "Unternehmen hinzufügen",
+      "intro": "Jedes Unternehmen hat seinen eigenen Tarif, seine eigenen Bücher und seine eigenen Personen. Du bist Inhaber:in.",
+      "about": "Zum Unternehmen",
+      "terms": "Bedingungen",
+      "submit": "Unternehmen hinzufügen"
+    },
+    "terms": {
+      "accept": "Ich akzeptiere die {{terms}} und die {{avv}}",
+      "termsLink": "Nutzungsbedingungen",
+      "binding": "Die deutsche Fassung ist verbindlich; die anderen dienen zum Lesen.",
+      "books": "Du führst deine Bücher selbst und schickst deine Erklärungen selbst ab: Die App erledigt die Arbeit, du bestätigst.",
+      "error": "Setze den Haken, um weiterzumachen.",
+      "notice": {
+        "title": "Die Rechtstexte sind noch nicht geschrieben",
+        "body": "Die Nutzungsbedingungen, die Datenschutzerklärung und der Auftragsverarbeitungsvertrag (AVV) werden geschrieben, bevor die App für Kunden öffnet. Die deutsche Fassung wird die verbindliche sein; Englisch und Arabisch gibt es als Übersetzungen zum Lesen.",
+        "close": "Schließen"
+      }
+    },
+    "twoStep": {
+      "scan": "Scanne den QR-Code mit einer Authenticator-App und gib dann ihren 6-stelligen Code ein.",
+      "keyIntro": "Scannen geht nicht? Gib diesen Schlüssel in der App ein:",
+      "code": "6-stelliger Code",
+      "demo": "Demo: Jeder 6-stellige Code funktioniert.",
+      "codesTitle": "Deine Backup-Codes",
+      "codesHint": "Speichere diese 8 Codes an einem sicheren Ort. Jeder gilt nur einmal, falls du dein Handy nicht nutzen kannst.",
+      "save": "Ich habe sie gespeichert",
+      "saved": "Die Anmeldung in zwei Schritten ist eingerichtet.",
+      "error": {
+        "digits": "Der Code hat 6 Ziffern."
+      }
+    }
+  },
+  "account": {
+    "title": "Mein Konto",
+    "change": "Ändern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "you": {
+      "title": "Du",
+      "save": "Speichern",
+      "saved": "Gespeichert.",
+      "email": {
+        "hint": "Eine neue Adresse wird zuerst per E-Mail bestätigt; die alte wird informiert.",
+        "changeLabel": "E-Mail-Adresse ändern",
+        "new": "Neue E-Mail-Adresse",
+        "send": "Link senden",
+        "sent": {
+          "before": "Wir haben einen Link an ",
+          "after": " geschickt. Er gilt 24 Stunden. Deine E-Mail-Adresse bleibt, bis du sie bestätigst."
+        },
+        "changed": "E-Mail-Adresse geändert. Die alte Adresse wird informiert."
+      },
+      "mail": {
+        "subject": "Bestätige deine neue E-Mail-Adresse",
+        "body": "Du möchtest diese Adresse für dein Konto nutzen. Bestätige sie mit dem Button unten. Der Link gilt 24 Stunden.",
+        "action": "Meine neue E-Mail bestätigen"
+      },
+      "error": {
+        "same": "Das ist schon deine E-Mail-Adresse."
+      }
+    },
+    "language": {
+      "title": "Sprache",
+      "hint": "Für die App und unsere E-Mails an dich. Steuererklärungen, Exporte und Rechnungen an deutsche Kunden bleiben auf Deutsch.",
+      "buttons": "Die Sprachbuttons oben in der Leiste ändern das ebenfalls."
+    },
+    "signingIn": {
+      "title": "Anmeldung",
+      "password": {
+        "changeLabel": "Passwort ändern",
+        "changed": "Passwort geändert. Auf deinen anderen Geräten bist du abgemeldet.",
+        "dialog": {
+          "title": "Passwort ändern",
+          "demo": "Demo: Dein aktuelles Passwort ist schon eingetragen, jedes neue Passwort mit mindestens 10 Zeichen funktioniert.",
+          "current": "Aktuelles Passwort",
+          "note": "Ein neues Passwort meldet dich auf deinen anderen Geräten ab.",
+          "save": "Passwort speichern"
+        },
+        "error": {
+          "current": "Gib dein aktuelles Passwort ein."
+        }
+      },
+      "twoStep": {
+        "label": "Anmeldung in zwei Schritten",
+        "on": "An",
+        "hint": "Authenticator-App. Immer an: Dein Konto enthält Bank- und Steuerdaten.",
+        "newPhone": "Neues Handy verwenden",
+        "done": "Dein neues Handy ist eingerichtet."
+      },
+      "backup": {
+        "label": "Backup-Codes",
+        "left": "{{left}} von {{total}} übrig",
+        "make": "Neue Codes erstellen",
+        "dialog": {
+          "title": "Deine neuen Backup-Codes",
+          "old": "Die alten Codes gelten nicht mehr.",
+          "done": "Fertig"
+        }
+      }
+    },
+    "devices": {
+      "title": "Wo du angemeldet bist",
+      "demo": "Demo: Diese Geräte sind Beispiele. Die App liest deinen Browser nicht.",
+      "device": "{{browser}} auf {{system}}",
+      "thisDevice": "Dieses Gerät",
+      "now": "jetzt",
+      "signOut": "Abmelden",
+      "signOutLabel": "{{device}} abmelden",
+      "signOutOthers": "Überall sonst abmelden",
+      "none": "Du bist sonst nirgends angemeldet.",
+      "signedOut": "{{device}} ist abgemeldet.",
+      "signedOutOthers": "Überall sonst abgemeldet."
+    },
+    "businesses": {
+      "title": "Deine Unternehmen",
+      "leave": "Verlassen",
+      "leaveLabel": "{{business}} verlassen",
+      "ownerNote": "Als Inhaber:in kannst du ein Unternehmen nicht verlassen: Übergib es zuerst unter „Personen mit Zugriff“ an jemand anderen.",
+      "onlyOne": "Das ist dein einziges Unternehmen, du kannst es nicht verlassen.",
+      "left": "Du hast {{business}} verlassen.",
+      "dialog": {
+        "title": "{{business}} verlassen?",
+        "body": "Du kannst die Bücher danach nicht mehr öffnen. Die Inhaber:in kann dich wieder einladen."
+      }
     }
   }
 }

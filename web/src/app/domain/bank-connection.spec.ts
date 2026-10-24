@@ -167,24 +167,6 @@ describe('maskIban', () => {
   });
 });
 
-describe('addDays', () => {
-  it('adds days to an ISO date, across a month and a year end', () => {
-    expect(addDays('2026-10-22', 5)).toBe('2026-10-27');
-    expect(addDays('2026-12-30', 3)).toBe('2027-01-02');
-    expect(addDays('2026-10-22', 0)).toBe(DEMO_TODAY);
-  });
-
-  it('goes through a leap day without a zone or the clock getting in the way', () => {
-    expect(addDays('2028-02-28', 2)).toBe('2028-03-01');
-    expect(addDays('2026-03-28', 2)).toBe('2026-03-30');
-    expect(addDays('2026-10-24', 2)).toBe('2026-10-26');
-  });
-
-  it('counts back with a negative number', () => {
-    expect(addDays('2026-10-22', -22)).toBe('2026-09-30');
-  });
-});
-
 describe('newConnection', () => {
   it('is a bank connection with a consent of 180 days from the demo day, fetched at noon that day', () => {
     expect(CONSENT_DAYS).toBe(180);

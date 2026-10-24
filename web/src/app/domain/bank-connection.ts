@@ -1,6 +1,10 @@
 import { BANKS } from '../data/banks';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Account, AccountConnection, Notice } from '../data/models';
+import { addDays, daysBetween } from './dates';
+
+// Day arithmetic lives in `dates.ts`; these stay exported here for the code that reads it from the bank rules.
+export { addDays, daysBetween };
 
 /**
  * How healthy an account's connection is: a bank connection that is fine, one whose consent ends soon (with the days
@@ -16,15 +20,8 @@ export type ConnectionStatus =
 /** A consent that ends within this many days (the last day included) is shown as "renew soon". */
 const RENEW_WITHIN_DAYS = 14;
 
-const MS_PER_DAY = 86_400_000;
-
 /** How long a bank's consent lasts after the person signs in, as the bank asks them to renew it. */
 export const CONSENT_DAYS = 180;
-
-/** The whole days from one ISO date to another; negative when `to` is earlier. Dates are read as UTC, so no clock or zone matters. */
-export function daysBetween(from: string, to: string): number {
-  return Math.round((Date.parse(to) - Date.parse(from)) / MS_PER_DAY);
-}
 
 /**
  * The status of an account's connection on `today` (an ISO date; never the real clock).
@@ -107,11 +104,6 @@ export function accountName(account: Account, productLabel: string): string {
 export function maskIban(iban: string): string {
   const compact = iban.replace(/\s+/g, '');
   return `${compact.slice(0, 4)} … ${compact.slice(-4)}`;
-}
-
-/** An ISO date `days` after another (before it when negative), counted in UTC so no clock or zone matters. */
-export function addDays(date: string, days: number): string {
-  return new Date(Date.parse(date) + days * MS_PER_DAY).toISOString().slice(0, 10);
 }
 
 /**

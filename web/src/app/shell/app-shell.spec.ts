@@ -3,11 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
+import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { presetOf } from '../domain/home-cards';
+import { AccountService } from '../state/account.service';
+import { signInAsSara } from '../state/account.testing';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection } from '../state/demo-state.testing';
 import { NoticeService } from '../state/notice.service';
+import { PersonLanguageService } from '../state/person-language.service';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { AppShell } from './app-shell';
 import { ComingSoonPage } from './coming-soon.page';
@@ -15,6 +19,10 @@ import { ComingSoonPage } from './coming-soon.page';
 /** Stands in for the Taxes page, which the app gets later. */
 @Component({ template: '' })
 class TaxesStub {}
+
+/** Stands in for the sign-in page, where Reset demo ends. */
+@Component({ template: '' })
+class SignInStub {}
 
 describe('AppShell', () => {
   let el: HTMLElement;
@@ -34,6 +42,7 @@ describe('AppShell', () => {
               { path: 'taxes', component: TaxesStub },
             ],
           },
+          { path: 'sign-in', component: SignInStub },
         ]),
       ],
     });
@@ -225,25 +234,26 @@ describe('AppShell', () => {
     expect(qa('[data-testid="demo-toolbar"] [aria-pressed="false"]')).toHaveLength(3);
   });
 
-  it('reset demo brings dismissed notices back', () => {
+  it('reset demo brings dismissed notices back', async () => {
     const notices = TestBed.inject(NoticeService);
     notices.dismiss('wd-n3');
     notices.dismiss('bank-expiry-wd-qonto');
     harness.detectChanges();
     expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('2');
-    q('[data-testid="demo-reset"]').click();
-    harness.detectChanges();
     expect(q('[data-testid="demo-reset"]').textContent).toContain('Reset demo');
-    expect(q('[data-testid="bell-badge"]').textContent?.trim()).toBe('4');
+    q('[data-testid="demo-reset"]').click();
+    // Reset demo leaves the app for the sign-in page, so the count is read from the service.
+    expect(notices.unreadCount()).toBe(4);
+    await settle();
   });
 
-  it('Reset demo restores a changed payment', () => {
+  it('Reset demo restores a changed payment', async () => {
     const demo = TestBed.inject(DemoStateService);
     const find = () => demo.business().transactions.find((t) => t.id === 'wd-t3')!;
     demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
     expect(find().receipt).toBe('notNeeded');
     q('[data-testid="demo-reset"]').click();
-    harness.detectChanges();
+    await settle();
     expect(find().receipt).toBe('missing');
   });
 
@@ -265,12 +275,10 @@ describe('AppShell', () => {
       expect(q('main').textContent).toContain('Payments');
     });
 
-    it('Got it keeps it away for the rest of the session, and Reset demo brings it back', async () => {
+    it('Got it keeps it away for the rest of the session', async () => {
       await expectReminder(true);
       press('tax-reminder-got-it');
       await expectReminder(false);
-      q('[data-testid="demo-reset"]').click();
-      await expectReminder(true);
     });
 
     it('Open taxes in the pop-up switches business and closes it', async () => {
@@ -308,6 +316,7 @@ describe('AppShell and the review inbox', () => {
     TestBed.configureTestingModule({
       providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
+    signInAsSara();
   });
 
   afterEach(() => {
@@ -339,5 +348,315 @@ describe('AppShell and the review inbox', () => {
     await settle();
     expect(router.url).toBe('/payments');
     expect(shell.querySelector('[data-testid="review-layer"]')).toBeNull();
+  });
+});
+
+describe('AppShell, the person menu and the business switcher', () => {
+  let harness: RouterTestingHarness;
+  let el: HTMLElement;
+  let router: Router;
+  let accounts: AccountService;
+  let demo: DemoStateService;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
+    });
+    accounts = TestBed.inject(AccountService);
+    demo = TestBed.inject(DemoStateService);
+    router = TestBed.inject(Router);
+    signInAsSara();
+    harness = await RouterTestingHarness.create('/');
+    await settle();
+  });
+
+  afterEach(() => {
+    TestBed.inject(LanguageService).setLang('en');
+    document.documentElement.lang = '';
+    document.documentElement.dir = '';
+  });
+
+  async function settle(): Promise<void> {
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    el = (harness.routeNativeElement ?? document.body) as HTMLElement;
+  }
+
+  const text = (node: Element | null | undefined) => node?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  const q = (testId: string) => el.querySelector<HTMLElement>(`[data-testid="${testId}"]`)!;
+  const body = (selector: string) => Array.from(document.body.querySelectorAll<HTMLElement>(selector));
+  const items = () => body('[hlmDropdownMenuItem]');
+  const item = (label: string) => items().find((i) => text(i).includes(label))!;
+  const roleOf = (name: string) => text(item(name).querySelector('[data-testid="business-role"]'));
+  const pickLanguage = (label: string) =>
+    Array.from(el.querySelectorAll<HTMLElement>('[data-testid="lang-switcher"] button'))
+      .find((b) => text(b) === label)!
+      .click();
+
+  async function openPersonMenu(): Promise<void> {
+    q('person-menu').click();
+    await settle();
+  }
+
+  async function openSwitcher(): Promise<void> {
+    q('business-switcher').click();
+    await settle();
+  }
+
+  /** Signs a person in who has made an account and a business of their own, as sign-up does. */
+  function signInAsMia(): void {
+    accounts.signOut();
+    const id = accounts.createPerson({ firstName: 'Mia', lastName: 'Becker', email: 'mia@example.com', lang: 'en' });
+    demo.createBusiness(
+      { personId: id, name: 'Mia Becker', email: 'mia@example.com' },
+      { name: 'Studio Becker', kind: 'freelance', legalForm: 'sole' },
+    );
+    accounts.signIn(id, false);
+  }
+
+  describe('the person menu', () => {
+    it('is the last thing in the top bar, with the initials and a name for screen readers', () => {
+      const button = q('person-menu');
+      expect(text(button)).toBe('SW');
+      expect(button.getAttribute('aria-label')).toBe('Account: Sara Weber');
+      const follows = q('lang-switcher').compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING;
+      expect(follows).toBeTruthy();
+      expect(el.querySelector('header')!.contains(button)).toBe(true);
+    });
+
+    it('opens with the name and email, My account and Sign out', async () => {
+      await openPersonMenu();
+      const menu = document.body.querySelector<HTMLElement>('[data-testid="person-menu-panel"]')!;
+      expect(text(menu.querySelector('[data-testid="person-menu-name"]'))).toBe('Sara Weber');
+      expect(text(menu.querySelector('[data-testid="person-menu-email"]'))).toBe('sara@example.com');
+      expect(menu.querySelector('[data-testid="person-menu-email"] bdi')!.getAttribute('dir')).toBe('ltr');
+      expect(items().map(text)).toEqual(['My account', 'Sign out']);
+      expect(item('My account').getAttribute('href')).toBe('/account');
+    });
+
+    it('follows the person who is signed in', async () => {
+      signInAsMia();
+      await settle();
+      expect(text(q('person-menu'))).toBe('MB');
+      expect(q('person-menu').getAttribute('aria-label')).toBe('Account: Mia Becker');
+      await openPersonMenu();
+      expect(text(document.body.querySelector('[data-testid="person-menu-name"]'))).toBe('Mia Becker');
+      expect(text(document.body.querySelector('[data-testid="person-menu-email"]'))).toBe('mia@example.com');
+    });
+
+    it('Sign out opens the sign-in page with the signed-out note, and the shell stays closed', async () => {
+      await openPersonMenu();
+      item('Sign out').click();
+      await settle();
+      expect(accounts.signedIn()).toBe(false);
+      expect(router.url).toBe('/sign-in?signedOut=1');
+      expect(text(q('signed-out-note'))).toBe("You're signed out.");
+      expect(document.querySelector('app-shell')).toBeNull();
+      expect(localStorage.getItem('mockup.session')).toBeNull();
+
+      // The pages of the app ask for signing in again.
+      await harness.navigateByUrl('/payments');
+      await settle();
+      expect(router.url).toBe('/sign-in?next=%2Fpayments');
+      expect(document.querySelector('app-shell')).toBeNull();
+    });
+  });
+
+  describe('the business switcher', () => {
+    it('shows Owner for Weber Design and Full access for Café Linde', async () => {
+      await openSwitcher();
+      expect(roleOf('Weber Design')).toBe('Owner');
+      expect(roleOf('Sara Weber Yoga')).toBe('Owner');
+      expect(roleOf('Café Linde GbR')).toBe('Full access');
+    });
+
+    it('shows a business of a new account with its owner role', async () => {
+      signInAsMia();
+      await settle();
+      await openSwitcher();
+      expect(items()).toHaveLength(2);
+      expect(roleOf('Studio Becker')).toBe('Owner');
+      expect(text(items()[1])).toBe('Add a business');
+    });
+
+    it('the role words follow the language', async () => {
+      pickLanguage('DE');
+      await settle();
+      await openSwitcher();
+      expect(roleOf('Café Linde GbR')).toBe('Voller Zugriff');
+      expect(roleOf('Weber Design')).toBe('Inhaber:in');
+    });
+
+    it('ends with a separator and Add a business, which opens /businesses/new', async () => {
+      await openSwitcher();
+      const add = item('Add a business');
+      expect(items().at(-1)).toBe(add);
+      expect(add.previousElementSibling?.getAttribute('data-slot')).toBe('dropdown-menu-separator');
+      expect(add.getAttribute('href')).toBe('/businesses/new');
+      add.click();
+      await settle();
+      expect(router.url).toBe('/businesses/new');
+      expect(text(q('add-business-title'))).toBe('Add a business');
+    });
+
+    it('still opens the business that is chosen', async () => {
+      await openSwitcher();
+      item('Café Linde GbR').click();
+      await settle();
+      expect(demo.business().id).toBe('cafe-linde');
+    });
+  });
+
+  describe('the language buttons', () => {
+    it("save the person's language", async () => {
+      expect(accounts.person().lang).toBeNull();
+      pickLanguage('DE');
+      await settle();
+      expect(accounts.person().lang).toBe('de');
+      expect(document.documentElement.lang).toBe('de');
+      pickLanguage('عربي');
+      await settle();
+      expect(accounts.person().lang).toBe('ar');
+      expect(document.documentElement.dir).toBe('rtl');
+    });
+
+    it('leave the language of another person alone', async () => {
+      pickLanguage('DE');
+      await settle();
+      signInAsMia();
+      await settle();
+      expect(accounts.person().lang).toBe('en');
+      expect(accounts.persons().find((p) => p.id === 'p1')!.lang).toBe('de');
+    });
+  });
+
+  describe('Reset demo', () => {
+    it("signs out, and the sign-in page has Sara's email", async () => {
+      accounts.signIn('p1', true);
+      expect(accounts.isTrusted('p1')).toBe(true);
+      q('demo-reset').click();
+      await settle();
+      expect(accounts.signedIn()).toBe(false);
+      expect(accounts.isTrusted('p1')).toBe(false);
+      expect(localStorage.getItem('mockup.session')).toBeNull();
+      expect(router.url).toBe('/sign-in');
+      expect(document.querySelector('app-shell')).toBeNull();
+      expect((q('email') as HTMLInputElement).value).toBe('sara@example.com');
+    });
+
+    it('drops an account and a business made during the visit', async () => {
+      signInAsMia();
+      await settle();
+      q('demo-reset').click();
+      await settle();
+      expect(accounts.persons().map((p) => p.id)).toEqual(['p1']);
+      expect(demo.businesses.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
+    });
+
+    it('forgets the dismissed notices of an account made during the visit, whose ids a reload uses again', async () => {
+      localStorage.setItem('mockup.dismissed.visit-1.new-1', '["a-notice"]');
+      localStorage.setItem('mockup.dismissed.p1.new-1', '["a-notice"]');
+      q('demo-reset').click();
+      await settle();
+      expect(localStorage.getItem('mockup.dismissed.visit-1.new-1')).toBeNull();
+      expect(localStorage.getItem('mockup.dismissed.p1.new-1')).toBeNull();
+    });
+
+    it('forgets a language picked while signed out, so it never reaches a sign-in after it', async () => {
+      const personLanguage = TestBed.inject(PersonLanguageService);
+      accounts.signOut();
+      personLanguage.set('de');
+      q('demo-reset').click();
+      await settle();
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      personLanguage.applyOnSignIn('p1');
+      expect(TestBed.inject(LanguageService).lang()).toBe('ar');
+    });
+
+    it("brings back Sara's dismissed notices, also when another person presses it", async () => {
+      const notices = TestBed.inject(NoticeService);
+      notices.dismiss('bank-expiry-wd-qonto');
+      expect(notices.unreadCount()).toBe(3);
+      signInAsMia();
+      await settle();
+      q('demo-reset').click();
+      await settle();
+      accounts.signIn('p1', false);
+      expect(notices.unreadCount()).toBe(4);
+    });
+  });
+});
+
+describe('AppShell and the tax reminder after Reset demo', () => {
+  let harness: RouterTestingHarness;
+  let el: HTMLElement;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [provideTranslocoTesting(), provideRouter(routes)],
+    });
+    signInAsSara();
+    harness = await RouterTestingHarness.create('/');
+    await settle();
+  });
+
+  afterEach(() => {
+    TestBed.inject(LanguageService).setLang('en');
+    document.documentElement.lang = '';
+    document.documentElement.dir = '';
+  });
+
+  async function settle(): Promise<void> {
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    el = (harness.routeNativeElement ?? document.body) as HTMLElement;
+  }
+
+  const reminder = () => document.body.querySelector<HTMLElement>('[role="dialog"] [data-testid="tax-reminder-list"]');
+  const press = (testId: string) => document.body.querySelector<HTMLElement>(`[data-testid="${testId}"]`)!.click();
+
+  /** The pop-up loads a moment after the shell starts, and closes after its exit animation. */
+  async function expectReminder(shown: boolean): Promise<void> {
+    await vi.waitFor(async () => {
+      await settle();
+      expect(reminder() !== null).toBe(shown);
+    });
+  }
+
+  async function type(testId: string, value: string): Promise<void> {
+    const field = el.querySelector<HTMLInputElement>(`[data-testid="${testId}"]`)!;
+    field.value = value;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    await settle();
+  }
+
+  async function submit(formId: string): Promise<void> {
+    el.querySelector(`[data-testid="${formId}"]`)!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    await settle();
+  }
+
+  it('after Reset and signing in, the tax reminder shows again', async () => {
+    await expectReminder(true);
+    press('tax-reminder-got-it');
+    await expectReminder(false);
+
+    el.querySelector<HTMLElement>('[data-testid="demo-reset"]')!.click();
+    await settle();
+    expect(TestBed.inject(Router).url).toBe('/sign-in');
+    expect(reminder()).toBeNull();
+
+    // Signing in is what opens the app again: the pop-up comes with it.
+    await type('password', 'anything at all');
+    await submit('sign-in-form');
+    await type('code', '123456');
+    await submit('code-form');
+    expect(TestBed.inject(Router).url).toBe('/');
+    await expectReminder(true);
   });
 });

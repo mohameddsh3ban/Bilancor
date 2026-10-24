@@ -14,6 +14,7 @@ import { PaymentsPage } from '../payments/payments.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection as setConnection } from '../state/demo-state.testing';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
 import { InvoiceDetailsPage } from './invoice-details.page';
@@ -105,7 +106,7 @@ describe('SettingsPage', () => {
   }
 
   describe('the page', () => {
-    it('has the title and four cards: Business and tax, Invoice details, Bank accounts, Documents inbox', async () => {
+    it('has the title and five cards: Business and tax, Invoice details, Bank accounts, People with access, Documents inbox', async () => {
       await render();
       expect(text(el.querySelector('h1'))).toBe('Settings');
       const cards = Array.from(el.querySelectorAll('section[data-testid^="settings-"]'));
@@ -113,14 +114,27 @@ describe('SettingsPage', () => {
         'settings-tax',
         'settings-invoice',
         'settings-banks',
+        'settings-people',
         'settings-inbox',
       ]);
       expect(cards.map((card) => text(card.querySelector('h2')))).toEqual([
         'Business and tax',
         'Invoice details',
         'Bank accounts',
+        'People with access',
         'Documents inbox',
       ]);
+    });
+
+    it('gives the People with access card the anchor people, so Back to Settings can open Settings at it', async () => {
+      await render();
+      const card = el.querySelector('#people')!;
+      expect(card).not.toBeNull();
+      expect(card.getAttribute('data-testid')).toBe('settings-people');
+      expect(el.querySelectorAll('#people')).toHaveLength(1);
+      expect(card.closest('app-people-card')!.previousElementSibling).toBe(
+        q('settings-banks')!.closest('app-bank-accounts'),
+      );
     });
 
     it('gives the Bank accounts card the anchor bank-accounts, so links can open Settings at it', async () => {
@@ -947,6 +961,7 @@ describe('Settings in the app', () => {
     TestBed.configureTestingModule({
       providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
+    signInAsSara();
   });
 
   afterEach(() => {
@@ -955,7 +970,7 @@ describe('Settings in the app', () => {
     document.documentElement.dir = '';
   });
 
-  it('menu Settings opens the page with four sections', async () => {
+  it('menu Settings opens the page with five sections', async () => {
     harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
     harness.detectChanges();
@@ -980,6 +995,12 @@ describe('Settings in the app', () => {
       Array.from(main.querySelectorAll('section[data-testid^="settings-"] h2')).map((h) =>
         h.textContent?.trim(),
       ),
-    ).toEqual(['Business and tax', 'Invoice details', 'Bank accounts', 'Documents inbox']);
+    ).toEqual([
+      'Business and tax',
+      'Invoice details',
+      'Bank accounts',
+      'People with access',
+      'Documents inbox',
+    ]);
   });
 });

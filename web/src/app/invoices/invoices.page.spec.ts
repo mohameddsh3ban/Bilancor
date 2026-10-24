@@ -4,8 +4,11 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
+import { foundAccountsOf } from '../data/banks';
+import { PERSON } from '../data/sample-person';
 import { DemoStateService } from '../state/demo-state.service';
 import { SEND_MS, InvoiceService } from '../state/invoice.service';
+import { signInAsSara } from '../state/account.testing';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { InvoicesPage } from './invoices.page';
 
@@ -352,6 +355,28 @@ describe('InvoicesPage', () => {
       await render();
       expect(q('empty-none')).not.toBeNull();
     });
+
+    it('the Invoices page shows its empty state for a new business', async () => {
+      const id = demo.createBusiness(
+        { personId: PERSON.id, name: 'Sara Weber', email: PERSON.email },
+        { name: 'Atelier Neu', kind: 'freelance', legalForm: 'sole' },
+      );
+      demo.setBusiness(id);
+      await render();
+      const empty = q('empty-none')!;
+      expect(text(empty.querySelector('h2'))).toBe('No invoices yet');
+      expect(inside(empty, 'empty-new-invoice')!.getAttribute('href')).toBe('/invoices/new');
+      expect(q('invoice-list')).toBeNull();
+      expect(q('invoice-filters')).toBeNull();
+      expect(q('owed-card')).toBeNull();
+
+      // With its bank connected and eight payments in, nothing was written or sent: the page stays empty.
+      demo.connectAccounts('qonto', foundAccountsOf(id, 'qonto'), '2026-01-01');
+      await settle();
+      expect(demo.business().transactions).toHaveLength(8);
+      expect(q('empty-none')).not.toBeNull();
+      expect(q('owed-card')).toBeNull();
+    });
   });
 
   describe('Arabic', () => {
@@ -384,6 +409,7 @@ describe('Invoices in the menu', () => {
     TestBed.configureTestingModule({
       providers: [provideTranslocoTesting(), provideRouter(routes), provideNoTaxReminder()],
     });
+    signInAsSara();
   });
 
   afterEach(() => TestBed.inject(LanguageService).setLang('en'));

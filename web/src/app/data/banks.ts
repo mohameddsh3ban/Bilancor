@@ -1,4 +1,5 @@
 import type { Account, AccountConnection } from './models';
+import { isVisitBusiness, newBusinessAccount } from './new-business-sample';
 import { BUSINESSES } from './sample-data';
 
 // Everything here is made up for the demo: no real bank connection, no official tax-office list.
@@ -142,3 +143,21 @@ export const FOUND_ACCOUNTS: Record<string, Record<string, Account[]>> = {
     sparkasse: [sampleAccount('cafe-linde', 'cl-sparkasse')],
   },
 };
+
+/**
+ * The banks a business uses (ids from `BANKS`), the first one first. Null for a business made during the visit: any bank
+ * is its bank. An id that is neither a sample business nor made during the visit has none.
+ */
+export function banksOf(businessId: string): string[] | null {
+  return isVisitBusiness(businessId) ? null : (SAMPLE_BANKS[businessId] ?? []);
+}
+
+/**
+ * The accounts the demo finds when a business signs in at a bank: a sample business's own accounts, or for a business
+ * made during the visit its one business account, named after whichever bank of `BANKS` it is. None at any other bank.
+ */
+export function foundAccountsOf(businessId: string, bankId: string): Account[] {
+  if (!isVisitBusiness(businessId)) return FOUND_ACCOUNTS[businessId]?.[bankId] ?? [];
+  const bank = BANKS.find((candidate) => candidate.id === bankId);
+  return bank ? [newBusinessAccount(businessId, bank.name)] : [];
+}

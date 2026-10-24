@@ -291,9 +291,25 @@ describe('NoticeService.resetDismissals', () => {
     demo.setBusiness('sara-yoga');
     service.dismiss(revenueLimit.id);
     service.resetDismissals();
-    expect(JSON.parse(storage.get('mockup.dismissed.p1.weber-design')!)).toEqual([]);
-    expect(JSON.parse(storage.get('mockup.dismissed.p1.sara-yoga')!)).toEqual([]);
+    expect(storage.get('mockup.dismissed.p1.weber-design')).toBeNull();
+    expect(storage.get('mockup.dismissed.p1.sara-yoga')).toBeNull();
     expect(service.shown().map((n) => n.id)).toEqual([bankEndedId, revenueLimit.id]);
+  });
+
+  it('also forgets the dismissals of an account made during the visit, whose ids a reload hands out again', () => {
+    const storage = TestBed.inject(SafeStorage);
+    const service = TestBed.inject(NoticeService);
+    storage.set('mockup.dismissed.visit-1.new-1', '["terms"]');
+    storage.set('mockup.dismissed.p1.new-1', '["terms"]');
+    storage.set('mockup.dismissed.p1.weber-design', '[]');
+    // Other things under `mockup.` are not dismissals and stay.
+    storage.set('mockup.lang', 'de');
+    service.resetDismissals();
+    expect(storage.get('mockup.dismissed.visit-1.new-1')).toBeNull();
+    expect(storage.get('mockup.dismissed.p1.new-1')).toBeNull();
+    expect(storage.get('mockup.dismissed.p1.weber-design')).toBeNull();
+    expect(localStorage.getItem('mockup.dismissed.visit-1.new-1')).toBeNull();
+    expect(storage.get('mockup.lang')).toBe('de');
   });
 
   it('a new NoticeService sees nothing dismissed after a reset', () => {
