@@ -434,6 +434,28 @@ describe('ReportsPage', () => {
       expect(document.activeElement).toBe(q('status-2026-09'));
     });
 
+    it('when its VAT return closes the month under the open pop-up, the pop-up goes and the cursor is on Closed', async () => {
+      await render('cafe-linde');
+      await click('close-2026-09');
+      await dialogIs(true);
+
+      demo.recordSentReturn({
+        periodStart: '2026-07-01',
+        periodEnd: '2026-09-30',
+        sentOn: DEMO_TODAY,
+        chargedCents: 0,
+        paidCents: 0,
+        resultCents: 0,
+        ticket: 'ET-2026-1022-00001',
+        taxOffice: null,
+      });
+      await dialogIs(false);
+
+      expect(text(q('status-2026-09'))).toBe('Closed');
+      expect(q('close-2026-09')).toBeNull();
+      expect(document.activeElement).toBe(q('status-2026-09'));
+    });
+
     it('the figures and the year total do not change when a month is closed', async () => {
       await render('sara-yoga');
       const before = ['income', 'costs', 'profit'].map((kind) => text(q(`${kind}-2026-09`)));

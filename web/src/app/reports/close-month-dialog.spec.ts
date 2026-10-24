@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
-import type { Doc, Transaction } from '../data/models';
+import { DEMO_TODAY } from '../data/demo-date';
+import type { Doc, SentVatReturn, Transaction } from '../data/models';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection, withRole } from '../state/demo-state.testing';
 import { CloseMonthDialog } from './close-month-dialog';
@@ -107,11 +108,6 @@ describe('CloseMonthDialog', () => {
     withConnection(demo, 'cl-qonto', { lastFetched: '2026-09-30T23:59' });
     await open('cafe-linde', '2026-09');
     expect(text(q('close-check-account-cl-qonto'))).toBe('Qonto: Check it against your statement');
-
-    // A month that has not ended can't have been delivered whole either: the sample's last fetch is on 22 Oct.
-    fixture.componentRef.setInput('month', '2026-10');
-    await settle();
-    expect(text(q('close-check-account-cl-qonto'))).toBe('Qonto: Check it against your statement');
   });
 
   it('a blocked month says what is missing, with Start, and Close is off', async () => {
@@ -156,12 +152,15 @@ describe('CloseMonthDialog', () => {
     demo.addDocument('sara-yoga', duplicate);
     await open('sara-yoga', '2026-09');
     expect(text(q('close-check-duplicates'))).toBe('1 document looks like a duplicate Show');
-    expect(q('close-check-show')!.getAttribute('href')).toBe('/documents');
+    // One possible duplicate: Show opens that document.
+    expect(q('close-check-show')!.getAttribute('href')).toBe('/documents/sy-dup');
     expect(button('close-confirm').disabled).toBe(false);
 
     demo.addDocument('sara-yoga', { ...duplicate, id: 'sy-dup-2' });
     await settle();
     expect(text(q('close-check-duplicates'))).toBe('2 documents look like duplicates Show');
+    // Several: Show opens the list.
+    expect(q('close-check-show')!.getAttribute('href')).toBe('/documents');
   });
 
   it('Close closes the month for the person, tells the page, and the pop-up goes', async () => {
@@ -222,6 +221,72 @@ describe('CloseMonthDialog', () => {
     expect(dialog()).not.toBeNull();
     expect(finished).toEqual([]);
     expect(demo.business().closedMonths).toHaveLength(1);
+  });
+
+  /** A VAT return sent today for a period, as the Taxes page records it. */
+  const sentFor = (periodStart: string, periodEnd: string): SentVatReturn => ({
+    periodStart,
+    periodEnd,
+    sentOn: DEMO_TODAY,
+    chargedCents: 0,
+    paidCents: 0,
+    resultCents: 0,
+    ticket: 'ET-2026-1022-00001',
+    taxOffice: null,
+  });
+
+  it('goes and says the month is closed when its VAT return closes it while the pop-up is open', async () => {
+    await open('cafe-linde', '2026-09');
+    expect(button('close-confirm').disabled).toBe(false);
+
+    demo.recordSentReturn(sentFor('2026-07-01', '2026-09-30'));
+    await expectClosed();
+    expect(finished).toEqual(['closed']);
+    expect(fixture.componentInstance.open()).toBe(false);
+    // The return closed it, not the person: no second line from the pop-up.
+    expect(demo.business().closedMonths.find((c) => c.month === '2026-09')).toEqual({
+      month: '2026-09',
+      on: DEMO_TODAY,
+      by: null,
+    });
+    expect(demo.business().history.filter((line) => line.params['month'] === '2026-09')).toHaveLength(1);
+  });
+
+  it('stays put while a return closes another month, and says so once when its own month closes', async () => {
+    await open('cafe-linde', '2026-09');
+    demo.recordSentReturn(sentFor('2026-07-01', '2026-08-31')); // July and August, not September
+    await settle();
+    expect(dialog()).not.toBeNull();
+    expect(finished).toEqual([]);
+
+    demo.recordSentReturn(sentFor('2026-09-01', '2026-09-30'));
+    await expectClosed();
+    await settle();
+    expect(finished).toEqual(['closed']);
+  });
+
+  it('a month that is not one to close (the running one) never stays open, and is put off, not closed', async () => {
+    demo.setBusiness('sara-yoga');
+    fixture = TestBed.createComponent(CloseMonthDialog);
+    fixture.componentRef.setInput('month', '2026-10');
+    fixture.componentRef.setInput('open', false);
+    fixture.componentInstance.finished.subscribe((result) => finished.push(result));
+    await settle();
+    fixture.componentRef.setInput('open', true);
+    await settle();
+    await settle();
+    expect(dialog()).toBeNull();
+    expect(fixture.componentInstance.open()).toBe(false);
+    expect(finished).toEqual(['dismissed']);
+    expect(demo.business().closedMonths).toHaveLength(1);
+  });
+
+  it('closing a month by its own button still says so once', async () => {
+    await open('sara-yoga', '2026-09');
+    button('close-confirm').click();
+    await expectClosed();
+    await settle();
+    expect(finished).toEqual(['closed']);
   });
 
   it('speaks German, with the month in German', async () => {

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   model,
@@ -19,7 +20,8 @@ import { pluralKey } from '../core/i18n/plural-key';
 import { Term } from '../core/i18n/term';
 import { DialogCard } from '../core/layout/dialog-card';
 import { accountName } from '../domain/bank-connection';
-import { closeCheck } from '../domain/months';
+import { DEMO_TODAY } from '../data/demo-date';
+import { closeCheck, isClosedDate, monthRows } from '../domain/months';
 import { DemoStateService } from '../state/demo-state.service';
 
 /** Stands where the term goes in a translated sentence, so the term can be a button of its own with its explanation. */
@@ -32,10 +34,13 @@ export type CloseResult = 'closed' | 'dismissed';
  * The pop-up that closes a finished month: what closing does (its bookings can't be changed any more), the check that was
  * made (the payments of the month, possible duplicates, each bank account) and **Close <month>**, which is off while a
  * payment of the month still needs the person. A possible duplicate and an account to check against the statement only
- * warn. **Start** and **Show** leave the pop-up behind on their way to the review inbox and to Documents.
+ * warn. **Start** and **Show** leave the pop-up behind on their way to the review inbox and to Documents (Show opens the
+ * document itself when exactly one looks like a duplicate, else the list).
  *
  * The page that opens it learns how it went (`finished`) so it can put the cursor back where it belongs. Only a person who
- * may close a month gets here (see `canCloseMonths`); when the state refuses all the same, the pop-up stays open.
+ * may close a month gets here (see `canCloseMonths`); when the state refuses all the same, the pop-up stays open. If the
+ * month is not waiting to be closed any more while the pop-up is open (sending its VAT return closes it), the pop-up goes by
+ * itself and says so, as closed, instead of leaving a Close that does nothing.
  */
 @Component({
   selector: 'app-close-month-dialog',
@@ -130,7 +135,7 @@ export type CloseResult = 'closed' | 'dismissed';
                 size="sm"
                 variant="outline"
                 class="shrink-0"
-                routerLink="/documents"
+                [routerLink]="duplicatesLink()"
                 data-testid="close-check-show"
                 (click)="leave()"
               >
@@ -232,6 +237,12 @@ export class CloseMonthDialog {
     return parts.map((part, i) => ({ ...part, last: i === parts.length - 1 }));
   });
 
+  /** Where Show goes: the document itself when exactly one looks like a duplicate, else the list of documents. */
+  protected readonly duplicatesLink = computed(() => {
+    const ids = this.check().duplicateDocIds;
+    return ids.length === 1 ? ['/documents', ids[0]] : ['/documents'];
+  });
+
   /** The accounts the check looked at, each with its account, so the pop-up can name it. */
   protected readonly accounts = computed(() => {
     const accounts = this.demo.business().accounts;
@@ -240,6 +251,25 @@ export class CloseMonthDialog {
       return account ? [{ account, result }] : [];
     });
   });
+
+  /** Whether the month is still waiting to be closed: a finished month that is not closed (the running one and a closed one are not). */
+  private readonly waiting = computed(() => {
+    const month = this.month();
+    return monthRows(this.demo.business(), DEMO_TODAY).some(
+      (row) => row.kind === 'month' && row.from === month && row.state === 'notClosed',
+    );
+  });
+
+  constructor() {
+    // The month stopped waiting under the open pop-up: it closed by its VAT return (the page then focuses the new status
+    // word), or is no longer one to close. The pop-up's own Close leaves through `confirm`, which sets `open` first.
+    effect(() => {
+      if (!this.open() || this.waiting()) return;
+      const closed = isClosedDate(this.demo.business(), `${this.month()}-01`);
+      this.open.set(false);
+      this.finished.emit(closed ? 'closed' : 'dismissed');
+    });
+  }
 
   /** The cross, Escape and a tap outside close the pop-up by themselves; it follows. */
   protected onStateChanged(state: 'open' | 'closed'): void {
