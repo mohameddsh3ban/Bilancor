@@ -474,8 +474,8 @@
         "many": "{{count}} payments still need you"
       },
       "note": {
-        "one": "It isn't in these figures or exports yet.",
-        "many": "They aren't in these figures or exports yet."
+        "one": "It isn't in these figures yet; an export marks it as open.",
+        "many": "They aren't in these figures yet; an export marks them as open."
       },
       "start": "Start"
     },

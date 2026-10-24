@@ -343,7 +343,7 @@ describe('ReportsPage', () => {
       const count = needsYouCount(demo.business().transactions);
       expect(count).toBe(3);
       expect(text(q('reports-needs'))).toContain('3 payments still need you');
-      expect(text(q('reports-needs'))).toContain("They aren't in these figures or exports yet.");
+      expect(text(q('reports-needs'))).toContain("They aren't in these figures yet; an export marks them as open.");
       expect(text(q('reports-needs-start'))).toBe('Start');
       expect(q('reports-needs-start')!.getAttribute('href')).toBe('/review');
 
@@ -353,10 +353,27 @@ describe('ReportsPage', () => {
       await settle();
       expect(needsYouCount(demo.business().transactions)).toBe(1);
       expect(text(q('reports-needs'))).toContain('1 payment still needs you');
-      expect(text(q('reports-needs'))).toContain("It isn't in these figures or exports yet.");
+      expect(text(q('reports-needs'))).toContain("It isn't in these figures yet; an export marks it as open.");
 
       await click('reports-needs-start');
       expect(router().url).toBe('/review');
+    });
+
+    it('does not say the payments are left out of an export: the export has them, marked as open', async () => {
+      await render('sara-yoga');
+      expect(text(q('reports-needs'))).not.toMatch(/exports yet/);
+      // The export card next to it offers exactly that, first and chosen.
+      expect(text(q('export-choice-open'))).toBe('Export with them marked as open');
+      expect(q('export-choice-open')!.querySelector('input')!.checked).toBe(true);
+    });
+
+    it('says it in German and Arabic too', async () => {
+      TestBed.inject(LanguageService).setLang('de');
+      await render('sara-yoga');
+      expect(text(q('reports-needs'))).toContain('Sie stecken noch nicht in diesen Zahlen; ein Export markiert sie als offen.');
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(q('reports-needs'))).toContain('ليست بعد ضمن هذه الأرقام، ويُظهرها التصدير على أنها مفتوحة.');
     });
 
     it('is not there when nothing needs the person', async () => {

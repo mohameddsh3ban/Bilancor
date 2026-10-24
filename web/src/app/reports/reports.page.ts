@@ -16,8 +16,8 @@ import { MonthTable } from './month-table';
  * them), so the page only points at them, as Taxes does; once they are saved but no bank is connected yet, it asks for
  * the bank, as Payments does.
  *
- * Above the cards, one line counts the payments that still need the person: they are not in the figures or in an export
- * yet. Phone: one column, in that order; computer: the months on one side, the exports on the other.
+ * Above the cards, one line counts the payments that still need the person: they are not in the figures yet, and an
+ * export has them marked as open. Phone: one column, in that order; computer: the months on one side, the exports on the other.
  */
 @Component({
   selector: 'app-reports-page',
@@ -96,6 +96,6 @@ export class ReportsPage {
 
   protected readonly plural = pluralKey;
 
-  /** The payments of the business that still need the person: not booked, not confirmed, or with no receipt (the number the homepage and the review inbox show). */
+  /** The payments of the business that still need the person: not booked, not confirmed, or with no receipt. Payments only, as Payments counts them (by the rule Taxes uses too); the Needs you button in the top bar counts documents as well. */
   protected readonly needsYou = computed(() => needsYouCount(this.demo.business().transactions));
 }

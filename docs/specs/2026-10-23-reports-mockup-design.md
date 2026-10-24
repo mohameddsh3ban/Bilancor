@@ -52,7 +52,7 @@ Approved as the mockup `reports-page.html` (in `.superpowers/brainstorm/1746-179
 
 **Before setup** *(my call)*: until the tax details are saved, the page shows only the same pointer as Taxes (the figures can't be worked out without knowing whether the business charges VAT); once they are saved but no bank is connected yet, it shows "Connect your bank to see your months" with the bank step, as Payments does. A business made during the visit therefore shows its October row only once both are done.
 
-**Needs you.** When payments of the business still need the person (the same count as the homepage and the review inbox, missing receipts included): "N payments still need you. They aren't in these figures or exports yet." with **Start** (the review inbox). Nothing when there are none.
+**Needs you.** When payments of the business still need the person (payments only, the count Payments shows, missing receipts included; the homepage's decisions count and the top bar's Needs you button also count documents): "N payments still need you. They aren't in these figures yet; an export marks them as open." with **Start** (the review inbox). Nothing when there are none.
 
 **Month by month** (with `bwa` explained): one row per month of the year so far, with income, costs and profit and a status word:
 

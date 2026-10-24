@@ -474,8 +474,8 @@
         "many": "{{count}} Zahlungen brauchen dich noch"
       },
       "note": {
-        "one": "Sie steckt noch nicht in diesen Zahlen und Exporten.",
-        "many": "Sie stecken noch nicht in diesen Zahlen und Exporten."
+        "one": "Sie steckt noch nicht in diesen Zahlen; ein Export markiert sie als offen.",
+        "many": "Sie stecken noch nicht in diesen Zahlen; ein Export markiert sie als offen."
       },
       "start": "Starten"
     },
