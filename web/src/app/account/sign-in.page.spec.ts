@@ -332,6 +332,88 @@ describe('SignInPage', () => {
     expect(router.url).toBe('/');
   });
 
+  describe('a double press while the app loads', () => {
+    let open: (go: boolean) => void;
+
+    /**
+     * The page the person signs in to takes a while to load: the navigation waits, and the sign-in page stays. The test
+     * can't wait for the app to be stable until then, so it only draws what it has.
+     */
+    function holdTheHomepage(): void {
+      const loading = new Promise<boolean>((resolve) => (open = resolve));
+      router.resetConfig([
+        { path: '', pathMatch: 'full', component: Stub, canActivate: [() => loading] },
+        { path: 'sign-in', component: SignInPage },
+      ]);
+    }
+
+    /** Two presses in the same moment, as a double tap sends them. */
+    function pressTwice(formId: string): void {
+      const form = q(formId)!;
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      harness!.detectChanges();
+    }
+
+    afterEach(async () => {
+      open?.(false);
+      await settle();
+    });
+
+    it('uses up one backup code and signs in once', async () => {
+      await render();
+      await giveCredentials();
+      await click('use-backup');
+      await type('code', '1234-5678');
+      expect(accounts.person().backupCodesLeft).toBe(6);
+
+      holdTheHomepage();
+      pressTwice('code-form');
+      expect(accounts.signIns()).toBe(1);
+      expect(accounts.person().backupCodesLeft).toBe(5);
+      // The page stays while the next one loads, and its button can't be pressed again.
+      expect(q('code-form')).not.toBeNull();
+      expect((q('code-submit') as HTMLButtonElement).disabled).toBe(true);
+
+      // Not even a later press (the form is still there) does anything.
+      pressTwice('code-form');
+      expect(accounts.signIns()).toBe(1);
+      expect(accounts.person().backupCodesLeft).toBe(5);
+    });
+
+    it('signs in once with the code of the app', async () => {
+      await render();
+      await giveCredentials();
+      await type('code', '123456');
+      holdTheHomepage();
+      pressTwice('code-form');
+      expect(accounts.signIns()).toBe(1);
+      expect((q('code-submit') as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('signs in once on a trusted device, where the email and password are the last step', async () => {
+      accounts.signIn('p1', true);
+      accounts.signOut();
+      const before = accounts.signIns();
+      await render();
+      await type('password', 'anything at all');
+      holdTheHomepage();
+      pressTwice('sign-in-form');
+      expect(accounts.signIns()).toBe(before + 1);
+      expect((q('sign-in-submit') as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('a code that is not accepted leaves the button usable', async () => {
+      await render();
+      await giveCredentials();
+      await giveCode('12');
+      expect(text(q('error-code'))).toBe('The code has 6 digits.');
+      expect((q('code-submit') as HTMLButtonElement).disabled).toBe(false);
+      await giveCode('123456');
+      expect(accounts.signedIn()).toBe(true);
+    });
+  });
+
   it('a backup code field left empty asks for one', async () => {
     await render();
     await giveCredentials();

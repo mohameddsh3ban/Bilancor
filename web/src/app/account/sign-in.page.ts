@@ -132,7 +132,14 @@ interface CredentialErrors {
             </div>
           </div>
 
-          <button hlmBtn size="lg" type="submit" class="w-full" data-testid="sign-in-submit">
+          <button
+            hlmBtn
+            size="lg"
+            type="submit"
+            class="w-full"
+            data-testid="sign-in-submit"
+            [disabled]="signingIn()"
+          >
             {{ 'auth.signIn.submit' | transloco }}
           </button>
 
@@ -199,7 +206,14 @@ interface CredentialErrors {
             {{ 'auth.code.trust' | transloco }}
           </app-choice-card>
 
-          <button hlmBtn size="lg" type="submit" class="w-full" data-testid="code-submit">
+          <button
+            hlmBtn
+            size="lg"
+            type="submit"
+            class="w-full"
+            data-testid="code-submit"
+            [disabled]="signingIn()"
+          >
             {{ 'auth.code.submit' | transloco }}
           </button>
 
@@ -264,6 +278,12 @@ export class SignInPage {
   protected readonly codeError = signal<string | null>(null);
   protected readonly trust = signal(false);
 
+  /**
+   * The person is signed in and the next page is loading (the form stays until it is there): a second press of the button
+   * does nothing, so a double tap signs in once and uses up one backup code, not two.
+   */
+  protected readonly signingIn = signal(false);
+
   /** Whether a language button was pressed here: that language then wins over the person's own. */
   protected pickedHere = false;
 
@@ -284,6 +304,7 @@ export class SignInPage {
 
   protected submitCredentials(event: Event): void {
     event.preventDefault();
+    if (this.signingIn()) return;
     const email = this.email().trim();
     const errors: CredentialErrors = {};
     if (!email) errors.email = 'auth.error.emailMissing';
@@ -307,6 +328,7 @@ export class SignInPage {
 
   protected submitCode(event: Event): void {
     event.preventDefault();
+    if (this.signingIn()) return;
     const id = this.personId();
     if (id === null) return;
     const value = this.code().trim();
@@ -359,6 +381,7 @@ export class SignInPage {
 
   /** Signs in, sets the language, and goes to the page that was asked for. */
   private finish(personId: string, trustDevice: boolean): void {
+    this.signingIn.set(true);
     this.accounts.signIn(personId, trustDevice);
     this.personLanguage.applyOnSignIn(personId, this.pickedHere);
     void this.router.navigateByUrl(safeNext(this.query().get('next')));
