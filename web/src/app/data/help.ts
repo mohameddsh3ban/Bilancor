@@ -40,7 +40,7 @@ export const HELP_ANSWERS: HelpAnswer[] = [
   {
     id: 'change-language',
     topic: 'start',
-    terms: [],
+    terms: ['eigenbeleg', 'uebertragungsprotokoll', 'ustva'],
     link: { route: '/account', page: 'settings' },
   },
 
@@ -60,13 +60,13 @@ export const HELP_ANSWERS: HelpAnswer[] = [
   {
     id: 'payment-needs',
     topic: 'payments',
-    terms: ['eigenbeleg'],
+    terms: ['eigenbeleg', 'ustva'],
     link: { route: '/review', page: 'payments' },
   },
   {
     id: 'private-payment',
     topic: 'payments',
-    terms: ['privateinlage'],
+    terms: ['ustva', 'privateinlage'],
     link: { route: '/payments', page: 'payments' },
   },
 
@@ -94,19 +94,19 @@ export const HELP_ANSWERS: HelpAnswer[] = [
   {
     id: 'write-invoice',
     topic: 'invoices',
-    terms: ['rechnung'],
+    terms: ['rechnung', 'stornorechnung'],
     link: { route: '/invoices/new', page: 'invoices' },
   },
   {
     id: 'e-invoice',
     topic: 'invoices',
-    terms: ['eRechnung', 'zugferd', 'xrechnung', 'leitwegId'],
+    terms: ['eRechnung', 'zugferd', 'xrechnung', 'leitwegId', 'kleinunternehmer'],
     link: { route: '/invoices', page: 'invoices' },
   },
   {
     id: 'customer-pays',
     topic: 'invoices',
-    terms: ['rechnung', 'zahlungserinnerung'],
+    terms: ['rechnung', 'zahlungserinnerung', 'mahnung'],
     link: { route: '/invoices', page: 'invoices' },
   },
 
@@ -114,7 +114,7 @@ export const HELP_ANSWERS: HelpAnswer[] = [
   {
     id: 'vat-due',
     topic: 'taxes',
-    terms: ['ustva', 'dauerfristverlaengerung'],
+    terms: ['ustva', 'dauerfristverlaengerung', 'kleinunternehmer'],
     link: { route: '/taxes', page: 'taxes' },
   },
   {
@@ -132,13 +132,13 @@ export const HELP_ANSWERS: HelpAnswer[] = [
   {
     id: 'klein-limit',
     topic: 'taxes',
-    terms: ['kleinunternehmer'],
+    terms: ['kleinunternehmer', 'steuerberater'],
     link: { route: '/taxes', page: 'taxes' },
   },
   {
     id: 'close-month',
     topic: 'taxes',
-    terms: ['festschreibung', 'bwa'],
+    terms: ['festschreibung', 'bwa', 'ustva'],
     link: { route: '/reports', page: 'reports' },
   },
   {
@@ -175,7 +175,12 @@ export const HELP_ANSWERS: HelpAnswer[] = [
     terms: ['avv', 'steuerberater'],
     link: { route: '/settings', fragment: 'people', page: 'settings' },
   },
-  { id: 'records-kept', topic: 'privacy', terms: ['festschreibung'], link: null },
+  {
+    id: 'records-kept',
+    topic: 'privacy',
+    terms: ['eigenbeleg', 'festschreibung'],
+    link: null,
+  },
 ];
 
 /**
@@ -195,8 +200,8 @@ export const PAGE_QUESTIONS: Record<HelpPage, string[]> = {
 
 /**
  * The questions Help offers under Taxes to a Kleinunternehmer, instead of `PAGE_QUESTIONS.taxes`: the limit first, then
- * the year-end questions. A Kleinunternehmer has no VAT return, so neither "When is my VAT return due?" nor "What happens
- * when I send it?" is offered.
+ * the year-end questions. A Kleinunternehmer has no VAT return, so none of the three VAT return questions of
+ * `PAGE_QUESTIONS.taxes` is offered: when it is due, what happens when I send it, and why a payment stops me sending it.
  */
 export const KLEINUNTERNEHMER_TAXES_QUESTIONS: string[] = [
   'klein-limit',

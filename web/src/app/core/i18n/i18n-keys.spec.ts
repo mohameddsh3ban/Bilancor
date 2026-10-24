@@ -199,4 +199,24 @@ describe('translation files', () => {
       }
     }
   });
+
+  it('an English or Arabic answer that names a German term by its German word offers it as a chip', () => {
+    // In English and Arabic a German word is there to be explained. (German writes its own words, so it is not checked.)
+    const escape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const [lang, file] of Object.entries({ en, ar })) {
+      const help = helpOf(file);
+      const terms = file.terms as unknown as Record<string, { de: string }>;
+      for (const { id, terms: keys } of HELP_ANSWERS) {
+        const text = `${String(help.answers?.[id]?.q ?? '')} ${String(help.answers?.[id]?.a ?? '')}`;
+        for (const key of TERM_KEYS) {
+          // The whole word: "Rechnung" is not named by "E-Rechnung" or "XRechnung".
+          const named = new RegExp(
+            `(?<![\\p{L}\\p{N}-])${escape(terms[key].de)}(?![\\p{L}\\p{N}-])`,
+            'u',
+          );
+          if (named.test(text)) expect(keys, `${lang} ${id} names ${terms[key].de}`).toContain(key);
+        }
+      }
+    }
+  });
 });

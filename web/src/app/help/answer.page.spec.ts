@@ -105,10 +105,15 @@ describe('HelpAnswerPage', () => {
 
     // The terms are chips that explain on tap: the translation with the German original beside it.
     const chips = qa('answer-term');
-    expect(chips.map((chip) => chip.dataset['term'])).toEqual(['ustva', 'dauerfristverlaengerung']);
+    expect(chips.map((chip) => chip.dataset['term'])).toEqual([
+      'ustva',
+      'dauerfristverlaengerung',
+      'kleinunternehmer',
+    ]);
     expect(chips.map((chip) => text(chip))).toEqual([
       'VAT return (UStVA)',
       'Permanent extension (Dauerfristverlängerung)',
+      'Small business, no VAT (Kleinunternehmer)',
     ]);
     expect(q('answer-terms-title') && text(q('answer-terms-title'))).toBe(
       'German words in this answer',
@@ -257,8 +262,12 @@ describe('HelpAnswerPage', () => {
     await render('/help/records-kept');
     expect(text(q('answer-title'))).toBe('How long are my records kept?');
     expect(q('answer-open')).toBeNull();
-    // It does name a term (Festschreibung), so the chips stay; one without terms shows neither the chips nor their title.
-    expect(qa('answer-term')).toHaveLength(1);
+    // It does name terms (Eigenbeleg, Festschreibung), so the chips stay; one without terms shows neither the chips nor
+    // their title.
+    expect(qa('answer-term').map((chip) => chip.dataset['term'])).toEqual([
+      'eigenbeleg',
+      'festschreibung',
+    ]);
     await render('/help/setup-steps');
     expect(qa('answer-term')).toHaveLength(0);
     expect(q('answer-terms-title')).toBeNull();
