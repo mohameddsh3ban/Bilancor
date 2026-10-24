@@ -380,7 +380,7 @@ describe('closeMonth', () => {
 });
 
 describe('closeMonthsOf', () => {
-  const lines = (b: Business) => b.history.filter((line) => line.key === 'monthClosed');
+  const lines = (b: Business) => b.history.filter((line) => line.key === 'monthClosed' || line.key === 'monthClosedByReturn');
 
   it('closes every month of the period that is not closed, by nobody, with one line each and no check', () => {
     const unconfirmed = withPayment(cafe, 'cl-t16', (tx) => ({ ...tx, confirmed: false })); // July has a payment that needs the person
@@ -391,9 +391,9 @@ describe('closeMonthsOf', () => {
       { month: '2026-09', on: DEMO_TODAY, by: null },
     ]);
     expect(lines(closed)).toEqual([
-      { date: DEMO_TODAY, key: 'monthClosed', params: { month: '2026-09', byReturn: '1' } },
-      { date: DEMO_TODAY, key: 'monthClosed', params: { month: '2026-08', byReturn: '1' } },
-      { date: DEMO_TODAY, key: 'monthClosed', params: { month: '2026-07', byReturn: '1' } },
+      { date: DEMO_TODAY, key: 'monthClosedByReturn', params: { month: '2026-09' } },
+      { date: DEMO_TODAY, key: 'monthClosedByReturn', params: { month: '2026-08' } },
+      { date: DEMO_TODAY, key: 'monthClosedByReturn', params: { month: '2026-07' } },
     ]);
     expect(closed.history).toHaveLength(unconfirmed.history.length + 3);
   });

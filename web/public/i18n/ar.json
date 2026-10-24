@@ -710,7 +710,8 @@
     "ownerChanged": "{{by}} نقل ملكية النشاط إلى {{name}}",
     "supportOn": "{{by}} سمح لفريق الدعم بالاطلاع حتى {{until}}",
     "supportOff": "{{by}} أوقف وصول فريق الدعم",
-    "monthClosed": "تم إغلاق {{month}} بواسطة {{by}}"
+    "monthClosed": "تم إغلاق {{month}} بواسطة {{by}}",
+    "monthClosedByReturn": "تم إغلاق {{month}} عند إرسال إقراره لضريبة القيمة المضافة"
   },
   "payments": {
     "title": "المدفوعات",

@@ -57,10 +57,13 @@ describe('translation files', () => {
     expect(en.history.supportOn).toContain('{{until}}');
   });
 
-  it('has a history text for a closed month, naming the month and who closed it', () => {
+  it('has a history text for a closed month, naming the month and who closed it, and one for a month its VAT return closed', () => {
     for (const lang of [en, de, ar]) {
       expect(lang.history.monthClosed).toContain('{{month}}');
       expect(lang.history.monthClosed).toContain('{{by}}');
+      // No person behind it, so no {{by}}.
+      expect(lang.history.monthClosedByReturn).toContain('{{month}}');
+      expect(lang.history.monthClosedByReturn).not.toContain('{{by}}');
     }
   });
 

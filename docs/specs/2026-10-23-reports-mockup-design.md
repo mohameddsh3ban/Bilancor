@@ -82,7 +82,7 @@ Approved as the mockup `reports-page.html` (in `.superpowers/brainstorm/1746-179
 - **Close <month>** (off while it blocks) and **Not yet**. A warning (a possible duplicate) doesn't stop closing; a payment that still needs the person, a missing receipt included, does.
 - The running month can't be closed: "Ready to close from 1 Nov".
 - **Sending a VAT return** (Taxes) closes every month of its period that isn't closed yet, without the check: the return can only be sent once every payment in it is booked.
-- Closing adds a `monthClosed` line (month, by whom: "VAT return" or the person) to the business's history.
+- Closing adds a line to the business's history: `monthClosed` (the month and the person) when a person closed it, or `monthClosedByReturn` (the month only) when sending its VAT return did. The month stays a raw `YYYY-MM` in the line; a screen that shows it formats it.
 - A closed month stays closed; **Reset demo** restores the sample's closed months.
 
 ## Payments and a closed month

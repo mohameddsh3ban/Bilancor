@@ -154,15 +154,16 @@ export function closeCheck(business: Business, month: string): CloseCheck {
 
 /**
  * The business with these months (oldest first) closed on `today` `by` a person's full name, or by no person (null) when a
- * VAT return closes them, and one `monthClosed` line each, the newest month's at the front.
+ * VAT return closes them, and one line each, the newest month's at the front: `monthClosed` (with `by`) for a person,
+ * `monthClosedByReturn` for a VAT return. `month` stays the raw 'YYYY-MM' in the params.
  */
 function withClosedMonths(business: Business, months: readonly string[], by: string | null, today: string): Business {
   if (months.length === 0) return business;
-  const lines = months.map((month): HistoryEntry => ({
-    date: today,
-    key: 'monthClosed',
-    params: by === null ? { month, byReturn: '1' } : { month, by },
-  }));
+  const lines = months.map((month): HistoryEntry =>
+    by === null
+      ? { date: today, key: 'monthClosedByReturn', params: { month } }
+      : { date: today, key: 'monthClosed', params: { month, by } },
+  );
   const closed = [...business.closedMonths, ...months.map((month) => ({ month, on: today, by }))];
   return {
     ...business,

@@ -74,9 +74,9 @@ describe('TaxService', () => {
       { month: '2026-09', on: DEMO_TODAY, by: null },
     ]);
     expect(demo.business().history.map((line) => [line.key, line.params])).toEqual([
-      ['monthClosed', { month: '2026-09', byReturn: '1' }],
-      ['monthClosed', { month: '2026-08', byReturn: '1' }],
-      ['monthClosed', { month: '2026-07', byReturn: '1' }],
+      ['monthClosedByReturn', { month: '2026-09' }],
+      ['monthClosedByReturn', { month: '2026-08' }],
+      ['monthClosedByReturn', { month: '2026-07' }],
     ]);
 
     // A second pass over the same period adds nothing: the months are closed.
@@ -97,10 +97,10 @@ describe('TaxService', () => {
       { month: '2026-08', on: DEMO_TODAY, by: 'Sara Weber' },
       { month: '2026-09', on: DEMO_TODAY, by: null },
     ]);
-    expect(demo.business().history.map((line) => line.params)).toEqual([
-      { month: '2026-09', byReturn: '1' },
-      { month: '2026-07', byReturn: '1' },
-      { month: '2026-08', by: 'Sara Weber' },
+    expect(demo.business().history.map((line) => [line.key, line.params])).toEqual([
+      ['monthClosedByReturn', { month: '2026-09' }],
+      ['monthClosedByReturn', { month: '2026-07' }],
+      ['monthClosed', { month: '2026-08', by: 'Sara Weber' }],
     ]);
   });
 

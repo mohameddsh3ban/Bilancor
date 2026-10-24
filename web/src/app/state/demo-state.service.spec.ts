@@ -1073,9 +1073,9 @@ describe('DemoStateService', () => {
         { month: '2026-09', on: DEMO_TODAY, by: null },
       ]);
       expect(cafe.history.map((line) => [line.key, line.params])).toEqual([
-        ['monthClosed', { month: '2026-09', byReturn: '1' }],
-        ['monthClosed', { month: '2026-08', byReturn: '1' }],
-        ['monthClosed', { month: '2026-07', byReturn: '1' }],
+        ['monthClosedByReturn', { month: '2026-09' }],
+        ['monthClosedByReturn', { month: '2026-08' }],
+        ['monthClosedByReturn', { month: '2026-07' }],
       ]);
     });
 
@@ -1087,7 +1087,7 @@ describe('DemoStateService', () => {
         { month: '2026-08', on: '2026-09-05', by: 'Sara Weber' },
         { month: '2026-09', on: DEMO_TODAY, by: null },
       ]);
-      expect(sara.history).toEqual([{ date: DEMO_TODAY, key: 'monthClosed', params: { month: '2026-09', byReturn: '1' } }]);
+      expect(sara.history).toEqual([{ date: DEMO_TODAY, key: 'monthClosedByReturn', params: { month: '2026-09' } }]);
     });
 
     it('never changes the shared sample data, and resetData takes the return back', () => {

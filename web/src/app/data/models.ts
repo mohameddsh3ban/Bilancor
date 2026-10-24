@@ -67,8 +67,10 @@ export type HistoryKey =
   | 'ownerChanged' // params: name (the new owner), by
   | 'supportOn' // params: until, by
   | 'supportOff' // params: by
-  // On a business, when one of its months is closed: `month` is 'YYYY-MM', and `by` is the full name of who closed it, or `byReturn` is '1' when sending its VAT return did
-  | 'monthClosed'; // params: month, and by or byReturn
+  // On a business, when one of its months is closed. `month` is always the raw 'YYYY-MM' (a screen that shows the line formats it
+  // as a month name in the person's language); `by` is the full name of who closed it
+  | 'monthClosed' // params: month, by
+  | 'monthClosedByReturn'; // params: month (no person: sending its VAT return closed it)
 /** What the review inbox learned: payments from this counterparty (its `counterpartyKey`) get this booking. */
 export interface CategoryRule { counterpartyKey: string; booking: Booking }
 export interface HistoryEntry { date: string; key: HistoryKey; params: Record<string, string> } // text: i18n "history.<key>"; params.category holds a labelKey

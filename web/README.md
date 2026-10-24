@@ -287,9 +287,9 @@ The Reports page (`/reports`) is where a business hands over its books: the year
   - **Each bank account** (the cash box is left out), judged by what the bank delivered: "Matches the bank" when the connection isn't broken and the bank last delivered on or after the day after the month ended (so every payment of the month was there; a consent that ended later doesn't matter, and Sara Weber Yoga's Qonto, whose consent ended on 20 Oct after a delivery that day, matches for September). "Check it against your statement" for a statement account, a broken connection, and a connection that hasn't been fetched since the month ended. A warning only.
 - **Close September** closes the month. **Not yet**, ✕, Escape and a tap outside leave it as it is. After closing, the cursor goes to the new "Closed" word.
 - Nothing can be closed that shouldn't be: the running month and months to come have no button, and a month that is closed already, a month of the earlier months line or a month with a payment that needs the person is refused, with nothing changed and no history line added.
-- Closing adds a history line to the business (the month, and who closed it). It is stored, not shown yet.
+- Closing adds a history line to the business: "<month> was closed by <person>" (stored as the month, `YYYY-MM`, and the person's full name). It is stored, not shown yet.
 
-**Closing by a sent VAT return:** sending a VAT return in Taxes closes the months of its period by itself (see Taxes), with no check and no person behind it. A quarter closes its three months. A month that was closed by hand before keeps its first date and person and gets no second history line. The note under the months names the months that closed this way.
+**Closing by a sent VAT return:** sending a VAT return in Taxes closes the months of its period by itself (see Taxes), with no check and no person behind it. A quarter closes its three months. Each month it closes gets its own history line, "<month> was closed by its VAT return" (a line of its own, with no person). A month that was closed by hand before keeps its first date and person and gets no second history line. The note under the months names the months that closed this way.
 
 **Export for your tax advisor:**
 
