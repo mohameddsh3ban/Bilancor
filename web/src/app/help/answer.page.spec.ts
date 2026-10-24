@@ -4,7 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
-import { HELP_ANSWERS, HELP_TOPICS } from '../data/help';
+import { HELP_ANSWERS, HELP_TOPICS, type HelpPage } from '../data/help';
 import { signInAsSara } from '../state/account.testing';
 import { HelpAnswerPage } from './answer.page';
 import { HelpPage as HelpPageComponent } from './help.page';
@@ -21,6 +21,17 @@ const text = (node: Element | null | undefined) =>
 
 /** The paragraphs of an answer as the translation files hold them: one text, split by a blank line. */
 const paragraphsOf = (answer: string) => answer.split('\n\n');
+
+/**
+ * The name a page button gives where it goes: the menu's name of the page, except for My account and the review inbox,
+ * which the menu has no name for. Written out here on purpose, so the page's own rule is checked against it.
+ */
+const destination = (lang: typeof en, route: string, page: HelpPage): string =>
+  route === '/account'
+    ? lang.account.title
+    : route === '/review'
+      ? lang.payments.quick.needsYou
+      : lang.help.pages[page];
 
 describe('HelpAnswerPage', () => {
   let harness: RouterTestingHarness | undefined;
@@ -126,7 +137,9 @@ describe('HelpAnswerPage', () => {
       ).toEqual(answer.terms);
       if (answer.link) {
         const open = q('answer-open')!;
-        expect(text(open), answer.id).toBe(`Open ${en.help.pages[answer.link.page]}`);
+        expect(text(open), answer.id).toBe(
+          `Open ${destination(en, answer.link.route, answer.link.page)}`,
+        );
         const href = open.getAttribute('href')!;
         expect(href, answer.id).toBe(
           answer.link.route + (answer.link.fragment ? `#${answer.link.fragment}` : ''),
@@ -147,6 +160,52 @@ describe('HelpAnswerPage', () => {
     q('answer-open')!.click();
     await settle();
     expect(router().url).toBe('/settings#bank-accounts');
+  });
+
+  describe('the page button names where it really goes', () => {
+    it('My account and the review inbox are named as the app names them, not as the page they belong to', async () => {
+      // Change language and the 6-digit code link to My account, which Help files under Settings.
+      for (const id of ['change-language', 'six-digit-code']) {
+        await render(`/help/${id}`);
+        expect(text(q('answer-open')), id).toBe('Open My account');
+        expect(q('answer-open')!.getAttribute('href'), id).toBe('/account');
+      }
+      // What a payment needs links to the review inbox, which the top bar calls Needs you (Help files it under Payments).
+      await render('/help/payment-needs');
+      expect(text(q('answer-open'))).toBe('Open Needs you');
+      expect(q('answer-open')!.getAttribute('href')).toBe('/review');
+      q('answer-open')!.click();
+      await settle();
+      expect(router().url).toBe('/review');
+    });
+
+    it('says the same in German and Arabic, with the words the app uses there', async () => {
+      for (const [lang, file] of [
+        ['de', de],
+        ['ar', ar],
+      ] as const) {
+        TestBed.inject(LanguageService).setLang(lang);
+        await render('/help/change-language');
+        expect(text(q('answer-open')), lang).toBe(
+          file.help.answer.open.replace('{{page}}', file.account.title),
+        );
+        expect(file.account.title, lang).not.toBe(file.help.pages.settings);
+        await render('/help/payment-needs');
+        expect(text(q('answer-open')), lang).toBe(
+          file.help.answer.open.replace('{{page}}', file.payments.quick.needsYou),
+        );
+        expect(file.payments.quick.needsYou, lang).not.toBe(file.help.pages.payments);
+      }
+    });
+
+    it('every other link keeps the name of its Help page', async () => {
+      for (const answer of HELP_ANSWERS) {
+        if (!answer.link || answer.link.route === '/account' || answer.link.route === '/review')
+          continue;
+        await render(`/help/${answer.id}`);
+        expect(text(q('answer-open')), answer.id).toBe(`Open ${en.help.pages[answer.link.page]}`);
+      }
+    });
   });
 
   it('an answer with no page to open shows no page button, and no empty list of terms', async () => {

@@ -17,7 +17,17 @@ import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { map } from 'rxjs';
 import { Term } from '../core/i18n/term';
-import { HELP_ANSWERS } from '../data/help';
+import { HELP_ANSWERS, type HelpAnswer } from '../data/help';
+
+/**
+ * The words of a page button for the places the menu has no name for, by where the link goes: "Open My account" and
+ * "Open Needs you" (the name of the review inbox in the top bar and in Payments). Every other link goes to a page of the
+ * menu and uses its name (`help.pages.<page>`), so the button never says a page the link does not open.
+ */
+const DESTINATION_LABELS = new Map<string, string>([
+  ['/account', 'account.title'],
+  ['/review', 'payments.quick.needsYou'],
+]);
 
 /**
  * One answer of Help (`/help/<id>`): "‹ Help · <topic>" (each part a link), the question as the title, the answer's
@@ -105,7 +115,7 @@ import { HELP_ANSWERS } from '../data/help';
           [fragment]="link.fragment"
           data-testid="answer-open"
         >
-          {{ 'help.answer.open' | transloco: { page: ('help.pages.' + link.page | transloco) } }}
+          {{ 'help.answer.open' | transloco: { page: (destinationKey(link) | transloco) } }}
         </a>
       }
 
@@ -181,6 +191,11 @@ export class HelpAnswerPage {
   /** The paragraphs of an answer's text: it keeps them apart with a blank line. */
   protected paragraphsOf(text: string): string[] {
     return text.split('\n\n');
+  }
+
+  /** The translation key of the name a page button gives its destination (see `DESTINATION_LABELS`). */
+  protected destinationKey(link: NonNullable<HelpAnswer['link']>): string {
+    return DESTINATION_LABELS.get(link.route) ?? `help.pages.${link.page}`;
   }
 
   protected thank(): void {
