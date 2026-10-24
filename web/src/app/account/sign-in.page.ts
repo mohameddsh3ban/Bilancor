@@ -245,7 +245,7 @@ export class SignInPage {
   protected readonly signedOut = computed(() => this.query().get('signedOut') === '1');
 
   protected readonly step = signal<'credentials' | 'code'>('credentials');
-  protected readonly email = signal(this.accounts.samplePerson.email);
+  protected readonly email = signal(this.accounts.sampleEmail());
   protected readonly password = signal('');
   protected readonly errors = signal<CredentialErrors>({});
   protected readonly emailDescribedBy = computed(() => {

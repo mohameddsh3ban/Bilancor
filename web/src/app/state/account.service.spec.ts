@@ -38,6 +38,24 @@ describe('AccountService', () => {
     expect(accounts.person()).toBe(PERSON);
   });
 
+  describe('the sample email', () => {
+    it("is Sara's email as it is now: a change follows, a made account doesn't count, and a reset brings it back", () => {
+      const accounts = TestBed.inject(AccountService);
+      expect(accounts.sampleEmail()).toBe('sara@example.com');
+      accounts.createPerson(newPerson);
+      expect(accounts.sampleEmail()).toBe('sara@example.com');
+
+      accounts.updatePerson('p1', (p) => ({ ...p, email: 'sara.klein@example.com' }));
+      expect(accounts.sampleEmail()).toBe('sara.klein@example.com');
+      // The new address is the one that finds her.
+      expect(accounts.findByEmail(accounts.sampleEmail())?.id).toBe('p1');
+      expect(accounts.emailTaken('sara@example.com')).toBe(false);
+
+      accounts.reset();
+      expect(accounts.sampleEmail()).toBe('sara@example.com');
+    });
+  });
+
   describe('finding a person by email', () => {
     it('ignores capitals and spaces around the address', () => {
       const accounts = TestBed.inject(AccountService);

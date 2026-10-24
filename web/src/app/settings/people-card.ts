@@ -34,6 +34,7 @@ import {
   type GrantedRole,
 } from '../domain/people';
 import { isolateText } from '../payments/payment-history';
+import { AccountService } from '../state/account.service';
 import { DemoStateService } from '../state/demo-state.service';
 import { focusAfterRender } from './form-helpers';
 import { InviteDialog } from './invite-dialog';
@@ -47,6 +48,8 @@ interface Row {
   member: Member;
   /** The name; the email of an invitation, which has no name yet. */
   label: string;
+  /** The email: the login's own, as it is now, for a person with an account. */
+  email: string;
   /** Empty for an invitation. */
   initials: string;
   you: boolean;
@@ -253,7 +256,7 @@ interface InvitationMail {
                     <bdi dir="ltr">{{ until | appDate }}</bdi>
                   }
                 } @else {
-                  <bdi dir="ltr">{{ row.member.email }}</bdi>
+                  <bdi dir="ltr">{{ row.email }}</bdi>
                   @if (row.member.joinedOn; as joined) {
                     · {{ 'people.row.joined' | transloco }}
                     <bdi dir="ltr">{{ joined | appDate: { year: true } }}</bdi>
@@ -408,6 +411,7 @@ interface InvitationMail {
 })
 export class PeopleCard {
   protected readonly demo = inject(DemoStateService);
+  private readonly accounts = inject(AccountService);
   private readonly language = inject(LanguageService);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
@@ -418,7 +422,7 @@ export class PeopleCard {
   protected readonly business = this.demo.business;
   protected readonly isOwner = computed(() => this.demo.myRole() === 'owner');
   protected readonly ownerName = computed(() => {
-    const owner = ownerOf(this.business());
+    const owner = this.whoIs(ownerOf(this.business()));
     return owner.name ?? owner.email;
   });
   protected readonly supportDays = SUPPORT_DAYS;
@@ -428,10 +432,12 @@ export class PeopleCard {
     const personId = this.demo.person.id;
     return this.business().people.map((member) => {
       const waiting = member.status === 'invited';
+      const who = this.whoIs(member);
       return {
         member,
-        label: member.name ?? member.email,
-        initials: member.name ? initialsOf(member.name) : '',
+        label: who.name ?? who.email,
+        email: who.email,
+        initials: who.name ? initialsOf(who.name) : '',
         you: !waiting && member.personId === personId,
         waiting,
         tone: waiting
@@ -561,6 +567,21 @@ export class PeopleCard {
           })),
         });
       });
+  }
+
+  /**
+   * The name and email of a row. A row that is a login (it has an account) shows what the account says now, so a person
+   * who renamed themselves or changed their email in My account is not shown as they were when they joined; every other
+   * row shows what it holds (an invitation has no name yet).
+   */
+  private whoIs(member: Member): { name: string | null; email: string } {
+    const login =
+      member.personId === null
+        ? undefined
+        : this.accounts.persons().find((p) => p.id === member.personId);
+    return login
+      ? { name: `${login.firstName} ${login.lastName}`, email: login.email }
+      : { name: member.name, email: member.email };
   }
 
   private focusTitle(): void {

@@ -119,6 +119,20 @@ describe('SignInPage', () => {
     expect(router.url).toBe('/');
   });
 
+  it('after Sara changes her email, the new one is filled in and signs her in', async () => {
+    accounts.updatePerson('p1', (p) => ({ ...p, email: 'sara.klein@example.com' }));
+    await render();
+    expect(field('email').value).toBe('sara.klein@example.com');
+
+    await type('password', 'x');
+    await submit('sign-in-form');
+    expect(q('error-account')).toBeNull();
+    expect(text(q('code-title'))).toBe('Enter your code');
+    await giveCode();
+    expect(accounts.person().id).toBe('p1');
+    expect(accounts.person().email).toBe('sara.klein@example.com');
+  });
+
   it('has the links to Forgot password and Create an account', async () => {
     await render();
     expect(q('forgot-link')!.getAttribute('href')).toBe('/forgot-password');

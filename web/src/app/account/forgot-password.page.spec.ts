@@ -86,6 +86,19 @@ describe('ForgotPasswordPage', () => {
     expect(q('back-to-sign-in')!.getAttribute('href')).toBe('/sign-in');
   });
 
+  it("fills in Sara's email as it is now, after she changed it", async () => {
+    await harness.navigateByUrl('/');
+    accounts.updatePerson('p1', (p) => ({ ...p, email: 'sara.klein@example.com' }));
+    await harness.navigateByUrl('/forgot-password');
+    await settle();
+    expect(field('email').value).toBe('sara.klein@example.com');
+
+    await submit('forgot-form');
+    expect(text(q('sent-title'))).toBe('Check your email');
+    expect(q('demo-email')).not.toBeNull();
+    expect(text(q('demo-email-to'))).toBe('To: sara.klein@example.com');
+  });
+
   it('an empty email says what is missing', async () => {
     await type('email', '  ');
     await submit('forgot-form');

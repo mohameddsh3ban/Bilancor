@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   Injector,
+  computed,
   inject,
   linkedSignal,
   signal,
@@ -241,8 +242,12 @@ export class YouCard {
   protected readonly person = this.accounts.person;
 
   // The name fields start as the person's name and follow it; what is typed stays until Save.
-  protected readonly firstName = linkedSignal(() => this.person().firstName);
-  protected readonly lastName = linkedSignal(() => this.person().lastName);
+  // The saved names are their own computeds: a change to anything else of the person (language, devices, codes, email)
+  // replaces the person but not these, so it can't take away what is typed and not yet saved.
+  private readonly savedFirst = computed(() => this.person().firstName);
+  private readonly savedLast = computed(() => this.person().lastName);
+  protected readonly firstName = linkedSignal(() => this.savedFirst());
+  protected readonly lastName = linkedSignal(() => this.savedLast());
   protected readonly nameErrors = signal<NameErrors>({});
   protected readonly nameSaved = signal(false);
 

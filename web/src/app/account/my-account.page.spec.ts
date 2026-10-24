@@ -237,6 +237,29 @@ describe('MyAccountPage', () => {
       expect(demo.person.firstName).toBe('Sarah');
     });
 
+    it('keeps names that are typed but not saved when something else about the person changes', async () => {
+      await render();
+      await type(q<HTMLInputElement>('you-first-name'), 'Sar');
+      await type(q<HTMLInputElement>('you-last-name'), 'Web');
+
+      // A language click, signing a device out and making new codes each replace the person, and none touches the names.
+      await click(q('language-de'));
+      await click(q('device-sign-out-d2'));
+      await click(q('new-codes'));
+      await expectDialog(true);
+      await click(inDialog('signing-close'));
+      await expectDialog(false);
+      expect(accounts.person()).toMatchObject({ firstName: 'Sara', lastName: 'Weber', lang: 'de' });
+      expect(q<HTMLInputElement>('you-first-name')!.value).toBe('Sar');
+      expect(q<HTMLInputElement>('you-last-name')!.value).toBe('Web');
+
+      // A real change of the saved name still reaches the fields.
+      accounts.updatePerson('p1', (p) => ({ ...p, firstName: 'Sarah', lastName: 'Weber-Klein' }));
+      await settle();
+      expect(q<HTMLInputElement>('you-first-name')!.value).toBe('Sarah');
+      expect(q<HTMLInputElement>('you-last-name')!.value).toBe('Weber-Klein');
+    });
+
     it('says which name is missing and saves nothing', async () => {
       await render();
       await type(q<HTMLInputElement>('you-first-name'), ' ');
@@ -754,6 +777,68 @@ describe('MyAccountPage inside the app shell', () => {
     });
     expect(shell.querySelector('app-top-bar')).not.toBeNull();
     expect(text(inShell('account-title'))).toBe('My account');
+  });
+
+  /** The page of the open business's people, which reads the account. */
+  async function openPage(url: string, testId: string): Promise<void> {
+    await harness.navigateByUrl(url);
+    await vi.waitFor(async () => {
+      await sync();
+      expect(document.body.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
+    });
+  }
+
+  it('a new name shows in Settings › People with access', async () => {
+    await vi.waitFor(async () => {
+      await sync();
+      expect(inShell('you-first-name')).not.toBeNull();
+    });
+    const first = inShell('you-first-name') as HTMLInputElement;
+    first.value = 'Mara';
+    first.dispatchEvent(new Event('input', { bubbles: true }));
+    const last = inShell('you-last-name') as HTMLInputElement;
+    last.value = 'Klein';
+    last.dispatchEvent(new Event('input', { bubbles: true }));
+    await sync();
+    inShell('you-save')!.click();
+    await sync();
+    expect(text(inShell('person-menu'))).toBe('MK');
+
+    await openPage('/settings', 'people-name-wd-m1');
+    expect(text(inShell('people-name-wd-m1'))).toBe('Mara Klein (you)');
+  });
+
+  it('a confirmed new email is the one filled in when she signs in again, and it signs her in', async () => {
+    const accounts = TestBed.inject(AccountService);
+    await vi.waitFor(async () => {
+      await sync();
+      expect(inShell('you-email-change')).not.toBeNull();
+    });
+    inShell('you-email-change')!.click();
+    await sync();
+    const input = inShell('you-email-input') as HTMLInputElement;
+    input.value = 'sara.klein@example.com';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await sync();
+    inShell('you-email-send')!.click();
+    await sync();
+    inShell('demo-email-action')!.click();
+    await sync();
+    expect(accounts.person().email).toBe('sara.klein@example.com');
+
+    accounts.signOut();
+    await openPage('/sign-in', 'sign-in-form');
+    const email = document.querySelector<HTMLInputElement>('[data-testid="email"]')!;
+    expect(email.value).toBe('sara.klein@example.com');
+    const password = document.querySelector<HTMLInputElement>('[data-testid="password"]')!;
+    password.value = 'anything';
+    password.dispatchEvent(new Event('input', { bubbles: true }));
+    document
+      .querySelector('[data-testid="sign-in-form"]')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await sync();
+    expect(document.querySelector('[data-testid="error-account"]')).toBeNull();
+    expect(document.querySelector('[data-testid="code-form"]')).not.toBeNull();
   });
 
   it('leaving Café Linde asks first and takes it out of the switcher', async () => {

@@ -183,6 +183,42 @@ describe('PeopleCard', () => {
       expect(text(q('people-intro'))).toContain("Sara Weber Yoga's books");
     });
 
+    it('shows the name and email a login has now: after Sara renames herself, her row does too, and the other rows stay', async () => {
+      TestBed.inject(AccountService).updatePerson('p1', (p) => ({
+        ...p,
+        firstName: 'Mara',
+        lastName: 'Klein',
+        email: 'Mara.Klein@Example.com',
+      }));
+      await render();
+      expect(name('wd-m1')).toBe('Mara Klein (you)');
+      expect(text(q('people-avatar-wd-m1'))).toBe('MK');
+      expect(sub('wd-m1')).toMatch(/^Mara.Klein@Example.com · Joined /);
+      expect(name('wd-m2')).toBe('Jana Hoffmann');
+      expect(sub('wd-m2')).toMatch(/^jana@kanzlei-hoffmann.example · /);
+      expect(name('wd-m3')).toBe('mia@example.com');
+    });
+
+    it('also follows a person who made their own account and renamed themselves', async () => {
+      const accounts = TestBed.inject(AccountService);
+      accounts.signOut();
+      const id = accounts.createPerson({
+        firstName: 'Mia',
+        lastName: 'Becker',
+        email: 'mia.b@example.com',
+        lang: 'en',
+      });
+      const business = demo.createBusiness(
+        { personId: id, name: 'Mia Becker', email: 'mia.b@example.com' },
+        { name: 'Studio Becker', kind: 'freelance', legalForm: 'sole' },
+      );
+      accounts.signIn(id, false);
+      accounts.updatePerson(id, (p) => ({ ...p, firstName: 'Mina', lastName: 'Berger' }));
+      await render(business);
+      expect(name(`${business}-m1`)).toBe('Mina Berger (you)');
+      expect(text(q(`people-avatar-${business}-m1`))).toBe('MB');
+    });
+
     it('is the card of the page: a section with the anchor people', async () => {
       await render();
       const card = el().querySelector('section')!;

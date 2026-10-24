@@ -74,6 +74,11 @@ export class AccountService {
   /** Goes up by one on every sign-in (not at start with a remembered one), so the tax reminder can open again. */
   readonly signIns: Signal<number> = this.signInCount.asReadonly();
 
+  /** The email the sign-in pages fill in: the sample person's own, as it is now (My account can change it). */
+  readonly sampleEmail: Signal<string> = computed(
+    () => this.personList().find((p) => p.id === PERSON.id)?.email ?? PERSON.email,
+  );
+
   /** The person who has this email, whatever its case or the spaces around it. */
   findByEmail(email: string): Person | undefined {
     const address = normalEmail(email);

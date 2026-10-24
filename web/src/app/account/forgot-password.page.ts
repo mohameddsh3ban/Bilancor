@@ -217,7 +217,7 @@ export class ForgotPasswordPage {
   protected readonly inputClass = INPUT_CLASS;
 
   protected readonly step = signal<Step>('email');
-  protected readonly email = signal(this.accounts.samplePerson.email);
+  protected readonly email = signal(this.accounts.sampleEmail());
   protected readonly emailMissing = signal(false);
   /** The email the link was "sent" to, as typed (without the spaces around it). */
   protected readonly sentTo = signal('');
