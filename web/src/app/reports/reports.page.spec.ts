@@ -200,6 +200,13 @@ describe('ReportsPage', () => {
       ).toEqual(['Closed', 'Closed', 'Closed', 'Running']);
       expect(text(q('month-link-2026-09'))).toBe('September');
       expect(text(q('month-2026-10'))).toContain('until 31 Oct');
+      expect(text(q('month-2026-10'))).toContain('Ready to close from 1 Nov');
+      // The dates sit in a left-to-right box of their own inside the sentences.
+      expect(
+        Array.from(q('month-2026-10')!.querySelectorAll('bdi[dir="ltr"]'))
+          .map((node) => text(node))
+          .filter((t) => /Oct|Nov/.test(t)),
+      ).toEqual(['31 Oct', '1 Nov']);
 
       // Every row's figures are the ones the rules calculate.
       const calculated = monthRows(business, DEMO_TODAY);
@@ -577,6 +584,16 @@ describe('ReportsPage', () => {
       expect(text(q('status-2026-09'))).toBe('مغلق');
       expect(text(q('month-link-2026-09'))).toBe('سبتمبر');
       expect(text(q('month-earlier'))).toContain('يناير–يوليو');
+
+      // The dates inside "until …" and "ready to close from …" keep their order inside the right-to-left sentence.
+      const october = q('month-2026-10')!;
+      const until = formatDate('2026-10-31', 'ar');
+      const ready = formatDate('2026-11-01', 'ar');
+      expect(text(october)).toContain(`حتى ${until}`);
+      expect(text(october)).toContain(`جاهز للإغلاق من ${ready}`);
+      const boxed = Array.from(october.querySelectorAll('bdi[dir="ltr"]')).map((node) => text(node));
+      expect(boxed).toContain(until);
+      expect(boxed).toContain(ready);
 
       // Amounts, the year and the file name stay left to right inside the right-to-left text.
       const year = yearSummary(demo.business());

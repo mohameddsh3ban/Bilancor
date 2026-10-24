@@ -33,6 +33,9 @@ import { periodFor } from '../domain/vat-return';
 import { DemoStateService } from '../state/demo-state.service';
 import { CloseMonthDialog, type CloseResult } from './close-month-dialog';
 
+/** Stands where a date goes in a translated sentence, so the date can sit in a `<bdi dir="ltr">` of its own. */
+const MARK = '\u0001';
+
 /** The locales a list of months is written in. */
 const LIST_LOCALES: Record<Lang, string> = { en: 'en-IE', de: 'de-DE', ar: 'ar-u-nu-latn' };
 
@@ -121,9 +124,11 @@ interface Item {
                       {{ 'reports.months.earlier' | transloco }}
                     </span>
                   } @else if (item.row.state === 'running') {
-                    <span class="text-muted-foreground text-xs">
-                      {{ 'reports.months.until' | transloco: { date: (item.endDate | appDate) } }}
-                    </span>
+                    @let until = ('reports.months.until' | transloco: { date: mark }).split(mark);
+                    <span class="text-muted-foreground text-xs"
+                      >{{ until[0] }}<bdi dir="ltr">{{ item.endDate | appDate }}</bdi
+                      >{{ until[1] }}</span
+                    >
                   }
                 </div>
 
@@ -154,11 +159,11 @@ interface Item {
                     }
                   </div>
                   @if (item.row.state === 'running') {
-                    <span class="text-muted-foreground text-end text-xs">
-                      {{
-                        'reports.months.readyFrom' | transloco: { date: (item.readyDate | appDate) }
-                      }}
-                    </span>
+                    @let ready = ('reports.months.readyFrom' | transloco: { date: mark }).split(mark);
+                    <span class="text-muted-foreground text-end text-xs"
+                      >{{ ready[0] }}<bdi dir="ltr">{{ item.readyDate | appDate }}</bdi
+                      >{{ ready[1] }}</span
+                    >
                   }
                 </div>
               </div>
@@ -255,6 +260,7 @@ export class MonthTable {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly plural = pluralKey;
+  protected readonly mark = MARK;
   /** The year of the demo's today, which is the year the table shows. */
   protected readonly year = DEMO_TODAY.slice(0, 4);
 
