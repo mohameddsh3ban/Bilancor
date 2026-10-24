@@ -198,6 +198,51 @@ describe('HelpAnswerPage', () => {
       }
     });
 
+    it('the button reads as a sentence in German and Arabic, whatever the name is: it stands in quotes', async () => {
+      // Some names are verb phrases ("Braucht dich", "يحتاج إليك"), so the name is set off from the word for "open".
+      const wording = {
+        de: {
+          'payment-needs': '„Braucht dich“ öffnen',
+          'change-language': '„Mein Konto“ öffnen',
+          'vat-due': '„Steuern“ öffnen',
+        },
+        ar: {
+          'payment-needs': 'فتح «يحتاج إليك»',
+          'change-language': 'فتح «حسابي»',
+          'vat-due': 'فتح «الضرائب»',
+        },
+      } as const;
+      for (const lang of ['de', 'ar'] as const) {
+        TestBed.inject(LanguageService).setLang(lang);
+        for (const [id, button] of Object.entries(wording[lang])) {
+          await render(`/help/${id}`);
+          expect(text(q('answer-open')), `${lang} ${id}`).toBe(button);
+        }
+      }
+      // Every button of every answer reads the same way: each name of a page, and of My account and Needs you, in quotes.
+      const quoted = {
+        de: (name: string) => `„${name}“ öffnen`,
+        ar: (name: string) => `فتح «${name}»`,
+      };
+      for (const [lang, file] of [
+        ['de', de],
+        ['ar', ar],
+      ] as const) {
+        TestBed.inject(LanguageService).setLang(lang);
+        for (const answer of HELP_ANSWERS.filter((a) => a.link)) {
+          const link = answer.link!;
+          await render(`/help/${answer.id}`);
+          expect(text(q('answer-open')), `${lang} ${answer.id}`).toBe(
+            quoted[lang](destination(file, link.route, link.page)),
+          );
+        }
+      }
+      // English has no such problem and stays plain.
+      TestBed.inject(LanguageService).setLang('en');
+      await render('/help/payment-needs');
+      expect(text(q('answer-open'))).toBe('Open Needs you');
+    });
+
     it('every other link keeps the name of its Help page', async () => {
       for (const answer of HELP_ANSWERS) {
         if (!answer.link || answer.link.route === '/account' || answer.link.route === '/review')
