@@ -711,6 +711,8 @@
     "paidInCash": "حددتها كمدفوعة نقدًا",
     "paysInvoice": "تسدد الفاتورة {{number}}",
     "bookedByInvoice": "تم الترحيل كـ {{category}} لتطابق الفاتورة",
+    "selfIssued": "أنشأت الإيصال ذاتي الإصدار رقم {{number}}",
+    "vatRemovedSelfIssued": "أُزيلت ضريبة القيمة المضافة: إيصال ذاتي الإصدار",
     "personInvited": "{{by}} دعا {{email}} بصلاحية {{role}}",
     "invitationCancelled": "{{by}} ألغى الدعوة المرسلة إلى {{email}}",
     "personJoined": "{{name}} انضم بصلاحية {{role}}",

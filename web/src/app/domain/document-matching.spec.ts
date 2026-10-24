@@ -36,6 +36,7 @@ function docFromPool(poolIndex: number): Doc {
     paymentId: null,
     history: [],
     invoice: null,
+    selfIssued: null,
   };
 }
 

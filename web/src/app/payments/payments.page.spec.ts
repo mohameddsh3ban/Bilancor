@@ -119,18 +119,18 @@ describe('PaymentsPage', () => {
     expect(link.closest('tr')!.classList).toContain('relative');
   });
 
-  it('quick filter Needs you shows 6 for weber-design', async () => {
+  it('quick filter Needs you shows 7 for weber-design', async () => {
     await render();
-    expect(text(q('quick-needsYou'))).toContain('6');
+    expect(text(q('quick-needsYou'))).toContain('7');
     expect(q('quick-all')!.getAttribute('aria-pressed')).toBe('true');
     await click('quick-needsYou');
     expect(q('quick-needsYou')!.getAttribute('aria-pressed')).toBe('true');
     expect(q('quick-all')!.getAttribute('aria-pressed')).toBe('false');
-    expect(qa('payment-row')).toHaveLength(6);
-    expect(qa('payment-table-row')).toHaveLength(6);
+    expect(qa('payment-row')).toHaveLength(7);
+    expect(qa('payment-table-row')).toHaveLength(7);
     expect(
       qa('payment-row').map((r) => text(r.querySelector('[data-testid="tx-status"]'))),
-    ).toEqual(['Receipt missing', 'Please confirm', 'Receipt missing', 'Unclear', 'Receipt missing', 'Unclear']);
+    ).toEqual(['Receipt missing', 'Please confirm', 'Receipt missing', 'Receipt missing', 'Unclear', 'Receipt missing', 'Unclear']);
   });
 
   it('"Review them" next to the Needs you quick filter opens the review inbox', async () => {

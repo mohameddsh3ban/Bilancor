@@ -54,7 +54,7 @@ describe('home figures', () => {
     const business = (id: string) => BUSINESSES.find((b) => b.id === id)!;
 
     it('adds the documents that need the person to the payments that need them', () => {
-      expect(decisionCount(business('weber-design'), presetSteps('active'))).toBe(7);
+      expect(decisionCount(business('weber-design'), presetSteps('active'))).toBe(8);
       expect(decisionCount(business('sara-yoga'), presetSteps('active'))).toBe(3);
       expect(decisionCount(business('cafe-linde'), presetSteps('active'))).toBe(0);
     });

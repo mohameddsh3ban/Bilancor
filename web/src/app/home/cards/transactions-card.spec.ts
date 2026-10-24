@@ -30,16 +30,16 @@ describe('TransactionsCard', () => {
     expect(rows().map((r) => r.getAttribute('href'))).toEqual([
       '/payments/wd-t19',
       '/payments/wd-t1',
+      '/payments/wd-t20', // the APCOA parking, of the same day as Müller's payment
       '/payments/wd-t2',
       '/payments/wd-t3',
-      '/payments/wd-t4',
     ]);
     expect(el.querySelector('[data-testid="tx-see-all"]')?.getAttribute('href')).toBe('/payments');
   });
 
   it('shows a status chip for each row', () => {
     const chips = rows().map((r) => r.querySelector('[data-testid="tx-status"]')?.textContent?.trim());
-    expect(chips).toEqual(['Receipt missing', 'Please confirm', 'Booked', 'Receipt missing', 'Unclear']);
+    expect(chips).toEqual(['Receipt missing', 'Please confirm', 'Receipt missing', 'Booked', 'Receipt missing']);
   });
 
   it('amount is wrapped in ltr bdi', () => {
@@ -87,6 +87,9 @@ describe('TransactionsCard', () => {
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }
+
+    /** A payment with no category among the five newest: the Amazon order that showed one is no longer among them, so the parking payment loses its category. */
+    const withoutBooking = (demo: DemoStateService) => demo.updateTransaction('wd-t20', (t) => ({ ...t, booking: null }));
 
     const tableRows = (root: HTMLElement) =>
       Array.from(root.querySelectorAll<HTMLElement>('[data-testid="tx-table-row"]'));
@@ -145,7 +148,7 @@ describe('TransactionsCard', () => {
     });
 
     it('booking cell is a dash when there is no booking', () => {
-      expect(bookingOf(renderTable('en'), 'Amazon')).toBe('—');
+      expect(bookingOf(renderTable('en', withoutBooking), 'APCOA Parking')).toBe('—');
     });
 
     it('counterparty truncates and has dir="auto"; amounts are in ltr bdi', () => {
@@ -194,7 +197,7 @@ describe('TransactionsCard', () => {
         rowFor(root, name).querySelector('[data-testid="tx-table-counterparty"]')!.getAttribute('title');
       expect(titleOf(renderTable('en'), 'Telekom')).toBe('Telekom · Phone & internet · 4920 Telefon');
       expect(titleOf(renderTable('de'), 'Telekom')).toBe('Telekom · 4920 Telefon');
-      expect(titleOf(renderTable('en'), 'Amazon')).toBe('Amazon');
+      expect(titleOf(renderTable('en', withoutBooking), 'APCOA Parking')).toBe('APCOA Parking');
     });
 
     it('status chips never wrap', () => {

@@ -968,7 +968,7 @@ describe('DocumentDetailPage', () => {
       await render('/documents/wd-d4');
       expect(text(d('payment-intro'))).toBe('No payment yet. These might be it:');
       const suggestions = da('payment-suggestion');
-      expect(suggestions).toHaveLength(2);
+      expect(suggestions).toHaveLength(3); // the two payments with no receipt, and the APCOA parking (wd-t20) that has none either
       expect(text(inside(suggestions[0], 'suggestion-name'))).toBe('SCHREIBWAREN BOETTCHER');
       expect(inside(suggestions[0], 'suggestion-name')!.getAttribute('dir')).toBe('auto');
       expect(text(inside(suggestions[0], 'suggestion-amount'))).toBe(
@@ -983,6 +983,7 @@ describe('DocumentDetailPage', () => {
         inside(suggestions[0], 'suggestion-reference')!.closest('bdi')!.getAttribute('dir'),
       ).toBe('ltr');
       expect(text(inside(suggestions[1], 'suggestion-name'))).toBe('Deutsche Bahn');
+      expect(text(inside(suggestions[2], 'suggestion-name'))).toBe('APCOA Parking');
       expect(text(inside(suggestions[0], 'link-payment'))).toBe('This one');
     });
 
@@ -991,7 +992,7 @@ describe('DocumentDetailPage', () => {
       await render('/documents/wd-d4');
       expect(da('payment-suggestion')).toHaveLength(3);
       await click(d('search-payments'));
-      expect(options('payment-picker-option')).toHaveLength(5);
+      expect(options('payment-picker-option')).toHaveLength(6); // wd-t17, wd-t3, wd-t20 and the three that lost their receipt
     });
 
     it("suggests Kern Studio Berlin's payment, which has no receipt yet, for Studio Kern's invoice", async () => {
@@ -1123,7 +1124,7 @@ describe('DocumentDetailPage', () => {
       expect(doc('wd-d4').paymentId).toBeNull();
       expect(status()).toBe('Waiting for payment');
       expect(d('linked-payment')).toBeNull();
-      expect(da('payment-suggestion')).toHaveLength(2);
+      expect(da('payment-suggestion')).toHaveLength(3);
       expect(historyTexts()[0]).toBe('You unlinked it from the SCHREIBWAREN BOETTCHER payment');
 
       await harness.navigateByUrl('/payments/wd-t17');
@@ -1165,6 +1166,7 @@ describe('DocumentDetailPage', () => {
         expect(rows.map((r) => text(inside(r, 'picker-name')))).toEqual([
           'SCHREIBWAREN BOETTCHER',
           'Deutsche Bahn',
+          'APCOA Parking',
         ]);
         expect(text(inside(rows[0], 'picker-amount'))).toBe(
           formatMoney(-2380, 'en', { signed: true }),
@@ -1236,7 +1238,7 @@ describe('DocumentDetailPage', () => {
         expect(inBody('payment-search')).toBeNull();
         await click(d('search-payments'));
         expect((inBody('payment-search') as HTMLInputElement).value).toBe('');
-        expect(options('payment-picker-option')).toHaveLength(2);
+        expect(options('payment-picker-option')).toHaveLength(3);
       });
     });
   });

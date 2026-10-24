@@ -1,6 +1,7 @@
 import { PRIVATE_IN, PRIVATE_OUT } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Booking, HistoryEntry, Transaction } from '../data/models';
+import { bookingKeepingNoVat } from './self-issued';
 
 // Pure actions on one payment. Each returns a new payment with one history entry (dated DEMO_TODAY) added at the front.
 
@@ -19,9 +20,14 @@ export function markNoReceiptNeeded(tx: Transaction): Transaction {
   return { ...tx, receipt: 'notNeeded', history: logged(tx, 'receiptNotNeeded') };
 }
 
-/** The person picks the category; choosing it also confirms the booking. */
+/** The person picks the category; choosing it also confirms the booking. A payment a self-issued receipt took the VAT from keeps 0 % VAT (see `keepsNoVat`). */
 export function changeCategory(tx: Transaction, booking: Booking): Transaction {
-  return { ...tx, booking, confirmed: true, history: logged(tx, 'categoryChanged', { category: booking.labelKey }) };
+  return {
+    ...tx,
+    booking: bookingKeepingNoVat(tx, booking),
+    confirmed: true,
+    history: logged(tx, 'categoryChanged', { category: booking.labelKey }),
+  };
 }
 
 /**

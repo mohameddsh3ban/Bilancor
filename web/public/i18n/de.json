@@ -711,6 +711,8 @@
     "paidInCash": "Du hast sie als bar bezahlt markiert",
     "paysInvoice": "Bezahlt die Rechnung {{number}}",
     "bookedByInvoice": "Passend zur Rechnung als {{category}} gebucht",
+    "selfIssued": "Du hast den Eigenbeleg {{number}} erstellt",
+    "vatRemovedSelfIssued": "Vorsteuer entfernt: Eigenbeleg",
     "personInvited": "{{by}} hat {{email}} als {{role}} eingeladen",
     "invitationCancelled": "{{by}} hat die Einladung an {{email}} zurückgezogen",
     "personJoined": "{{name}} ist als {{role}} beigetreten",

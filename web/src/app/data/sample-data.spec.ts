@@ -125,6 +125,33 @@ describe('sample payments', () => {
     }
   });
 
+  it('weber-design has the APCOA Parking payment wd-t20, the self-issued receipt demo: money out at 19 % VAT, confirmed, its receipt missing', () => {
+    const wd = BUSINESSES.find((b) => b.id === 'weber-design')!;
+    const t20 = wd.transactions.find((t) => t.id === 'wd-t20')!;
+    expect(paymentStatus(t20)).toBe('noReceipt');
+    expect(t20).toMatchObject({
+      date: '2026-10-20',
+      counterparty: 'APCOA Parking',
+      amountCents: -650,
+      accountId: 'wd-qonto',
+      booking: { labelKey: 'travel', skr03: '4670', vatRate: 19 },
+      confirmed: true,
+      isPrivate: false,
+      receipt: 'missing',
+      receiptFile: null,
+      reference: 'Parkhaus Zentrum, Automat',
+    });
+    expect(wd.documents.filter((d) => d.paymentId === 'wd-t20')).toEqual([]);
+    // Deutsche Bahn stays the Documents upload demo, so the two demos do not meet.
+    expect(paymentStatus(wd.transactions.find((t) => t.id === 'wd-t3')!)).toBe('noReceipt');
+  });
+
+  it('no sample document is a self-issued receipt: the field is null on every one', () => {
+    for (const b of BUSINESSES) {
+      for (const d of b.documents) expect(d.selfIssued, d.id).toBeNull();
+    }
+  });
+
   it('weber-design has the new Amazon payment wd-t18: unclear, with its receipt attached and the same suggestions as wd-t4', () => {
     const wd = BUSINESSES.find((b) => b.id === 'weber-design')!;
     const t18 = wd.transactions.find((t) => t.id === 'wd-t18')!;
@@ -134,13 +161,19 @@ describe('sample payments', () => {
     expect(wd.documents.filter((d) => d.paymentId === 'wd-t18').map((d) => d.id)).toEqual(['doc-wd-t18']);
   });
 
-  it('every booking is a known category or a private booking', () => {
+  it('every booking is a known category or a private booking, except that the APCOA parking is taxed at 19 % under Travel (whose usual rate is 7 %)', () => {
     const known = [...CATEGORIES, PRIVATE_OUT, PRIVATE_IN];
+    const otherRate: string[] = [];
     for (const b of BUSINESSES) {
       for (const t of b.transactions) {
-        if (t.booking) expect(known).toContainEqual(t.booking);
+        const booking = t.booking;
+        if (!booking) continue;
+        const category = known.find((k) => k.labelKey === booking.labelKey);
+        expect(category, t.id).toMatchObject({ skr03: booking.skr03, nameDe: booking.nameDe });
+        if (category?.vatRate !== booking.vatRate) otherRate.push(t.id);
       }
     }
+    expect(otherRate).toEqual(['wd-t20']);
   });
 });
 

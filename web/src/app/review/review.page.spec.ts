@@ -198,11 +198,11 @@ describe('ReviewPage', () => {
 
     const barValue = () => el.querySelector('[role="progressbar"]')!.getAttribute('aria-valuenow');
 
-    it('progress reads 1 of 7 for weber-design', async () => {
+    it('progress reads 1 of 8 for weber-design', async () => {
       await render();
 
       expect(demo.business().id).toBe('weber-design');
-      expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
+      expect(text(q('review-meta'))).toBe('1 of 8 · about 8 min left');
       expect(el.querySelector('[role="progressbar"]')!.getAttribute('aria-label')).toBe('Progress');
     });
 
@@ -212,12 +212,12 @@ describe('ReviewPage', () => {
       expect(barValue()).toBe('0');
 
       const values = [barValue()];
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 8; i++) {
         answerAndWait();
         values.push(barValue());
       }
       // The text says which card it is on; the bar says how much is done.
-      expect(values).toEqual(['0', '14', '29', '43', '57', '71', '86', '100']);
+      expect(values).toEqual(['0', '13', '25', '38', '50', '63', '75', '88', '100']);
     });
 
     it('the bar moves when the answer is given, while its card still shows the tick', async () => {
@@ -225,7 +225,7 @@ describe('ReviewPage', () => {
       vi.useFakeTimers();
 
       answer();
-      expect(barValue()).toBe('14');
+      expect(barValue()).toBe('13');
       expect(name()).toBe('Amazon');
     });
 
@@ -399,7 +399,7 @@ describe('ReviewPage', () => {
       harness.detectChanges();
 
       expect(name()).toBe('SCHREIBWAREN BOETTCHER');
-      expect(text(q('review-meta'))).toBe('2 of 7 · about 6 min left');
+      expect(text(q('review-meta'))).toBe('2 of 8 · about 7 min left');
     });
   });
 
@@ -489,7 +489,7 @@ describe('ReviewPage', () => {
       expect(q('card-tick')).toBeNull();
       expect(name()).toBe('Deutsche Bahn');
       // It counts as one card, so the progress did not move.
-      expect(text(q('review-meta'))).toBe('4 of 7 · about 4 min left');
+      expect(text(q('review-meta'))).toBe('4 of 8 · about 5 min left');
     });
 
     it('Skip for now slides the card away and brings the next one in; the skipped one comes back last', () => {
@@ -500,9 +500,9 @@ describe('ReviewPage', () => {
       expect(host()!.getAttribute('inert')).toBe('');
       play(SLIDE_MS);
       expect(name()).toBe('SCHREIBWAREN BOETTCHER');
-      expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
+      expect(text(q('review-meta'))).toBe('1 of 8 · about 8 min left');
 
-      for (let i = 0; i < 6; i++) answerAndWait();
+      for (let i = 0; i < 7; i++) answerAndWait();
       expect(name()).toBe('Amazon');
       expect(review.current()!.id).toBe('wd-t18');
     });
@@ -539,7 +539,7 @@ describe('ReviewPage', () => {
       expect(q('undo-toast')).toBeNull();
       expect(review.current()!.id).toBe('wd-t18');
       expect(name()).toBe('Amazon');
-      expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
+      expect(text(q('review-meta'))).toBe('1 of 8 · about 8 min left');
     });
 
     it('on a computer the toast area floats at the bottom of the screen, so a toast never changes the height of the column', () => {
@@ -614,6 +614,10 @@ describe('ReviewPage', () => {
 
       for (let i = 0; i < 5; i++) answerAndWait(i === 1 ? 'receipt' : undefined);
       expect(q('review-finish')).toBeNull();
+      expect(name()).toBe('APCOA Parking');
+
+      answerAndWait();
+      expect(q('review-finish')).toBeNull();
       expect(name()).toBe('Bürobedarf Schulz');
 
       answerAndWait('duplicateRemoved');
@@ -627,7 +631,7 @@ describe('ReviewPage', () => {
 
       expect(q('review-card')).toBeNull();
       expect(text(q('finish-title'))).toBe('All done — your books are up to date');
-      expect(text(q('finish-summary'))).toBe('7 decisions · 1 receipt added · 1 duplicate removed');
+      expect(text(q('finish-summary'))).toBe('8 decisions · 1 receipt added · 1 duplicate removed');
       expect(text(q('finish-vat'))).toBe('VAT return (UStVA) · next due 10 Nov');
       expect(q('review-meta')).toBeNull();
       expect(el.querySelector('[role="progressbar"]')!.getAttribute('aria-valuenow')).toBe('100');
@@ -650,7 +654,7 @@ describe('ReviewPage', () => {
     it('Undo from the finish screen brings the last card back', async () => {
       await render();
       vi.useFakeTimers();
-      for (let i = 0; i < 7; i++) answerAndWait();
+      for (let i = 0; i < 8; i++) answerAndWait();
       expect(q('review-finish')).not.toBeNull();
       expect(q('undo-toast')).not.toBeNull();
 
@@ -669,7 +673,7 @@ describe('ReviewPage', () => {
       await render();
       vi.useFakeTimers();
       answerAndWait();
-      expect(text(q('review-meta'))).toBe('2 of 7 · about 6 min left');
+      expect(text(q('review-meta'))).toBe('2 of 8 · about 7 min left');
 
       demo.setBusiness('sara-yoga');
       harness.detectChanges();
@@ -706,7 +710,7 @@ describe('ReviewPage', () => {
       play(SLIDE_MS);
 
       expect(name()).toBe('Amazon');
-      expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
+      expect(text(q('review-meta'))).toBe('1 of 8 · about 8 min left');
     });
   });
 
@@ -752,7 +756,7 @@ describe('ReviewPage', () => {
       await render();
       vi.useFakeTimers();
 
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 8; i++) {
         answer();
         play(TICKED);
       }
@@ -787,7 +791,7 @@ describe('ReviewPage', () => {
     it('amounts stay left to right', async () => {
       await render();
       expect(q('card-amount')!.querySelector('bdi')!.getAttribute('dir')).toBe('ltr');
-      expect(text(q('review-meta'))).toBe('1 من 7 · متبقي نحو 7 د');
+      expect(text(q('review-meta'))).toBe('1 من 8 · متبقي نحو 8 د');
     });
 
     it('English goes the other way', async () => {

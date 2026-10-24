@@ -185,6 +185,7 @@ const doc = (id: string, patch: Partial<Doc> = {}): Doc => ({
   paymentId: null,
   history: [],
   invoice: null,
+  selfIssued: null,
   ...patch,
 });
 

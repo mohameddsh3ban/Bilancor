@@ -125,15 +125,15 @@ describe('ExportCard', () => {
     expect((q('export-period') as HTMLSelectElement).value).toBe('2026-10');
     expect(options()).toEqual(['October 2026', 'September 2026', 'August 2026']);
 
-    // The summary is the one the rules calculate: 11 bookings, 8 receipts, running, 6 payments need Sara.
+    // The summary is the one the rules calculate: 12 bookings, 8 receipts, running, 7 payments need Sara.
     const october = exportPeriods(demo.business(), 'month', DEMO_TODAY)[0];
     expect(exportSummary(demo.business(), october, DEMO_TODAY)).toMatchObject({
-      bookings: 11,
+      bookings: 12,
       receipts: 8,
-      needsYou: 6,
+      needsYou: 7,
     });
     expect(text(q('export-summary'))).toBe(
-      'October: 11 bookings, 8 receipts · Running · 6 payments still need you',
+      'October: 12 bookings, 8 receipts · Running · 7 payments still need you',
     );
     expect(text(q('export-state'))).toBe('Running');
 
@@ -359,7 +359,7 @@ describe('ExportCard', () => {
       await render('weber-design');
       expect(text(q('export-title'))).toBe('Export für deine Steuerberater:in');
       expect(text(q('export-summary'))).toBe(
-        'Oktober: 11 Buchungen, 8 Belege · Läuft · 6 Zahlungen brauchen dich noch',
+        'Oktober: 12 Buchungen, 8 Belege · Läuft · 7 Zahlungen brauchen dich noch',
       );
       expect(text(q('export-kind-quarter'))).toBe('Quartal');
       expect(options()[0]).toBe('Oktober 2026');

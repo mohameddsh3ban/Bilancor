@@ -711,6 +711,8 @@
     "paidInCash": "You marked it as paid in cash",
     "paysInvoice": "Pays invoice {{number}}",
     "bookedByInvoice": "Booked as {{category}} to match the invoice",
+    "selfIssued": "You wrote the self-issued receipt {{number}}",
+    "vatRemovedSelfIssued": "VAT removed: self-issued receipt",
     "personInvited": "{{by}} invited {{email}} as {{role}}",
     "invitationCancelled": "{{by}} cancelled the invitation for {{email}}",
     "personJoined": "{{name}} joined as {{role}}",

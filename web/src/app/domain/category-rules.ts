@@ -1,7 +1,8 @@
-import { PRIVATE_IN, PRIVATE_OUT } from '../data/categories';
+import { CATEGORIES, PRIVATE_IN, PRIVATE_OUT } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { CategoryRule, Transaction } from '../data/models';
 import { paymentStatus } from './payment-status';
+import { bookingKeepingNoVat, keepsNoVat } from './self-issued';
 
 export type { CategoryRule } from '../data/models';
 
@@ -28,7 +29,7 @@ export function applyRuleToUnclear(
     bookedIds.push(tx.id);
     return {
       ...tx,
-      booking: rule.booking,
+      booking: bookingKeepingNoVat(tx, rule.booking),
       confirmed: true,
       history: [{ date: DEMO_TODAY, key: 'bookedByRule' as const, params: { category: rule.booking.labelKey } }, ...tx.history],
     };
@@ -42,7 +43,8 @@ const isPrivateBooking = (labelKey: string): boolean => labelKey === PRIVATE_OUT
  * When a payment gets a different category, the rule for its counterparty (if there is one) takes it over, so a rule
  * never goes stale. A rule is never made here, and these changes leave the rules alone: the booking is cleared, it
  * becomes private, or the payment only moves between private and business (marking private is not a category choice).
- * Returns the same array when nothing changes.
+ * The rule takes the category with its usual VAT, also when the payment has none because a self-issued receipt took it (the
+ * rule is for the counterparty's other payments). Returns the same array when nothing changes.
  */
 export function followCategoryChange(rules: CategoryRule[], before: Transaction, after: Transaction): CategoryRule[] {
   const booking = after.booking;
@@ -51,5 +53,6 @@ export function followCategoryChange(rules: CategoryRule[], before: Transaction,
   const key = counterpartyKey(after.counterparty);
   const rule = rules.find((r) => r.counterpartyKey === key);
   if (!rule || rule.booking.labelKey === booking.labelKey) return rules;
-  return rules.map((r) => (r === rule ? { ...r, booking } : r));
+  const learned = keepsNoVat(after) ? (CATEGORIES.find((category) => category.labelKey === booking.labelKey) ?? booking) : booking;
+  return rules.map((r) => (r === rule ? { ...r, booking: learned } : r));
 }

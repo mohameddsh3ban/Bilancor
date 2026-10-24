@@ -37,6 +37,7 @@ const base: Doc = {
   paymentId: null,
   history: [],
   invoice: null,
+  selfIssued: null,
 };
 
 describe('DocumentsPage', () => {

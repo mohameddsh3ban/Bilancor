@@ -110,6 +110,12 @@ describe('the review cards on the page', () => {
     nextCard();
     seen.push(url());
 
+    // wd-t20: the APCOA parking, which comes after wd-t1 on the same day: no receipt needed
+    expect(name()).toBe('APCOA Parking');
+    click('answer-no-receipt');
+    nextCard();
+    seen.push(url());
+
     // wd-d1: type in the amount
     expect(name()).toBe('Bürobedarf Schulz');
     const field = q('field-amount') as HTMLInputElement;
@@ -129,11 +135,11 @@ describe('the review cards on the page', () => {
     nextCard();
     seen.push(url());
 
-    expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review', '/review']);
+    expect(seen).toEqual(['/review', '/review', '/review', '/review', '/review', '/review', '/review']);
     expect(url()).toBe('/review');
     expect(q('review-card')).toBeNull();
     // The photo and the invoice are the two receipts added.
-    expect(text(q('finish-summary'))).toBe('6 decisions · 2 receipts added');
+    expect(text(q('finish-summary'))).toBe('7 decisions · 2 receipts added');
     expect(demo.business().invoices.find((i) => i.id === 'inv-wd-044')!.paymentIds).toEqual(['wd-t19']);
   });
 
@@ -173,7 +179,7 @@ describe('the review cards on the page', () => {
   it('learning shows under the tick, the other Amazon payment leaves the queue, and the card slides on', async () => {
     await render();
     vi.useFakeTimers();
-    expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
+    expect(text(q('review-meta'))).toBe('1 of 8 · about 8 min left');
 
     click('answer-suggestion');
     play(SAVING_MS);
@@ -183,7 +189,7 @@ describe('the review cards on the page', () => {
     );
     expect(text(q('card-tick'))).toContain('…and 1 more Amazon payment booked.');
     // The other Amazon payment (wd-t4) was booked by the rule, so it is not a decision any more.
-    expect(review.total()).toBe(6);
+    expect(review.total()).toBe(7);
     expect(review.current()!.id).toBe('wd-t17');
     expect(name()).toBe('Amazon'); // the card is held for the tick, then slides away
     play(TICK_NOTE_MS - TICK_MS + TICK_MS); // the tick has time to be read
@@ -198,7 +204,7 @@ describe('the review cards on the page', () => {
     const card = q('review-card-host')!;
     expect(name()).toBe('Amazon');
     expect(text(q('card-question'))).toBe('What was this for?');
-    expect(text(q('review-meta'))).toBe('1 of 7 · about 7 min left');
+    expect(text(q('review-meta'))).toBe('1 of 8 · about 8 min left');
 
     click('answer-suggestion');
     play(SAVING_MS + TICK_NOTE_MS);

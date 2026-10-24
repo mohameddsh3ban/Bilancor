@@ -8,6 +8,7 @@ import { READING_MS } from '../domain/document-upload';
 import { invoiceStatus, owedSummary } from '../domain/invoices';
 import { reviewItems } from '../domain/review-queue';
 import { DemoStateService } from '../state/demo-state.service';
+import { ReceiptService } from '../state/receipt.service';
 import { ReviewService } from '../state/review.service';
 import { UploadService } from '../state/upload.service';
 import { type PaymentItem, PaymentCard } from './payment-card';
@@ -98,7 +99,7 @@ describe('PaymentCard', () => {
     it('unclear Amazon: choosing a suggestion books it, learns, and books wd-t18 too', () => {
       vi.useFakeTimers();
       show('wd-t4'); // wd-t18, the older Amazon payment, is skipped
-      expect(queueLength()).toBe(7);
+      expect(queueLength()).toBe(8);
 
       click(all('answer-suggestion')[0]);
 
@@ -114,7 +115,7 @@ describe('PaymentCard', () => {
         { counterpartyKey: 'amazon', booking: OFFICE },
       ]);
       // Both leave the queue: one answer, two fewer decisions.
-      expect(queueLength()).toBe(5);
+      expect(queueLength()).toBe(6);
       expect(review.answered()).toBe(1);
       expect(review.lastAnswer()).toMatchObject({
         labelKey: 'review.result.booked',
@@ -280,7 +281,7 @@ describe('PaymentCard', () => {
       expect(tx('wd-t4')).toEqual(before);
       expect(review.answered()).toBe(0);
       expect(review.canUndo()).toBe(false);
-      expect(queueLength()).toBe(7);
+      expect(queueLength()).toBe(8);
     });
   });
 
@@ -322,6 +323,24 @@ describe('PaymentCard', () => {
       play(SAVING_MS);
       expect(text(q('tick-text'))).toBe('Category changed');
       expect(all('tick-note')).toHaveLength(0);
+    });
+
+    it('Change category on a payment with a self-issued receipt keeps its VAT at 0 %', async () => {
+      demo.updateTransaction('wd-t20', (t) => ({ ...t, confirmed: false })); // the booking still waits to be confirmed
+      TestBed.inject(ReceiptService).createSelfIssued('wd-t20', { purpose: 'Parking', reason: 'machine', reasonText: null, address: null }, 'payment');
+      show('wd-t20');
+      expect(text(q('card-kind'))).toBe('Payment · please confirm');
+      click(q('change-category'));
+      await settle();
+
+      const option = optionStartingWith('Office supplies');
+      vi.useFakeTimers();
+      option.click();
+      fixture.detectChanges();
+
+      expect(tx('wd-t20').booking).toEqual({ ...OFFICE, vatRate: 0 });
+      expect(tx('wd-t20').confirmed).toBe(true);
+      expect(tx('wd-t20').history[0].key).toBe('categoryChanged');
     });
 
     it('choosing the category it already has counts as yes', async () => {

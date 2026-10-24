@@ -65,6 +65,7 @@ describe('MonthPrintPage', () => {
     expect(rows().map((row) => cell(row, 'print-counterparty'))).toEqual([
       'Kern Studio Berlin',
       'Müller GmbH',
+      'APCOA Parking',
       'Telekom',
       'Deutsche Bahn',
       'Amazon',
@@ -76,14 +77,14 @@ describe('MonthPrintPage', () => {
       'Amazon',
     ]);
     expect(text(q('print-total-in'))).toBe(formatMoney(685500, 'en', { signed: true }));
-    expect(text(q('print-total-out'))).toBe(formatMoney(-72822, 'en', { signed: true }));
+    expect(text(q('print-total-out'))).toBe(formatMoney(-73472, 'en', { signed: true })); // the old -728,22 € and the 6,50 € parking
     expect(q('print-total-in')!.closest('bdi[dir="ltr"]')).not.toBeNull();
     expect(q('print-total-out')!.closest('bdi[dir="ltr"]')).not.toBeNull();
   });
 
   it('shows date, account, booking, status and signed amount in each row', async () => {
     await render('/print/month?month=2026-10');
-    const [kern, first, , third, fourth] = rows();
+    const [kern, first, , , third, fourth] = rows(); // skips the APCOA parking and Telekom, so the third is Deutsche Bahn and the fourth the Amazon order
     expect(cell(kern, 'print-date')).toBe('21 Oct');
     expect(cell(kern, 'tx-status')).toBe('Receipt missing');
     expect(cell(kern, 'print-amount')).toBe(formatMoney(238000, 'en', { signed: true }));
@@ -138,13 +139,13 @@ describe('MonthPrintPage', () => {
 
   it('ignores the quick filter and the search, so it is always the whole month', async () => {
     await render('/print/month?month=2026-10&quick=needsYou&search=Telekom');
-    expect(rows()).toHaveLength(11);
+    expect(rows()).toHaveLength(12);
   });
 
   it('prints the edits made in the app, since the business is the one the demo state holds', async () => {
     demo.updateTransaction('wd-t3', (tx) => ({ ...tx, receipt: 'notNeeded' }));
     await render('/print/month?month=2026-10');
-    expect(cell(rows()[3], 'tx-status')).toBe('Booked');
+    expect(cell(rows()[4], 'tx-status')).toBe('Booked');
   });
 
   it('prints the month of the business that is open', async () => {

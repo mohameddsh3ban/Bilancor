@@ -48,6 +48,7 @@ export function linkedDocFor(tx: Transaction, kleinunternehmer: boolean): Doc {
       { date: tx.date, key: 'addedFile', params: {} },
     ],
     invoice: null,
+    selfIssued: null,
   };
 }
 
@@ -93,6 +94,7 @@ function extra(s: ExtraSpec): Doc {
       { date: s.date, key: ADDED_KEY[s.source], params: {} },
     ],
     invoice: null,
+    selfIssued: null,
   };
 }
 

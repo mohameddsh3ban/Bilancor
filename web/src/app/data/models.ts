@@ -57,6 +57,8 @@ export type HistoryKey =
   | 'paidInCash'
   | 'paysInvoice' // on a payment; params: number, and auto ('true') when the system matched it on its own
   | 'bookedByInvoice' // on a payment that pays an invoice taxed differently from how it was booked; params: category, and auto ('true') as above
+  | 'selfIssued' // on the document of a self-issued receipt (Eigenbeleg); params: number
+  | 'vatRemovedSelfIssued' // on a payment a self-issued receipt was written for: its VAT is 0 % from then on, whatever category it gets
   // On a business; `by` is the full name of who did it, `role` a Role id (shown with its "roles.<role>.name" word) and `until` an ISO date
   | 'personInvited' // params: email, role, by
   | 'invitationCancelled' // params: email, by
@@ -87,6 +89,17 @@ export type DocDirection = 'received' | 'sent';
 export type DocSource = 'photo' | 'file' | 'email';
 export type DocField = 'amount' | 'date' | 'name';
 export type DocStatus = 'reading' | 'duplicate' | 'direction' | 'checkAmount' | 'checkDate' | 'checkName' | 'waiting' | 'overdue' | 'done';
+/** Why a payment has no receipt, as the person says it on a self-issued receipt; `other` comes with a text of their own. */
+export type SelfIssuedReason = 'lost' | 'machine' | 'tip' | 'sellerNone' | 'other';
+/** What a self-issued receipt (Eigenbeleg) says besides the payment it is for: its number, why there is no receipt, what the money was for, and who confirmed it on which day. */
+export interface SelfIssued {
+  number: string; // 'EB-2026-001'
+  reason: SelfIssuedReason; reasonText: string | null; // reasonText: only with `other`, else null
+  purpose: string; // what the money was for
+  address: string | null; // the payee's address, when the person gave one
+  confirmedBy: string; // the full name of the person who confirmed it is true
+  issuedOn: string; // ISO date
+}
 export interface Doc {
   id: string; fileName: string; source: DocSource; addedOn: string; fromUpload: boolean; reading: boolean;
   name: string | null; direction: DocDirection | null; invoiceNo: string;
@@ -96,6 +109,7 @@ export interface Doc {
   paymentId: string | null;
   history: HistoryEntry[]; // newest first
   invoice: { id: string; role: 'invoice' | 'cancellation'; cancelled: boolean } | null; // set on the sent document of an invoice written in the app; null on every other document
+  selfIssued: SelfIssued | null; // set on a self-issued receipt written in the app; null on every other document
 } // the status is calculated by docStatus(), never stored
 /** A ready-made reading result for a simulated upload; `plain` marks the receipts a pool repeats. */
 export type PoolResult = Pick<Doc, 'name' | 'direction' | 'invoiceNo' | 'date' | 'dueDate' | 'amountCents' | 'vatRate' | 'duplicateOf' | 'booking'> & { plain: boolean };

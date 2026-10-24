@@ -30,6 +30,7 @@ const FILE_DOC: Doc = {
   paymentId: null,
   history: [],
   invoice: null,
+  selfIssued: null,
 };
 
 describe('InvoiceListRow', () => {

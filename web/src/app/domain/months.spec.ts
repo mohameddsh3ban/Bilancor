@@ -226,8 +226,8 @@ describe('a payment in the earlier months', () => {
 
 describe('closeCheck', () => {
   it('closeCheck counts unclear, unconfirmed and receipt-less payments and blocks', () => {
-    // October at Weber Design: Amazon twice with no category, Müller GmbH to confirm, and three payments with no receipt.
-    expect(closeCheck(weber, '2026-10')).toMatchObject({ unclear: 2, confirm: 1, noReceipt: 3, blocked: true });
+    // October at Weber Design: Amazon twice with no category, Müller GmbH to confirm, and four payments with no receipt (the APCOA parking too).
+    expect(closeCheck(weber, '2026-10')).toMatchObject({ unclear: 2, confirm: 1, noReceipt: 4, blocked: true });
   });
 
   it('a month where every payment is booked and has its receipt does not block', () => {

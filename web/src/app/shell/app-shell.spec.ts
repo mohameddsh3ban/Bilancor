@@ -86,7 +86,7 @@ describe('AppShell', () => {
 
   it('has the Needs you button in the top bar, right before the bell, linking to the review inbox', () => {
     const button = q('[data-testid="needs-you-button"]');
-    expect(button.textContent?.replace(/\s+/g, ' ').trim()).toBe('Needs you · 7');
+    expect(button.textContent?.replace(/\s+/g, ' ').trim()).toBe('Needs you · 8');
     expect(button.getAttribute('href')).toBe('/review');
     expect(q('header').contains(button)).toBe(true);
     expect(button.closest('app-needs-you-button')!.nextElementSibling).toBe(q('app-bell-panel'));

@@ -64,6 +64,14 @@ describe('translation files', () => {
     }
   });
 
+  it('has a history text for a self-issued receipt (its number) and for the VAT it takes off the payment', () => {
+    for (const lang of [en, de, ar]) {
+      expect(lang.history.selfIssued).toContain('{{number}}');
+      expect(lang.history.vatRemovedSelfIssued).toBeTruthy();
+    }
+    expect(en.history.vatRemovedSelfIssued).toBe('VAT removed: self-issued receipt');
+  });
+
   it('has a name for every role, and what the three roles that can be given can and can not do', () => {
     for (const lang of [en, de, ar]) {
       const roles = lang.roles as Record<string, Record<string, string>>;
