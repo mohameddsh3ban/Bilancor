@@ -64,7 +64,7 @@ interface AccountRow {
   statusKey: string;
   statusParams: { days: number } | null;
   tone: string;
-  /** The button of the row: Renew and Sign in again open the sign-in, Import statement leaves for its page; null for none. */
+  /** The button of the row: Renew and Sign in again open the sign-in, Import statement leaves for the import of the account; null for none. */
   action: 'renew' | 'signIn' | 'import' | null;
   /** The button's accessible name: its own words and then the account's name, so every Renew says which account. */
   actionLabelledBy: string;
@@ -82,8 +82,9 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
  * Settings › Bank accounts: **Connect a bank**, then one row per money account with its initials tile, bank and
  * product, masked IBAN, last fetch, a status word and the button that goes with it. Renew and Sign in again open the
  * bank's (simulated) sign-in inside the row, one at a time; approving renews the connection and puts the cursor on the
- * row's new status, cancelling closes it and puts the cursor back there. Statement import goes to its coming-soon
- * page. Before the bank step is done the page says so and offers **Connect your bank**, with only the cash box listed.
+ * row's new status, cancelling closes it and puts the cursor back there. Import statement opens the import of that
+ * account (`/payments/import`, back to Settings). Before the bank step is done the page says so and offers **Connect your
+ * bank**, with only the cash box listed.
  */
 @Component({
   selector: 'app-bank-accounts',
@@ -206,7 +207,8 @@ const needsSignIn = (status: ConnectionStatus): boolean =>
                         hlmBtn
                         variant="outline"
                         size="sm"
-                        [routerLink]="['/soon', 'statementImport']"
+                        routerLink="/payments/import"
+                        [queryParams]="{ account: row.account.id, from: 'settings' }"
                         [id]="'bank-action-' + row.account.id"
                         [attr.aria-labelledby]="row.actionLabelledBy"
                         [attr.data-testid]="'bank-action-' + row.account.id"

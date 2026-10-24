@@ -14,6 +14,7 @@ import { bankInitials, maskIban } from '../domain/bank-connection';
 import { HomePage } from '../home/home.page';
 import { PaymentDetailPage } from '../payments/payment-detail.page';
 import { PaymentsPage } from '../payments/payments.page';
+import { StatementImportPage } from '../payments/statement-import.page';
 import { ComingSoonPage } from '../shell/coming-soon.page';
 import { DemoStateService } from '../state/demo-state.service';
 import { ConnectBankPage, FETCH_MS } from './connect-bank.page';
@@ -35,6 +36,7 @@ describe('ConnectBankPage', () => {
         provideTranslocoTesting(),
         provideRouter([
           { path: '', pathMatch: 'full', component: HomePage },
+          { path: 'payments/import', component: StatementImportPage },
           {
             path: 'payments',
             component: PaymentsPage,
@@ -163,13 +165,18 @@ describe('ConnectBankPage', () => {
       expect(q('add-cash')).not.toBeNull();
     });
 
-    it("My bank isn't listed leads to the coming-soon page for importing a statement", async () => {
+    it("My bank isn't listed leads to the new account for importing a statement, and back to where it was opened from", async () => {
       await render();
       expect(text(q('not-listed'))).toContain("My bank isn't listed");
-      expect(q('not-listed')!.getAttribute('href')).toBe('/soon/statementImport');
+      expect(text(q('not-listed'))).not.toContain('Coming soon');
+      expect(q('not-listed')!.getAttribute('href')).toBe('/payments/import?new=1&from=settings');
       await click('not-listed');
-      expect(router.url).toBe('/soon/statementImport');
+      expect(router.url).toBe('/payments/import?new=1&from=settings');
       expect(text(el.querySelector('h1'))).toBe('Import a bank statement');
+      await render('/settings/bank/connect?from=payments');
+      expect(q('not-listed')!.getAttribute('href')).toBe('/payments/import?new=1&from=payments');
+      await render('/settings/bank/connect?from=home');
+      expect(q('not-listed')!.getAttribute('href')).toBe('/payments/import?new=1&from=home');
     });
 
     it('I also take cash shows only for a business without a cash box', async () => {

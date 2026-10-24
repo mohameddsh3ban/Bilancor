@@ -185,6 +185,16 @@
       "de": "GDPdU",
       "explain": "The set format in which the tax office can ask for your books in digital form during an audit. Your tax advisor usually knows what to hand over."
     },
+    "camt": {
+      "label": "Bank standard",
+      "de": "CAMT",
+      "explain": "The standard file that German banks offer for account statements (CAMT.053). It holds the same payments as a CSV file, in a layout every bank writes the same way, so no column needs matching."
+    },
+    "kontoauszug": {
+      "label": "bank statement",
+      "de": "Kontoauszug",
+      "explain": "The list of payments your bank sends you for a period, as a file or a PDF. You download it from your online banking."
+    },
     "festschreibung": {
       "label": "Locking the books",
       "de": "Festschreibung",
@@ -217,7 +227,6 @@
     "photo": "Take a photo",
     "selfReceipt": "Self-issued receipt",
     "cashPayment": "Paid in cash or privately",
-    "statementImport": "Import a bank statement",
     "default": "This page"
   },
   "comingSoon": {
@@ -741,6 +750,8 @@
     },
     "clearAll": "Clear all",
     "reviewThem": "Review them",
+    "more": "More actions",
+    "import": "Import statement",
     "download": "Download month",
     "monthIn": "In",
     "monthOut": "Out",
@@ -1499,7 +1510,7 @@
       "noMatch": "We couldn't find a bank called “{{search}}”.",
       "notListed": {
         "title": "My bank isn't listed",
-        "body": "Import a statement from your bank instead. Coming soon."
+        "body": "Import a statement from your bank instead."
       },
       "cash": {
         "title": "I also take cash",
@@ -1598,6 +1609,117 @@
       "en": "English"
     },
     "save": "Save"
+  },
+  "statementImport": {
+    "title": "Import a bank statement",
+    "intro": "Add payments from the {{term}} of your online banking. Payments that are here already are skipped.",
+    "back": {
+      "home": "Back to home",
+      "payments": "Back to Payments",
+      "settings": "Back to Settings"
+    },
+    "into": "Into:",
+    "change": "Change account",
+    "chooser": {
+      "title": "Which account is it for?",
+      "statement": "Payments come from statements",
+      "connected": "Add older months",
+      "new": "A new account…",
+      "newBody": "For a bank that isn't connected here"
+    },
+    "new": {
+      "title": "A new account",
+      "intro": "Give the account a name and its IBAN. Then you can import its statement.",
+      "name": "Account name",
+      "namePlaceholder": "e.g. Volksbank",
+      "nameError": "Give the account a name.",
+      "iban": "IBAN",
+      "ibanHint": "You find it on the statement or in your online banking.",
+      "ibanError": "This doesn't look like an IBAN. Check it and try again.",
+      "continue": "Continue"
+    },
+    "file": {
+      "drop": "Drop the file from your online banking here",
+      "or": "or",
+      "choose": "choose a file",
+      "sample": "Use a sample statement",
+      "demo": "Demo: whichever file you give, we read this account's sample statement."
+    },
+    "read": {
+      "title": "We read it",
+      "file": "File",
+      "recognised": "Recognised: {{format}}",
+      "unknown": "Unknown layout",
+      "payments": {
+        "one": "1 payment in the file",
+        "many": "{{count}} payments in the file"
+      },
+      "new": "New",
+      "already": "Already here, skipped",
+      "closed": "In a closed month, not imported",
+      "unreadable": "Couldn't be read, not imported",
+      "seeWhich": "See which",
+      "hideWhich": "Hide the list",
+      "inFile": "In the file",
+      "hereAlready": "Already here"
+    },
+    "rows": {
+      "title": "First payments",
+      "already": "Already here",
+      "closed": "Closed month"
+    },
+    "columns": {
+      "title": "Match the columns",
+      "intro": "We don't know this layout yet. We guessed what each column holds: check it.",
+      "moneyOut": "Money out is shown as",
+      "minus": "A minus sign",
+      "column": "Its own column",
+      "unnamed": "Column {{number}}",
+      "role": {
+        "date": "Date",
+        "amount": "Amount",
+        "amountIn": "Money in",
+        "amountOut": "Money out",
+        "who": "Who",
+        "purpose": "What for",
+        "ignore": "Ignore"
+      },
+      "need": "Choose which column holds the date, the amount and who was paid.",
+      "needOut": "Choose the column that holds money out too."
+    },
+    "import": {
+      "one": "Import 1 payment",
+      "many": "Import {{count}} payments",
+      "none": "Import payments",
+      "running": "Importing…",
+      "allHere": "Every payment in this file is here already.",
+      "nothingNew": "There are no new payments in this file."
+    },
+    "summary": {
+      "title": "Import done",
+      "added": "{{count}} added",
+      "booked": "{{count}} booked automatically",
+      "needs": {
+        "one": "{{count}} needs you",
+        "many": "{{count}} need you"
+      },
+      "skipped": {
+        "one": "1 payment was here already and was skipped.",
+        "many": "{{count}} payments were here already and were skipped."
+      },
+      "nothing": "Nothing was added: every payment in the file was here already.",
+      "start": "Start",
+      "payments": "See the payments",
+      "undo": "Undo import",
+      "undoBlocked": {
+        "worked": "This import can't be undone any more: some payments were worked on.",
+        "closed": "This import can't be undone any more: a month with some of its payments has been closed."
+      }
+    },
+    "undone": {
+      "one": "Import undone. 1 payment was taken out again.",
+      "many": "Import undone. {{count}} payments were taken out again."
+    }
   },
   "settings": {
     "title": "Settings",

@@ -137,6 +137,29 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
 
+  it('Import a bank statement is inside the app shell, and is not a payment called "import": signed out it asks for signing in first', async () => {
+    const harness = await RouterTestingHarness.create('/payments/import');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fpayments%2Fimport');
+
+    signInAsSara();
+    await harness.navigateByUrl('/payments/import');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-statement-import-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/payments/import');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-payment-detail-page')).toBeNull();
+
+    // A payment still opens under Payments.
+    await harness.navigateByUrl('/payments/wd-t3');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-payment-detail-page')).not.toBeNull();
+    });
+  });
+
   it('signed in, the pages of the app open', async () => {
     signInAsSara();
     const harness = await RouterTestingHarness.create('/payments');

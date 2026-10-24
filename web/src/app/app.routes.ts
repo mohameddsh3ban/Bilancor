@@ -39,6 +39,12 @@ export const routes: Routes = [
         pathMatch: 'full',
         loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
       },
+      // A fixed path under payments (payments/import) must be listed above payments, or "import" is taken for a payment's id.
+      {
+        path: 'payments/import',
+        loadComponent: () =>
+          import('./payments/statement-import.page').then((m) => m.StatementImportPage),
+      },
       {
         path: 'payments',
         loadComponent: () => import('./payments/payments.page').then((m) => m.PaymentsPage),

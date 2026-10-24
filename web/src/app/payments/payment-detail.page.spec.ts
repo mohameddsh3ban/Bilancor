@@ -737,6 +737,14 @@ describe('PaymentDetailPage', () => {
       expect(d('bank-iban')).toBeNull();
       expect(text(d('bank-reference'))).toBe('Einkauf bar');
     });
+
+    it('an imported payment has no IBAN of the other party, so no empty IBAN row, but keeps its reference', async () => {
+      demo.updateTransaction('wd-t2', (t) => ({ ...t, counterpartyIban: '' }));
+      await render('/payments/wd-t2');
+      expect(d('bank-iban')).toBeNull();
+      expect(d('bank-section')!.textContent).not.toContain('IBAN');
+      expect(text(d('bank-reference'))).toBe('Rechnung 8841 0712, Mobilfunk Oktober');
+    });
   });
 
   describe('history', () => {

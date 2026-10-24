@@ -117,6 +117,8 @@ describe('translation files', () => {
       'bwa',
       'gdpdu',
       'festschreibung',
+      'camt',
+      'kontoauszug',
     ];
     for (const term of terms) {
       for (const part of ['label', 'de', 'explain']) {

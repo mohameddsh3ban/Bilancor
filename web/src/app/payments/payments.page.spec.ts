@@ -506,6 +506,76 @@ describe('PaymentsPage', () => {
     });
   });
 
+  describe('the account in the address', () => {
+    it('?account= starts the list on that account, with its chip, and leaves it out of the address', async () => {
+      await render('/payments?account=wd-cash');
+      await settle();
+      expect((q('filter-account') as HTMLSelectElement).value).toBe('wd-cash');
+      expect(text(q('chip-account'))).toContain('Cash box');
+      const rows = qa('payment-row');
+      expect(rows.length).toBeGreaterThan(0);
+      expect(rows.length).toBe(demo.business().transactions.filter((t) => t.accountId === 'wd-cash').length);
+      expect(TestBed.inject(Router).url).toBe('/payments');
+    });
+
+    it('keeps the other filters as they are and lets the account go again', async () => {
+      await render('/payments?account=wd-qonto');
+      await settle();
+      await click('chip-account-remove');
+      expect(q('chip-account')).toBeNull();
+      expect(qa('payment-row')).toHaveLength(demo.business().transactions.length);
+    });
+
+    it('ignores an account the business does not have', async () => {
+      await render('/payments?account=cl-sparkasse');
+      await settle();
+      expect((q('filter-account') as HTMLSelectElement).value).toBe('');
+      expect(q('chip-account')).toBeNull();
+      expect(qa('payment-row')).toHaveLength(demo.business().transactions.length);
+      expect(TestBed.inject(Router).url).toBe('/payments');
+    });
+  });
+
+  describe('importing a statement', () => {
+    it('payments offers Import statement', async () => {
+      await render();
+      // A computer has the button in the toolbar, next to Download month.
+      const link = q('import-statement')!;
+      expect(text(link)).toBe('Import statement');
+      expect(link.getAttribute('href')).toBe('/payments/import?from=payments');
+      expect(link.classList).toContain('hidden');
+      expect(link.classList).toContain('lg:inline-flex');
+
+      // A phone has it in a ⋯ menu.
+      const more = q('more-actions')!;
+      expect(more.getAttribute('aria-label')).toBe('More actions');
+      expect(more.classList).toContain('lg:hidden');
+      more.click();
+      await settle();
+      const item = document.body.querySelector<HTMLElement>('[data-testid="menu-import-statement"]')!;
+      expect(text(item)).toBe('Import statement');
+      expect(item.getAttribute('href')).toBe('/payments/import?from=payments');
+    });
+
+    it('is offered before the bank is connected too: a statement is a way to get payments in', async () => {
+      demo.setSetup('new');
+      await render();
+      expect(q('import-statement')).not.toBeNull();
+      expect(q('more-actions')).not.toBeNull();
+    });
+
+    it('says Import statement in German and Arabic', async () => {
+      await render();
+      TestBed.inject(LanguageService).setLang('de');
+      await settle();
+      expect(text(q('import-statement'))).toBe(de.payments.import);
+      TestBed.inject(LanguageService).setLang('ar');
+      await settle();
+      expect(text(q('import-statement'))).toBe(ar.payments.import);
+      expect(q('more-actions')!.getAttribute('aria-label')).toBe(ar.payments.more);
+    });
+  });
+
   describe('opened payment', () => {
     it('highlights the selected row in list and table and hides the list below lg', async () => {
       await render('/payments/wd-t3');

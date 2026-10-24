@@ -520,7 +520,7 @@ describe('SettingsPage', () => {
       expect(text(q('bank-name-cl-sparkasse'))).toBe('Sparkasse · Business account');
       expect(status('cl-sparkasse')).toBe('Statement import');
       expect(text(action('cl-sparkasse'))).toBe('Import statement');
-      expect(action('cl-sparkasse')!.getAttribute('href')).toBe('/soon/statementImport');
+      expect(action('cl-sparkasse')!.getAttribute('href')).toBe('/payments/import?account=cl-sparkasse&from=settings');
       expect(text(q('bank-line-cl-sparkasse'))).toContain('Payments come from imported statements');
       expect(q('bank-fetched-cl-sparkasse')).toBeNull();
     });

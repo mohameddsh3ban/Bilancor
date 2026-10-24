@@ -19,7 +19,6 @@ const FEATURES: readonly string[] = [
   'photo',
   'selfReceipt',
   'cashPayment',
-  'statementImport',
 ];
 
 /** Where every link to a page that is not designed yet lands. */

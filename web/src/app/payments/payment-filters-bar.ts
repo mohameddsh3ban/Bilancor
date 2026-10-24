@@ -1,10 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideDownload, lucideSearch, lucideX } from '@ng-icons/lucide';
+import {
+  lucideDownload,
+  lucideEllipsis,
+  lucideFileUp,
+  lucideSearch,
+  lucideX,
+} from '@ng-icons/lucide';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmButton } from '@spartan-ng/helm/button';
+import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu';
 import { AppMonthPipe } from '../core/format/month.pipe';
 import { Account } from '../data/models';
 import { accountName } from '../domain/bank-connection';
@@ -130,13 +137,22 @@ const QUICK_FILTERS: readonly QuickFilter[] = ['all', 'needsYou', 'in', 'out'];
 
 /**
  * Search, quick filters, account and month selects, and the chips of what is on.
- * On a computer a "Download month" link opens the print view of the filtered month (or the newest one).
+ * On a computer a "Download month" link opens the print view of the filtered month (or the newest one), and an "Import statement"
+ * button opens the statement import; on a phone the import is in a ⋯ menu beside the search.
  */
 @Component({
   selector: 'app-payment-filters-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmButton, NgIcon, PaymentFilterChips, RouterLink, TranslocoPipe, AppMonthPipe],
-  viewProviders: [provideIcons({ lucideDownload, lucideSearch })],
+  imports: [
+    HlmButton,
+    HlmDropdownMenuImports,
+    NgIcon,
+    PaymentFilterChips,
+    RouterLink,
+    TranslocoPipe,
+    AppMonthPipe,
+  ],
+  viewProviders: [provideIcons({ lucideDownload, lucideEllipsis, lucideFileUp, lucideSearch })],
   host: { class: 'flex flex-col gap-3' },
   template: `
     <div class="flex items-center gap-2">
@@ -170,6 +186,43 @@ const QUICK_FILTERS: readonly QuickFilter[] = ['all', 'needsYou', 'in', 'out'];
           {{ 'payments.download' | transloco }}
         </a>
       }
+      <a
+        hlmBtn
+        variant="outline"
+        class="hidden shrink-0 lg:inline-flex"
+        data-testid="import-statement"
+        routerLink="/payments/import"
+        [queryParams]="{ from: 'payments' }"
+      >
+        <ng-icon name="lucideFileUp" size="16" aria-hidden="true" />
+        {{ 'payments.import' | transloco }}
+      </a>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-lg"
+        align="end"
+        class="shrink-0 lg:hidden"
+        data-testid="more-actions"
+        [hlmDropdownMenuTrigger]="menu"
+        [attr.aria-label]="'payments.more' | transloco"
+      >
+        <ng-icon name="lucideEllipsis" size="20" aria-hidden="true" />
+      </button>
+      <ng-template #menu>
+        <div hlmDropdownMenu class="w-56">
+          <a
+            hlmDropdownMenuItem
+            class="min-h-10"
+            routerLink="/payments/import"
+            data-testid="menu-import-statement"
+            [queryParams]="{ from: 'payments' }"
+          >
+            {{ 'payments.import' | transloco }}
+          </a>
+        </div>
+      </ng-template>
     </div>
 
     <div class="flex flex-wrap items-center gap-x-3 gap-y-2">

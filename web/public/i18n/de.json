@@ -185,6 +185,16 @@
       "de": "GDPdU",
       "explain": "Das festgelegte Format, in dem das Finanzamt bei einer Prüfung deine Bücher in digitaler Form anfordern kann. Deine Steuerberater:in weiß meist, was zu übergeben ist."
     },
+    "camt": {
+      "label": "CAMT",
+      "de": "CAMT",
+      "explain": "Die Standarddatei, die deutsche Banken für Kontoauszüge anbieten (CAMT.053). Sie enthält dieselben Zahlungen wie eine CSV-Datei, aber in einem Aufbau, den jede Bank gleich schreibt, sodass keine Spalte zugeordnet werden muss."
+    },
+    "kontoauszug": {
+      "label": "Kontoauszug",
+      "de": "Kontoauszug",
+      "explain": "Die Liste der Zahlungen, die deine Bank dir für einen Zeitraum schickt, als Datei oder PDF. Du lädst sie in deinem Online-Banking herunter."
+    },
     "festschreibung": {
       "label": "Festschreibung",
       "de": "Festschreibung",
@@ -217,7 +227,6 @@
     "photo": "Foto aufnehmen",
     "selfReceipt": "Eigenbeleg",
     "cashPayment": "Bar oder privat bezahlt",
-    "statementImport": "Kontoauszug importieren",
     "default": "Diese Seite"
   },
   "comingSoon": {
@@ -741,6 +750,8 @@
     },
     "clearAll": "Alle zurücksetzen",
     "reviewThem": "Jetzt durchgehen",
+    "more": "Weitere Aktionen",
+    "import": "Kontoauszug importieren",
     "download": "Monat herunterladen",
     "monthIn": "Eingang",
     "monthOut": "Ausgang",
@@ -1499,7 +1510,7 @@
       "noMatch": "Wir haben keine Bank namens „{{search}}“ gefunden.",
       "notListed": {
         "title": "Meine Bank steht nicht in der Liste",
-        "body": "Importiere stattdessen einen Kontoauszug deiner Bank. Kommt bald."
+        "body": "Importiere stattdessen einen Kontoauszug deiner Bank."
       },
       "cash": {
         "title": "Ich nehme auch Bargeld ein",
@@ -1598,6 +1609,117 @@
       "en": "Englisch"
     },
     "save": "Speichern"
+  },
+  "statementImport": {
+    "title": "Kontoauszug importieren",
+    "intro": "Füge Zahlungen aus dem {{term}} deines Online-Bankings hinzu. Zahlungen, die schon da sind, werden übersprungen.",
+    "back": {
+      "home": "Zurück zur Startseite",
+      "payments": "Zurück zu den Zahlungen",
+      "settings": "Zurück zu den Einstellungen"
+    },
+    "into": "Ins Konto:",
+    "change": "Konto wechseln",
+    "chooser": {
+      "title": "Für welches Konto?",
+      "statement": "Zahlungen kommen aus Kontoauszügen",
+      "connected": "Ältere Monate nachtragen",
+      "new": "Ein neues Konto…",
+      "newBody": "Für eine Bank, die hier nicht angebunden ist"
+    },
+    "new": {
+      "title": "Ein neues Konto",
+      "intro": "Gib dem Konto einen Namen und seine IBAN. Danach kannst du seinen Kontoauszug importieren.",
+      "name": "Kontoname",
+      "namePlaceholder": "z. B. Volksbank",
+      "nameError": "Gib dem Konto einen Namen.",
+      "iban": "IBAN",
+      "ibanHint": "Du findest sie auf dem Kontoauszug oder in deinem Online-Banking.",
+      "ibanError": "Das sieht nicht wie eine IBAN aus. Prüfe sie und versuche es noch einmal.",
+      "continue": "Weiter"
+    },
+    "file": {
+      "drop": "Zieh die Datei aus deinem Online-Banking hierher",
+      "or": "oder",
+      "choose": "wähle eine Datei",
+      "sample": "Beispiel-Kontoauszug verwenden",
+      "demo": "Demo: Egal welche Datei du gibst, wir lesen den Beispiel-Kontoauszug dieses Kontos."
+    },
+    "read": {
+      "title": "Das haben wir gelesen",
+      "file": "Datei",
+      "recognised": "Erkannt: {{format}}",
+      "unknown": "Unbekanntes Layout",
+      "payments": {
+        "one": "1 Zahlung in der Datei",
+        "many": "{{count}} Zahlungen in der Datei"
+      },
+      "new": "Neu",
+      "already": "Schon da, übersprungen",
+      "closed": "In einem abgeschlossenen Monat, nicht importiert",
+      "unreadable": "Nicht lesbar, nicht importiert",
+      "seeWhich": "Welche?",
+      "hideWhich": "Liste ausblenden",
+      "inFile": "In der Datei",
+      "hereAlready": "Schon da"
+    },
+    "rows": {
+      "title": "Die ersten Zahlungen",
+      "already": "Schon da",
+      "closed": "Abgeschlossener Monat"
+    },
+    "columns": {
+      "title": "Spalten zuordnen",
+      "intro": "Dieses Layout kennen wir noch nicht. Wir haben geraten, was jede Spalte enthält: Prüfe es.",
+      "moneyOut": "Ausgaben stehen",
+      "minus": "Mit einem Minuszeichen",
+      "column": "In einer eigenen Spalte",
+      "unnamed": "Spalte {{number}}",
+      "role": {
+        "date": "Datum",
+        "amount": "Betrag",
+        "amountIn": "Einnahmen",
+        "amountOut": "Ausgaben",
+        "who": "Wer",
+        "purpose": "Wofür",
+        "ignore": "Ignorieren"
+      },
+      "need": "Wähle, welche Spalte das Datum, den Betrag und den Zahlungspartner enthält.",
+      "needOut": "Wähle auch die Spalte mit den Ausgaben."
+    },
+    "import": {
+      "one": "1 Zahlung importieren",
+      "many": "{{count}} Zahlungen importieren",
+      "none": "Zahlungen importieren",
+      "running": "Wird importiert…",
+      "allHere": "Jede Zahlung in dieser Datei ist schon da.",
+      "nothingNew": "In dieser Datei gibt es keine neuen Zahlungen."
+    },
+    "summary": {
+      "title": "Import fertig",
+      "added": "{{count}} hinzugefügt",
+      "booked": "{{count}} automatisch gebucht",
+      "needs": {
+        "one": "{{count}} braucht dich",
+        "many": "{{count}} brauchen dich"
+      },
+      "skipped": {
+        "one": "1 Zahlung war schon da und wurde übersprungen.",
+        "many": "{{count}} Zahlungen waren schon da und wurden übersprungen."
+      },
+      "nothing": "Es wurde nichts hinzugefügt: Jede Zahlung der Datei war schon da.",
+      "start": "Starten",
+      "payments": "Zahlungen ansehen",
+      "undo": "Import rückgängig machen",
+      "undoBlocked": {
+        "worked": "Dieser Import lässt sich nicht mehr rückgängig machen: Einige Zahlungen wurden schon bearbeitet.",
+        "closed": "Dieser Import lässt sich nicht mehr rückgängig machen: Ein Monat mit einigen seiner Zahlungen wurde abgeschlossen."
+      }
+    },
+    "undone": {
+      "one": "Import rückgängig gemacht. 1 Zahlung wurde wieder entfernt.",
+      "many": "Import rückgängig gemacht. {{count}} Zahlungen wurden wieder entfernt."
+    }
   },
   "settings": {
     "title": "Einstellungen",

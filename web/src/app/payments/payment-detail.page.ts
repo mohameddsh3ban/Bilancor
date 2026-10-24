@@ -351,7 +351,7 @@ import { PaymentStatusChip } from './payment-status-chip';
             {{ 'payments.detail.bank.title' | transloco }}
           </h2>
           <dl class="flex flex-col gap-3 text-sm">
-            @if (account?.kind !== 'cash') {
+            @if (account?.kind !== 'cash' && tx.counterpartyIban) {
               <div class="flex flex-col gap-0.5">
                 <dt class="text-muted-foreground">{{ 'payments.detail.bank.iban' | transloco }}</dt>
                 <dd class="font-medium">
