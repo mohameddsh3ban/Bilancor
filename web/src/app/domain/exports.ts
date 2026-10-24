@@ -23,7 +23,7 @@ export type ExportState = 'closed' | 'notClosed' | 'running' | 'partly';
 /** What an export holds, for the summary above its downloads. */
 export interface ExportSummary {
   bookings: number; // the period's payments that are not private
-  receipts: number; // the documents linked to those payments
+  receipts: number; // those payments with their receipt attached (what Payments shows), so the rows' receipts add up to it
   needsYou: number; // those payments that need the person, by `paymentStatus`: unclear, not confirmed, or receipt missing
   state: ExportState;
   empty: boolean; // no payments to export
@@ -38,7 +38,7 @@ export interface ExportRow {
   skr03: string | null;
   nameDe: string | null;
   vatRate: number | null;
-  hasReceipt: boolean; // a document is linked to the payment
+  hasReceipt: boolean; // the payment's receipt is attached, as Payments shows it (a part payment of an invoice counts)
   open: boolean; // the payment needs the person: the export marks it as open
 }
 
@@ -93,10 +93,9 @@ function stateOf(business: Business, period: ExportPeriod, today: string): Expor
 /** What an export of the period holds. */
 export function exportSummary(business: Business, period: ExportPeriod, today: string): ExportSummary {
   const payments = paymentsIn(business, period);
-  const ids = new Set(payments.map((tx) => tx.id));
   return {
     bookings: payments.length,
-    receipts: business.documents.filter((doc) => doc.paymentId !== null && ids.has(doc.paymentId)).length,
+    receipts: payments.filter((tx) => tx.receipt === 'attached').length,
     needsYou: payments.filter((tx) => paymentStatus(tx) !== 'booked').length,
     state: stateOf(business, period, today),
     empty: payments.length === 0,
@@ -105,7 +104,6 @@ export function exportSummary(business: Business, period: ExportPeriod, today: s
 
 /** The rows of the printable summary of an export: its payments, oldest first. */
 export function exportRows(business: Business, period: ExportPeriod): ExportRow[] {
-  const linked = new Set(business.documents.flatMap((doc) => doc.paymentId ?? []));
   return paymentsIn(business, period)
     .map((tx): ExportRow => ({
       date: tx.date,
@@ -114,7 +112,7 @@ export function exportRows(business: Business, period: ExportPeriod): ExportRow[
       skr03: tx.booking?.skr03 ?? null,
       nameDe: tx.booking?.nameDe ?? null,
       vatRate: tx.booking?.vatRate ?? null,
-      hasReceipt: linked.has(tx.id),
+      hasReceipt: tx.receipt === 'attached',
       open: paymentStatus(tx) !== 'booked',
     }))
     .sort((a, b) => a.date.localeCompare(b.date));

@@ -1,8 +1,10 @@
 import { RENT } from '../data/categories';
 import { DEMO_TODAY } from '../data/demo-date';
 import type { Business, Transaction } from '../data/models';
+import { newBusiness, newBusinessAccount, newBusinessPayments } from '../data/new-business-sample';
 import { BUSINESSES } from '../data/sample-data';
 import { auditFileName, exportFileName, exportPeriods, exportRows, exportSummary, type ExportPeriod } from './exports';
+import { closeMonth } from './months';
 
 const business = (id: string): Business => BUSINESSES.find((b) => b.id === id)!;
 const weber = business('weber-design');
@@ -87,6 +89,35 @@ describe('exportSummary', () => {
     });
   });
 
+  it('a receipt is what Payments shows as attached, a part payment of an invoice included', () => {
+    // Sara's 300,00 € for RE-2026-021 is booked with its receipt attached on Payments, though the invoice is not a document
+    // linked to the payment (it waits for the rest). Eight payments in October, and only Kiezdruck's receipt is missing.
+    expect(sara.documents.some((doc) => doc.paymentId === 'sy-t15')).toBe(false);
+    const october = periodOf(sara, 'month', '2026-10');
+    expect(exportSummary(sara, october, DEMO_TODAY)).toEqual({ bookings: 8, receipts: 7, needsYou: 3, state: 'running', empty: false });
+    expect(exportRows(sara, october).find((row) => row.date === '2026-10-21')).toMatchObject({
+      counterparty: 'Physio Zentrum Mitte',
+      hasReceipt: true,
+      open: false,
+    });
+    // The same payments are in Q4 and the year.
+    expect(exportSummary(sara, periodOf(sara, 'quarter', '2026-Q4'), DEMO_TODAY).receipts).toBe(7);
+    expect(exportSummary(sara, periodOf(sara, 'year', '2026'), DEMO_TODAY).receipts).toBe(7 + 4 + 3); // October, September (4 payments), August (3)
+  });
+
+  it('a payment that needs no receipt has none, and does not need the person', () => {
+    const noReceiptNeeded = {
+      ...weber,
+      transactions: weber.transactions.map((tx) => (tx.id === 'wd-t3' ? { ...tx, receipt: 'notNeeded' as const } : tx)),
+    };
+    const october = periodOf(noReceiptNeeded, 'month', '2026-10');
+    expect(exportSummary(noReceiptNeeded, october, DEMO_TODAY)).toMatchObject({ bookings: 11, receipts: 8, needsYou: 5 });
+    expect(exportRows(noReceiptNeeded, october).find((row) => row.counterparty === 'Deutsche Bahn')).toMatchObject({
+      hasReceipt: false,
+      open: false,
+    });
+  });
+
   it('private payments are not bookings', () => {
     // August at Weber Design has four payments, one of them the private cash payment at Edeka.
     expect(weber.transactions.filter((tx) => tx.date.startsWith('2026-08')).length).toBe(4);
@@ -123,6 +154,34 @@ describe('exportSummary', () => {
     });
     const onlyPrivate = without(weber, (tx) => !(tx.date.startsWith('2026-08') && tx.isPrivate));
     expect(exportSummary(onlyPrivate, periodOf(weber, 'month', '2026-08'), DEMO_TODAY)).toMatchObject({ bookings: 0, empty: true });
+  });
+
+  it('a quarter with one month closed by hand is partly closed, with no opening row in it', () => {
+    // Café Linde's opening line ends in June, so Q3 is three month rows: July and September not closed, August closed by hand.
+    const closed = closeMonth(cafe, '2026-08', 'Jonas Linde', DEMO_TODAY);
+    expect(closed.closedMonths.map((c) => c.month)).toEqual(['2026-08']);
+    expect(exportSummary(closed, periodOf(closed, 'quarter', '2026-Q3'), DEMO_TODAY)).toMatchObject({ state: 'partly', bookings: 12 });
+    expect(exportSummary(closed, periodOf(closed, 'month', '2026-08'), DEMO_TODAY).state).toBe('closed');
+    expect(exportSummary(closed, periodOf(closed, 'month', '2026-09'), DEMO_TODAY).state).toBe('notClosed');
+  });
+
+  it('a business made in the demo has only October, and nothing to export until its bank brings payments', () => {
+    const owner = { personId: 'p-mia', name: 'Mia Test', email: 'mia@example.com' };
+    const made = newBusiness('new-1', { name: 'Mia Test Studio', kind: 'freelance', legalForm: 'sole' }, owner);
+    expect(keys(made, 'month')).toEqual(['2026-10']);
+    expect(keys(made, 'quarter')).toEqual(['2026-Q4']);
+    expect(keys(made, 'year')).toEqual(['2026']);
+    // Its year starts with an empty opening line, which Month by month has no row for, so the year is running, not partly closed.
+    for (const kind of ['month', 'quarter', 'year'] as const) {
+      const [period] = exportPeriods(made, kind, DEMO_TODAY);
+      expect(exportSummary(made, period, DEMO_TODAY), kind).toEqual({ bookings: 0, receipts: 0, needsYou: 0, state: 'running', empty: true });
+      expect(exportRows(made, period), kind).toEqual([]);
+    }
+
+    // Its bank brings eight October payments, none with a receipt yet, so every one needs the person.
+    const withPayments = { ...made, transactions: newBusinessPayments(made.id, newBusinessAccount(made.id, 'Qonto'), owner.name) };
+    const [year] = exportPeriods(withPayments, 'year', DEMO_TODAY);
+    expect(exportSummary(withPayments, year, DEMO_TODAY)).toEqual({ bookings: 8, receipts: 0, needsYou: 8, state: 'running', empty: false });
   });
 
   it('a period outside the months Reports lists follows the closed months', () => {
