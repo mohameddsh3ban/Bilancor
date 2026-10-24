@@ -128,6 +128,16 @@ describe('CloseMonthDialog', () => {
     expect(finished).toEqual([]);
   });
 
+  it('no sample month is blocked: unlinking a document from a payment of a finished open month is what blocks it', async () => {
+    demo.setBusiness('sara-yoga');
+    const zoom = demo.business().documents.find((doc) => doc.paymentId === 'sy-t11')!;
+    expect(zoom).toBeDefined();
+    demo.unlink(zoom.id); // Documents › the document › Not this payment
+    await open('sara-yoga', '2026-09');
+    expect(text(q('close-check-payments'))).toBe('1 receipt missing Start');
+    expect(button('close-confirm').disabled).toBe(true);
+  });
+
   it('names every kind that blocks, in the order a payment is dealt with: no category, confirmation, receipt', async () => {
     demo.setBusiness('sara-yoga');
     edit('sy-t10', (tx) => ({ ...tx, booking: null }));

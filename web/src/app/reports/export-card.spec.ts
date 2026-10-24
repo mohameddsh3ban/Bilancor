@@ -183,6 +183,9 @@ describe('ExportCard', () => {
     await settle();
     expect(text(q('export-needs'))).toBe('1 payment still needs you');
     expect(q('export-choices')).not.toBeNull();
+    // The two choices read in the singular too.
+    expect(text(q('export-choice-open'))).toBe('Export it marked as open');
+    expect(text(q('export-choice-fix'))).toBe('Fix it first');
   });
 
   it('Fix them first turns the downloads off and Start opens the review inbox', async () => {
