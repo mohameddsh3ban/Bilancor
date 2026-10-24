@@ -174,6 +174,34 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).toBeNull();
   });
 
+  it('Write to us (help/contact) is inside the app shell, after German terms A–Z and above an answer, so :id never takes its address', async () => {
+    const shell = routes.find((route) => route.path === '')!;
+    const paths = shell.children!.map((route) => route.path);
+    expect(paths.indexOf('help/contact')).toBeGreaterThan(paths.indexOf('help/terms'));
+    expect(paths.indexOf('help/contact')).toBeLessThan(paths.indexOf('help/:id'));
+    // The order Help's pages are in: Help, German terms A–Z, Write to us, then one answer.
+    expect(paths.filter((path) => path?.startsWith('help'))).toEqual([
+      'help',
+      'help/terms',
+      'help/contact',
+      'help/:id',
+    ]);
+
+    const harness = await RouterTestingHarness.create('/help/contact?topic=taxes&about=vat-due');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp%2Fcontact%3Ftopic%3Dtaxes%26about%3Dvat-due');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help/contact?topic=taxes&about=vat-due');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-contact-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help/contact?topic=taxes&about=vat-due');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).toBeNull();
+  });
+
   it('An answer of Help (help/:id) is inside the app shell, right after Help, and no fixed path of Help comes below it', async () => {
     const shell = routes.find((route) => route.path === '')!;
     const paths = shell.children!.map((route) => route.path);

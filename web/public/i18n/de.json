@@ -2213,6 +2213,35 @@
       "noneBody": "Versuch eine andere Schreibweise oder weniger Buchstaben, oder zeig die ganze Liste.",
       "noneAction": "Alle Begriffe zeigen"
     },
+    "contact": {
+      "title": "Schreib uns",
+      "topic": {
+        "label": "Thema",
+        "placeholder": "Wähle ein Thema",
+        "other": "Etwas anderes"
+      },
+      "message": {
+        "label": "Deine Nachricht",
+        "placeholder": "Sag uns, wobei du Hilfe brauchst."
+      },
+      "about": "Betrifft: {{question}}",
+      "error": {
+        "missing": "Schreib deine Nachricht.",
+        "short": "Schreib mindestens {{min}} Zeichen."
+      },
+      "reply": "Unsere Antwort geht an {{email}}, in der Regel innerhalb eines Werktags.",
+      "send": "Senden",
+      "sent": "Gesendet. Unsere Antwort findest du in deinem E-Mail-Postfach.",
+      "back": "Zurück zur Hilfe",
+      "demo": {
+        "label": "Demo",
+        "text": "In dieser Demo wird nichts wirklich gesendet."
+      },
+      "support": {
+        "text": "Damit wir bei deiner Buchhaltung mitschauen können, während wir dir helfen:",
+        "path": "{{settings}} › {{people}} › Support hineinlassen"
+      }
+    },
     "topics": {
       "start": "Erste Schritte",
       "payments": "Bank und Zahlungen",

@@ -2213,6 +2213,35 @@
       "noneBody": "Try another spelling or fewer letters, or show the whole list.",
       "noneAction": "Show all terms"
     },
+    "contact": {
+      "title": "Write to us",
+      "topic": {
+        "label": "Topic",
+        "placeholder": "Choose a topic",
+        "other": "Something else"
+      },
+      "message": {
+        "label": "Your message",
+        "placeholder": "Tell us what you need help with."
+      },
+      "about": "About: {{question}}",
+      "error": {
+        "missing": "Write your message.",
+        "short": "Write at least {{min}} characters."
+      },
+      "reply": "We answer to {{email}}, usually within 1 working day.",
+      "send": "Send",
+      "sent": "Sent. You'll find our answer in your email.",
+      "back": "Back to Help",
+      "demo": {
+        "label": "Demo",
+        "text": "Nothing is really sent in this demo."
+      },
+      "support": {
+        "text": "To let us look at your books while we help:",
+        "path": "{{settings}} › {{people}} › Let support look"
+      }
+    },
     "topics": {
       "start": "Getting started",
       "payments": "Bank and payments",
