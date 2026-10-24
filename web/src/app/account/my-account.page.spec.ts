@@ -498,21 +498,73 @@ describe('MyAccountPage', () => {
         dialog()!.querySelectorAll('[data-testid="two-step-backup"] li bdi'),
       ).map(text);
       expect(codes).toEqual(demoBackupCodes(1));
-      expect(shown('backup-left')).toBe('8 of 8 left');
+      // The codes only count once they are saved: nothing has changed yet.
+      expect(shown('backup-left')).toBe('6 of 8 left');
 
       // The block's own "I've saved them" needs the 6 digits.
       await click(inDialog('two-step-done'));
       expect(text(inDialog('two-step-error'))).toBe('The code has 6 digits.');
       expect(q('phone-done')).toBeNull();
+      expect(shown('backup-left')).toBe('6 of 8 left');
       await type(inDialog<HTMLInputElement>('two-step-code'), '123456');
       await click(inDialog('two-step-done'));
       expect(text(inDialog('two-step-saved'))).toBe('Two-step login is set up.');
+      expect(shown('backup-left')).toBe('8 of 8 left');
 
       await click(inDialog('signing-close'));
       await expectDialog(false);
       expect(shown('phone-done')).toBe('Your new phone is set up.');
       expect(shown('two-step-status')).toBe('On');
       await expectFocus(() => q('new-phone'));
+    });
+
+    it('Cancel on Use a new phone keeps the old backup codes, and codes nobody saved are not made', async () => {
+      await render();
+      await click(q('new-phone'));
+      await expectDialog(true);
+      expect(shown('backup-left')).toBe('6 of 8 left');
+      await click(inDialog('signing-close'));
+      await expectDialog(false);
+      expect(shown('backup-left')).toBe('6 of 8 left');
+      expect(accounts.person().backupCodesLeft).toBe(6);
+      expect(q('phone-done')).toBeNull();
+      await expectFocus(() => q('new-phone'));
+
+      // Cancelling after the 6 digits but before "I've saved them" changes nothing either.
+      await click(q('new-phone'));
+      await expectDialog(true);
+      await type(inDialog<HTMLInputElement>('two-step-code'), '123456');
+      await click(inDialog('signing-close'));
+      await expectDialog(false);
+      expect(shown('backup-left')).toBe('6 of 8 left');
+
+      // Make new codes still works, and gives the first new set.
+      await click(q('new-codes'));
+      await expectDialog(true);
+      expect(
+        Array.from(dialog()!.querySelectorAll('[data-testid="codes-list"] li')).map(text),
+      ).toEqual(demoBackupCodes(1));
+      expect(shown('backup-left')).toBe('8 of 8 left');
+    });
+
+    it("I've saved them on Use a new phone makes the codes it showed the stored ones", async () => {
+      await render();
+      await click(q('new-phone'));
+      await expectDialog(true);
+      const shownCodes = () =>
+        Array.from(dialog()!.querySelectorAll('[data-testid="two-step-backup"] li bdi')).map(text);
+      expect(shownCodes()).toEqual(demoBackupCodes(1));
+      await type(inDialog<HTMLInputElement>('two-step-code'), '123456');
+      await click(inDialog('two-step-done'));
+      expect(shown('backup-left')).toBe('8 of 8 left');
+      expect(accounts.person().backupCodesLeft).toBe(8);
+      // They are the ones that count now: the codes shown stay as they were, and the next set is a new one.
+      expect(shownCodes()).toEqual(demoBackupCodes(1));
+      expect(accounts.peekBackupCodes()).toEqual(demoBackupCodes(2));
+      await click(inDialog('signing-close'));
+      await expectDialog(false);
+      expect(shown('backup-left')).toBe('8 of 8 left');
+      expect(shown('phone-done')).toBe('Your new phone is set up.');
     });
 
     it('Make new codes shows 8 codes and 8 of 8 left', async () => {

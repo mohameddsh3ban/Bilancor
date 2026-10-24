@@ -188,6 +188,15 @@ export class AccountService {
     return demoBackupCodes(++this.codeRound);
   }
 
+  /**
+   * The set `makeBackupCodes` will make next, without making it: the old codes still count and nothing else changes. A
+   * pop-up shows it before the person has saved it (Use a new phone), and only saving makes it. While nobody is signed in it
+   * gives none.
+   */
+  peekBackupCodes(): string[] {
+    return this.signedInId() === null ? [] : demoBackupCodes(this.codeRound + 1);
+  }
+
   /** Uses up one backup code; false when none is left (or nobody has the id). Which code was typed is never checked. */
   useBackupCode(personId: string): boolean {
     const left = this.personList().find((p) => p.id === personId)?.backupCodesLeft ?? 0;

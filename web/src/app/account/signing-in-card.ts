@@ -47,7 +47,8 @@ interface PasswordErrors {
  * - **Change** the password opens a pop-up with the current password filled in and the new one (at least 10 characters).
  *   Saving signs out every other device and says so.
  * - Two-step login is always **On**: it can't be switched off. **Use a new phone** shows the authenticator step again
- *   (QR picture, the 6-digit code, new backup codes) in a pop-up; its own "I've saved them" ends it.
+ *   (QR picture, the 6-digit code, new backup codes) in a pop-up; its own "I've saved them" ends it, and only then do the
+ *   new codes count ("8 of 8 left"): Cancel leaves the old ones.
  * - **Make new codes** gives 8 new backup codes at once (the old ones stop counting, "8 of 8 left") and shows them in a
  *   pop-up. They are shown only then: there is no other way to see them again.
  *
@@ -304,7 +305,7 @@ interface PasswordErrors {
                 </h2>
               </hlm-dialog-header>
 
-              <app-two-step-setup [codes]="codes()" (done)="phoneDone.set(true)" />
+              <app-two-step-setup [codes]="codes()" (done)="phoneSaved()" />
 
               <hlm-dialog-footer>
                 <button
@@ -385,7 +386,7 @@ export class SigningInCard {
   protected readonly errors = signal<PasswordErrors>({});
   protected readonly passwordChanged = signal(false);
 
-  /** The backup codes made when a pop-up opened: shown there, and nowhere else. */
+  /** The backup codes a pop-up shows (made when Make new codes opened, still unsaved when Use a new phone opened): shown there, and nowhere else. */
   protected readonly codes = signal<string[]>([]);
   /** The new phone's authenticator step is finished. */
   protected readonly phoneDone = signal(false);
@@ -398,10 +399,17 @@ export class SigningInCard {
     this.open('password');
   }
 
+  /** The new set is shown from the start but only counts once it is saved (`phoneSaved`): Cancel leaves the old codes. */
   protected openPhone(): void {
-    this.codes.set(this.accounts.makeBackupCodes());
+    this.codes.set(this.accounts.peekBackupCodes());
     this.phoneDone.set(false);
     this.open('phone');
+  }
+
+  /** "I've saved them": the codes the pop-up showed are now the ones that count (the old ones stop). */
+  protected phoneSaved(): void {
+    this.codes.set(this.accounts.makeBackupCodes());
+    this.phoneDone.set(true);
   }
 
   protected openCodes(): void {

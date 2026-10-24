@@ -323,6 +323,35 @@ describe('AccountService', () => {
       expect(accounts.makeBackupCodes()).toEqual(demoBackupCodes(1));
     });
 
+    it('peekBackupCodes shows the next set without making it, and makeBackupCodes then makes that very set', () => {
+      const accounts = TestBed.inject(AccountService);
+      accounts.signIn('p1', false);
+      const before = accounts.persons();
+      const next = accounts.peekBackupCodes();
+      expect(next).toEqual(demoBackupCodes(1));
+      // Looking changes nothing: not the count, not the person, and not which set comes next.
+      expect(accounts.persons()).toBe(before);
+      expect(accounts.person().backupCodesLeft).toBe(6);
+      expect(accounts.peekBackupCodes()).toEqual(next);
+
+      expect(accounts.makeBackupCodes()).toEqual(next);
+      expect(accounts.person().backupCodesLeft).toBe(8);
+      expect(accounts.peekBackupCodes()).toEqual(demoBackupCodes(2));
+    });
+
+    it('with nobody signed in, peekBackupCodes gives nothing', () => {
+      expect(TestBed.inject(AccountService).peekBackupCodes()).toEqual([]);
+    });
+
+    it('reset starts the sets over, so the next peek is the first set again', () => {
+      const accounts = TestBed.inject(AccountService);
+      accounts.signIn('p1', false);
+      accounts.makeBackupCodes();
+      accounts.reset();
+      accounts.signIn('p1', false);
+      expect(accounts.peekBackupCodes()).toEqual(demoBackupCodes(1));
+    });
+
     it('useBackupCode refuses a person nobody knows', () => {
       expect(TestBed.inject(AccountService).useBackupCode('nobody')).toBe(false);
     });
