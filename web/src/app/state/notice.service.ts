@@ -6,6 +6,9 @@ import { docsToCheckCount, visibleDocuments } from '../domain/document-status';
 import { invoiceNotices, noticesForSetup, splitNotices, withUnreadableCount } from '../domain/notices';
 import { DemoStateService } from './demo-state.service';
 
+/** Every dismissal is stored under this prefix (then the person and the business), so Reset demo can forget them all at once. */
+const DISMISSED_PREFIX = 'mockup.dismissed.';
+
 /** Notices of the open business, with dismissals remembered per person and business. */
 @Injectable({ providedIn: 'root' })
 export class NoticeService {
@@ -70,16 +73,17 @@ export class NoticeService {
     this.dismissedByBusiness.update((all) => ({ ...all, [business.id]: next }));
   }
 
-  /** Brings back every dismissed notice of the person's businesses (demo only). */
+  /**
+   * Brings back every dismissed notice (demo only): of everybody's businesses, not just the open person's, because an
+   * account made during the visit and its business get the same ids (`visit-1`, `new-1`) again after a reload.
+   */
   resetDismissals(): void {
-    for (const business of this.demo.businesses) {
-      this.storage.set(this.key(business.id), '[]');
-    }
+    this.storage.removeWithPrefix(DISMISSED_PREFIX);
     this.dismissedByBusiness.set({});
   }
 
   private key(businessId: string): string {
-    return `mockup.dismissed.${this.demo.person.id}.${businessId}`;
+    return `${DISMISSED_PREFIX}${this.demo.person.id}.${businessId}`;
   }
 
   private read(businessId: string): string[] {

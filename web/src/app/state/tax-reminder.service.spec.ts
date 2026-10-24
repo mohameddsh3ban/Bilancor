@@ -206,6 +206,8 @@ describe('TaxReminderService', () => {
   it('reset clears every tax reminder acknowledgement, and nothing else', () => {
     storage.set('mockup.taxReminder.p1.cafe-linde.2026-07-10', '1');
     storage.set('mockup.taxReminder.p1.old-business.2025-01-10', '1');
+    // An account made during the visit gets its id again after a reload, so its acknowledgement must go as well.
+    storage.set('mockup.taxReminder.visit-1.new-1.2026-10-10', '1');
     storage.set('mockup.dismissed.p1.weber-design', '["x"]');
     const service = TestBed.inject(TaxReminderService);
     service.gotIt();
@@ -213,6 +215,7 @@ describe('TaxReminderService', () => {
     TestBed.tick();
     expect(storage.get('mockup.taxReminder.p1.cafe-linde.2026-07-10')).toBeNull();
     expect(storage.get('mockup.taxReminder.p1.old-business.2025-01-10')).toBeNull();
+    expect(storage.get('mockup.taxReminder.visit-1.new-1.2026-10-10')).toBeNull();
     expect(storage.get('mockup.dismissed.p1.weber-design')).toBe('["x"]');
   });
 

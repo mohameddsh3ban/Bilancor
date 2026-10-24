@@ -555,6 +555,15 @@ describe('AppShell, the person menu and the business switcher', () => {
       expect(demo.businesses.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
     });
 
+    it('forgets the dismissed notices of an account made during the visit, whose ids a reload uses again', async () => {
+      localStorage.setItem('mockup.dismissed.visit-1.new-1', '["a-notice"]');
+      localStorage.setItem('mockup.dismissed.p1.new-1', '["a-notice"]');
+      q('demo-reset').click();
+      await settle();
+      expect(localStorage.getItem('mockup.dismissed.visit-1.new-1')).toBeNull();
+      expect(localStorage.getItem('mockup.dismissed.p1.new-1')).toBeNull();
+    });
+
     it('forgets a language picked while signed out, so it never reaches a sign-in after it', async () => {
       const personLanguage = TestBed.inject(PersonLanguageService);
       accounts.signOut();
