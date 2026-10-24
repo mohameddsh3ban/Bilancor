@@ -477,9 +477,27 @@ BuchhaltungsButler's help names more under Abschluss that this account doesn't s
 
 Each report's own screen, whether the VAT return can be sent from here, and the locking screen: each needs a click that may create or change something in this account.
 
+## Help and contact
+
+Studied Oct 24, 2026: the portal's links by reading the page only, and the public website they lead to.
+
+Our own version, a Help page with answers inside the app, is described in `docs/specs/2026-10-24-help-mockup-design.md`.
+
+- **No help inside the portal.** "Hilfe & Kontakt" in the sidebar, and "Hilfe" and "Kontakt" in the footer, open Bilancor's public website in a new tab (bilancor.de/hilfe and bilancor.de/kontakt). There is no help page, search, chat window or contact form in the portal itself.
+- **Both links are broken.** Each of those pages shows "404 Page Not Found — Did you forget to add the page to the router?", a developer's message, over the site's home banner. The footer's Impressum, Datenschutz and AGB pages work.
+- **What the public website offers instead:** a "Kontaktiere uns" button (not opened), an email address and a WhatsApp number, and a "Kunden Login" link back to the portal. The homepage promise from the old site (answers within 3 hours, a fixed contact person, WhatsApp) belongs to the bookkeeping service, not to the software.
+- **Help texts from someone else's product.** The few "more about this" links inside Einstellungen go to BuchhaltungsButler's own knowledge base (wissen.buchhaltungsbutler.de), in German only, with BuchhaltungsButler's name, plans and screens, some of which Bilancor hides. So the white label shows through exactly where a client looks for help.
+- **The terms are public.** The AGB (Stand Oktober 2025) can be read at bilancor.de/agb without the account, which answers part of the open question about reviewing them.
+
+### What it shows
+
+- **A client with a question has nowhere to go inside the app:** help means leaving the portal, and the way out is a dead page.
+- **Help depends on people:** the only working channels are email and WhatsApp to the bookkeeping team. For a software-only product, the help has to stand on its own: answers in the app, in the client's language, at the moment of the question.
+- **German only, and the wrong product's words:** the knowledge base explains BuchhaltungsButler, with terms and plans the client never sees.
+
 ## Screens still to explore
 
-6 items are still unopened. Explore by reading and hovering only, with no button that changes data.
+5 items are still unopened. Explore by reading and hovering only, with no button that changes data.
 
 - [x] Document management: folders, list, filters, upload window, menus, document detail with its four steps, and ways to upload (Oct 22, 2026)
 - [ ] Invoicing: steps to create an invoice, templates, and e-invoice support
@@ -488,7 +506,7 @@ Each report's own screen, whether the VAT return can be sent from here, and the 
 - [x] Diploma: the Abschluss page's period and six reports, and from the public help the EÜR, the DATEV export, locking and the month-end checklist (Oct 23, 2026)
 - [ ] Controlling (beta): which KPIs are shown
 - [ ] Notifications: types of notifications
-- [ ] Help & Contact: available support channels
+- [x] Help & Contact: no help inside the portal; the links open the public website's /hilfe and /kontakt, both 404 (Oct 24, 2026)
 - [x] Tasks filter: keine Auswahl, alle, offen, erledigt (seen in the document filters, Oct 22, 2026)
 - [x] Settings: bank connections, transfer accounts, account management, tax settings, company data, the first connection screen and Datenimport (Oct 22, 2026); users and access through Meine Daten and the public help, since the account has no user management (Oct 23, 2026)
 - [ ] Settings: invoice numbering, invoice approval, layout, payment reminders, API (with Invoicing)
@@ -651,4 +669,5 @@ The key decision is made: software only. What remains is mostly who we sell to, 
 - Screenshots of the portal, October 21, 2026
 - BuchhaltungsButler help on users, October 23, 2026: [Nutzerverwaltung und Rechtevergabe](https://wissen.buchhaltungsbutler.de/hc/de/articles/11453993512733-Nutzerverwaltung-und-Rechtevergabe-nutzen), [rights of the standard roles](https://wissen.buchhaltungsbutler.de/hc/de/articles/13110056377245-%C3%9Cbersicht-Einzelne-Rechte-der-Standard-Nutzerrollen), [custom roles](https://wissen.buchhaltungsbutler.de/hc/de/articles/13124377471133-Individuelle-Nutzerrolle-erstellen), [tax-advisor access](https://wissen.buchhaltungsbutler.de/hc/de/articles/11446168108957-Steuerberater-Zugang-einrichten), [several companies](https://wissen.buchhaltungsbutler.de/hc/de/articles/11453965304349-Mehrmandantenf%C3%A4higkeit-verstehen-und-nutzen)
 - BuchhaltungsButler help on reports and exports, October 23, 2026: [BWA](https://wissen.buchhaltungsbutler.de/hc/de/articles/11473653935005-Eine-Betriebswirtschaftliche-Auswertung-BWA-erstellen-und-exportieren), [EÜR](https://wissen.buchhaltungsbutler.de/hc/de/articles/11474039285405-Eine-Einnahmen%C3%BCberschussrechnung-E%C3%9CR-erstellen-und-exportieren), [official EÜR form](https://wissen.buchhaltungsbutler.de/hc/de/articles/29104969813277-Das-amtliche-Formular-Anlage-E%C3%9CR-erstellen), [export of bookings and documents](https://wissen.buchhaltungsbutler.de/hc/de/articles/11445407988637-Buchungss%C3%A4tze-und-Belegbilder-in-unterschiedlichen-Formaten-exportieren), [GDPdU export](https://wissen.buchhaltungsbutler.de/hc/de/articles/11445774450973-GDPdU-Export-f%C3%BCr-Betriebspr%C3%BCfungen-erstellen), [check a balance](https://wissen.buchhaltungsbutler.de/hc/de/articles/11474253173021-Zahlungskonten-%C3%BCber-Kontostand-berechnen-plausibilisieren), [month-end steps](https://wissen.buchhaltungsbutler.de/hc/de/articles/11421107352989-Schritte-um-die-Buchhaltung-am-Monatsende-fertigzustellen), [month-end checklist](https://wissen.buchhaltungsbutler.de/hc/de/articles/38676182512029-Monatsabschluss-Checkliste-Beta)
+- Bilancor's public website, October 24, 2026: [home](https://bilancor.de/), [AGB](https://bilancor.de/agb); /hilfe and /kontakt answered 404
 - BuchhaltungsButler per-user prices and language (third-party, not confirmed): [quasa — Lexware Office or BuchhaltungsButler](https://quasa.io/de/media/lexware-office-oder-buchhaltungsbutler-bilanzierung-kostet-deutlich-mehr), [trusted.de — BuchhaltungsButler vs billomat](https://trusted.de/buchhaltungsbutler-vs-billomat-buchhaltung)
