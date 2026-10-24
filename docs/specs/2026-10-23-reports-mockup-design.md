@@ -78,7 +78,7 @@ Approved as the mockup `reports-page.html` (in `.superpowers/brainstorm/1746-179
 - **Close** opens **Close <month>?**: "Closing locks its bookings: they can't be changed any more" (with `festschreibung` explained), then the check:
   - every payment is booked and has its receipt (none still needs the person, by the app's own rule in `paymentStatus`: an unclear, unconfirmed or receipt-less payment needs the person) — **blocks** closing when it fails, with **Start** and the count of each kind ("2 to confirm, 1 receipt missing"). The owner decided a missing receipt blocks, as it blocks sending a VAT return, so the same rule holds everywhere and a closed month's figures are always complete;
   - "Nothing looks like a duplicate", or the possible duplicates with **Show** (Documents) — a warning;
-  - each bank account: "Matches the bank" for a connected account (always, in the demo) *(my call)*; "Check it against your statement" for a statement account; the cash box is left out.
+  - each bank account, by what the bank delivered *(my call)*: "Matches the bank" when the connection isn't broken and the bank last delivered on or after the day after the month ended (so every payment of the month was there, and a consent that ended later doesn't matter); "Check it against your statement" for a statement account, a broken connection, or one that hasn't been fetched since the month ended; the cash box is left out. A warning only.
 - **Close <month>** (off while it blocks) and **Not yet**. A warning (a possible duplicate) doesn't stop closing; a payment that still needs the person, a missing receipt included, does.
 - The running month can't be closed: "Ready to close from 1 Nov".
 - **Sending a VAT return** (Taxes) closes every month of its period that isn't closed yet, without the check: the return can only be sent once every payment in it is booked.
@@ -93,7 +93,7 @@ Approved as the mockup `reports-page.html` (in `.superpowers/brainstorm/1746-179
 ## Sample data
 
 - **Weber Design:** August and September closed by their VAT returns (sent 8 Sep and 8 Oct); October running.
-- **Sara Weber Yoga** (Kleinunternehmer): August closed by hand on 5 Sep 2026; **September not closed**, so the demo can close it (every check passes: its payments are booked and have receipts); October running, with Druckerei Kiezdruck's missing receipt, which would stop October from closing once it ends.
+- **Sara Weber Yoga** (Kleinunternehmer): August closed by hand on 5 Sep 2026; **September not closed**, so the demo can close it (every check passes: its payments are booked and have receipts, and its Qonto delivered on 20 Oct, after September ended, even though the consent ended that day); October running, with Druckerei Kiezdruck's missing receipt, which would stop October from closing once it ends.
 - **Café Linde GbR:** Q2's return was sent, so its months are inside the closed opening line; July to September not closed (Q3 is overdue); October running. Sending Q3 from Taxes closes July to September.
 - A business made during the visit: only October, running.
 

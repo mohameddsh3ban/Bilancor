@@ -383,7 +383,8 @@ describe('ReportsPage', () => {
       await click('close-2026-09');
       await dialogIs(true);
 
-      // The check: every payment is booked with its receipt, nothing is doubled, the account is checked against the statement.
+      // The check: every payment is booked with its receipt, nothing is doubled, and the bank delivered after September ended
+      // (the consent ended on 20 Oct, the last delivery was that day), so every line passes.
       expect(text(inDialog('close-title'))).toBe('Close September 2026?');
       expect(sentence(inDialog('close-locks'))).toBe(
         "Closing locks its bookings: they can't be changed any more. This is called Locking the books (Festschreibung).",
@@ -392,9 +393,7 @@ describe('ReportsPage', () => {
         'Every payment is booked and has its receipt',
       );
       expect(text(inDialog('close-check-duplicates'))).toBe('Nothing looks like a duplicate');
-      expect(text(inDialog('close-check-account-sy-qonto'))).toBe(
-        'Qonto: Check it against your statement',
-      );
+      expect(text(inDialog('close-check-account-sy-qonto'))).toBe('Qonto: Matches the bank');
       expect(text(inDialog('close-confirm'))).toBe('Close September');
       expect((inDialog('close-confirm') as HTMLButtonElement).disabled).toBe(false);
       expect(text(inDialog('close-not-yet'))).toBe('Not yet');

@@ -280,23 +280,50 @@ describe('closeCheck', () => {
     accounts: b.accounts.map((a) => (a.id === accountId ? { ...a, connection: { ...a.connection, ...change } } : a)),
   });
 
-  it('a connected account whose consent has ended, or that the bank reports as broken, says to check it too', () => {
-    // Sara Weber Yoga's Qonto: the consent ended on 20 Oct, so September's balance can't be read from the bank any more.
-    expect(sara.accounts.find((a) => a.id === 'sy-qonto')!.connection.consentUntil).toBe('2026-10-20');
-    expect(closeCheck(sara, '2026-09').accounts).toEqual([{ accountId: 'sy-qonto', result: 'statement' }]);
-    expect(closeCheck(withConnection(weber, 'wd-qonto', { broken: true }), '2026-09').accounts).toEqual([
-      { accountId: 'wd-qonto', result: 'statement' },
-    ]);
-    expect(closeCheck(withConnection(weber, 'wd-qonto', { consentUntil: '2026-10-21' }), '2026-09').accounts).toEqual([
+  it('a connected account matches when the bank delivered after the month ended, even if its consent ended since', () => {
+    // Sara Weber Yoga's Qonto: the consent ended on 20 Oct, but the bank last delivered on 20 Oct, after September ended.
+    const qonto = sara.accounts.find((a) => a.id === 'sy-qonto')!.connection;
+    expect(qonto.consentUntil).toBe('2026-10-20');
+    expect(qonto.lastFetched).toBe('2026-10-20T06:10');
+    expect(closeCheck(sara, '2026-09').accounts).toEqual([{ accountId: 'sy-qonto', result: 'matches' }]);
+    expect(closeCheck(sara, '2026-08').accounts).toEqual([{ accountId: 'sy-qonto', result: 'matches' }]);
+  });
+
+  it('a connected account says to check it when the bank has not delivered since the month ended', () => {
+    // The last delivery was still inside September: nothing after its last day was ever fetched.
+    const early = withConnection(weber, 'wd-qonto', { lastFetched: '2026-09-30T23:59' });
+    expect(closeCheck(early, '2026-09').accounts).toEqual([{ accountId: 'wd-qonto', result: 'statement' }]);
+    // October has not ended: the sample's last delivery is on the 22nd.
+    expect(closeCheck(weber, '2026-10').accounts).toEqual([{ accountId: 'wd-qonto', result: 'statement' }]);
+    // A connected account that was never fetched has delivered nothing.
+    expect(closeCheck(withConnection(weber, 'wd-qonto', { lastFetched: null }), '2026-09').accounts).toEqual([
       { accountId: 'wd-qonto', result: 'statement' },
     ]);
   });
 
-  it('a connection that only ends soon still matches the bank, until the day it ends', () => {
+  it('a delivery on the day after the month ended is enough, at any time that day', () => {
+    for (const lastFetched of ['2026-10-01T00:00', '2026-10-01T06:12', '2026-10-01']) {
+      const fetched = withConnection(weber, 'wd-qonto', { lastFetched });
+      expect(closeCheck(fetched, '2026-09').accounts, lastFetched).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
+    }
+    // December ends on the 31st, and the day after is 1 Jan of the next year.
+    const january = withConnection(weber, 'wd-qonto', { lastFetched: '2027-01-01T00:00' });
+    expect(closeCheck(january, '2026-12').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
+    const newYearsEve = withConnection(weber, 'wd-qonto', { lastFetched: '2026-12-31T23:59' });
+    expect(closeCheck(newYearsEve, '2026-12').accounts).toEqual([{ accountId: 'wd-qonto', result: 'statement' }]);
+  });
+
+  it('a connection that the bank reports as broken says to check it, however recent its last delivery', () => {
+    expect(closeCheck(withConnection(weber, 'wd-qonto', { broken: true }), '2026-09').accounts).toEqual([
+      { accountId: 'wd-qonto', result: 'statement' },
+    ]);
+  });
+
+  it('what the bank delivered decides, not the day the consent ends', () => {
     const endsSoon = withConnection(weber, 'wd-qonto', { consentUntil: '2026-11-01' });
     expect(closeCheck(endsSoon, '2026-09').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
-    expect(closeCheck(endsSoon, '2026-09', '2026-11-01').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
-    expect(closeCheck(endsSoon, '2026-09', '2026-11-02').accounts).toEqual([{ accountId: 'wd-qonto', result: 'statement' }]);
+    const ended = withConnection(weber, 'wd-qonto', { consentUntil: '2026-10-02' });
+    expect(closeCheck(ended, '2026-09').accounts).toEqual([{ accountId: 'wd-qonto', result: 'matches' }]);
   });
 
   it('a business with no account has none to check', () => {

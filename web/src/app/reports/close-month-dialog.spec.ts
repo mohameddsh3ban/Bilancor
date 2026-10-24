@@ -78,8 +78,8 @@ describe('CloseMonthDialog', () => {
     await open('sara-yoga', '2026-09');
     expect(text(q('close-check-payments'))).toBe('Every payment is booked and has its receipt');
     expect(text(q('close-check-duplicates'))).toBe('Nothing looks like a duplicate');
-    // Sara Weber Yoga's Qonto consent ended on 20 Oct, so September is checked against the statement.
-    expect(text(q('close-check-account-sy-qonto'))).toBe('Qonto: Check it against your statement');
+    // Sara Weber Yoga's Qonto consent ended on 20 Oct, but the bank delivered on 20 Oct, after September ended.
+    expect(text(q('close-check-account-sy-qonto'))).toBe('Qonto: Matches the bank');
     expect(q('close-check-start')).toBeNull();
     expect(button('close-confirm').disabled).toBe(false);
     expect(text(button('close-confirm'))).toBe('Close September');
@@ -95,10 +95,22 @@ describe('CloseMonthDialog', () => {
     expect(q('close-check-account-cl-cash')).toBeNull();
   });
 
-  it('a connection that ends or breaks is checked against the statement', async () => {
+  it('a connection the bank reports as broken is checked against the statement', async () => {
     demo.setBusiness('cafe-linde');
     withConnection(demo, 'cl-qonto', { broken: true });
     await open('cafe-linde', '2026-09');
+    expect(text(q('close-check-account-cl-qonto'))).toBe('Qonto: Check it against your statement');
+  });
+
+  it('a connection the bank has not delivered on since the month ended is checked against the statement', async () => {
+    demo.setBusiness('cafe-linde');
+    withConnection(demo, 'cl-qonto', { lastFetched: '2026-09-30T23:59' });
+    await open('cafe-linde', '2026-09');
+    expect(text(q('close-check-account-cl-qonto'))).toBe('Qonto: Check it against your statement');
+
+    // A month that has not ended can't have been delivered whole either: the sample's last fetch is on 22 Oct.
+    fixture.componentRef.setInput('month', '2026-10');
+    await settle();
     expect(text(q('close-check-account-cl-qonto'))).toBe('Qonto: Check it against your statement');
   });
 
@@ -217,8 +229,15 @@ describe('CloseMonthDialog', () => {
     await open('sara-yoga', '2026-09');
     expect(text(q('close-title'))).toBe('September 2026 abschließen?');
     expect(text(q('close-check-payments'))).toBe('Jede Zahlung ist gebucht und hat ihren Beleg');
-    expect(text(q('close-check-account-sy-qonto'))).toBe('Qonto: Prüfe es mit deinem Kontoauszug');
+    expect(text(q('close-check-account-sy-qonto'))).toBe('Qonto: Stimmt mit der Bank überein');
     expect(text(button('close-confirm'))).toBe('September abschließen');
     expect(text(button('close-not-yet'))).toBe('Noch nicht');
+  });
+
+  it('says in German to check an account against the statement', async () => {
+    TestBed.inject(LanguageService).setLang('de');
+    demo.setBusiness('cafe-linde');
+    await open('cafe-linde', '2026-09');
+    expect(text(q('close-check-account-cl-sparkasse'))).toBe('Sparkasse: Prüfe es mit deinem Kontoauszug');
   });
 });
