@@ -1,3 +1,4 @@
+import { monthBefore } from '../domain/dates';
 import { certainMatch } from '../domain/document-matching';
 import { applyReadResult, newReadingDoc, nextPoolResult } from '../domain/document-upload';
 import { presetSteps } from '../domain/home-cards';
@@ -75,6 +76,8 @@ describe('newBusiness', () => {
 
   it('starts its year with nothing before the first payment and nothing set aside', () => {
     expect(business().yearOpening).toEqual({ incomeCents: 0, costsCents: 0, costsByCategory: [], untilMonth: '2026-09' });
+    // Its opening line ends the month before today's, so the running month is the first one it shows.
+    expect(business().yearOpening.untilMonth).toBe(monthBefore(DEMO_TODAY));
     expect(business().incomeTaxReserveCents).toBe(0);
   });
 

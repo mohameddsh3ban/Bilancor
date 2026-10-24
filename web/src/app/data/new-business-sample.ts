@@ -1,4 +1,5 @@
 import { OFFICE, OTHER_COSTS, PHONE, RENT, REVENUE_19, SOFTWARE, TRAVEL } from './categories';
+import { monthBefore } from '../domain/dates';
 import { DEMO_TODAY } from './demo-date';
 import type { Account, Booking, Business, BusinessKind, HistoryEntry, PoolResult, Transaction } from './models';
 
@@ -51,7 +52,7 @@ export function newBusiness(id: string, input: NewBusinessInput, owner: NewOwner
     documents: [],
     vatReturns: [],
     legalForm: input.legalForm,
-    yearOpening: { incomeCents: 0, costsCents: 0, costsByCategory: [], untilMonth: '2026-09' },
+    yearOpening: { incomeCents: 0, costsCents: 0, costsByCategory: [], untilMonth: monthBefore(DEMO_TODAY) },
     closedMonths: [],
     incomeTaxReserveCents: 0,
     invoices: [],

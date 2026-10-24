@@ -1,6 +1,6 @@
 import { DEMO_TODAY } from '../data/demo-date';
 import { addDays as addDaysFromBankConnection, daysBetween as daysBetweenFromBankConnection } from './bank-connection';
-import { addDays, daysBetween } from './dates';
+import { addDays, daysBetween, monthBefore } from './dates';
 
 describe('addDays', () => {
   it('adds days to an ISO date, across a month and a year end', () => {
@@ -17,6 +17,20 @@ describe('addDays', () => {
 
   it('counts back with a negative number', () => {
     expect(addDays('2026-10-22', -22)).toBe('2026-09-30');
+  });
+});
+
+describe('monthBefore', () => {
+  it('is the month before the month of an ISO date, as YYYY-MM', () => {
+    expect(monthBefore('2026-10-22')).toBe('2026-09');
+    expect(monthBefore(DEMO_TODAY)).toBe('2026-09');
+    expect(monthBefore('2026-10-01')).toBe('2026-09');
+    expect(monthBefore('2026-03-31')).toBe('2026-02');
+  });
+
+  it('goes back over a year end and through a leap February', () => {
+    expect(monthBefore('2027-01-15')).toBe('2026-12');
+    expect(monthBefore('2028-03-10')).toBe('2028-02');
   });
 });
 
