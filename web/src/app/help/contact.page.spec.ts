@@ -348,6 +348,15 @@ describe('HelpContactPage', () => {
       expect(router().url).toBe('/help');
     });
 
+    it("sends straight from an answer's No without typing: the About line counts as the message", async () => {
+      await render('/help/contact?topic=taxes&about=vat-due');
+      expect(message().value).toBe('About: When is my VAT return due?\n\n');
+      await send();
+      expect(text(q('contact-sent'))).toBe("Sent. You'll find our answer in your email.");
+      expect(q('contact-form')).toBeNull();
+      expect(q('contact-error-message')).toBeNull();
+    });
+
     it('sends without a topic: only the message is needed', async () => {
       await render();
       await typeMessage('I cannot find where to change my phone number.');
