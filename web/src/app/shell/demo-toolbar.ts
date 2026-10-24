@@ -6,6 +6,7 @@ import { presetOf } from '../domain/home-cards';
 import { AccountService } from '../state/account.service';
 import { DemoStateService } from '../state/demo-state.service';
 import { NoticeService } from '../state/notice.service';
+import { PersonLanguageService } from '../state/person-language.service';
 
 /** Demo-only strip at the very top: lets the owner compare the three setup states, and start the demo over. */
 @Component({
@@ -51,6 +52,7 @@ export class DemoToolbar {
   protected readonly demo = inject(DemoStateService);
   protected readonly router = inject(Router);
   protected readonly notices = inject(NoticeService);
+  private readonly personLanguage = inject(PersonLanguageService);
   protected readonly states: readonly SetupState[] = ['new', 'halfway', 'active'];
   /** The shortcut that matches the open business's steps exactly; none for a mixed set. */
   protected readonly pressed = computed(() => presetOf(this.demo.setup()));
@@ -64,6 +66,7 @@ export class DemoToolbar {
     this.accounts.reset();
     this.demo.resetData();
     this.notices.resetDismissals();
+    this.personLanguage.forgetPick();
     void this.router.navigateByUrl('/sign-in');
   }
 }

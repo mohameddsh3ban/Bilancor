@@ -32,7 +32,8 @@ interface CredentialErrors {
 /**
  * The sign-in page (`/sign-in`), outside the app shell: email and password, then the code of the authenticator app unless
  * this device is trusted. Nothing is checked: Sara's email is filled in, any password works, and so do any 6 digits or any
- * backup code (which is used up). An email the demo knows by no login says so. Signing in sets the person's language, and
+ * backup code (which is used up). An email the demo knows by no login says so. Signing in sets the person's language (a
+ * language button pressed on any of the pages before signing in wins, see `PersonLanguageService`), and
  * goes to the page that was asked for (`?next=`, only a path inside the app) or the homepage; `?signedOut=1` says
  * "You're signed out." (Sign out arrives there).
  */
@@ -41,7 +42,7 @@ interface CredentialErrors {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AuthFrame, ChoiceCard, FieldError, HlmButton, RouterLink, TranslocoPipe],
   template: `
-    <app-auth-frame (langPicked)="pickedHere = true">
+    <app-auth-frame>
       @if (step() === 'credentials') {
         <form
           class="flex flex-col gap-4"
@@ -284,9 +285,6 @@ export class SignInPage {
    */
   protected readonly signingIn = signal(false);
 
-  /** Whether a language button was pressed here: that language then wins over the person's own. */
-  protected pickedHere = false;
-
   protected setEmail(event: Event): void {
     this.email.set((event.target as HTMLInputElement).value);
     clearErrors(this.errors, 'email', 'account');
@@ -383,7 +381,7 @@ export class SignInPage {
   private finish(personId: string, trustDevice: boolean): void {
     this.signingIn.set(true);
     this.accounts.signIn(personId, trustDevice);
-    this.personLanguage.applyOnSignIn(personId, this.pickedHere);
+    this.personLanguage.applyOnSignIn(personId);
     void this.router.navigateByUrl(safeNext(this.query().get('next')));
   }
 }

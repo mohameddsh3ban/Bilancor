@@ -4,6 +4,7 @@ import { Lang } from '../data/models';
 import { LanguageService } from '../core/i18n/language.service';
 import { provideTranslocoTesting } from '../core/i18n/transloco-testing';
 import { AccountService } from '../state/account.service';
+import { PersonLanguageService } from '../state/person-language.service';
 import { AuthFrame } from './auth-frame';
 
 @Component({
@@ -73,5 +74,26 @@ describe('AuthFrame', () => {
     ]);
     // Nobody is signed in, so the pick is the browser's language only: Sara's own stays unset.
     expect(accounts.person().lang).toBeNull();
+  });
+
+  it('a pick while nobody is signed in is remembered for the next sign-in', () => {
+    const { buttons } = render();
+    const accounts = TestBed.inject(AccountService);
+    accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+    buttons()[1].click();
+    TestBed.inject(PersonLanguageService).applyOnSignIn('p1');
+    expect(language.lang()).toBe('de');
+    expect(accounts.person().lang).toBe('de');
+  });
+
+  it("a button pressed by a signed-in person (the join page) saves the language as theirs", () => {
+    const { fixture, buttons } = render();
+    const accounts = TestBed.inject(AccountService);
+    accounts.signIn('p1', false);
+    buttons()[1].click();
+    fixture.detectChanges();
+    expect(language.lang()).toBe('de');
+    expect(accounts.person().lang).toBe('de');
+    expect(fixture.componentInstance.picked).toEqual(['de']);
   });
 });

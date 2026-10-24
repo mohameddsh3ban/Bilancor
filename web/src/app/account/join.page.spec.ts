@@ -264,6 +264,25 @@ describe('JoinPage', () => {
       );
     });
 
+    it("the language buttons save the language of the signed-in person, so it is still hers after Back to Settings", async () => {
+      accounts.signIn('p1', false);
+      expect(accounts.person().lang).toBeNull();
+      await open();
+      Array.from(el.querySelectorAll<HTMLButtonElement>('[data-testid="lang-switcher"] button'))
+        .find((b) => text(b) === 'DE')!
+        .click();
+      await settle();
+      expect(language.lang()).toBe('de');
+      expect(accounts.person().lang).toBe('de');
+
+      await fillIn();
+      await submit('join-form');
+      await click('done-back');
+      expect(router.url).toBe('/settings#people');
+      expect(language.lang()).toBe('de');
+      expect(accounts.persons().find((p) => p.id === 'p1')!.lang).toBe('de');
+    });
+
     it('the role of the invitation decides what the page says it can do, and Tax advisor explains its German word', async () => {
       expect(demo.invite('noah@example.com', 'advisor')).toBeNull();
       const id = demo.business().people.at(-1)!.id;

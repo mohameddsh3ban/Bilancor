@@ -302,6 +302,65 @@ describe('SignInPage', () => {
     expect(accounts.person().lang).toBe('de');
   });
 
+  /** Presses one of the language buttons above the card. */
+  async function pickLanguage(label: string): Promise<void> {
+    Array.from(el.querySelectorAll<HTMLElement>('[data-testid="lang-switcher"] button'))
+      .find((b) => text(b) === label)!
+      .click();
+    await settle();
+  }
+
+  it('a pick is kept through Forgot password and a new password, and still wins at the next sign-in', async () => {
+    accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+    await render();
+    await pickLanguage('DE');
+    expect(language.lang()).toBe('de');
+
+    await click('forgot-link');
+    expect(router.url).toBe('/forgot-password');
+    await type('email', 'sara@example.com');
+    await submit('forgot-form');
+    await click('demo-email-action');
+    await type('new-password', 'a long enough password');
+    await submit('new-password-form');
+    expect(q('done-title')).not.toBeNull();
+    await click('done-sign-in');
+    expect(router.url).toBe('/sign-in');
+
+    await giveCredentials();
+    await giveCode();
+    expect(language.lang()).toBe('de');
+    expect(accounts.person().lang).toBe('de');
+  });
+
+  it('a pick made on the Forgot password page counts too', async () => {
+    accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+    await render('/forgot-password');
+    await pickLanguage('DE');
+    await render('/sign-in');
+    await giveCredentials();
+    await giveCode();
+    expect(language.lang()).toBe('de');
+    expect(accounts.person().lang).toBe('de');
+  });
+
+  it('a pick is used by that sign-in only: the next one gets the own language of the person', async () => {
+    await render();
+    await pickLanguage('DE');
+    await giveCredentials();
+    await giveCode();
+    expect(accounts.person().lang).toBe('de');
+
+    accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+    accounts.signOut();
+    language.setLang('en');
+    await render('/sign-in');
+    await giveCredentials();
+    await giveCode();
+    expect(language.lang()).toBe('ar');
+    expect(accounts.person().lang).toBe('ar');
+  });
+
   it("without a pick the person's own language applies", async () => {
     accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
     await render();

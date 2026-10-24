@@ -71,6 +71,81 @@ describe('PersonLanguageService', () => {
     });
   });
 
+  describe('a language picked while nobody is signed in', () => {
+    it('wins at the next sign-in, wherever it was picked, and is saved', () => {
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      service.set('de');
+      expect(saraLang()).toBe('ar');
+      service.applyOnSignIn('p1');
+      expect(language.lang()).toBe('de');
+      expect(saraLang()).toBe('de');
+    });
+
+    it('is used up by that sign-in: the next one with no pick gets the own language of the person', () => {
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      service.set('de');
+      service.applyOnSignIn('p1');
+      expect(saraLang()).toBe('de');
+
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      language.setLang('en');
+      service.applyOnSignIn('p1');
+      expect(language.lang()).toBe('ar');
+      expect(saraLang()).toBe('ar');
+    });
+
+    it('goes to whoever signs in next, also an account made in the demo', () => {
+      const id = accounts.createPerson({
+        firstName: 'Mia',
+        lastName: 'Becker',
+        email: 'mia@example.com',
+        lang: 'ar',
+      });
+      service.set('de');
+      service.applyOnSignIn(id);
+      expect(accounts.persons().find((p) => p.id === id)!.lang).toBe('de');
+    });
+
+    it('is not made by a language set while somebody is signed in (that one is saved at once)', () => {
+      accounts.signIn('p1', false);
+      service.set('de');
+      expect(saraLang()).toBe('de');
+      accounts.signOut();
+      language.setLang('en');
+      service.applyOnSignIn('p1');
+      // Nothing was picked while signed out: Sara's own language applies.
+      expect(language.lang()).toBe('de');
+    });
+
+    it("is not made by a person nobody knows signing in, and stays for the real sign-in", () => {
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      service.set('de');
+      service.applyOnSignIn('nobody');
+      service.applyOnSignIn('p1');
+      expect(saraLang()).toBe('de');
+    });
+
+    it('is forgotten by Reset demo (forgetPick), so a pick never reaches a sign-in after it', () => {
+      service.set('de');
+      service.forgetPick();
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      service.applyOnSignIn('p1');
+      expect(language.lang()).toBe('ar');
+      expect(saraLang()).toBe('ar');
+    });
+
+    it('is not there in a fresh visit', () => {
+      service.set('de');
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers: [provideTranslocoTesting()] });
+      const fresh = TestBed.inject(PersonLanguageService);
+      const freshAccounts = TestBed.inject(AccountService);
+      freshAccounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      fresh.applyOnSignIn('p1');
+      expect(TestBed.inject(LanguageService).lang()).toBe('ar');
+    });
+  });
+
   describe('set', () => {
     it('signed out, it only sets the language (the sign-in pages)', () => {
       service.set('de');

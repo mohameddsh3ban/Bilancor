@@ -11,6 +11,7 @@ import { signInAsSara } from '../state/account.testing';
 import { DemoStateService } from '../state/demo-state.service';
 import { withConnection } from '../state/demo-state.testing';
 import { NoticeService } from '../state/notice.service';
+import { PersonLanguageService } from '../state/person-language.service';
 import { provideNoTaxReminder } from '../state/tax-reminder.testing';
 import { AppShell } from './app-shell';
 import { ComingSoonPage } from './coming-soon.page';
@@ -552,6 +553,17 @@ describe('AppShell, the person menu and the business switcher', () => {
       await settle();
       expect(accounts.persons().map((p) => p.id)).toEqual(['p1']);
       expect(demo.businesses.map((b) => b.id)).toEqual(['weber-design', 'sara-yoga', 'cafe-linde']);
+    });
+
+    it('forgets a language picked while signed out, so it never reaches a sign-in after it', async () => {
+      const personLanguage = TestBed.inject(PersonLanguageService);
+      accounts.signOut();
+      personLanguage.set('de');
+      q('demo-reset').click();
+      await settle();
+      accounts.updatePerson('p1', (p) => ({ ...p, lang: 'ar' }));
+      personLanguage.applyOnSignIn('p1');
+      expect(TestBed.inject(LanguageService).lang()).toBe('ar');
     });
 
     it("brings back Sara's dismissed notices, also when another person presses it", async () => {

@@ -3,14 +3,17 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { LanguageService } from '../core/i18n/language.service';
 import type { Lang } from '../data/models';
+import { PersonLanguageService } from '../state/person-language.service';
 
 /**
  * The frame of every page for people who are not in yet (sign in, forgotten password, sign up, joining): a card in the
  * middle of the page, with the app's name and the language buttons above it. There is no app shell and no demo bar here;
  * the demo's help sits in dashed boxes on the pages themselves.
  *
- * The buttons only set the browser's language (nobody is signed in, so there is no person to save it for) and tell the
- * page that one was picked: signing in then keeps that language instead of the person's own.
+ * The buttons go through `PersonLanguageService`. Where nobody is signed in (all of these pages but joining) they set the
+ * browser's language and the service remembers the pick, whichever of these pages it was made on: the next sign-in keeps
+ * that language instead of the person's own. On the join page somebody is signed in (the owner who sent the invitation),
+ * so the pick is saved as theirs. The page is told too (`langPicked`), for a form that follows the buttons.
  */
 @Component({
   selector: 'app-auth-frame',
@@ -54,6 +57,7 @@ import type { Lang } from '../data/models';
 })
 export class AuthFrame {
   protected readonly language = inject(LanguageService);
+  private readonly personLanguage = inject(PersonLanguageService);
   protected readonly languages: { lang: Lang; label: string }[] = [
     { lang: 'en', label: 'EN' },
     { lang: 'de', label: 'DE' },
@@ -64,7 +68,7 @@ export class AuthFrame {
   readonly langPicked = output<Lang>();
 
   protected pick(lang: Lang): void {
-    this.language.setLang(lang);
+    this.personLanguage.set(lang);
     this.langPicked.emit(lang);
   }
 }
