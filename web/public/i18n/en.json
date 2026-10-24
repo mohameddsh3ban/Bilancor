@@ -2262,7 +2262,7 @@
       },
       "change-language": {
         "q": "How do I change the app's language?",
-        "a": "Tap EN, DE or عربي in the top bar, or choose a language on the Language card in My account (open it from your initials at the end of the top bar). The language is yours: it sets the app and our emails to you, and others in the same business keep their own.\n\nTax returns and exports are always in German, whatever language you choose. Each invoice has a language of its own, German or English, whatever the app's language; the default is in Settings › Invoice details."
+        "a": "Tap EN, DE or عربي in the top bar, or choose a language on the Language card in My account (open it from your initials at the end of the top bar). The language is yours: it sets the app and our emails to you, and others in the same business keep their own.\n\nTwo papers keep a language of their own, whatever language you choose: a self-issued receipt is always in German, and each invoice is in German or English (the default is in Settings › Invoice details). If your business charges VAT, the transfer receipt of its VAT return follows the language of the app. So does the Print summary of an export, though its account names stay in German."
       },
       "connect-bank": {
         "q": "How do I connect my bank?",
