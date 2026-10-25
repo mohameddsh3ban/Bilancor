@@ -28,6 +28,16 @@ describe('BalancesCard', () => {
     expect(updated('wd-cash')).toBe('Updated 14 Oct');
   });
 
+  it("each account opens Payments showing that account's payments", () => {
+    TestBed.inject(DemoStateService).setBusiness('weber-design');
+    const fixture = TestBed.createComponent(BalancesCard);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const href = (id: string) => el.querySelector(`[data-testid="account-${id}"]`)?.getAttribute('href');
+    expect(href('wd-qonto')).toBe('/payments?account=wd-qonto');
+    expect(href('wd-cash')).toBe('/payments?account=wd-cash');
+  });
+
   it("does not list the Own money account: it holds nothing of the business's, so no balance of it is shown", () => {
     const demo = TestBed.inject(DemoStateService);
     demo.setBusiness('weber-design');

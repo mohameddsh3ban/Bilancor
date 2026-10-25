@@ -80,13 +80,16 @@ export class NoticesCard {
   protected readonly textKey = noticeTextKey;
 
   /**
-   * Fixing unreadable receipts happens in Documents, renewing a bank connection in Settings (at its Bank accounts card)
-   * and reminding a customer on the invoice itself (see `queryParams`); the other actions are not built yet.
+   * Fixing unreadable receipts happens in Documents, renewing a bank connection in Settings (at its Bank accounts card),
+   * the revenue limit's details on Taxes (its tracker) and reminding a customer on the invoice itself (see `queryParams`);
+   * reviewing the bank-connection provider's new terms is not built yet.
    */
   protected link(notice: Notice): string[] {
     switch (notice.kind) {
       case 'unreadable':
         return ['/documents'];
+      case 'revenueLimit':
+        return ['/taxes'];
       case 'bankExpiry':
       case 'bankEnded':
         return ['/settings'];

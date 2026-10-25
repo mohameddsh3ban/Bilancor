@@ -10,7 +10,7 @@ import { accountName } from '../../domain/bank-connection';
 import { balanceAccounts, totalAvailableCents } from '../../domain/home-figures';
 import { DemoStateService } from '../../state/demo-state.service';
 
-/** Each account with its balance (tap opens the coming soon page), and the total available. */
+/** Each account with its balance (tap opens Payments showing that account's payments), and the total available. */
 @Component({
   selector: 'app-balances-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,7 +28,8 @@ import { DemoStateService } from '../../state/demo-state.service';
             <li class="border-border border-t first:border-t-0">
               <a
                 class="hover:bg-muted flex items-center gap-3 py-2.5"
-                [routerLink]="['/soon', 'account']"
+                routerLink="/payments"
+                [queryParams]="{ account: account.id }"
                 [attr.data-testid]="'account-' + account.id"
               >
                 <ng-icon

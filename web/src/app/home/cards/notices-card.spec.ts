@@ -84,6 +84,13 @@ describe('NoticesCard', () => {
     expect(q(el, `notice-action-${BANK_ENDED}`)?.getAttribute('href')).toBe('/settings#bank-accounts');
   });
 
+  it('Details on the revenue-limit notice opens Taxes, where the limit tracker is', () => {
+    TestBed.inject(DemoStateService).setBusiness('sara-yoga');
+    const { el } = render();
+    expect(q(el, 'notice-action-sy-n1')?.textContent?.trim()).toBe('Details');
+    expect(q(el, 'notice-action-sy-n1')?.getAttribute('href')).toBe('/taxes');
+  });
+
   it('Fix opens Documents', () => {
     // Fixing needs the unreadable notice on show: it moves up once the bank notice and the late invoice's are dismissed.
     TestBed.inject(NoticeService).dismiss(BANK_EXPIRY);

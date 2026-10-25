@@ -35,7 +35,7 @@ The strip at the top of every page inside the app is demo-only (the sign-in page
 
 ## Payments
 
-The Payments page (`/payments`) opens from the menu (on a phone, from the bottom bar) and from the homepage's "See all" and its transaction rows (a row opens that payment). It works in English, German and Arabic.
+The Payments page (`/payments`) opens from the menu (on a phone, from the bottom bar) and from the homepage's "See all", its transaction rows (a row opens that payment) and its account balances (an account opens the list filtered to that account). It works in English, German and Arabic.
 
 What works on sample data:
 
@@ -126,7 +126,7 @@ Changes live in memory only. A page reload, or **Reset demo** in the demo toolba
 
 ## Taxes
 
-The Taxes page (`/taxes`) shows the VAT return the business has to send next, and the year so far. It opens from the menu, from **Open taxes** on the homepage tax card (a tile on a computer) and from the tax reminder (below). It works in English, German and Arabic.
+The Taxes page (`/taxes`) shows the VAT return the business has to send next, and the year so far. It opens from the menu, from **Open taxes** on the homepage tax card (a tile on a computer), from **Details** on a Kleinunternehmer's revenue-limit notice (Taxes holds the limit tracker) and from the tax reminder (below). It works in English, German and Arabic.
 
 - **Tabs:** a business that charges VAT has two, **VAT return** and **Year (EÜR)** (`/taxes?tab=year`). A Kleinunternehmer has no tabs: the revenue-limit tracker, "No VAT return needed" and the year. Until the business has saved its tax details (or, when it charges VAT, picked a return period) the page only says so and links to the tax details in Settings.
 - **A business that files its VAT once a year** shows "Yearly VAT return only" with the date (31 July next year) and nothing to send.
