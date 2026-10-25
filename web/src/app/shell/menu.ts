@@ -31,7 +31,7 @@ export interface MenuItem {
   icon: string;
 }
 
-/** The main menu, in display order. Home, Payments, Documents, Invoices, Taxes, Reports and Settings are real pages; the rest open "coming soon". */
+/** The main menu, in display order. Every item is a real page. */
 export const MENU_ITEMS: MenuItem[] = [
   { id: 'home', route: '/', icon: 'lucideHouse' },
   { id: 'payments', route: '/payments', icon: 'lucideCreditCard' },
@@ -40,7 +40,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'taxes', route: '/taxes', icon: 'lucideLandmark' },
   { id: 'reports', route: '/reports', icon: 'lucideChartColumn' },
   { id: 'settings', route: '/settings', icon: 'lucideSettings' },
-  { id: 'help', route: '/soon/help', icon: 'lucideCircleQuestionMark' },
+  { id: 'help', route: '/help', icon: 'lucideCircleQuestionMark' },
 ];
 
 export type BottomBarId = MenuId | 'upload' | 'more';

@@ -14,8 +14,9 @@ const OPTIONS: readonly { lang: Lang; label: string }[] = [
 
 /**
  * My account › Language: English, Deutsch or عربي, the person's own language. The choice is saved for the person and the
- * app follows at once; the language buttons in the top bar change the same setting. Outputs for German authorities and
- * customers stay German whatever is chosen here, and the card says so.
+ * app follows at once; the language buttons in the top bar change the same setting. The card says which papers follow it
+ * (a VAT return's transfer receipt, an export's Print summary) and which keep their own language (a self-issued receipt
+ * is always German, an invoice German or English), as Help's answer about the language does.
  */
 @Component({
   selector: 'app-language-card',

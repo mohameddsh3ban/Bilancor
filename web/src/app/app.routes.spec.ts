@@ -138,6 +138,92 @@ describe('the routes', () => {
     expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
   });
 
+  it('Help is inside the app shell: signed out it asks for signing in first, signed in it opens the page', async () => {
+    const harness = await RouterTestingHarness.create('/help');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+  });
+
+  it('German terms A–Z (help/terms) is inside the app shell, between Help and an answer, so :id never takes its address', async () => {
+    const shell = routes.find((route) => route.path === '')!;
+    const paths = shell.children!.map((route) => route.path);
+    expect(paths.indexOf('help/terms')).toBeGreaterThan(paths.indexOf('help'));
+    expect(paths.indexOf('help/terms')).toBeLessThan(paths.indexOf('help/:id'));
+
+    const harness = await RouterTestingHarness.create('/help/terms');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp%2Fterms');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help/terms#kasse');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-terms-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help/terms#kasse');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).toBeNull();
+  });
+
+  it('Write to us (help/contact) is inside the app shell, after German terms A–Z and above an answer, so :id never takes its address', async () => {
+    const shell = routes.find((route) => route.path === '')!;
+    const paths = shell.children!.map((route) => route.path);
+    expect(paths.indexOf('help/contact')).toBeGreaterThan(paths.indexOf('help/terms'));
+    expect(paths.indexOf('help/contact')).toBeLessThan(paths.indexOf('help/:id'));
+    // The order Help's pages are in: Help, German terms A–Z, Write to us, then one answer.
+    expect(paths.filter((path) => path?.startsWith('help'))).toEqual([
+      'help',
+      'help/terms',
+      'help/contact',
+      'help/:id',
+    ]);
+
+    const harness = await RouterTestingHarness.create('/help/contact?topic=taxes&about=vat-due');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp%2Fcontact%3Ftopic%3Dtaxes%26about%3Dvat-due');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help/contact?topic=taxes&about=vat-due');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-contact-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help/contact?topic=taxes&about=vat-due');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).toBeNull();
+  });
+
+  it('An answer of Help (help/:id) is inside the app shell, right after Help, and no fixed path of Help comes below it', async () => {
+    const shell = routes.find((route) => route.path === '')!;
+    const paths = shell.children!.map((route) => route.path);
+    const answerAt = paths.indexOf('help/:id');
+    expect(answerAt).toBeGreaterThan(paths.indexOf('help'));
+    expect(paths.slice(answerAt + 1).filter((path) => path?.startsWith('help'))).toEqual([]);
+
+    const harness = await RouterTestingHarness.create('/help/vat-due');
+    harness.detectChanges();
+    expect(router.url).toBe('/sign-in?next=%2Fhelp%2Fvat-due');
+
+    signInAsSara();
+    await harness.navigateByUrl('/help/vat-due');
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-answer-page')).not.toBeNull();
+    });
+    expect(router.url).toBe('/help/vat-due');
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-top-bar')).not.toBeNull();
+    expect((harness.routeNativeElement as HTMLElement).querySelector('app-help-page')).toBeNull();
+  });
+
   it('Import a bank statement is inside the app shell, and is not a payment called "import": signed out it asks for signing in first', async () => {
     const harness = await RouterTestingHarness.create('/payments/import');
     harness.detectChanges();

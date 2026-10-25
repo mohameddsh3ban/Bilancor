@@ -1,6 +1,8 @@
 import en from '../../../../public/i18n/en.json';
 import de from '../../../../public/i18n/de.json';
 import ar from '../../../../public/i18n/ar.json';
+import { HELP_ANSWERS, HELP_TOPICS } from '../../data/help';
+import { TERM_KEYS } from './term-keys';
 
 function flatten(obj: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(obj).flatMap(([key, value]) =>
@@ -8,6 +10,16 @@ function flatten(obj: Record<string, unknown>, prefix = ''): string[] {
       ? flatten(value as Record<string, unknown>, `${prefix}${key}.`)
       : [`${prefix}${key}`],
   );
+}
+
+interface HelpTexts {
+  topics?: Record<string, unknown>;
+  answers?: Record<string, { q?: unknown; a?: unknown } | undefined>;
+}
+
+/** The `help` block of a translation file, read loosely so a missing text fails a test instead of the build. */
+function helpOf(file: object): HelpTexts {
+  return ((file as Record<string, unknown>)['help'] ?? {}) as HelpTexts;
 }
 
 describe('translation files', () => {
@@ -99,53 +111,111 @@ describe('translation files', () => {
   });
 
   it('has the German tax terms with label, de and explain', () => {
-    const terms = [
-      'ustva',
-      'euer',
-      'kleinunternehmer',
-      'skr03',
-      'eigenbeleg',
-      'eingangsbeleg',
-      'ausgangsbeleg',
-      'freiberufler',
-      'gewerbe',
-      'einzelunternehmen',
-      'gbr',
-      'avv',
-      'steuerberater',
-      'dauerfristverlaengerung',
-      'istVersteuerung',
-      'sollVersteuerung',
-      'steuernummer',
-      'ustIdNr',
-      'finanzamt',
-      'umsatzsteuer',
-      'vorsteuer',
-      'elster',
-      'einkommensteuererklaerung',
-      'feststellungserklaerung',
-      'umsatzsteuererklaerung',
-      'uebertragungsprotokoll',
-      'rechnung',
-      'stornorechnung',
-      'eRechnung',
-      'zugferd',
-      'xrechnung',
-      'zahlungserinnerung',
-      'mahnung',
-      'leitwegId',
-      'reverseCharge',
-      'bwa',
-      'gdpdu',
-      'festschreibung',
-      'camt',
-      'kontoauszug',
-      'kasse',
-      'privateinlage',
-    ];
-    for (const term of terms) {
+    for (const term of TERM_KEYS) {
       for (const part of ['label', 'de', 'explain']) {
         expect(enKeys).toContain(`terms.${term}.${part}`);
+      }
+    }
+  });
+
+  it('every answer has a question and a text in all three languages, and no text is a placeholder', () => {
+    const english = helpOf(en);
+    for (const [lang, file] of Object.entries({ en, de, ar })) {
+      const help = helpOf(file);
+      const texts: [key: string, text: unknown, englishText: unknown][] = [
+        ...HELP_TOPICS.map(
+          (topic) =>
+            [`help.topics.${topic}`, help.topics?.[topic], english.topics?.[topic]] as [
+              string,
+              unknown,
+              unknown,
+            ],
+        ),
+        ...HELP_ANSWERS.flatMap(({ id }) =>
+          (['q', 'a'] as const).map(
+            (part) =>
+              [
+                `help.answers.${id}.${part}`,
+                help.answers?.[id]?.[part],
+                english.answers?.[id]?.[part],
+              ] as [string, unknown, unknown],
+          ),
+        ),
+      ];
+
+      for (const [key, text, englishText] of texts) {
+        const where = `${lang} ${key}`;
+        expect(typeof text, `${where} is missing`).toBe('string');
+        const value = text as string;
+        expect(value.trim(), `${where} is empty`).not.toBe('');
+        expect(value, `${where} has spaces around it`).toBe(value.trim());
+        expect(value, `${where} is a placeholder`).not.toMatch(
+          /TODO|TBD|FIXME|lorem|placeholder|xxx/i,
+        );
+        // Plain text: no HTML, no Markdown, no interpolation.
+        expect(value, `${where} is not plain text`).not.toMatch(/[<>*`#]|\{\{|\]\(/);
+        if (lang !== 'en') expect(value, `${where} is a copy of the English`).not.toBe(englishText);
+        if (lang === 'ar') {
+          // Western digits only, as on bank statements and receipts.
+          const digits = value.match(/\p{Nd}/gu)?.join('') ?? '';
+          expect(digits, `${where} has digits other than 0-9`).toMatch(/^[0-9]*$/);
+        }
+      }
+
+      for (const { id } of HELP_ANSWERS) {
+        expect(help.answers?.[id]?.q, `${lang} ${id}.q is a question`).toMatch(/[?؟]$/);
+        // One to three short paragraphs, split by one blank line.
+        const paragraphs = String(help.answers?.[id]?.a).split('\n\n');
+        expect(paragraphs.length, `${lang} ${id}.a paragraphs`).toBeLessThanOrEqual(3);
+        for (const paragraph of paragraphs) {
+          expect(paragraph, `${lang} ${id}.a has an empty or broken paragraph`).toMatch(
+            /^\S[^\n]*\S$/,
+          );
+        }
+      }
+    }
+  });
+
+  it('an answer that talks about the VAT return says it is for a business that charges VAT', () => {
+    // The same Help for everyone, and a Kleinunternehmer has no VAT return: the condition is said in words.
+    const answers = helpOf(en).answers ?? {};
+    for (const { id } of HELP_ANSWERS) {
+      const text = String(answers[id]?.a ?? '');
+      if (/VAT return/.test(text)) {
+        expect(text, `en ${id}`).toMatch(/if your business charges VAT/i);
+      }
+    }
+  });
+
+  it('every answer names its German terms by their German word, in all three languages', () => {
+    for (const [lang, file] of Object.entries({ en, de, ar })) {
+      const help = helpOf(file);
+      const terms = file.terms as unknown as Record<string, { de: string }>;
+      for (const { id, terms: keys } of HELP_ANSWERS) {
+        const text = `${String(help.answers?.[id]?.q ?? '')} ${String(help.answers?.[id]?.a ?? '')}`;
+        for (const key of keys) {
+          expect(text, `${lang} ${id} names ${key}`).toContain(terms[key].de);
+        }
+      }
+    }
+  });
+
+  it('an English or Arabic answer that names a German term by its German word offers it as a chip', () => {
+    // In English and Arabic a German word is there to be explained. (German writes its own words, so it is not checked.)
+    const escape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const [lang, file] of Object.entries({ en, ar })) {
+      const help = helpOf(file);
+      const terms = file.terms as unknown as Record<string, { de: string }>;
+      for (const { id, terms: keys } of HELP_ANSWERS) {
+        const text = `${String(help.answers?.[id]?.q ?? '')} ${String(help.answers?.[id]?.a ?? '')}`;
+        for (const key of TERM_KEYS) {
+          // The whole word: "Rechnung" is not named by "E-Rechnung" or "XRechnung".
+          const named = new RegExp(
+            `(?<![\\p{L}\\p{N}-])${escape(terms[key].de)}(?![\\p{L}\\p{N}-])`,
+            'u',
+          );
+          if (named.test(text)) expect(keys, `${lang} ${id} names ${terms[key].de}`).toContain(key);
+        }
       }
     }
   });

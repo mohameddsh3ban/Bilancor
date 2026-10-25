@@ -227,7 +227,6 @@
   "soon": {
     "home": "Start",
     "payments": "Zahlungen",
-    "help": "Hilfe",
     "more": "Mehr",
     "terms": "Bedingungen der Bankanbindung",
     "unreadable": "Nicht lesbare Belege",
@@ -2090,7 +2089,7 @@
     },
     "language": {
       "title": "Sprache",
-      "hint": "Für die App und unsere E-Mails an dich. Steuererklärungen, Exporte und Rechnungen an deutsche Kunden bleiben auf Deutsch.",
+      "hint": "Für die App, unsere E-Mails an dich, das Übertragungsprotokoll einer Umsatzsteuer-Voranmeldung und die „Zusammenfassung drucken“ eines Exports (die Kontonamen darin bleiben deutsch). Nicht für einen Eigenbeleg, der immer deutsch ist, und nicht für Rechnungen, die deutsch oder englisch sind.",
       "buttons": "Die Sprachbuttons oben in der Leiste ändern das ebenfalls."
     },
     "signingIn": {
@@ -2150,6 +2149,204 @@
       "dialog": {
         "title": "{{business}} verlassen?",
         "body": "Du kannst die Bücher danach nicht mehr öffnen. Die Inhaber:in kann dich wieder einladen."
+      }
+    }
+  },
+  "help": {
+    "title": "Hilfe",
+    "pages": {
+      "start": "Start",
+      "payments": "Zahlungen",
+      "documents": "Dokumente",
+      "invoices": "Rechnungen",
+      "taxes": "Steuern",
+      "reports": "Auswertungen",
+      "settings": "Einstellungen"
+    },
+    "home": {
+      "searchLabel": "In der Hilfe suchen",
+      "searchPlaceholder": "Wobei brauchst du Hilfe?",
+      "found": {
+        "one": "1 Ergebnis",
+        "many": "{{count}} Ergebnisse"
+      },
+      "results": "Suchergebnisse",
+      "term": "Begriff",
+      "nothingTitle": "Nichts gefunden",
+      "nothingBody": "Schreib uns, was du gesucht hast.",
+      "nothingAction": "Schreib uns",
+      "forPage": "Hilfe zur Seite „{{page}}“",
+      "because": "Weil du von „{{page}}“ kommst.",
+      "topics": "Themen",
+      "allTopics": "Alle Themen",
+      "answers": {
+        "one": "1 Antwort",
+        "many": "{{count}} Antworten"
+      },
+      "termsTitle": "Deutsche Begriffe A–Z",
+      "termsBody": "{{count}} Wörter aus Briefen und Formularen, erklärt.",
+      "termsAction": "Liste öffnen",
+      "contactTitle": "Schreib uns",
+      "contactBody": "Wir antworten auf Deutsch, Englisch oder Arabisch.",
+      "contactAction": "Nachricht schreiben",
+      "taxNote": "Wir erklären, wie die App funktioniert und was deutsche Begriffe bedeuten. Für Beratung zu deinen eigenen Steuern frag deine {{term}}.",
+      "taxAction": "Lade deine Steuerberater:in ein"
+    },
+    "answer": {
+      "breadcrumb": "Brotkrumen-Navigation",
+      "termsTitle": "Begriffe in dieser Antwort",
+      "open": "„{{page}}“ öffnen",
+      "feedbackTitle": "Hat das deine Frage beantwortet?",
+      "yes": "Ja",
+      "thanks": "Danke",
+      "no": "Nein, schreib uns",
+      "missingTitle": "Diese Antwort gibt es nicht",
+      "missingBody": "Geh zurück zur Hilfe, um zu suchen oder die Themen durchzusehen.",
+      "missingAction": "Zurück zur Hilfe"
+    },
+    "terms": {
+      "filterLabel": "Deutsche Begriffe filtern",
+      "filterPlaceholder": "Gib ein deutsches Wort oder seine Bedeutung ein",
+      "appearsIn": "Kommt vor in: {{pages}}",
+      "pagesSeparator": ", ",
+      "noneTitle": "Kein Begriff passt",
+      "noneBody": "Versuch eine andere Schreibweise oder weniger Buchstaben, oder zeig die ganze Liste.",
+      "noneAction": "Alle Begriffe zeigen"
+    },
+    "contact": {
+      "title": "Schreib uns",
+      "topic": {
+        "label": "Thema",
+        "placeholder": "Wähle ein Thema",
+        "other": "Etwas anderes"
+      },
+      "message": {
+        "label": "Deine Nachricht",
+        "placeholder": "Sag uns, wobei du Hilfe brauchst."
+      },
+      "about": "Betrifft: {{question}}",
+      "error": {
+        "missing": "Schreib deine Nachricht.",
+        "short": "Schreib mindestens {{min}} Zeichen."
+      },
+      "reply": "Unsere Antwort geht an {{email}}, in der Regel innerhalb eines Werktags.",
+      "send": "Senden",
+      "sent": "Gesendet. Unsere Antwort findest du in deinem E-Mail-Postfach.",
+      "back": "Zurück zur Hilfe",
+      "demo": {
+        "label": "Demo",
+        "text": "In dieser Demo wird nichts wirklich gesendet."
+      },
+      "support": {
+        "text": "Damit wir bei deiner Buchhaltung mitschauen können, während wir dir helfen:",
+        "path": "{{settings}} › {{people}} › Support hineinlassen"
+      }
+    },
+    "topics": {
+      "start": "Erste Schritte",
+      "payments": "Bank und Zahlungen",
+      "receipts": "Belege und Dokumente",
+      "invoices": "Rechnungen",
+      "taxes": "Steuern und Jahresende",
+      "account": "Dein Konto und Personen",
+      "privacy": "Deine Daten und Datenschutz"
+    },
+    "answers": {
+      "setup-steps": {
+        "q": "Was sind die drei Schritte zur Einrichtung?",
+        "a": "Die Liste „Richte dein Konto fertig ein“ auf der Startseite hat drei Schritte: „Bank verbinden“, „Steuerangaben ergänzen“ und „Ersten Beleg hochladen“. Die Reihenfolge ist egal. Jeder Schritt hakt sich selbst ab, sobald er erledigt ist, und die Liste verschwindet, wenn alle drei erledigt sind.\n\nDie Steuerangaben sind fünf kurze Fragen, die meisten Antworten stehen im Brief vom Finanzamt. Keine Bankverbindung? Ein importierter Kontoauszug hakt den Bank-Schritt auch ab.\n\nJedes Unternehmen hat seine eigenen Schritte: Wechselst du das Unternehmen, siehst du dessen Fortschritt."
+      },
+      "switch-business": {
+        "q": "Wie wechsle ich zwischen meinen Unternehmen?",
+        "a": "Tippe oben in der Leiste auf den Namen des Unternehmens. Die Liste zeigt jedes Unternehmen, in dem du bist, mit deiner Rolle darin (Inhaber:in, Voller Zugriff, …); wähle eins aus, um es zu öffnen. Jedes Unternehmen hat seine eigene Buchhaltung, eigene Schritte und eigene Personen.\n\nFür ein weiteres eigenes Unternehmen wähle am Ende der Liste „Unternehmen hinzufügen“. Du beantwortest ein paar Fragen dazu, akzeptierst die Bedingungen und wirst Inhaber:in. Jedes Unternehmen hat seinen eigenen Tarif."
+      },
+      "change-language": {
+        "q": "Wie ändere ich die Sprache der App?",
+        "a": "Tippe oben in der Leiste auf EN, DE oder عربي, oder wähle eine Sprache in der Karte „Sprache“ unter „Mein Konto“ (du öffnest es über deine Initialen am Ende der oberen Leiste). Die Sprache gehört dir: Sie gilt für die App und unsere E-Mails an dich, und andere im selben Unternehmen behalten ihre eigene.\n\nZwei Ausdrucke behalten ihre eigene Sprache, egal welche Sprache du wählst: Ein Eigenbeleg ist immer auf Deutsch, und jede Rechnung ist auf Deutsch oder Englisch (die Voreinstellung findest du unter Einstellungen › Rechnungsangaben). Wenn dein Unternehmen Umsatzsteuer berechnet, richtet sich das Übertragungsprotokoll seiner Umsatzsteuer-Voranmeldung (UStVA) nach der Sprache der App. Das gilt auch für die „Zusammenfassung drucken“ eines Exports, nur die Kontonamen darin bleiben auf Deutsch."
+      },
+      "connect-bank": {
+        "q": "Wie verbinde ich meine Bank?",
+        "a": "Öffne „Verbinde deine Bank“ (über die Startseite, Zahlungen oder Einstellungen › Bankkonten), wähle deine Bank und melde dich auf der eigenen Seite deiner Bank an. Dann markierst du die Konten, die zum Geschäft gehören; private Konten bleiben draußen. Danach kommen deine Zahlungen von selbst.\n\nDie App sieht deine Zahlungen und deinen Kontostand und ruft jeden Tag neue ab. Sie kann kein Geld bewegen, keine Überweisungen machen und dein Bankpasswort nicht sehen.\n\nDeine Bank ist nicht dabei? Wähle „Meine Bank steht nicht in der Liste“ und importiere stattdessen einen Kontoauszug aus deinem Online-Banking, als CSV-Datei oder im Bankstandard CAMT."
+      },
+      "renew-bank": {
+        "q": "Was bedeutet „Erneuern“ bei einer Bankverbindung?",
+        "a": "Deine Bank erlaubt der App, dein Konto jeweils 180 Tage lang zu lesen; danach bestätigst du das bei deiner Bank neu. Unter Einstellungen › Bankkonten zeigt eine Verbindung, die in den nächsten 14 Tagen endet, „Erneuern in 5 Tagen“ (oder wie viele Tage noch übrig sind), und die Startseite erinnert dich auch.\n\nWähle „Erneuern“ und melde dich bei deiner Bank an: Die Verbindung zeigt wieder „Verbunden“, und die Zahlungen kommen weiter. Eine Verbindung, die schon abgelaufen ist, zeigt „Erneut anmelden“; das funktioniert genauso."
+      },
+      "payment-needs": {
+        "q": "Was braucht eine Zahlung von mir?",
+        "a": "Jede geschäftliche Zahlung braucht eine Kategorie, eine bestätigte Buchung und einen Beleg. Das meiste erledigt die App: Sie bucht, was sie kann, und verknüpft die Belege, die sie findet. Was sie nicht entscheiden kann, wartet unter „Braucht dich“ auf dich.\n\nTippe oben in der Leiste auf „Braucht dich“ und geh die Karten nacheinander durch: Sag, wofür eine unklare Zahlung war, bestätige eine Buchung, füge einen fehlenden Beleg mit „Foto aufnehmen“ oder „Aus Dokumenten wählen“ hinzu, oder wähle „Kein Beleg nötig“. Beleg verloren? Für eine Ausgabe kannst du einen Eigenbeleg schreiben.\n\nEine Zahlung, die dich noch braucht, ist noch nicht in deinen Zahlen und, wenn dein Unternehmen Umsatzsteuer berechnet, auch nicht in deiner Umsatzsteuer-Voranmeldung (UStVA)."
+      },
+      "private-payment": {
+        "q": "Was, wenn eine Zahlung privat war?",
+        "a": "Öffne die Zahlung und stell sie von „Geschäftlich“ auf „Privat“ um, oder wähle unter „Braucht dich“ „Privat, nicht fürs Geschäft“. Eine private Zahlung braucht keinen Beleg und zählt nicht für deinen Gewinn und, wenn dein Unternehmen Umsatzsteuer berechnet, auch nicht für deine Umsatzsteuer-Voranmeldung (UStVA). Privates Geld, das hereinkommt, etwa von deinem eigenen Konto, wird als Privateinlage gebucht.\n\nEine Zahlung mit verknüpftem Dokument kann erst privat werden, wenn du die Verknüpfung löst, und eine Zahlung, die eine Rechnung bezahlt, bleibt geschäftlich.\n\nDu hast etwas fürs Geschäft mit deiner eigenen Karte oder deinem eigenen Bargeld bezahlt? Öffne den Beleg in „Dokumente“, wähle „Bar oder mit eigenem Geld bezahlt“ und dann „Mit eigenem Geld“. Die Zahlung kommt in das Konto „Eigenes Geld“, und die Kosten zählen fürs Geschäft."
+      },
+      "add-receipt-phone": {
+        "q": "Wie füge ich mit dem Handy einen Beleg hinzu?",
+        "a": "Tippe auf den Kamera-Knopf in der Mitte der unteren Leiste oder in „Dokumente“ auf „Hinzufügen“, dann auf „Foto aufnehmen“; mehrere Seiten werden zu einem Beleg. Du kannst auch eine Datei auswählen (PDF, JPG, PNG oder eine E-Rechnung als XML, bis 20 MB) oder Belege per E-Mail an die eigene Adresse deines Unternehmens weiterleiten, die dort und unter Einstellungen › Beleg-Postfach steht.\n\nDie App liest jedes Dokument und erkennt, ob es eine Rechnung ist, die du bekommen hast (Eingangsbeleg), oder eine, die du geschickt hast (Ausgangsbeleg); kann sie es nicht erkennen, fragt sie dich. Weiß sie sicher, zu welcher Zahlung ein Beleg gehört, verknüpft sie beide, sonst schlägt sie passende Zahlungen vor.\n\nFehlt der Beleg zu einer Zahlung? Öffne die Zahlung und wähle „Foto aufnehmen“: Der Beleg wird gleich mit ihr verknüpft."
+      },
+      "receipt-unreadable": {
+        "q": "Was, wenn ein Beleg nicht gelesen werden konnte?",
+        "a": "Kann die App bei einem Beleg den Betrag, das Datum oder den Namen nicht lesen, erscheint er im Kasten „Braucht dich“ oben in „Dokumente“, und die Startseite zeigt, wie viele es sind. Was sie nicht lesen konnte, ist auf dem Scan markiert.\n\nWähle „Eintippen“ und gib ein, was auf dem Beleg steht, oder öffne das Dokument und nutze „Bearbeiten“. Mit dem Speichern ist das Problem gelöst; gibt es noch ein weiteres, fragt die Karte als Nächstes danach.\n\nKann die App nicht erkennen, ob es ein Eingangsbeleg (bekommen) oder ein Ausgangsbeleg (verschickt) ist, fragt sie: „Empfangen“ oder „Gesendet“."
+      },
+      "self-issued": {
+        "q": "Was ist ein Eigenbeleg?",
+        "a": "Ein Beleg, den du selbst schreibst, wenn das Original verloren ist oder du nie eins bekommen hast, zum Beispiel an einem Parkautomaten. Er ist für Ausgaben, bei denen der Beleg fehlt: Öffne die Zahlung und wähle „Eigenbeleg erstellen“, oder unter „Braucht dich“ „Beleg verloren? Schreib selbst einen“.\n\nGib an, wofür es war und warum es keinen Beleg gibt, hake „Ich bestätige, dass das stimmt“ an und wähle „Beleg erstellen“. Die App nummeriert ihn (EB-2026-001, …) und legt ihn verknüpft mit der Zahlung in „Dokumente“ ab, und du kannst ihn drucken. Der Beleg selbst ist immer auf Deutsch.\n\nMit einem Eigenbeleg kannst du keine Vorsteuer zurückholen, deshalb zählt die Vorsteuer der Zahlung nicht mehr. Einmal geschrieben, lässt er sich nicht ändern oder entfernen; „Rückgängig“ geht nur ein paar Sekunden lang."
+      },
+      "write-invoice": {
+        "q": "Wie schreibe ich eine Rechnung?",
+        "a": "Wähle in „Rechnungen“ „Neue Rechnung“. Wähle einen Kunden, dem du schon eine Rechnung geschickt hast, oder leg einen neuen an, füge Zeilen für deine Arbeit hinzu und wähle Rechnungsdatum und Leistungszeit. Die Summen rechnen beim Tippen mit, und der Entwurf speichert sich selbst.\n\n„Bereit zum Senden“ zeigt, was eine deutsche Rechnung enthalten muss, und verlinkt alles, was fehlt, etwa deine Steuernummer in den Einstellungen. Fehlt nichts mehr, zeigt „Ansehen und senden“ die E-Mail; „Senden“ gibt der Rechnung ihre Nummer und schickt sie per E-Mail an deinen Kunden.\n\nEine gesendete Rechnung lässt sich nicht ändern. Um eine offene zu korrigieren, wähle in ihrem ⋯-Menü „Rechnung stornieren“, das erstellt eine Stornorechnung, und dann „Korrigierte Kopie erstellen“."
+      },
+      "e-invoice": {
+        "q": "Was ist eine E-Rechnung (XRechnung, ZUGFeRD)?",
+        "a": "Eine E-Rechnung trägt ihre Daten in einer Form, die ein Computer lesen kann. Die App wählt das Format, wenn du eine Rechnung sendest, und der Sendeschritt zeigt es an.\n\nEin Unternehmen in Deutschland bekommt ZUGFeRD, ein PDF mit den Daten darin. Eine Behörde bekommt eine XRechnung, eine reine Datendatei, die die Leitweg-ID der Behörde braucht. Privatpersonen und Kunden im Ausland bekommen ein einfaches PDF, Geschäftskunden auch, wenn dein Unternehmen keine Umsatzsteuer berechnet (Kleinunternehmer).\n\nE-Rechnungen, die du bekommst, fügst du wie jede andere Datei in „Dokumente“ hinzu: Wähle die XML-Datei."
+      },
+      "customer-pays": {
+        "q": "Was passiert, wenn ein Kunde bezahlt?",
+        "a": "Nennt der Verwendungszweck einer Zahlung die Nummer deiner Rechnung, ordnet die App sie selbst zu: Die Rechnung wird „Bezahlt“, oder „Teilweise bezahlt“, wenn weniger kam. Passt nur der Betrag, fragt „Braucht dich“, ob es die Zahlung für diese Rechnung ist. Bar bezahlt? Öffne die Rechnung und wähle „Als bezahlt markieren“.\n\nNach dem Fälligkeitsdatum zeigt die Rechnung „Überfällig“. „Zahlungserinnerung senden“ bittet deinen Kunden, innerhalb von 7 Tagen zu zahlen; eine Woche später kannst du eine Mahnung senden. Die App schreibt Kunden nie von selbst."
+      },
+      "vat-due": {
+        "q": "Wann ist meine Umsatzsteuer-Voranmeldung fällig?",
+        "a": "Wenn dein Unternehmen Umsatzsteuer berechnet, ist die Umsatzsteuer-Voranmeldung (UStVA) am 10. des Monats nach dem Zeitraum fällig: am 10. November für Oktober, wenn du monatlich meldest, am 10. Oktober für Juli bis September, wenn du vierteljährlich meldest. Mit Dauerfristverlängerung ist es einen Monat später. Meldest du nur einmal im Jahr, gibt es nur die Jahreserklärung, fällig am 31. Juli des Folgejahres.\n\nZeitraum und Fristverlängerung kommen aus deinen Steuerangaben in den Einstellungen. „Steuern“ und die Startseite zeigen das nächste Fälligkeitsdatum, und eine Erinnerung erscheint, wenn du die App in den 21 Tagen davor öffnest. Die App zeigt den 10. auch dann, wenn er auf ein Wochenende fällt.\n\nEin Kleinunternehmer berechnet keine Umsatzsteuer und hat keine Voranmeldung."
+      },
+      "send-return": {
+        "q": "Was passiert, wenn ich meine Umsatzsteuer-Voranmeldung sende?",
+        "a": "Wenn dein Unternehmen Umsatzsteuer berechnet und monatlich oder vierteljährlich meldet, hat „Steuern“ den Knopf „Ans Finanzamt senden“. Er zeigt zuerst eine Prüfung: den Zeitraum, die Umsatzsteuer, die du berechnet hast, die Vorsteuer, die du gezahlt hast, und das Ergebnis. „Senden“ schickt deine Umsatzsteuer-Voranmeldung (UStVA) über ELSTER, den offiziellen Weg zum Finanzamt.\n\nDanach bekommst du ein Übertragungsprotokoll zum Drucken oder als PDF; es bleibt unter „Früher gesendet“ mit Datum und Betrag. Eine gesendete Voranmeldung lässt sich nicht ändern, und der nächste Zeitraum wird deine aktuelle Voranmeldung.\n\nMit dem Senden schließt du auch die Monate des Zeitraums ab: Die Zahlungen darin lassen sich danach nicht mehr ändern."
+      },
+      "payment-blocks-send": {
+        "q": "Warum hindert mich eine Zahlung am Senden der Voranmeldung?",
+        "a": "Wenn dein Unternehmen Umsatzsteuer berechnet und monatlich oder vierteljährlich meldet, zählt seine Umsatzsteuer-Voranmeldung (UStVA) nur gebuchte Zahlungen. Solange eine Zahlung des Zeitraums dich noch braucht (sie ist unklar, nicht bestätigt oder ohne Beleg), würde sie darin fehlen; deshalb heißt der Knopf in „Steuern“ „Zuerst 1 Zahlung klären“, oder so viele, wie es sind.\n\nWähle ihn, um „Braucht dich“ zu öffnen und die Karten zu beantworten. Ist jede Zahlung des Zeitraums gebucht, heißt der Knopf wieder „Ans Finanzamt senden“.\n\nDer Knopf ist auch aus, solange der Zeitraum noch läuft; der Hinweis darunter sagt, ab wann du senden kannst."
+      },
+      "klein-limit": {
+        "q": "Was ist die Kleinunternehmer-Grenze?",
+        "a": "Ein Kleinunternehmer ist ein kleines Unternehmen, das keine Umsatzsteuer berechnet, solange sein Umsatz unter den Grenzen bleibt. Die App nutzt diese: Umsatz unter 25.000 € im letzten Jahr und unter 100.000 € in diesem Jahr.\n\nWenn dein Unternehmen keine Umsatzsteuer berechnet, zeigen „Steuern“ und die Startseite deinen Umsatz in diesem Jahr gegenüber 25.000 € und wie viel der Grenze du erreicht hast. Die Anzeige zählt dieselben Einnahmen wie dein Jahr in „Steuern“ und bewegt sich, wenn Zahlungen gebucht werden; ab 20.000 € erscheint sie als Warnung, über 100.000 € in Rot.\n\nOb die Regel zu deinem Unternehmen passt und was du nahe der Grenze tust, klärst du mit deiner Steuerberater:in."
+      },
+      "close-month": {
+        "q": "Was passiert, wenn ich einen Monat abschließe?",
+        "a": "In „Auswertungen“ zeigt „Monat für Monat“ Einnahmen, Kosten und Gewinn jedes Monats: deine Betriebswirtschaftliche Auswertung (BWA). Ein beendeter Monat, der noch nicht abgeschlossen ist, hat einen Knopf „Abschließen“.\n\nZuerst prüft die App den Monat: Jede Zahlung muss gebucht sein und ihren Beleg haben, sonst lässt er sich noch nicht abschließen. Sie warnt auch vor möglichen Dubletten und vor Bankkonten, die mit dem Kontoauszug zu prüfen sind. Nur die Inhaber:in und Personen mit vollem Zugriff können einen Monat abschließen.\n\nDer Abschluss sperrt die Buchungen des Monats (Festschreibung): Sie lassen sich nicht mehr ändern. Wenn dein Unternehmen Umsatzsteuer berechnet, schließt auch das Senden einer Umsatzsteuer-Voranmeldung (UStVA) die Monate ihres Zeitraums von selbst ab."
+      },
+      "export-advisor": {
+        "q": "Wie schicke ich meine Buchhaltung an meine Steuerberater:in?",
+        "a": "In „Auswertungen“ wählst du unter „Export für deine Steuerberater:in“ einen Monat, ein Quartal oder ein Jahr, dann „DATEV (ZIP) herunterladen“, das Format, das Steuerberater:innen lesen, oder „Tabelle (CSV)“. Zahlungen, die dich noch brauchen, werden als offen markiert, oder du erledigst sie zuerst. „Zusammenfassung drucken“ listet jede Buchung mit ihrem Konto im SKR03.\n\nDeine Steuerberater:in kann den Export auch mit eigenem Login herunterladen: Lade sie unter Einstellungen › Personen mit Zugriff ein.\n\nFür eine Betriebsprüfung gibt es einen eigenen Prüfungsexport im Format, das das Finanzamt verlangt (GDPdU). Frag zuerst deine Steuerberater:in."
+      },
+      "invite-advisor": {
+        "q": "Wie lade ich meine Steuerberater:in ein?",
+        "a": "Wähle unter Einstellungen › Personen mit Zugriff „Person einladen“, gib die E-Mail-Adresse ein, wähle „Steuerberater:in“ und dann „Einladung senden“. Nur die Inhaber:in des Unternehmens kann Personen einladen.\n\nDeine Steuerberater:in bekommt einen Link, der 7 Tage gilt, und wählt das Passwort selbst. Sie kann alles ansehen und Belege und Exporte herunterladen, aber keine Buchungen ändern, keine Banken verbinden und keine Erklärungen senden.\n\nAlle sind im Preis enthalten. Über das ⋮-Menü neben einer Person änderst du ihre Berechtigung oder entfernst sie."
+      },
+      "six-digit-code": {
+        "q": "Wie funktioniert der 6-stellige Code?",
+        "a": "Die Anmeldung in zwei Schritten ist immer an, weil dein Konto Bank- und Steuerdaten enthält. Nach deinem Passwort fragt die App nach dem 6-stelligen Code aus deiner Authenticator-App, sodass sich nur anmelden kann, wer dein Handy hat. Hake „Auf diesem Gerät 30 Tage lang nicht mehr fragen“ an, um den Code auf einem Gerät zu überspringen, dem du vertraust.\n\nKein Handy zur Hand? Wähle „Stattdessen einen Backup-Code verwenden“: Jeder deiner 8 Backup-Codes gilt einmal.\n\nNeues Handy? Unter „Mein Konto“ › „Anmeldung“ richtet „Neues Handy verwenden“ den Code neu ein, und „Neue Codes erstellen“ gibt dir 8 neue Backup-Codes; die alten gelten dann nicht mehr."
+      },
+      "roles": {
+        "q": "Was kann jede Rolle?",
+        "a": "Inhaber:in: alles; nur sie lädt Personen ein, ändert ihre Rollen und entfernt sie. Voller Zugriff, etwa für eine Partner:in: alles, was die Inhaber:in kann, außer Personen und Tarif.\n\nNur Belege, etwa für eine Assistenz: Belege hochladen und die eigenen korrigieren; keine Zahlungen, Kontostände, Steuern oder Einstellungen. Steuerberater:in: sieht alles und lädt Belege und Exporte herunter, ändert aber keine Buchungen, verbindet keine Banken und sendet keine Erklärungen.\n\nDie Inhaber:in wählt die Rolle beim Einladen und kann sie später ändern. Um das Unternehmen zu übergeben, macht sie eine Person mit vollem Zugriff zur Inhaber:in."
+      },
+      "who-sees-books": {
+        "q": "Wer kann meine Buchhaltung sehen?",
+        "a": "Nur die Personen unter Einstellungen › Personen mit Zugriff, jeweils mit der Rolle, die die Inhaber:in ihnen gegeben hat. Deine Steuerberater:in sieht sie erst, wenn sie eingeladen ist, mit eigenem Login.\n\nUnser Support-Team hat keinen Zugriff. Wenn du uns um Hilfe bittest, kann die Inhaber:in „Support für 7 Tage hineinlassen“ wählen; der Support kann dann nur ansehen, nichts ändern, und „Jetzt beenden“ beendet das jederzeit.\n\nWenn du dein Konto anlegst, akzeptierst du den Auftragsverarbeitungsvertrag (AVV): den Vertrag, der regelt, was wir mit deinen Daten tun dürfen und wie sie geschützt werden."
+      },
+      "records-kept": {
+        "q": "Wie lange werden meine Unterlagen aufbewahrt?",
+        "a": "In Deutschland muss ein Unternehmen seine Bücher und Belege bis zu 10 Jahre aufbewahren. Deshalb bleibt die Buchhaltung eines Unternehmens in der App: Wer geht oder entfernt wird, verliert den Zugriff, aber was die Person getan hat, bleibt im Verlauf, und eine Inhaber:in kann erst gehen, wenn sie das Unternehmen übergeben hat.\n\nManche Unterlagen sind gesperrt, damit sie bleiben, wie sie waren: eine gesendete Rechnung, ein Eigenbeleg und jede Buchung in einem abgeschlossenen Monat (Festschreibung)."
       }
     }
   }

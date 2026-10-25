@@ -123,9 +123,11 @@ describe('MyAccountPage', () => {
       );
 
       // Language
+      // The same rule as Help's answer about the language: which papers follow it, and which keep their own.
       expect(shown('language-hint')).toContain(
-        'For the app and our emails to you. Tax returns, exports and invoices to German customers stay German.',
+        "For the app, our emails to you, a VAT return's transfer receipt and an export's Print summary (its account names stay German). Not for a self-issued receipt, which is always German, or an invoice, which is German or English.",
       );
+      expect(shown('language-hint')).not.toContain('Tax returns, exports and invoices');
       expect(qa('[data-testid="language-buttons"] button').map(text)).toEqual([
         'English',
         'Deutsch',

@@ -40,14 +40,20 @@ describe('ComingSoonPage', () => {
     expect(el.querySelector('h1')?.textContent).toContain('This page');
   });
 
-  it('documents, upload, decisions, the bank notices, the bank flow, the tax details, Invoices, Taxes, Reports, Settings, the statement import and the self-issued receipt are built, so they are no longer coming-soon features', async () => {
+  it('documents, upload, decisions, the bank notices, the bank flow, the tax details, Invoices, Taxes, Reports, Settings, Help, the statement import and the self-issued receipt are built, so they are no longer coming-soon features', async () => {
     const harness = await RouterTestingHarness.create('/soon/home');
-    for (const feature of ['documents', 'upload', 'decisions', 'bankExpiry', 'bankEnded', 'bank', 'tax', 'invoices', 'taxes', 'reports', 'settings', 'statementImport', 'selfReceipt']) {
+    for (const feature of ['documents', 'upload', 'decisions', 'bankExpiry', 'bankEnded', 'bank', 'tax', 'invoices', 'taxes', 'reports', 'settings', 'help', 'statementImport', 'selfReceipt']) {
       await harness.navigateByUrl(`/soon/${feature}`);
       harness.detectChanges();
       const title = (harness.routeNativeElement as HTMLElement).querySelector('h1')?.textContent;
       expect(title, feature).toContain('This page');
     }
+  });
+
+  it('coming soon no longer lists help: Help is built, so its title is gone and an old link to /soon/help lands on the default page', async () => {
+    const el = await render('/soon/help');
+    expect(el.querySelector('h1')?.textContent).toContain('This page');
+    for (const lang of [en, de, ar]) expect(lang.soon).not.toHaveProperty('help');
   });
 
   it('coming soon no longer lists selfReceipt: the self-issued receipt is built, so its title is gone and its link lands on the default page', async () => {
@@ -66,7 +72,6 @@ describe('ComingSoonPage', () => {
     const features = [
       'home',
       'payments',
-      'help',
       'more',
       'terms',
       'unreadable',
