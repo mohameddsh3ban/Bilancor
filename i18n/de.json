@@ -1,0 +1,176 @@
+{
+  "terms": {
+    "ustva": {
+      "label": "UStVA",
+      "de": "UStVA",
+      "explain": "Die regelmäßige Meldung ans Finanzamt, wie viel Umsatzsteuer du berechnet und gezahlt hast."
+    },
+    "euer": {
+      "label": "EÜR",
+      "de": "EÜR",
+      "explain": "Eine einfache Jahresaufstellung aus Einnahmen minus Ausgaben, die deinen steuerlichen Gewinn zeigt."
+    },
+    "kleinunternehmer": {
+      "label": "Kleinunternehmer",
+      "de": "Kleinunternehmer",
+      "explain": "Eine Regelung für kleine Unternehmen: Du musst keine Umsatzsteuer berechnen, solange dein Umsatz unter der Grenze bleibt."
+    },
+    "skr03": {
+      "label": "SKR03",
+      "de": "SKR03",
+      "explain": "Der Standardkontenrahmen mit den Kontonummern, unter denen jede Einnahme und Ausgabe abgelegt wird."
+    }
+  },
+  "account": {
+    "cash": "Kasse"
+  },
+  "menu": {
+    "home": "Start",
+    "payments": "Zahlungen",
+    "documents": "Dokumente",
+    "invoices": "Rechnungen",
+    "taxes": "Steuern",
+    "reports": "Auswertungen",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "upload": "Beleg hochladen",
+    "more": "Mehr"
+  },
+  "soon": {
+    "home": "Start",
+    "payments": "Zahlungen",
+    "documents": "Dokumente",
+    "invoices": "Rechnungen",
+    "taxes": "Steuern",
+    "reports": "Auswertungen",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "upload": "Beleg hochladen",
+    "more": "Mehr",
+    "decisions": "Deine Entscheidungen",
+    "terms": "Bedingungen der Bankanbindung",
+    "bankExpiry": "Bankanbindung",
+    "unreadable": "Nicht lesbare Belege",
+    "revenueLimit": "Umsatzgrenze",
+    "bank": "Bank verbinden",
+    "tax": "Deine Steuerangaben",
+    "receipt": "Ersten Beleg hochladen",
+    "account": "Konto",
+    "default": "Diese Seite"
+  },
+  "comingSoon": {
+    "body": "Diese Seite gestalten wir als Nächstes",
+    "back": "Zurück zum Start"
+  },
+  "shell": {
+    "greeting": "Hallo, {{name}}",
+    "switchBusiness": "Unternehmen wechseln",
+    "notifications": "Benachrichtigungen",
+    "noNotifications": "Noch keine Benachrichtigungen",
+    "language": "Sprache",
+    "mainMenu": "Hauptmenü",
+    "logo": "Dein Logo",
+    "needsAction": "Zu erledigen",
+    "earlier": "Früher"
+  },
+  "demo": {
+    "label": "Demo",
+    "setup": "Einrichtungsstand",
+    "new": "Neukunde",
+    "halfway": "Halb fertig",
+    "active": "Aktiver Kunde",
+    "reset": "Demo zurücksetzen"
+  },
+  "notice": {
+    "terms": {
+      "text": "Neue Bedingungen unseres Anbieters für die Bankanbindung müssen geprüft werden",
+      "action": "Prüfen"
+    },
+    "bankExpiry": {
+      "text": "Deine Verbindung zu {{bank}} läuft in {{days}} Tagen ab",
+      "action": "Erneuern"
+    },
+    "unreadable": {
+      "text": "Nicht lesbare Belege: {{count}}",
+      "action": "Beheben"
+    },
+    "revenueLimit": {
+      "text": "Du hast {{percent}} % deiner Umsatzgrenze als Kleinunternehmer erreicht",
+      "action": "Details"
+    }
+  },
+  "booking": {
+    "goods7": "Wareneinkauf (7 % USt)",
+    "otherCosts": "Sonstige Betriebskosten",
+    "phone": "Telefon & Internet",
+    "rent": "Miete",
+    "revenue19": "Einnahmen (19 % USt)",
+    "revenue7": "Einnahmen (7 % USt)",
+    "revenueKU": "Einnahmen (ohne USt)",
+    "salaries": "Gehälter",
+    "software": "Software & Wartung",
+    "supplies": "Betriebsbedarf",
+    "travel": "Reisen",
+    "utilities": "Nebenkosten"
+  },
+  "home": {
+    "notices": {
+      "dismiss": "Schließen",
+      "more": "+{{count}} weitere"
+    },
+    "decisions": {
+      "one": "1 Sache braucht deine Entscheidung",
+      "many": "{{count}} Dinge brauchen deine Entscheidung",
+      "minutesOne": "etwa 1 Minute",
+      "minutes": "etwa {{count}} Minuten",
+      "start": "Starten",
+      "allClear": "Alles erledigt. Nichts braucht deine Entscheidung."
+    },
+    "checklist": {
+      "title": "Richte dein Konto fertig ein",
+      "bank": "Bank verbinden",
+      "tax": "Steuerangaben ergänzen",
+      "receipt": "Ersten Beleg hochladen",
+      "start": "Starten",
+      "view": "Ansehen",
+      "done": "Erledigt"
+    },
+    "status": {
+      "booked": "Gebucht",
+      "confirm": "Bitte bestätigen",
+      "noReceipt": "Beleg fehlt",
+      "unclear": "Unklar"
+    },
+    "transactions": {
+      "title": "Letzte Zahlungen",
+      "seeAll": "Alle ansehen",
+      "col": {
+        "date": "Datum",
+        "counterparty": "Gegenpartei",
+        "account": "Konto",
+        "booking": "Buchung",
+        "status": "Status",
+        "amount": "Betrag"
+      }
+    },
+    "balances": {
+      "title": "Konten",
+      "total": "Insgesamt verfügbar",
+      "updated": "Aktualisiert am {{date}}"
+    },
+    "tax": {
+      "title": "Steuern",
+      "vatDue": "Fällig am {{date}}",
+      "vatAmount": "Voraussichtlich zu zahlen",
+      "of": "von",
+      "thisYear": "in diesem Jahr",
+      "percentUsed": "{{percent}} % deiner Grenze erreicht",
+      "revenueLabel": "Umsatz in diesem Jahr",
+      "incomeTax": "Einkommensteuer zurücklegen",
+      "open": "Zu den Steuern"
+    },
+    "tiles": {
+      "decisions": "Entscheidungen"
+    }
+  }
+}
